@@ -1,0 +1,124 @@
+﻿using System;
+using System.Linq;
+using System.IO;
+using System.Collections.Generic;
+using System.Text;
+using GLFW;
+using static OpenGL.GL;
+using COREMath;
+
+namespace openGLToturial
+{
+    class Shader
+    {
+        public readonly uint Handle;
+        public string vertexShaderSource;
+        public string fragmentShaderSource;
+
+        public Shader(string vertexPath, string fragmentPath)
+        {
+            vertexShaderSource = File.ReadAllText(vertexPath);
+            fragmentShaderSource = File.ReadAllText(fragmentPath);
+
+            var vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vertexShader, vertexShaderSource); 
+
+            var fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fragmentShader, fragmentShaderSource);
+
+            compileShader(vertexShader);
+            compileShader(fragmentShader);
+
+            Handle = glCreateProgram();
+
+            glAttachShader(Handle, vertexShader);
+            glAttachShader(Handle, fragmentShader);
+
+            linkProgram(Handle);
+
+            glDetachShader(Handle, vertexShader);
+            glDetachShader(Handle, fragmentShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+        }
+
+        private static void compileShader(uint shader)
+        {
+            glCompileShader(shader);
+            int[] pname = new int[] { 0 };
+            glGetShaderiv(shader, GL_COMPILE_STATUS, pname);
+            bool successful = pname[0] == GL_TRUE;
+            if (!successful)
+            {
+                Console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
+                Console.WriteLine(glGetShaderInfoLog(shader));
+            }
+        }
+
+        private static void linkProgram(uint program)
+        {
+            glLinkProgram(program);
+            int[] pname = new int[] { 0 };
+            glGetProgramiv(program, GL_LINK_STATUS, pname);
+            bool successful = pname[0] == GL_TRUE;
+            if (!successful)
+            {
+                Console.WriteLine($"failed to link program, pname[0] != GL_TRUE");
+                Console.WriteLine(glGetProgramInfoLog(program));
+            }
+        }
+
+        public void SetInt(string name, int value)
+        {
+            int location = glGetUniformLocation(Handle, name);
+
+            glUniform1i(location, value);
+        }
+
+        public unsafe void SetMatrix(string name, Matrix matrix)
+        {
+            glUseProgram(Handle);
+
+            matrix.SwitchRowsAndColumns();
+
+            int location = glGetUniformLocation(Handle, name);
+
+            fixed (float* temp = &matrix.matrix4x4[0,0])
+            {
+                glUniformMatrix4fv(location, 1, true, temp);
+            }
+        }
+
+        public void Use()
+        {
+            glUseProgram(Handle);
+        }
+
+        public int GetAttribLocation(string attribName)
+        {
+            return glGetAttribLocation(Handle, attribName);
+        }
+
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                glDeleteProgram(Handle);
+                disposedValue = true;
+            }
+        }
+
+        ~Shader()
+        {
+            glDeleteProgram(Handle);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+    }
+}

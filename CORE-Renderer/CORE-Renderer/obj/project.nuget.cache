@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "D1IhSw2L9K7C6jbgSbTjKK4dURxSu5UQUTkevA8AdkY4VTZZvivZpn8NCMJdPX0uOP1gvDa5N4OIxyXu9NVIvQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\wveen\\source\\repos\\CORE-Renderer\\CORE-Renderer\\CORE-Renderer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\wveen\\.nuget\\packages\\stbimagesharp\\2.27.13\\stbimagesharp.2.27.13.nupkg.sha512"
+  ],
+  "logs": []
+}
