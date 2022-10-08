@@ -1,2 +1,4 @@
-# CORERenderer
-In-house renderer with its own mathematics library, both made by me
+# The CORE Renderer
+Renderer with its own mathematics library.
+
+Passion project, made and maintained by me
