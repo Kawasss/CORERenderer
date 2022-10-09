@@ -8,14 +8,18 @@ namespace openGLToturial
 {
     class CORERenderContent : Overrides
     {
-        static private Shader? shader;
-        static private Texture? texture;
-        static private Texture? texture2;
+        static private Shader shader;
+        static private Texture texture;
+        static private Texture texture2;
+        static private Matrix view;
+        static private Matrix projection;
+        static private Matrix model;
         static private uint vertexBufferObject;
         static private uint vertexArrayObject;
+        static private double time;
 
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        static string directory = System.IO.Path.GetDirectoryName(root);
+        static string? directory = System.IO.Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
 
         static string path = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
@@ -33,6 +37,8 @@ namespace openGLToturial
         public unsafe override void OnLoad()
         {
             MathC.Initialize(false);
+
+            glEnable(GL_DEPTH_TEST);
 
             //initialises given shaders
             shader = new Shader($"{path}\\shaders\\shader.vert", $"{path}\\shaders\\shader.frag");
@@ -92,30 +98,36 @@ namespace openGLToturial
 
             Console.WriteLine("Successfully assigned textures");
 
+            view = MathC.GetTranslationMatrix(0, 0, -1f);
+            projection = Matrix.CreatePerspectiveFOV(MathC.DegToRad(120), COREMain.WIDTH / COREMain.HEIGHT, 0.1f, 100);
+
             Console.WriteLine($"Initialised in {Glfw.Time} seconds");
             Console.WriteLine("Beginning render loop");
         }
 
         public unsafe override void RenderEveryFrame()
         {
+            time += Glfw.Time - time * 2;
+
             //sets background color
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            Matrix rotation = MathC.GetRotationZMatrix(90.0f);
-            Matrix scale = MathC.GetScalingMatrix(0.5f, 0.5f, 0.5f);
-            Matrix trans = rotation.MultiplyWith(scale);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //applies the shaders and textures
             texture.Use(GL_TEXTURE0);
             texture2.Use(GL_TEXTURE1);
             shader.Use();
 
-            shader.SetMatrix("transform", trans);
+            model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetRotationXMatrix((float)Glfw.Time * 30));
+
+            shader.SetMatrix("model", model);
+            shader.SetMatrix("view", view);
+            shader.SetMatrix("projection", projection);
 
             //draws the final polygons
             glBindVertexArray(vertexArrayObject);
             glDrawElements(GL_TRIANGLES, indices.Length, GL_UNSIGNED_INT, (void*)3);
+            Glfw.SwapBuffers(COREMain.window);
         }
     }
 }

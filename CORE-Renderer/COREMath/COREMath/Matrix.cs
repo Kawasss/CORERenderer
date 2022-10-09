@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace COREMath
+﻿namespace COREMath
 {
     public class Matrix //if doing mathematical functions with matrixes doesnt return the right answers, try changing h,i,j < 4 back to h,i,j < 3
     {
@@ -72,9 +70,9 @@ namespace COREMath
             {
                 this.matrix4x4 = new float[4, 4]
             {
-                { 0, 0, 0, v1.x },
-                { 0, 0, 0, v1.y },
-                { 0, 0, 0, v1.z },
+                { 1, 0, 0, v1.x },
+                { 0, 1, 0, v1.y },
+                { 0, 0, 1, v1.z },
                 { 0, 0, 0,    1 }
              };
             } else
@@ -106,9 +104,9 @@ namespace COREMath
             {
                 this.matrix4x4 = new float[4, 4]
             {
-                { 0, 0, 0, v1 },
-                { 0, 0, 0, v2 },
-                { 0, 0, 0, v3 },
+                { 1, 0, 0, v1 },
+                { 0, 1, 0, v2 },
+                { 0, 0, 1, v3 },
                 { 0, 0, 0,  1 }
              };
             }
@@ -116,6 +114,71 @@ namespace COREMath
             {
                 this.matrix4x4 = new float[4, 4];
             }
+        }
+
+        public static Matrix IdentityMatrix = new(1, 1, 1, 0, 0, 0);
+
+        public static void CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix result)
+        {
+            float x = 2 * depthNear / (right - left);
+            float y = 2 * depthNear / (top - bottom);
+            float a = (right + left) / (right - left);
+            float b = (top + bottom) / (top - bottom);
+            float c = -((depthFar + depthNear) / (depthFar - depthNear));
+            float d = -((2 * depthFar * depthNear) / (depthFar - depthNear));
+
+            float[,] v1 = { { x, 0, a, 0 },
+                            { 0, y, b, 0 },
+                            { 0, 0, c, d },
+                            { 0, 0,-1, 0 } };
+            result = new(v1);
+        }
+
+        public static Matrix CreatePerspectiveFOV(float fovY, float aspectRatio, float depthNear, float depthFar)
+        {
+            if (fovY <= 0 || fovY > MathC.Pi2)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fovY));
+            } if (aspectRatio <= 0) {
+                throw new ArgumentOutOfRangeException(nameof(aspectRatio));
+            } if (depthNear <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(depthNear));
+            } if (depthFar <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(depthFar));
+            }
+
+            float maximumY = depthNear * MathC.Tan(fovY * 0.5f);
+            float minimumY = -maximumY;
+            float maximumX = maximumY * aspectRatio;
+            float minimumX = minimumY * aspectRatio;
+
+            CreatePerspectiveOffCenter(minimumX, maximumX, minimumY, maximumY, depthNear, depthFar, out Matrix result);
+            return result;
+        }
+
+        public void FloatToMatrix(float[,] v1)
+        {
+            v1[0, 0] = this.matrix4x4[0, 0];
+            v1[0, 1] = this.matrix4x4[0, 1];
+            v1[0, 2] = this.matrix4x4[0, 2];
+            v1[0, 3] = this.matrix4x4[0, 3];
+            
+            v1[1, 0] = this.matrix4x4[1, 0];
+            v1[1, 1] = this.matrix4x4[1, 1];
+            v1[1, 2] = this.matrix4x4[1, 2];
+            v1[1, 3] = this.matrix4x4[1, 3];
+
+            v1[2, 0] = this.matrix4x4[2, 0];
+            v1[2, 1] = this.matrix4x4[2, 1];
+            v1[2, 2] = this.matrix4x4[2, 2];
+            v1[2, 3] = this.matrix4x4[2, 3];
+
+            v1[3, 0] = this.matrix4x4[3, 0];
+            v1[3, 1] = this.matrix4x4[3, 1];
+            v1[3, 2] = this.matrix4x4[3, 2];
+            v1[3, 3] = this.matrix4x4[3, 3];
         }
 
         /// <summary>

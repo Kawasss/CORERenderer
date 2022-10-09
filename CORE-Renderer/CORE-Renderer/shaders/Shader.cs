@@ -79,13 +79,11 @@ namespace openGLToturial
         {
             glUseProgram(Handle);
 
-            matrix.SwitchRowsAndColumns();
-
             int location = glGetUniformLocation(Handle, name);
 
             fixed (float* temp = &matrix.matrix4x4[0,0])
             {
-                glUniformMatrix4fv(location, 1, true, temp);
+                glUniformMatrix4fv(location, 1, false, temp);
             }
         }
 

@@ -8,10 +8,30 @@
         public const double Precision = 0.001;
 
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        static string directory = System.IO.Path.GetDirectoryName(root);
+        static string? directory = Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
 
         static string path = directory.Substring(0, MathCIndex) + "CORE-Renderer\\COREMath\\COREMath\\LookUpTables";
+
+        public static float DegToRad(float deg)
+        {
+            return deg * (PiF / 180);
+        }
+
+        public static double DegToRad(double deg)
+        {
+            return deg * (Pi / 180);
+        }
+
+        public static float RadToDeg(float deg)
+        {
+            return deg * (180f / PiF);
+        }
+
+        public static double RadToDeg(double deg)
+        {
+            return deg * (180 / Pi);
+        }
 
         public static float Tan(float Angle)
         {

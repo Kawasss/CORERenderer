@@ -2,11 +2,16 @@
 using GLFW;
 using COREMath;
 using static OpenGL.GL;
+using JetBrains.Annotations;
 
 namespace openGLToturial
 {
     public class COREMain
     {
+        public const int WIDTH = 800;
+        public const int HEIGHT = 600;
+        public static Window window;
+
         public unsafe static void Main(string[] args)
         {
             //creating the window
@@ -15,7 +20,7 @@ namespace openGLToturial
             Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
-            Window window = Glfw.CreateWindow(800, 600, "CORE renderer", GLFW.Monitor.None, Window.None);
+            window = Glfw.CreateWindow(WIDTH, HEIGHT, "CORE renderer", GLFW.Monitor.None, Window.None);
             if (window == null)
             {
                 Console.WriteLine("Failed to create a window");
@@ -37,7 +42,6 @@ namespace openGLToturial
 
                 render.RenderEveryFrame();
 
-                Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }
             Console.WriteLine("shutting down");
