@@ -13,6 +13,55 @@
 
         static string path = directory.Substring(0, MathCIndex) + "CORE-Renderer\\COREMath\\COREMath\\LookUpTables";
 
+        public static Matrix LookAt(Vector3 eye, Vector3 target, Vector3 up)
+        {
+            Vector3 z = Normalize(eye.Subtract(target)); //forward
+            Vector3 x = Normalize(GetCrossProduct(z, up)); //right
+            Vector3 y = Normalize(GetCrossProduct(x, z)); //camera up
+
+            Matrix matrix = new();
+
+            matrix.matrix4x4[0, 0] = x.x;
+            matrix.matrix4x4[0, 1] = x.y;
+            matrix.matrix4x4[0, 2] = x.z;
+            matrix.matrix4x4[0, 3] = -((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z));
+
+            matrix.matrix4x4[1, 0] = y.x;
+            matrix.matrix4x4[1, 1] = y.y;
+            matrix.matrix4x4[1, 2] = y.z;
+            matrix.matrix4x4[1, 3] = -((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z));
+
+            matrix.matrix4x4[2, 0] = -z.x;
+            matrix.matrix4x4[2, 1] = -z.y;
+            matrix.matrix4x4[2, 2] = -z.z;
+            matrix.matrix4x4[2, 3] = -((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z));
+
+            matrix.matrix4x4[3, 0] = 0;
+            matrix.matrix4x4[3, 1] = 0;
+            matrix.matrix4x4[3, 2] = 0;
+            matrix.matrix4x4[3, 3] = 1;
+
+            //matrix.Print();
+            //matrix.MultiplyWith(matrix1);
+            //matrix.Print();
+            return matrix;
+        }
+
+        public static float Clamp(float n, float min, float max)
+        {
+            return MathF.Max(MathF.Min(n, max), min);
+        }
+
+        public static Vector3 Normalize(Vector3 vector)
+        {
+            float dividend = 1 / GetLengthOf(vector);
+            vector.x *= dividend;
+            vector.y *= dividend;
+            vector.z *= dividend;
+
+            return vector;
+        }
+
         public static float DegToRad(float deg)
         {
             return deg * (PiF / 180);
@@ -135,6 +184,17 @@
             return newVector;
         }
 
+        public static Vector3 GetCrossProduct(Vector3 vector0, Vector3 vector)
+        {
+            Vector3 newVector = new()
+            {
+                x = (vector0.y * vector.z) - (vector0.z * vector.y),
+                y = (vector0.z * vector.x) - (vector0.x * vector.z),
+                z = (vector0.x * vector.y) - (vector0.y * vector.x),
+            };
+            return newVector;
+        }
+
         /// <summary>
         /// Returns the dot product of a vector with another
         /// </summary>
@@ -147,10 +207,26 @@
         }
 
         /// <summary>
+        /// Returns the dot product of a vector with another
+        /// </summary>
+        /// <param name="vector0">Vector to calculate the dot product with</param>
+        /// <param name="vector">Second vector to calculate the dot product with</param>
+        /// <returns>The dot product of two vectors as a float</returns>
+        public static float GetDotProductOf(Vector3 vector0, Vector3 vector)
+        {
+            return vector0.x * vector.x + vector0.y * vector.y + vector0.z * vector.z;
+        }
+
+        /// <summary>
         /// Returns the length / magnitude of given vector
         /// </summary>
         /// <returns>Given vectors length as a float</returns>
         public static float GetLengthOf(Vector4 vector)
+        {
+            return MathF.Sqrt(Squared(vector.x) + Squared(vector.y) + Squared(vector.z));
+        }
+
+        public static float GetLengthOf(Vector3 vector)
         {
             return MathF.Sqrt(Squared(vector.x) + Squared(vector.y) + Squared(vector.z));
         }

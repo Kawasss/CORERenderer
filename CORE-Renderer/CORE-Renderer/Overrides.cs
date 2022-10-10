@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GLFW;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,7 @@ namespace openGLToturial
         public unsafe abstract void OnLoad();
 
         public unsafe abstract void RenderEveryFrame();
+
+        public unsafe abstract void EveryFrame(Window window, float delta);
     }
 }

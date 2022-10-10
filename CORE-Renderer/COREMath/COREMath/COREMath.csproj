@@ -5,7 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ApplicationIcon>logoM.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="logoM.ico" />
+  </ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="StbImageSharp" Version="2.27.13" />

@@ -12,7 +12,7 @@ namespace GLFW
         /// <summary>
         ///     The height, in pixels, of this image.
         /// </summary>
-        public readonly int Width;
+        public readonly int Width; 
 
         /// <summary>
         ///     The width, in pixels, of this image.
@@ -22,7 +22,7 @@ namespace GLFW
         /// <summary>
         ///     Pointer to the RGBA pixel data of this image, arranged left-to-right, top-to-bottom.
         /// </summary>
-        public readonly IntPtr Pixels;
+        public readonly IntPtr Pixels; 
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Image" /> struct.

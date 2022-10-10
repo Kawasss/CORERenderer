@@ -81,6 +81,40 @@
             }
         }
 
+
+        /// <summary>
+        /// Gives a scaling or translation matrix of the given vector
+        /// </summary>
+        /// <param name="isScalingVector">True if the vector is a scaling vector, false if translation vector</param>
+        /// <param name="v1">transformation or translation vector</param>
+        public Matrix(bool isScalingVector, Vector3 v1)
+        {
+            if (isScalingVector)
+            {
+                this.matrix4x4 = new float[4, 4]
+            {
+                { v1.x, 0, 0, 0 },
+                { 0, v1.y, 0, 0 },
+                { 0, 0, v1.z, 0 },
+                { 0, 0, 0,    1 }
+             };
+            }
+            else if (!isScalingVector)
+            {
+                this.matrix4x4 = new float[4, 4]
+            {
+                { 1, 0, 0, v1.x },
+                { 0, 1, 0, v1.y },
+                { 0, 0, 1, v1.z },
+                { 0, 0, 0,    1 }
+             };
+            }
+            else
+            {
+                this.matrix4x4 = new float[4, 4];
+            }
+        }
+
         /// <summary>
         /// Gives a scaling or translation matrix of the given values
         /// </summary>
@@ -298,7 +332,7 @@
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        newMatrix[j, i] = this.matrix4x4[j, h] * matrix[h, i];
+                        newMatrix[j, i] += this.matrix4x4[j, h] * matrix[h, i];
                     }
                 }
             }
