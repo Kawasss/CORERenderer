@@ -71,9 +71,19 @@ namespace openGLToturial
 
         public void SetInt(string name, int value)
         {
+            glUseProgram(Handle);
+
             int location = glGetUniformLocation(Handle, name);
 
             glUniform1i(location, value);
+        }
+
+        public void SetFloat(string name, float value)
+        {
+            glUseProgram(Handle);
+
+            int location = glGetUniformLocation(Handle, name);
+            glUniform1f(location, value);
         }
 
         public unsafe void SetMatrix(string name, Matrix matrix)

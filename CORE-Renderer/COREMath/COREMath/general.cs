@@ -58,9 +58,6 @@ namespace COREMath
             matrix.matrix4x4[3, 2] = 0;
             matrix.matrix4x4[3, 3] = 1;
 
-            //matrix.Print();
-            //matrix.MultiplyWith(matrix1);
-            //matrix.Print();
             return matrix;
         }
 

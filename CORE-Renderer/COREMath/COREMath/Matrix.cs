@@ -150,6 +150,34 @@
             }
         }
 
+        public Matrix(bool isScalingVector, float v1)
+        {
+            if (isScalingVector)
+            {
+                this.matrix4x4 = new float[4, 4]
+            {
+                { v1, 0, 0, 0 },
+                { 0, v1, 0, 0 },
+                { 0, 0, v1, 0 },
+                { 0, 0, 0,  1 }
+             };
+            }
+            else if (!isScalingVector)
+            {
+                this.matrix4x4 = new float[4, 4]
+            {
+                { 1, 0, 0, v1 },
+                { 0, 1, 0, v1 },
+                { 0, 0, 1, v1 },
+                { 0, 0, 0,  1 }
+             };
+            }
+            else
+            {
+                this.matrix4x4 = new float[4, 4];
+            }
+        }
+
         public static Matrix IdentityMatrix = new(1, 1, 1, 0, 0, 0);
 
         public static void CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix result)

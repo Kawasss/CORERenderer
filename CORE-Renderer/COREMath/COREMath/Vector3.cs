@@ -75,9 +75,9 @@
         public Vector3 MulitplyBy(Vector3 vector)
         {
             Vector3 newVector = new();
-            newVector.x *= vector.x;
-            newVector.y *= vector.y;
-            newVector.z *= vector.z;
+            newVector.x = this.x * vector.x;
+            newVector.y = this.y * vector.y;
+            newVector.z = this.z * vector.z;
 
             return newVector;
         }

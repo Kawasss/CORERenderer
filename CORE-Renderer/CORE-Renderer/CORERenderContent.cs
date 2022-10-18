@@ -20,6 +20,7 @@ namespace openGLToturial
         static private Matrix view;
         static private Matrix projection;
         static private Matrix model;
+        static private Matrix lightModel;
 
         static private Camera camera;
 
@@ -89,7 +90,7 @@ namespace openGLToturial
                                   1, 2, 3
                                 };
 
-        static public Vector3 lightPos = new(0.7f, 1, 1.5f); //new(1.2f, 1, 2);
+        static public Vector3 lightPos = new(0.6f, 1, 1f); //new(1.2f, 1, 2);
 
         public unsafe override void OnLoad()
         {
@@ -148,34 +149,57 @@ namespace openGLToturial
             time += Glfw.Time - time * 2;
 
             //sets background color
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glBindVertexArray(vertexArrayObject);
+            //glBindVertexArray(vertexArrayObject);
 
             shader.Use();
+
+            shader.SetVector3("light.position", lightPos);
+            shader.SetVector3("viewPos", camera.position);
+
+            Vector3 lightColor = Vector3.Zero;
+            Vector3 diffuseColor;
+            Vector3 ambientColor;
+
+            lightColor.x = MathC.Abs((float)MathC.Sin(Glfw.Time * 2) + 1);
+            lightColor.y = MathC.Abs((float)MathC.Sin(Glfw.Time * 0.7) + 1);
+            lightColor.z = MathC.Abs((float)MathC.Sin(Glfw.Time * 1.3) + 1);  
+            diffuseColor = lightColor.MulitplyBy(new Vector3(0.5f, 0.5f, 0.5f));
+            ambientColor = diffuseColor.MulitplyBy(new Vector3(0.2f, 0.2f, 0.2f));
+            
+            shader.SetVector3("light.ambient", ambientColor);
+            shader.SetVector3("light.diffuse", diffuseColor);
+            shader.SetVector3("light.specular", 1, 1, 1);
+
+            shader.SetVector3("material.ambient", 1, 0.5f, 0.31f);
+            shader.SetVector3("material.diffuse", 1, 0.5f, 0.31f);
+            shader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
+            shader.SetFloat("material.shininess", 32);
 
             shader.SetMatrix("model", Matrix.IdentityMatrix);
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
-            shader.SetVector3("objectColor", 1, 0.5f, 0.31f);
-            shader.SetVector3("lightColor", 1, 1, 1);
-            shader.SetVector3("lightPos", lightPos);
-
+            glBindVertexArray(vertexArrayObject);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
-            glBindVertexArray(vertexArrayObjectLightSource);
+            //glBindVertexArray(vertexArrayObjectLightSource);
 
             lightShader.Use();
 
-            Matrix lightMatrix = new(0.2f, 0.2f, 0.2f, lightPos.x, lightPos.y, lightPos.z);
-            lightMatrix = lightMatrix.MultiplyWith(lightMatrix);
+            lightPos.x = (float)(1 + MathC.Cos(Glfw.Time) * 2);
+            lightPos.y = (float)MathC.Sin(Glfw.Time / 2);
 
-            lightShader.SetMatrix("model", lightMatrix);
+            lightModel = Matrix.IdentityMatrix.MultiplyWith(new Matrix(false, lightPos.x, lightPos.y, lightPos.z));
+            lightModel = lightModel.MultiplyWith(new Matrix(true, 0.2f));
+
+            lightShader.SetMatrix("model", lightModel);
             lightShader.SetMatrix("view", camera.GetViewMatrix());
             lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
 
+            glBindVertexArray(vertexArrayObjectLightSource);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             Glfw.SwapBuffers(COREMain.window);
