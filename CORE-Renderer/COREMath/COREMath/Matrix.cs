@@ -341,6 +341,25 @@
             matrix4x4 = newMatrix;
         }
 
+        public void MultiplyWith(float v1)
+        {
+            float[,] newMatrix = new float[4, 4];
+
+            for (int h = 0; h < 4; h++)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        newMatrix[j, i] += this.matrix4x4[j, h] * v1;
+                    }
+                }
+            }
+
+            newMatrix[3, 3] = 1;
+            matrix4x4 = newMatrix;
+        }
+
         /// <summary>
         /// Switches the rows and columns of the current matrix class
         /// </summary>

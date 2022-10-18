@@ -14,6 +14,7 @@ namespace openGLToturial
         public readonly uint Handle;
         public string vertexShaderSource;
         public string fragmentShaderSource;
+        public string gridShaderSource;
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -85,6 +86,22 @@ namespace openGLToturial
             {
                 glUniformMatrix4fv(location, 1, false, temp);
             }
+        }
+
+        public unsafe void SetVector3(string name, Vector3 v3)
+        {
+            glUseProgram(Handle);
+
+            int location = glGetUniformLocation(Handle, name);
+            glUniform3f(location, v3.x, v3.y, v3.z);
+        }
+
+        public unsafe void SetVector3(string name, float v1, float v2, float v3)
+        {
+            glUseProgram(Handle);
+
+            int location = glGetUniformLocation(Handle, name);
+            glUniform3f(location, v1, v2, v3);
         }
 
         public void Use()

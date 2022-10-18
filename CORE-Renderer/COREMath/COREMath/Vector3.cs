@@ -47,6 +47,17 @@
             return newVector;
         }
 
+        public Vector3 Add(float v1, float v2, float v3)
+        {
+            Vector3 newVector = new(0, 0, 0)
+            {
+                x = v1 + this.x,
+                y = v2 + this.y,
+                z = v3 + this.z
+            };
+            return newVector;
+        }
+
         public Vector3 Scalar(float value)
         {
             Vector3 v1 = new(this.x, this.y, this.z);

@@ -20,16 +20,12 @@ namespace CORE_Renderer
 
         public float AspectRatio;
 
-        public Vector3 position; // = new(0, 0, 5);
-        //public static Vector3 target = Vector3.Zero;
-        //public static Vector3 direction = MathC.Normalize(position.Subtract(target));
+        public Vector3 position; 
 
         public Vector3 front = new(0, 0, -1);
 
         public Vector3 up = Vector3.UnitVectorY;
-        public Vector3 right = Vector3.UnitVectorX; //MathC.Normalize(MathC.GetCrossProduct(up, direction));
-
-        //static Vector3 cameraUp = MathC.GetCrossProduct(direction, right);
+        public Vector3 right = Vector3.UnitVectorX;
 
         public Camera(Vector3 Position, float aspectRatio)
         {
@@ -94,6 +90,15 @@ namespace CORE_Renderer
 
             right = MathC.Normalize(MathC.GetCrossProduct(front, Vector3.UnitVectorY));
             up = MathC.Normalize(MathC.GetCrossProduct(right, front));
+        }
+
+        public void Debug()
+        {
+            Console.SetCursorPosition(0, Console.CursorTop - 4);
+            Console.WriteLine($"pitch: {pitch}        " +
+                $"\n yaw: {yaw}        " +
+                $"\n position: ({position.x}, {position.y}, {position.z})         " +
+                $"\n front: ({front.x}, {front.y}, {front.z})        ");
         }
     }
 }

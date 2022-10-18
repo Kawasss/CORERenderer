@@ -1,4 +1,6 @@
-﻿namespace COREMath
+﻿using System.Numerics;
+
+namespace COREMath
 {
     public static partial class MathC
     {
@@ -12,6 +14,21 @@
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
 
         static string path = directory.Substring(0, MathCIndex) + "CORE-Renderer\\COREMath\\COREMath\\LookUpTables";
+
+        public static Vector3 Translate(Vector3 vector, float v1, float v2, float v3)
+        {
+            return vector.Add(v2, v2, v3);
+        }
+
+        public static Vector3 Translate(Vector3 vector, Vector3 vector2)
+        {
+            return vector.Add(vector2);
+        }
+
+        public static Vector3 Scale(Vector3 vector, float v1)
+        {
+            return vector.Scalar(v1);
+        }
 
         public static Matrix LookAt(Vector3 eye, Vector3 target, Vector3 up)
         {
@@ -333,6 +350,12 @@
             return matrix;
         }
 
+        public static Matrix GetTranslationMatrix(Vector3 vector)
+        {
+            Matrix matrix = new(false, vector.x, vector.y, vector.z);
+            return matrix;
+        }
+
         /// <summary>
         /// Gives the scaling matrix of a scaling vector
         /// </summary>
@@ -341,6 +364,12 @@
         public static Matrix GetScalingMatrix(Vector4 vector)
         {
             Matrix matrix = new(true, vector);
+            return matrix;
+        }
+
+        public static Matrix GetScalingMatrix(float v1)
+        {
+            Matrix matrix = new(true, v1, v1, v1);
             return matrix;
         }
 

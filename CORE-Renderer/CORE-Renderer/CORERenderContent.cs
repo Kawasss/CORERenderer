@@ -12,7 +12,8 @@ namespace openGLToturial
     class CORERenderContent : Overrides
     {
         static private Shader shader;
-        
+        static private Shader lightShader;
+
         static private Texture texture;
         static private Texture texture2;
        
@@ -24,8 +25,8 @@ namespace openGLToturial
 
         static private uint vertexBufferObject;
         static private uint vertexArrayObject;
+        static private uint vertexArrayObjectLightSource;
         static private double time;
-
         static private bool firstMove = true;
         static double mousePosXD;
         static double mousePosYD;
@@ -39,128 +40,107 @@ namespace openGLToturial
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        static readonly float[] vertices = {
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        private readonly float[] vertices = {
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
 
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-        };
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    };
+
 
         static readonly uint[] indices = { 0, 1, 3,
                                   1, 2, 3
                                 };
 
+        static public Vector3 lightPos = new(0.7f, 1, 1.5f); //new(1.2f, 1, 2);
+
         public unsafe override void OnLoad()
         {
+            Console.WriteLine("Initializing renderer");
+            Console.WriteLine();
             MathC.Initialize(false);
 
             glEnable(GL_DEPTH_TEST);
 
-            //initialises given shaders
-            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\shader.frag");
-            shader.Use();
-
-            //making VBO and assigning it the vertices
             vertexBufferObject = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
             fixed (float* temp = &vertices[0])
             {
-                IntPtr ptr = new IntPtr(temp);
-                glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), ptr, GL_STATIC_DRAW);
+                IntPtr intptr = new(temp);
+                glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
             }
-            Console.WriteLine("Successfully initialised VBO");
 
-            //making VAO and assigning it the vertices
-            uint elementBufferObject;
+            //initialises given shaders
+            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\shader.frag");
+            lightShader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lampShader.frag");
 
-            vertexArrayObject = glGenVertexArray();
-            glBindVertexArray(vertexArrayObject);
-
-            elementBufferObject = glGenBuffer();
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
-            fixed (uint* temp = &indices[0])
             {
-                IntPtr ptr = new IntPtr(temp);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices.Length * sizeof(uint), ptr, GL_STATIC_DRAW);
+                vertexArrayObject = glGenVertexArray();
+                glBindVertexArray(vertexArrayObject);
+
+                int vertexLocation = shader.GetAttribLocation("aPos");
+                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+                glEnableVertexAttribArray((uint)vertexLocation);
+
+                int vertexLocation2 = shader.GetAttribLocation("aNormal");
+                glVertexAttribPointer((uint)vertexLocation2, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+                glEnableVertexAttribArray((uint)vertexLocation2);
             }
-            Console.WriteLine("Successfully initialised VAO");
 
-            //telling the vertexAttribArray the amount of values to add (3 values, when it repeats and when it starts)
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 5 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
+            {
+                vertexArrayObjectLightSource = glGenVertexArray();
+                glBindVertexArray(vertexArrayObjectLightSource);
 
-            Console.WriteLine("Successfully assigned vertex shader values");
-
-            //telling the vertexAttribArray the amount of values to add (2 values, when it repeats and when it starts)
-            int texCoordLocation = shader.GetAttribLocation("aTexCoord");
-            glEnableVertexAttribArray((uint)texCoordLocation);
-            glVertexAttribPointer((uint)texCoordLocation, 2, GL_FLOAT, false, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-            glEnableVertexAttribArray(2);
-
-
-            texture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container.png");
-            texture.Use(GL_TEXTURE0);
-
-            Console.WriteLine("successfully initialised texture 0");
-
-            texture2 = Texture.ReadFromFile($"{pathRenderer}\\textures\\water.png");
-            texture2.Use(GL_TEXTURE1);
-
-            Console.WriteLine("successfully initialised texture 1");
-
-            shader.SetInt("texture0", 0);
-            shader.SetInt("texture1", 1);
-
-            Console.WriteLine("Successfully assigned textures");
+                int vertexLocation = lightShader.GetAttribLocation("aPos");
+                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+                glEnableVertexAttribArray((uint)vertexLocation);
+            }
 
             Vector3 newVector = new(0, 0, 3f);
             camera = new Camera(newVector, COREMain.WIDTH / COREMain.HEIGHT);
 
-            //view = MathC.GetTranslationMatrix(0, 0, -3f);
-            //projection = Matrix.CreatePerspectiveFOV(MathC.DegToRad(120), COREMain.WIDTH / COREMain.HEIGHT, 0.1f, 100);
-
             Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
+            Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
+            Console.WriteLine("Beginning render loop"                          );
 
-            Console.WriteLine($"Initialised in {Glfw.Time} seconds");
-            Console.WriteLine("Beginning render loop");
+            Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); //more space for debug
         }
 
         public unsafe override void RenderEveryFrame()
@@ -171,21 +151,33 @@ namespace openGLToturial
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //applies the shaders and textures
-            texture.Use(GL_TEXTURE0);
-            texture2.Use(GL_TEXTURE1);
+            glBindVertexArray(vertexArrayObject);
+
             shader.Use();
 
-            model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetRotationXMatrix((float)Glfw.Time * 30));
-
-            shader.SetMatrix("model", model);
+            shader.SetMatrix("model", Matrix.IdentityMatrix);
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
-            //draws the final polygons
-            glBindVertexArray(vertexArrayObject);
-            //glDrawElements(GL_TRIANGLES, indices.Length, GL_UNSIGNED_INT, (void*)3);
+            shader.SetVector3("objectColor", 1, 0.5f, 0.31f);
+            shader.SetVector3("lightColor", 1, 1, 1);
+            shader.SetVector3("lightPos", lightPos);
+
             glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            glBindVertexArray(vertexArrayObjectLightSource);
+
+            lightShader.Use();
+
+            Matrix lightMatrix = new(0.2f, 0.2f, 0.2f, lightPos.x, lightPos.y, lightPos.z);
+            lightMatrix = lightMatrix.MultiplyWith(lightMatrix);
+
+            lightShader.SetMatrix("model", lightMatrix);
+            lightShader.SetMatrix("view", camera.GetViewMatrix());
+            lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
             Glfw.SwapBuffers(COREMain.window);
         }
 
@@ -204,51 +196,59 @@ namespace openGLToturial
             const float CAMERA_SPEED = 1.1f;
             const float SENSITIVITY = 0.1f;
 
-            if (Glfw.GetKey(window, Keys.W) == InputState.Press)
-            {
-                Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Add(v1);
-            }
-            if (Glfw.GetKey(window, Keys.S) == InputState.Press)
-            {
-                Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Subtract(v1);
-            }
-            if (Glfw.GetKey(window, Keys.A) == InputState.Press)
-            {
-                Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Add(v1);
-            }
-            if (Glfw.GetKey(window, Keys.D) == InputState.Press)
-            {
-                Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Subtract(v1);
-            }
-            if (Glfw.GetKey(window, Keys.Space) == InputState.Press)
-            {
-                Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Add(v1);
-            }
-            if (Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
-            {
-                Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
-                camera.position = camera.position.Subtract(v1);
-            }
+            InputState state = Glfw.GetMouseButton(window, MouseButton.Left);
 
-            if (firstMove)
-            {
-                lastPos = new(mousePosX, 0, mousePosY);
-                firstMove = false;
-            } else
-            {
-                float deltaX = mousePosX - lastPos.x;
-                float deltaY = mousePosY - lastPos.z;
-                
-                lastPos = new(mousePosX, 0, mousePosY);
+            InputState state2 = Glfw.GetMouseButton(window, MouseButton.Middle);
 
-                camera.Yaw -= deltaX * SENSITIVITY; //+=
-                camera.Pitch -= deltaY * SENSITIVITY;
-            }        
+            if (state == InputState.Press)
+            {
+                if (Glfw.GetKey(window, Keys.W) == InputState.Press)
+                {
+                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Add(v1);
+                }
+                if (Glfw.GetKey(window, Keys.S) == InputState.Press)
+                {
+                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Subtract(v1);
+                }
+                if (Glfw.GetKey(window, Keys.A) == InputState.Press)
+                {
+                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Add(v1);
+                }
+                if (Glfw.GetKey(window, Keys.D) == InputState.Press)
+                {
+                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Subtract(v1);
+                }
+                if (Glfw.GetKey(window, Keys.Space) == InputState.Press)
+                {
+                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Add(v1);
+                }
+                if (Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
+                {
+                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
+                    camera.position = camera.position.Subtract(v1);
+                }
+
+                if (firstMove)
+                {
+                    lastPos = new(mousePosX, 0, mousePosY);
+                    firstMove = false;
+                }
+                else
+                {
+                    float deltaX = mousePosX - lastPos.x;
+                    float deltaY = mousePosY - lastPos.z;
+
+                    lastPos = new(mousePosX, 0, mousePosY);
+
+                    camera.Yaw += deltaX * SENSITIVITY;
+                    camera.Pitch -= deltaY * SENSITIVITY;
+                }
+            }
         }
 
         public static void ScrollCallback(Window window, double x, double y)
