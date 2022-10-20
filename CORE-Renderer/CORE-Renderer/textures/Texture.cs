@@ -15,7 +15,6 @@ namespace openGLToturial
     public class Texture
     {
         public readonly uint Handle;
-        //public static ImageResult image;
 
         public static unsafe Texture ReadFromFile(string imagePath)
         {
@@ -30,7 +29,7 @@ namespace openGLToturial
 
             fixed (byte* temp = &image.Data[0])
             {
-                IntPtr ptr = new IntPtr(temp);
+                IntPtr ptr = new(temp);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
             }
 

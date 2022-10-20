@@ -49,7 +49,6 @@ namespace CORE_Renderer
             get => MathC.RadToDeg(yaw);
             set
             {
-                float angle = MathC.Clamp(value, -fov, fov);
                 yaw = MathC.DegToRad(value);
                 UpdateVectors();
             }
@@ -77,14 +76,14 @@ namespace CORE_Renderer
 
         public Matrix GetViewMatrix()
         {
-            return MathC.LookAt(position, position.Add(front), up);
+            return MathC.LookAt(position, position.Add(front), up); //position.Add(front)
         }
 
         private void UpdateVectors()
         {
-            front.x = MathC.Cos(pitch) * MathC.Cos(yaw);
+            front.x = MathC.Cos(pitch) * MathC.Cos(yaw); // MathC.Cos(pitch) *
             front.y = MathC.Sin(pitch);
-            front.z = MathC.Cos(pitch) * MathC.Sin(yaw);
+            front.z = MathC.Cos(pitch) * MathC.Sin(yaw); // MathC.Cos(pitch) *
 
             front = MathC.Normalize(front);
 

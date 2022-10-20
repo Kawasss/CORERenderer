@@ -32,26 +32,26 @@ namespace COREMath
 
         public static Matrix LookAt(Vector3 eye, Vector3 target, Vector3 up)
         {
-            Vector3 z = Normalize(eye.Subtract(target)); //forward
-            Vector3 x = Normalize(GetCrossProduct(z, up)); //right
-            Vector3 y = Normalize(GetCrossProduct(x, z)); //camera up
+            Vector3 z = Normalize(target.Subtract(eye)); //forward eye.Subtract(target)
+            Vector3 x = Normalize(GetCrossProduct(up, z)); //right
+            Vector3 y = GetCrossProduct(z, x); //camera up
 
             Matrix matrix = new();
 
             matrix.matrix4x4[0, 0] = x.x;
             matrix.matrix4x4[0, 1] = x.y;
             matrix.matrix4x4[0, 2] = x.z;
-            matrix.matrix4x4[0, 3] = -((x.x * eye.x) + (x.y * eye.y) + (x.z * eye.z));
+            matrix.matrix4x4[0, 3] = -(GetDotProductOf(x, eye));
 
             matrix.matrix4x4[1, 0] = y.x;
             matrix.matrix4x4[1, 1] = y.y;
             matrix.matrix4x4[1, 2] = y.z;
-            matrix.matrix4x4[1, 3] = -((y.x * eye.x) + (y.y * eye.y) + (y.z * eye.z));
+            matrix.matrix4x4[1, 3] = -(GetDotProductOf(y, eye));
 
-            matrix.matrix4x4[2, 0] = -z.x;
-            matrix.matrix4x4[2, 1] = -z.y;
-            matrix.matrix4x4[2, 2] = -z.z;
-            matrix.matrix4x4[2, 3] = -((z.x * eye.x) + (z.y * eye.y) + (z.z * eye.z));
+            matrix.matrix4x4[2, 0] = z.x;
+            matrix.matrix4x4[2, 1] = z.y;
+            matrix.matrix4x4[2, 2] = z.z;
+            matrix.matrix4x4[2, 3] = -(GetDotProductOf(z, eye));
 
             matrix.matrix4x4[3, 0] = 0;
             matrix.matrix4x4[3, 1] = 0;
