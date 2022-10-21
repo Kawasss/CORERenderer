@@ -8,13 +8,17 @@ out vec2 TexCoords;
 out vec3 Normal;
 out vec3 FragPos;
 
+out mat4 Model;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main() {
-	gl_Position = vec4(aPos, 1.0) * model * view * projection;
-	FragPos = vec3(model * vec4(aPos, 1.0));
+	//gl_Position = vec4(aPos, 1.0) * model * view * projection;
+	FragPos = (vec4(aPos, 1.0) * model).xyz;
 	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
 	TexCoords = aTexCoords;
+	Model = model;
+	gl_Position = vec4(FragPos, 1.0) * view * projection;
 }

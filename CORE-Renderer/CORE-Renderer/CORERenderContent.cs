@@ -127,7 +127,7 @@ namespace openGLToturial
             }
 
             //initialises given shaders
-            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\shader.frag");
+            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\spotLight.frag"); //specify the type of light
             lightShader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lampShader.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
             
@@ -169,7 +169,7 @@ namespace openGLToturial
             diffuseTexture.Use(GL_TEXTURE0);
             specularTexture.Use(GL_TEXTURE1);
 
-            camera = new Camera(new(0, 1, -3), COREMain.WIDTH / COREMain.HEIGHT);
+            camera = new Camera(new(0, 1, -3), COREMain.Width / COREMain.Height);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop"                          );
@@ -191,7 +191,8 @@ namespace openGLToturial
             shader.SetInt("material.diffuse", 0);
             shader.SetInt("material.specular", 1);
 
-            shader.SetVector3("light.position", lightPos);
+            shader.SetVector3("light.direction", camera.front);
+            shader.SetVector3("light.position", camera.position);//lightPos
             shader.SetVector3("viewPos", camera.position);
             
             shader.SetVector3("light.ambient", 0.2f, 0.2f, 0.2f);
@@ -204,6 +205,8 @@ namespace openGLToturial
             shader.SetFloat("light.constant", 1);
             shader.SetFloat("light.linear", 0.022f);
             shader.SetFloat("light.quadratic", 0.0019f);
+            shader.SetFloat("light.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
+            shader.SetFloat("light.outerCutOff", MathC.Cos(MathC.DegToRad(17.5f)));
 
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
@@ -212,7 +215,7 @@ namespace openGLToturial
             glBindVertexArray(vertexArrayObject);
             for (int i = 0; i < 10; i++)
             {
-                Matrix model = MathC.GetTranslationMatrix(cubePos[i]);
+                Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(cubePos[i]));
                 float angle = 20 * i;
                 model = model.MultiplyWith(MathC.GetRotationXMatrix(angle)).MultiplyWith(MathC.GetRotationZMatrix(angle));
 
@@ -352,6 +355,7 @@ namespace openGLToturial
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
             }
         }
+        
         //zoom in or out
         public static void ScrollCallback(Window window, double x, double y)
         {

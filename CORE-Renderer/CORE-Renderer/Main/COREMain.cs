@@ -15,8 +15,8 @@ namespace openGLToturial
 {
     public class COREMain
     {
-        public const int WIDTH = 800;
-        public const int HEIGHT = 600;
+        public static int Width = 800;
+        public static int Height = 600;
         public static Window window;
 
         private static double time = 0;
@@ -29,7 +29,7 @@ namespace openGLToturial
             Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
-            window = Glfw.CreateWindow(WIDTH, HEIGHT, "CORE renderer", GLFW.Monitor.None, Window.None);
+            window = Glfw.CreateWindow(Width, Height, "CORE renderer", GLFW.Monitor.None, Window.None);
             if (window == null)
             {
                 Console.WriteLine("Failed to create a window");
@@ -75,6 +75,8 @@ namespace openGLToturial
         static void FramebufferSizeCallBack(Window window, int width, int height)
         {
             glViewport(0, 0, width, height);
+            Width = width;
+            Height = height;
         }
     }
 }
