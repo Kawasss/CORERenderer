@@ -43,7 +43,7 @@ namespace openGLToturial
             GLFW.Image[] images = new GLFW.Image[1];
             fixed (byte* temp = &image.Data[0])
             {
-                IntPtr ptr = new IntPtr(temp);
+                IntPtr ptr = new(temp);
                 images[0] = new GLFW.Image(image.Width, image.Height, ptr);
             }
             Glfw.SetWindowIcon(window, 1, images);

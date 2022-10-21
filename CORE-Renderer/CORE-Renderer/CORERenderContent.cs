@@ -131,7 +131,7 @@ namespace openGLToturial
             lightShader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lampShader.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
             
-            {
+            { //assignes values from vertices to the vertex buffer object
                 vertexArrayObject = glGenVertexArray();
                 glBindVertexArray(vertexArrayObject);
 
@@ -148,7 +148,7 @@ namespace openGLToturial
                 glEnableVertexAttribArray((uint)vertexLocation3);
             }
 
-            {
+            { //assignes values from vertices to the vertex buffer object for the light source
                 vertexArrayObjectLightSource = glGenVertexArray();
                 glBindVertexArray(vertexArrayObjectLightSource);
 
@@ -157,11 +157,12 @@ namespace openGLToturial
                 glEnableVertexAttribArray((uint)vertexLocation);
             }
             
-            {
+            { //allows the grid to render bufferless
                 vertexArrayObjectGrid = glGenVertexArray();
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
+            //loads in and uses textures
             diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2.png");
             specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2_specular.png");
 
@@ -184,6 +185,7 @@ namespace openGLToturial
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            //assigns all the values to the object shaders for proper lighting and placement
             shader.Use();
 
             shader.SetInt("material.diffuse", 0);
@@ -203,12 +205,11 @@ namespace openGLToturial
             shader.SetFloat("light.linear", 0.022f);
             shader.SetFloat("light.quadratic", 0.0019f);
 
-            //shader.SetMatrix("model", Matrix.IdentityMatrix);
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
+            //draws 10 objects
             glBindVertexArray(vertexArrayObject);
-            //glDrawArrays(GL_TRIANGLES, 0, 36);
             for (int i = 0; i < 10; i++)
             {
                 Matrix model = MathC.GetTranslationMatrix(cubePos[i]);
@@ -219,8 +220,8 @@ namespace openGLToturial
 
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }
-            //glBindVertexArray(vertexArrayObject);
 
+            //assigns all the values for placement of the light source
             lightShader.Use();
 
             lightPos.x = (float)(1 + MathC.Cos(Glfw.Time) * 2);
@@ -236,6 +237,7 @@ namespace openGLToturial
             glBindVertexArray(vertexArrayObjectLightSource);
             glDrawArrays(GL_TRIANGLES, 0, 36);
             
+            //assigns all the values for placement of the grid
             gridShader.Use();
 
             gridShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(new Matrix(true, 100 * MathC.GetLengthOf(camera.position))));
@@ -271,6 +273,7 @@ namespace openGLToturial
 
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Middle);
 
+            //basic movement
             if (state == InputState.Press)
             {
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
@@ -305,7 +308,7 @@ namespace openGLToturial
                     Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
                     camera.position = camera.position.Subtract(v1);
                 }
-
+                //rotating the camera with mouse movement
                 if (firstMove)
                 {
                     lastPos = new(mousePosX, 0, mousePosY);
@@ -349,7 +352,7 @@ namespace openGLToturial
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
             }
         }
-
+        //zoom in or out
         public static void ScrollCallback(Window window, double x, double y)
         {
             camera.Fov -= (float)y * 1.5f;
