@@ -22,7 +22,6 @@ namespace openGLToturial
 
         static private Matrix view;
         static private Matrix projection;
-        static private Matrix lightModel;
 
         static private Camera camera;
 
@@ -105,6 +104,14 @@ namespace openGLToturial
             new Vector3(-1.3f,  1.0f, -1.5f)
         };
 
+        static readonly Vector3[] pointLightPositions =
+        {
+            new Vector3(0.7f, 0.2f, 2),
+            new Vector3(2.3f, -3.3f, -4),
+            new Vector3(-4, 2, 12),
+            new Vector3(0, 0, -3)
+        };
+
         static public Vector3 lightPos = new(0.6f, 1, 1f);
 
         public unsafe override void OnLoad()
@@ -127,7 +134,7 @@ namespace openGLToturial
             }
 
             //initialises given shaders
-            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\spotLight.frag"); //specify the type of light
+            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); //specify the type of light
             lightShader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lampShader.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
             
@@ -188,25 +195,32 @@ namespace openGLToturial
             //assigns all the values to the object shaders for proper lighting and placement
             shader.Use();
 
-            shader.SetInt("material.diffuse", 0);
-            shader.SetInt("material.specular", 1);
-
-            shader.SetVector3("light.direction", camera.front);
-            shader.SetVector3("light.position", camera.position);//lightPos
             shader.SetVector3("viewPos", camera.position);
+            shader.SetFloat("material.shininess", 2.0f);
+
+            //assigns all of the values for the 4 active light sources
+            for (int i = 0; i < 4; i++)
+            {
+                shader.SetVector3($"pointLights[{i}].position", pointLightPositions[i]);
+                shader.SetVector3($"pointLights[{i}].ambient", 0.05f, 0.05f, 0.05f);
+                shader.SetVector3($"pointLights[{i}].diffuse", 0.8f, 0.8f, 0.8f);
+                shader.SetVector3($"pointLights[{i}].specular", 1.0f, 1.0f, 1.0f);
+                shader.SetFloat($"pointLights[{i}].constant", 1.0f);
+                shader.SetFloat($"pointLights[{i}].linear", 0.09f);
+                shader.SetFloat($"pointLights[{i}].quadratic", 0.032f);
+            }
             
-            shader.SetVector3("light.ambient", 0.2f, 0.2f, 0.2f);
-            shader.SetVector3("light.diffuse", 0.7f, 0.7f, 0.7f);
-            shader.SetVector3("light.specular", 1, 1, 1);
-
-            shader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
-
-            shader.SetFloat("material.shininess", 32);
-            shader.SetFloat("light.constant", 1);
-            shader.SetFloat("light.linear", 0.022f);
-            shader.SetFloat("light.quadratic", 0.0019f);
-            shader.SetFloat("light.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
-            shader.SetFloat("light.outerCutOff", MathC.Cos(MathC.DegToRad(17.5f)));
+            //spotLight
+            shader.SetVector3("spotLight.position", camera.position);
+            shader.SetVector3("spotLight.direction", camera.front);
+            shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+            shader.SetVector3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+            shader.SetFloat("spotLight.constant", 1.0f);
+            shader.SetFloat("spotLight.linear", 0.09f);
+            shader.SetFloat("spotLight.quadratic", 0.032f);
+            shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
+            shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
 
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
@@ -215,7 +229,7 @@ namespace openGLToturial
             glBindVertexArray(vertexArrayObject);
             for (int i = 0; i < 10; i++)
             {
-                Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(cubePos[i]));
+                Matrix model = MathC.GetTranslationMatrix(cubePos[i]);
                 float angle = 20 * i;
                 model = model.MultiplyWith(MathC.GetRotationXMatrix(angle)).MultiplyWith(MathC.GetRotationZMatrix(angle));
 
@@ -226,19 +240,19 @@ namespace openGLToturial
 
             //assigns all the values for placement of the light source
             lightShader.Use();
-
-            lightPos.x = (float)(1 + MathC.Cos(Glfw.Time) * 2);
-            lightPos.y = (float)MathC.Sin(Glfw.Time / 2);
-
-            lightModel = Matrix.IdentityMatrix.MultiplyWith(new Matrix(false, lightPos.x, lightPos.y, lightPos.z));
-            lightModel = lightModel.MultiplyWith(new Matrix(true, 0.2f));
-
-            lightShader.SetMatrix("model", lightModel);
             lightShader.SetMatrix("view", camera.GetViewMatrix());
             lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
 
             glBindVertexArray(vertexArrayObjectLightSource);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            for (int i = 0; i < 4; i ++)
+            {
+                Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(pointLightPositions[i]));
+                model = model.MultiplyWith(MathC.GetScalingMatrix(0.2f));
+                
+                lightShader.SetMatrix("model", model);
+
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
             
             //assigns all the values for placement of the grid
             gridShader.Use();
