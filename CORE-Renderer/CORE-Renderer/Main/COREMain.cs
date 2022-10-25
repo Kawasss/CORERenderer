@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 using static System.Net.Mime.MediaTypeNames;
 using CORE_Renderer;
 
-namespace openGLToturial
+namespace CORERenderer
 {
     public class COREMain
     {

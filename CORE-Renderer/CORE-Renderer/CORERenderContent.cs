@@ -8,8 +8,9 @@ using OpenGL;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Net.Http.Headers;
+using CORERenderer.Loaders;
 
-namespace openGLToturial
+namespace CORERenderer
 {
     class CORERenderContent : Overrides
     {
@@ -181,6 +182,8 @@ namespace openGLToturial
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop"                          );
 
+            OBJLoader.LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj");
+
             Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); //more space for debug
         }
 
@@ -202,12 +205,12 @@ namespace openGLToturial
             for (int i = 0; i < 4; i++)
             {
                 shader.SetVector3($"pointLights[{i}].position", pointLightPositions[i]);
-                shader.SetVector3($"pointLights[{i}].ambient", 0.05f, 0.05f, 0.05f);
+                shader.SetVector3($"pointLights[{i}].ambient", 0.02f, 0.02f, 0.02f);
                 shader.SetVector3($"pointLights[{i}].diffuse", 0.8f, 0.8f, 0.8f);
                 shader.SetVector3($"pointLights[{i}].specular", 1.0f, 1.0f, 1.0f);
                 shader.SetFloat($"pointLights[{i}].constant", 1.0f);
-                shader.SetFloat($"pointLights[{i}].linear", 0.09f);
-                shader.SetFloat($"pointLights[{i}].quadratic", 0.032f);
+                shader.SetFloat($"pointLights[{i}].linear", 0.07f);
+                shader.SetFloat($"pointLights[{i}].quadratic", 0.017f);
             }
             
             //spotLight
@@ -222,7 +225,7 @@ namespace openGLToturial
             shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
             shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
 
-            shader.SetMatrix("view", camera.GetViewMatrix());
+            shader.SetMatrix("view", camera.GetArcBallViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
             //draws 10 objects
@@ -258,7 +261,7 @@ namespace openGLToturial
             gridShader.Use();
 
             gridShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(new Matrix(true, 100 * MathC.GetLengthOf(camera.position))));
-            gridShader.SetMatrix("view", camera.GetViewMatrix());
+            gridShader.SetMatrix("view", camera.GetArcBallViewMatrix());
             gridShader.SetMatrix("projection", camera.GetProjectionMatrix());
 
             gridShader.SetVector3("playerPos", camera.position);
@@ -345,8 +348,6 @@ namespace openGLToturial
 
             if (state2 == InputState.Press) //doesnt work
             {
-                Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
-
                 if (firstMove)
                 {
                     lastPos = new(mousePosX, 0, mousePosY);

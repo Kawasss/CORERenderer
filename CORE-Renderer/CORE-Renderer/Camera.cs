@@ -76,14 +76,19 @@ namespace CORE_Renderer
 
         public Matrix GetViewMatrix()
         {
-            return MathC.LookAt(position, position.Add(front), up); //position.Add(front)
+            return MathC.LookAt(position, position.Add(front), up);
+        }
+
+        public Matrix GetArcBallViewMatrix()
+        {
+            return MathC.LookAt(position, position.Add(front), up);
         }
 
         private void UpdateVectors()
         {
-            front.x = MathC.Cos(pitch) * MathC.Cos(yaw); // MathC.Cos(pitch) *
+            front.x = MathC.Cos(pitch) * MathC.Cos(yaw);
             front.y = MathC.Sin(pitch);
-            front.z = MathC.Cos(pitch) * MathC.Sin(yaw); // MathC.Cos(pitch) *
+            front.z = MathC.Cos(pitch) * MathC.Sin(yaw);
 
             front = MathC.Normalize(front);
 

@@ -10,7 +10,7 @@ using GLFW;
 using StbImageSharp;
 
 
-namespace openGLToturial
+namespace CORERenderer
 {
     public class Texture
     {

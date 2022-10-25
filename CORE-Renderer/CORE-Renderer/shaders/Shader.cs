@@ -7,7 +7,7 @@ using GLFW;
 using static OpenGL.GL;
 using COREMath;
 
-namespace openGLToturial
+namespace CORERenderer
 {
     class Shader
     {
