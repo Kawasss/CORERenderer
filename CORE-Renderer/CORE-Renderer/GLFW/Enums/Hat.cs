@@ -1,6 +1,6 @@
 using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Describes joystick hat states.

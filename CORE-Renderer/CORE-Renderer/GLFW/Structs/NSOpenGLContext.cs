@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Structs
 {
     /// <summary>
     ///     Wrapper around a NSOpenGL context pointer.

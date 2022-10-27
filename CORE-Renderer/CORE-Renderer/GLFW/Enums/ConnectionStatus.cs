@@ -1,4 +1,4 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed values indicating connection status of joysticks, monitors, etc.

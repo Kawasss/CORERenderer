@@ -1,4 +1,4 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Describes the release behavior to be used by the context.

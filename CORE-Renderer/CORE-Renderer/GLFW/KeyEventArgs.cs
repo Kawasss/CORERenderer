@@ -1,6 +1,7 @@
-﻿using System;
+﻿using CORERenderer.GLFW.Enums;
+using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Arguments supplied with keyboard events.

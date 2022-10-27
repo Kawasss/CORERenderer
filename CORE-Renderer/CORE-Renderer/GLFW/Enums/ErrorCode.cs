@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed error codes for error handling.

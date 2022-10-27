@@ -1,6 +1,6 @@
 using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Arguments used when a window content scaling is changed.

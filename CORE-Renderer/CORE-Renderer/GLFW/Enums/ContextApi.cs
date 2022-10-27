@@ -1,4 +1,4 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Describes the API used for creating the OpenGL context.

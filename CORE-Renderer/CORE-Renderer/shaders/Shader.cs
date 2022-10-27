@@ -4,10 +4,10 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using GLFW;
-using static OpenGL.GL;
+using static CORERenderer.GL;
 using COREMath;
 
-namespace CORERenderer
+namespace CORERenderer.shaders
 {
     class Shader
     {
@@ -22,7 +22,7 @@ namespace CORERenderer
             fragmentShaderSource = File.ReadAllText(fragmentPath);
 
             var vertexShader = glCreateShader(GL_VERTEX_SHADER);
-            glShaderSource(vertexShader, vertexShaderSource); 
+            glShaderSource(vertexShader, vertexShaderSource);
 
             var fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
             glShaderSource(fragmentShader, fragmentShaderSource);
@@ -92,7 +92,7 @@ namespace CORERenderer
 
             int location = glGetUniformLocation(Handle, name);
 
-            fixed (float* temp = &matrix.matrix4x4[0,0])
+            fixed (float* temp = &matrix.matrix4x4[0, 0])
             {
                 glUniformMatrix4fv(location, 1, false, temp);
             }

@@ -1,4 +1,4 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed values describing possible joysticks.

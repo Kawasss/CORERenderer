@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 
-namespace OpenGL
+namespace CORERenderer
 {
     /// <summary>
     ///     Returns a function pointer for the OpenGL function with the specified name. 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Arguments supplied with size changing events.

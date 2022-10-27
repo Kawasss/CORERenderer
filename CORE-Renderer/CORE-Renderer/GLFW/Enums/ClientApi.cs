@@ -1,14 +1,14 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed description for possible client APIs to be used.
     /// </summary>
     public enum ClientApi
     {
-	    /// <summary>
-	    ///     No context
-	    /// </summary>
-	    None = 0x00000000,
+        /// <summary>
+        ///     No context
+        /// </summary>
+        None = 0x00000000,
 
         /// <summary>
         ///     OpenGL

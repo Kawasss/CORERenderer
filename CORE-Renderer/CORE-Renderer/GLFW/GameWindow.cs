@@ -1,7 +1,8 @@
+using CORERenderer.GLFW.Structs;
 using System;
 
 // ReSharper disable once CheckNamespace
-namespace GLFW.Game
+namespace CORERenderer.GLFW
 {
     /// <inheritdoc cref="NativeWindow"/>
     [Obsolete("Use NativeWindow, GameWindow will be removed in future release.")]
@@ -21,7 +22,7 @@ namespace GLFW.Game
 
         /// <inheritdoc cref="NativeWindow(int, int, string, Monitor, Window)"/>
         [Obsolete("Use NativeWindow, GameWindow will be removed in future release.")]
-        public GameWindow(int width, int height, string title, Monitor monitor, Window share) : base(width, height,
+        public GameWindow(int width, int height, string title, Structs.Monitor monitor, Window share) : base(width, height,
             title, monitor, share)
         {
         }

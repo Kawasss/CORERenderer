@@ -1,8 +1,9 @@
-﻿using System;
+﻿using CORERenderer.GLFW;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Structs
 {
     /// <summary>
     ///     Wrapper around a pointer to monitor.

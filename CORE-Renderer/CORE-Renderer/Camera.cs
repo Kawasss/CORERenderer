@@ -8,19 +8,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CORE_Renderer
+namespace CORERenderer
 {
     public class Camera
     {
-        
-        
+
+
         private float pitch;
         private float yaw = -(MathC.PiF / 2);
         private float fov = MathC.PiF / 2;
 
         public float AspectRatio;
 
-        public Vector3 position; 
+        public Vector3 position;
 
         public Vector3 front = new(0, 0, -1);
 
@@ -31,7 +31,7 @@ namespace CORE_Renderer
         {
             position = Position;
             AspectRatio = aspectRatio;
-        }   
+        }
 
         public float Pitch
         {

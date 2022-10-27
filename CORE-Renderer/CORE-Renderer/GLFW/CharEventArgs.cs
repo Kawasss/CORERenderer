@@ -1,11 +1,12 @@
-﻿using System;
+﻿using CORERenderer.GLFW.Enums;
+using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Arguments supplied with char input events.
     /// </summary>
-    /// <seealso cref="System.EventArgs" />
+    /// <seealso cref="EventArgs" />
     public class CharEventArgs : EventArgs
     {
         #region Constructors
@@ -31,7 +32,7 @@ namespace GLFW
         /// <value>
         ///     The character.
         /// </value>
-        public string Char => char.ConvertFromUtf32(unchecked((int) CodePoint));
+        public string Char => char.ConvertFromUtf32(unchecked((int)CodePoint));
 
         /// <summary>
         ///     Gets the platform independent code point.

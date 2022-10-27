@@ -1,4 +1,7 @@
-﻿namespace GLFW
+﻿using CORERenderer.GLFW.Enums;
+using GLFW;
+
+namespace CORERenderer.GLFW
 {
     /// <summary>
     /// Base exception class for GLFW related errors.
@@ -16,17 +19,17 @@
         {
             switch (code)
             {
-                case ErrorCode.NotInitialized:     return Strings.NotInitialized;
-                case ErrorCode.NoCurrentContext:   return Strings.NoCurrentContext;
-                case ErrorCode.InvalidEnum:        return Strings.InvalidEnum;
-                case ErrorCode.InvalidValue:       return Strings.InvalidValue;
-                case ErrorCode.OutOfMemory:        return Strings.OutOfMemory;
-                case ErrorCode.ApiUnavailable:     return Strings.ApiUnavailable;
+                case ErrorCode.NotInitialized: return Strings.NotInitialized;
+                case ErrorCode.NoCurrentContext: return Strings.NoCurrentContext;
+                case ErrorCode.InvalidEnum: return Strings.InvalidEnum;
+                case ErrorCode.InvalidValue: return Strings.InvalidValue;
+                case ErrorCode.OutOfMemory: return Strings.OutOfMemory;
+                case ErrorCode.ApiUnavailable: return Strings.ApiUnavailable;
                 case ErrorCode.VersionUnavailable: return Strings.VersionUnavailable;
-                case ErrorCode.PlatformError:      return Strings.PlatformError;
-                case ErrorCode.FormatUnavailable:  return Strings.FormatUnavailable;
-                case ErrorCode.NoWindowContext:    return Strings.NoWindowContext;
-                default:                           return Strings.UnknownError;
+                case ErrorCode.PlatformError: return Strings.PlatformError;
+                case ErrorCode.FormatUnavailable: return Strings.FormatUnavailable;
+                case ErrorCode.NoWindowContext: return Strings.NoWindowContext;
+                default: return Strings.UnknownError;
             }
         }
 

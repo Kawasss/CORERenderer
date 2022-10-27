@@ -1,4 +1,4 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Used internally to consolidate strongly-typed values for getting/setting window attributes.

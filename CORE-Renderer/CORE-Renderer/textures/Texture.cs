@@ -5,12 +5,12 @@ using System.IO;
 using System.Collections;
 using System.Text;
 using System.Drawing.Drawing2D;
-using static OpenGL.GL;
+using static CORERenderer.GL;
 using GLFW;
 using StbImageSharp;
 
 
-namespace CORERenderer
+namespace CORERenderer.textures
 {
     public class Texture
     {
@@ -24,7 +24,7 @@ namespace CORERenderer
             glBindTexture(GL_TEXTURE_2D, handle);
 
             StbImage.stbi_set_flip_vertically_on_load(1);
-            
+
             ImageResult image = ImageResult.FromStream(File.OpenRead(imagePath), ColorComponents.RedGreenBlueAlpha);
 
             fixed (byte* temp = &image.Data[0])
@@ -38,7 +38,7 @@ namespace CORERenderer
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            
+
             glGenerateMipmap(GL_TEXTURE_2D);
 
             return new Texture(handle);
@@ -48,7 +48,7 @@ namespace CORERenderer
         {
             Handle = newHandle;
         }
-        
+
         public void Use(int texture)
         {
             glActiveTexture(texture);

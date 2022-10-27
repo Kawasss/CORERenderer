@@ -2,19 +2,19 @@
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
-using JetBrains.Annotations;
+using CORERenderer.GLFW.Structs;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
-	/// <summary>
-	///     Provides access to relevant native functions of the current operating system.
-	///     <para>
-	///         By using the native access functions you assert that you know what you're doing and how to fix problems
-	///         caused by using them.
-	///     </para>
-	///     <para>If you don't, you shouldn't be using them.</para>
-	/// </summary>
-	[SuppressUnmanagedCodeSecurity]
+    /// <summary>
+    ///     Provides access to relevant native functions of the current operating system.
+    ///     <para>
+    ///         By using the native access functions you assert that you know what you're doing and how to fix problems
+    ///         caused by using them.
+    ///     </para>
+    ///     <para>If you don't, you shouldn't be using them.</para>
+    /// </summary>
+    [SuppressUnmanagedCodeSecurity]
     public static class Native
     {
         #region External
@@ -25,7 +25,7 @@ namespace GLFW
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The CGDirectDisplayID of the specified monitor, or <see cref="IntPtr.Zero" /> if an error occurred.</returns>
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetCocoaMonitor", CallingConvention = CallingConvention.Cdecl)]
-        public static extern uint GetCocoaMonitor(Monitor monitor);
+        public static extern uint GetCocoaMonitor(Structs.Monitor monitor);
 
         /// <summary>
         ///     Retrieves a pointer to the X11 display.
@@ -51,7 +51,7 @@ namespace GLFW
         /// <returns>A pointer to the Wayland output struct.</returns>
         /// <seealso href="https://github.com/msteinert/wayland/blob/master/src/wayland-client.c" />
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetWaylandMonitor", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr GetWaylandMonitor(Monitor monitor);
+        public static extern IntPtr GetWaylandMonitor(Structs.Monitor monitor);
 
         /// <summary>
         ///     Returns the pointer to the Wayland window for the specified window.
@@ -83,7 +83,7 @@ namespace GLFW
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The RROutput of the specified monitor, or <see cref="IntPtr.Zero" /> if an error occurred.</returns>
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetX11Monitor", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr GetX11Monitor(Monitor monitor);
+        public static extern IntPtr GetX11Monitor(Structs.Monitor monitor);
 
         /// <summary>
         ///     Returns the RRCrtc of the specified monitor.
@@ -91,7 +91,7 @@ namespace GLFW
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The RRCrtc of the specified monitor, or <see cref="IntPtr.Zero" /> if an error occurred.</returns>
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetX11Adapter", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr GetX11Adapter(Monitor monitor);
+        public static extern IntPtr GetX11Adapter(Structs.Monitor monitor);
 
         /// <summary>
         ///     Returns the pointer to the Cocoa window for the specified window.
@@ -219,10 +219,10 @@ namespace GLFW
         private static extern IntPtr GetX11SelectionStringInternal();
 
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetWin32Adapter", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr GetWin32AdapterInternal(Monitor monitor);
+        private static extern IntPtr GetWin32AdapterInternal(Structs.Monitor monitor);
 
         [DllImport(Glfw.LIBRARY, EntryPoint = "glfwGetWin32Monitor", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr GetWin32MonitorInternal(Monitor monitor);
+        private static extern IntPtr GetWin32MonitorInternal(Structs.Monitor monitor);
 
         #endregion
 
@@ -233,7 +233,7 @@ namespace GLFW
         /// </summary>
         /// <param name="monitor">A monitor instance.</param>
         /// <returns>dapter device name (for example \\.\DISPLAY1) of the specified monitor, or <c>null</c> if an error occurred.</returns>
-        public static string GetWin32Adapter(Monitor monitor)
+        public static string GetWin32Adapter(Structs.Monitor monitor)
         {
             return Util.PtrToStringUTF8(GetWin32AdapterInternal(monitor));
         }
@@ -246,7 +246,7 @@ namespace GLFW
         ///     The display device name (for example \\.\DISPLAY1\Monitor0) of the specified monitor, or <c>null</c> if an
         ///     error occurred.
         /// </returns>
-        public static string GetWin32Monitor(Monitor monitor)
+        public static string GetWin32Monitor(Structs.Monitor monitor)
         {
             return Util.PtrToStringUTF8(GetWin32MonitorInternal(monitor));
         }

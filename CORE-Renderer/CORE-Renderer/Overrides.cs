@@ -1,4 +1,4 @@
-﻿using GLFW;
+﻿using CORERenderer.GLFW.Structs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

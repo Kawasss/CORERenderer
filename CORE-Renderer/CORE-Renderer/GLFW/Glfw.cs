@@ -2,11 +2,12 @@
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
-using JetBrains.Annotations;
+using CORERenderer.GLFW.Enums;
+using CORERenderer.GLFW.Structs;
 
 #pragma warning disable 0419
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     The base class the vast majority of the GLFW functions, excluding only Vulkan and native platform specific
@@ -264,7 +265,7 @@ namespace GLFW
             for (var i = 0; i < count; i++)
             {
                 var value = Marshal.ReadByte(ptr, i);
-                hat |= (Hat) value;
+                hat |= (Hat)value;
             }
 
             return hat;
@@ -377,16 +378,16 @@ namespace GLFW
         /// <value>
         ///     The monitors.
         /// </value>
-        public static Monitor[] Monitors
+        public static Structs.Monitor[] Monitors
         {
             get
             {
                 var ptr = GetMonitors(out var count);
-                var monitors = new Monitor[count];
+                var monitors = new Structs.Monitor[count];
                 var offset = 0;
                 for (var i = 0; i < count; i++, offset += IntPtr.Size)
                 {
-                    monitors[i] = Marshal.PtrToStructure<Monitor>(ptr + offset);
+                    monitors[i] = Marshal.PtrToStructure<Structs.Monitor>(ptr + offset);
                 }
 
                 return monitors;
@@ -400,7 +401,7 @@ namespace GLFW
         /// <value>
         ///     The primary monitor, or <see cref="Monitor.None" /> if no monitors were found or if an error occurred.
         /// </value>
-        public static Monitor PrimaryMonitor => GetPrimaryMonitor();
+        public static Structs.Monitor PrimaryMonitor => GetPrimaryMonitor();
 
         /// <summary>
         ///     Gets or sets the value of the GLFW timer.
@@ -521,7 +522,7 @@ namespace GLFW
         public static extern ErrorCallback SetErrorCallback(ErrorCallback errorHandler);
 
         [DllImport(LIBRARY, EntryPoint = "glfwCreateWindow", CallingConvention = CallingConvention.Cdecl)]
-        private static extern Window CreateWindow(int width, int height, byte[] title, Monitor monitor, Window share);
+        private static extern Window CreateWindow(int width, int height, byte[] title, Structs.Monitor monitor, Window share);
 
         /// <summary>
         ///     This function destroys the specified window and its context. On calling this function, no further callbacks will be
@@ -915,13 +916,13 @@ namespace GLFW
         public static extern WindowCallback SetCloseCallback(Window window, WindowCallback closeCallback);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetPrimaryMonitor", CallingConvention = CallingConvention.Cdecl)]
-        private static extern Monitor GetPrimaryMonitor();
+        private static extern Structs.Monitor GetPrimaryMonitor();
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetVideoMode", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr GetVideoModeInternal(Monitor monitor);
+        private static extern IntPtr GetVideoModeInternal(Structs.Monitor monitor);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetVideoModes", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr GetVideoModes(Monitor monitor, out int count);
+        private static extern IntPtr GetVideoModes(Structs.Monitor monitor, out int count);
 
         /// <summary>
         ///     Gets the handle of the monitor that the specified window is in full screen on.
@@ -929,7 +930,7 @@ namespace GLFW
         /// <param name="window">A window instance.</param>
         /// <returns>The monitor, or <see cref="Monitor.None" /> if the window is in windowed mode or an error occurred.</returns>
         [DllImport(LIBRARY, EntryPoint = "glfwGetWindowMonitor", CallingConvention = CallingConvention.Cdecl)]
-        public static extern Monitor GetWindowMonitor(Window window);
+        public static extern Structs.Monitor GetWindowMonitor(Window window);
 
         /// <summary>
         ///     Sets the monitor that the window uses for full screen mode or, if the monitor is
@@ -959,11 +960,11 @@ namespace GLFW
         /// <param name="height">The desired height, in screen coordinates, of the client area or video mode.</param>
         /// <param name="refreshRate">The desired refresh rate, in Hz, of the video mode, or <see cref="Constants.Default" />.</param>
         [DllImport(LIBRARY, EntryPoint = "glfwSetWindowMonitor", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetWindowMonitor(Window window, Monitor monitor, int x, int y, int width, int height,
+        public static extern void SetWindowMonitor(Window window, Structs.Monitor monitor, int x, int y, int width, int height,
             int refreshRate);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetGammaRamp", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr GetGammaRampInternal(Monitor monitor);
+        internal static extern IntPtr GetGammaRampInternal(Structs.Monitor monitor);
 
         /// <summary>
         ///     Sets the current gamma ramp for the specified monitor.
@@ -976,7 +977,7 @@ namespace GLFW
         /// <param name="monitor">The monitor whose gamma ramp to set.</param>
         /// <param name="gammaRamp">The gamma ramp to use.</param>
         [DllImport(LIBRARY, EntryPoint = "glfwSetGammaRamp", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetGammaRamp(Monitor monitor, GammaRamp gammaRamp);
+        public static extern void SetGammaRamp(Structs.Monitor monitor, GammaRamp gammaRamp);
 
         /// <summary>
         ///     This function generates a 256-element gamma ramp from the specified exponent and then calls
@@ -986,7 +987,7 @@ namespace GLFW
         /// <param name="monitor">The monitor whose gamma ramp to set.</param>
         /// <param name="gamma">The desired exponent.</param>
         [DllImport(LIBRARY, EntryPoint = "glfwSetGamma", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetGamma(Monitor monitor, float gamma);
+        public static extern void SetGamma(Structs.Monitor monitor, float gamma);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetClipboardString", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr GetClipboardStringInternal(Window window);
@@ -1011,7 +1012,7 @@ namespace GLFW
         public static extern FileDropCallback SetDropCallback(Window window, FileDropCallback dropCallback);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetMonitorName", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr GetMonitorNameInternal(Monitor monitor);
+        private static extern IntPtr GetMonitorNameInternal(Structs.Monitor monitor);
 
         /// <summary>
         ///     Creates a new custom cursor image that can be set for a window with glfwSetCursor.
@@ -1227,7 +1228,7 @@ namespace GLFW
         /// <param name="width">The width, in millimeters, of the monitor's display area.</param>
         /// <param name="height">The height, in millimeters, of the monitor's display area.</param>
         [DllImport(LIBRARY, EntryPoint = "glfwGetMonitorPhysicalSize", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetMonitorPhysicalSize(Monitor monitor, out int width, out int height);
+        public static extern void GetMonitorPhysicalSize(Structs.Monitor monitor, out int width, out int height);
 
         /// <summary>
         ///     Gets the position, in screen coordinates, of the upper-left corner of the specified monitor.
@@ -1236,7 +1237,7 @@ namespace GLFW
         /// <param name="x">The monitor x-coordinate.</param>
         /// <param name="y">The monitor y-coordinate.</param>
         [DllImport(LIBRARY, EntryPoint = "glfwGetMonitorPos", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetMonitorPosition(Monitor monitor, out int x, out int y);
+        public static extern void GetMonitorPosition(Structs.Monitor monitor, out int x, out int y);
 
         [DllImport(LIBRARY, EntryPoint = "glfwGetMonitors", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr GetMonitors(out int count);
@@ -1486,7 +1487,7 @@ namespace GLFW
         ///     resources..
         /// </param>
         /// <returns>The created window, or <see cref="Window.None" /> if an error occurred.</returns>
-        public static Window CreateWindow(int width, int height, [NotNull] string title, Monitor monitor, Window share)
+        public static Window CreateWindow(int width, int height, [NotNull] string title, Structs.Monitor monitor, Window share)
         {
             return CreateWindow(width, height, Encoding.UTF8.GetBytes(title), monitor, share);
         }
@@ -1498,7 +1499,7 @@ namespace GLFW
         /// <returns>The client API.</returns>
         public static ClientApi GetClientApi(Window window)
         {
-            return (ClientApi) GetWindowAttribute(window, (int) ContextAttributes.ClientApi);
+            return (ClientApi)GetWindowAttribute(window, (int)ContextAttributes.ClientApi);
         }
 
         /// <summary>
@@ -1520,7 +1521,7 @@ namespace GLFW
         /// <returns>The API used to create the context.</returns>
         public static ContextApi GetContextCreationApi(Window window)
         {
-            return (ContextApi) GetWindowAttribute(window, (int) ContextAttributes.ContextCreationApi);
+            return (ContextApi)GetWindowAttribute(window, (int)ContextAttributes.ContextCreationApi);
         }
 
         /// <summary>
@@ -1550,9 +1551,9 @@ namespace GLFW
         /// </summary>
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The current gamma ramp, or empty structure if an error occurred.</returns>
-        public static GammaRamp GetGammaRamp(Monitor monitor)
+        public static GammaRamp GetGammaRamp(Structs.Monitor monitor)
         {
-            return (GammaRamp) Marshal.PtrToStructure<GammaRampInternal>(GetGammaRampInternal(monitor));
+            return (GammaRamp)Marshal.PtrToStructure<GammaRampInternal>(GetGammaRampInternal(monitor));
         }
 
         /// <summary>
@@ -1562,7 +1563,7 @@ namespace GLFW
         /// <returns><c>true</c> if window context is debug context, otherwise <c>false</c>.</returns>
         public static bool GetIsDebugContext(Window window)
         {
-            return GetWindowAttribute(window, (int) ContextAttributes.OpenglDebugContext) == (int) Constants.True;
+            return GetWindowAttribute(window, (int)ContextAttributes.OpenglDebugContext) == (int)Constants.True;
         }
 
         /// <summary>
@@ -1572,7 +1573,7 @@ namespace GLFW
         /// <returns><c>true</c> if window context is forward compatible, otherwise <c>false</c>.</returns>
         public static bool GetIsForwardCompatible(Window window)
         {
-            return GetWindowAttribute(window, (int) ContextAttributes.OpenglForwardCompat) == (int) Constants.True;
+            return GetWindowAttribute(window, (int)ContextAttributes.OpenglForwardCompat) == (int)Constants.True;
         }
 
         /// <summary>
@@ -1604,7 +1605,7 @@ namespace GLFW
             var ptr = GetJoystickButtons(joystick, out var count);
             var states = new InputState[count];
             for (var i = 0; i < count; i++)
-                states[i] = (InputState) Marshal.ReadByte(ptr, i);
+                states[i] = (InputState)Marshal.ReadByte(ptr, i);
             return states;
         }
 
@@ -1648,7 +1649,7 @@ namespace GLFW
         /// </summary>
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The name of the monitor, or <c>null</c> if an error occurred.</returns>
-        public static string GetMonitorName(Monitor monitor)
+        public static string GetMonitorName(Structs.Monitor monitor)
         {
             return Util.PtrToStringUTF8(GetMonitorNameInternal(monitor));
         }
@@ -1673,7 +1674,7 @@ namespace GLFW
         /// <returns>Profile of the window.</returns>
         public static Profile GetProfile(Window window)
         {
-            return (Profile) GetWindowAttribute(window, (int) ContextAttributes.OpenglProfile);
+            return (Profile)GetWindowAttribute(window, (int)ContextAttributes.OpenglProfile);
         }
 
         /// <summary>
@@ -1683,7 +1684,7 @@ namespace GLFW
         /// <returns>Current set value of the robustness.</returns>
         public static Robustness GetRobustness(Window window)
         {
-            return (Robustness) GetWindowAttribute(window, (int) ContextAttributes.ContextRobustness);
+            return (Robustness)GetWindowAttribute(window, (int)ContextAttributes.ContextRobustness);
         }
 
         /// <summary>
@@ -1695,7 +1696,7 @@ namespace GLFW
         /// </summary>
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The current mode of the monitor, or <c>null</c> if an error occurred.</returns>
-        public static VideoMode GetVideoMode(Monitor monitor)
+        public static VideoMode GetVideoMode(Structs.Monitor monitor)
         {
             var ptr = GetVideoModeInternal(monitor);
             return Marshal.PtrToStructure<VideoMode>(ptr);
@@ -1710,7 +1711,7 @@ namespace GLFW
         /// </summary>
         /// <param name="monitor">The monitor to query.</param>
         /// <returns>The array of video modes.</returns>
-        public static VideoMode[] GetVideoModes(Monitor monitor)
+        public static VideoMode[] GetVideoModes(Structs.Monitor monitor)
         {
             var pointer = GetVideoModes(monitor, out var count);
             var modes = new VideoMode[count];
@@ -1727,7 +1728,7 @@ namespace GLFW
         /// <returns>The value of the attribute, or zero if an error occurred.</returns>
         public static bool GetWindowAttribute(Window window, WindowAttribute attribute)
         {
-            return GetWindowAttribute(window, (int) attribute) == (int) Constants.True;
+            return GetWindowAttribute(window, (int)attribute) == (int)Constants.True;
         }
 
         /// <summary>
@@ -1779,7 +1780,7 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, ClientApi value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, ClientApi value) { WindowHint(hint, (int)value); }
 
         /// <summary>
         ///     Sets hints for the next call to <see cref="CreateWindow" />. The hints, once set, retain their values
@@ -1793,7 +1794,7 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, Constants value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, Constants value) { WindowHint(hint, (int)value); }
 
         /// <summary>
         ///     Sets hints for the next call to <see cref="CreateWindow" />. The hints, once set, retain their values
@@ -1807,7 +1808,7 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, ContextApi value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, ContextApi value) { WindowHint(hint, (int)value); }
 
         /// <summary>
         ///     Sets hints for the next call to <see cref="CreateWindow" />. The hints, once set, retain their values
@@ -1821,7 +1822,7 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, Robustness value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, Robustness value) { WindowHint(hint, (int)value); }
 
         /// <summary>
         ///     Sets hints for the next call to <see cref="CreateWindow" />. The hints, once set, retain their values
@@ -1835,7 +1836,7 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, Profile value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, Profile value) { WindowHint(hint, (int)value); }
 
         /// <summary>
         ///     Sets hints for the next call to <see cref="CreateWindow" />. The hints, once set, retain their values
@@ -1849,13 +1850,13 @@ namespace GLFW
         /// </summary>
         /// <param name="hint">The hint.</param>
         /// <param name="value">The value.</param>
-        public static void WindowHint(Hint hint, ReleaseBehavior value) { WindowHint(hint, (int) value); }
+        public static void WindowHint(Hint hint, ReleaseBehavior value) { WindowHint(hint, (int)value); }
 
         private static void GetContextVersion(Window window, out int major, out int minor, out int revision)
         {
-            major = GetWindowAttribute(window, (int) ContextAttributes.ContextVersionMajor);
-            minor = GetWindowAttribute(window, (int) ContextAttributes.ContextVersionMinor);
-            revision = GetWindowAttribute(window, (int) ContextAttributes.ContextVersionRevision);
+            major = GetWindowAttribute(window, (int)ContextAttributes.ContextVersionMajor);
+            minor = GetWindowAttribute(window, (int)ContextAttributes.ContextVersionMinor);
+            revision = GetWindowAttribute(window, (int)ContextAttributes.ContextVersionRevision);
         }
 
         private static void GlfwError(ErrorCode code, IntPtr message)

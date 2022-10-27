@@ -1,6 +1,7 @@
 ﻿#pragma warning disable 1591
 
-namespace GLFW
+
+namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed enumeration for key code values.

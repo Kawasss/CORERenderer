@@ -2,15 +2,16 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using JetBrains.Annotations;
+using CORERenderer.GLFW.Enums;
+using CORERenderer.GLFW.Structs;
 using Microsoft.Win32.SafeHandles;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Provides a simplified interface for creating and using a GLFW window with properties, events, etc.
     /// </summary>
-    /// <seealso cref="Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid" />
+    /// <seealso cref="SafeHandleZeroOrMinusOneIsInvalid" />
     public class NativeWindow : SafeHandleZeroOrMinusOneIsInvalid, IEquatable<NativeWindow>
     {
         /// <summary>
@@ -48,13 +49,13 @@ namespace GLFW
             ContentScaleChanged?.Invoke(this, new ContentScaleEventArgs(xScale, yScale));
         }
 
-        /// <inheritdoc cref="Object.Equals(object)" />
+        /// <inheritdoc cref="object.Equals(object)" />
         public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is NativeWindow other && Equals(other);
         }
 
-        /// <inheritdoc cref="Object.GetHashCode" />
+        /// <inheritdoc cref="object.GetHashCode" />
         public override int GetHashCode()
         {
             return Window.GetHashCode();
@@ -168,13 +169,13 @@ namespace GLFW
             }
             set
             {
-                if (value < 1) 
+                if (value < 1)
                     throw new Exception("Window width muts be greater than 0.");
                 Glfw.GetWindowSize(Window, out var dummy, out var height);
                 Glfw.SetWindowSize(Window, value, height);
             }
         }
-        
+
         /// <summary>
         ///     Gets or sets the height of the client area of the window, in screen coordinates.
         /// </summary>
@@ -188,7 +189,7 @@ namespace GLFW
             }
             set
             {
-                if (value < 1) 
+                if (value < 1)
                     throw new Exception("Window height muts be greater than 0.");
                 Glfw.GetWindowSize(Window, out var width, out var dummy);
                 Glfw.SetWindowSize(Window, width, value);
@@ -229,7 +230,6 @@ namespace GLFW
         /// <value>
         ///     The clipboard string.
         /// </value>
-        [JetBrains.Annotations.NotNull]
         public string Clipboard
         {
             get => Glfw.GetClipboardString(Window);
@@ -244,8 +244,8 @@ namespace GLFW
         /// </value>
         public CursorMode CursorMode
         {
-            get => (CursorMode) Glfw.GetInputMode(Window, InputMode.Cursor);
-            set => Glfw.SetInputMode(Window, InputMode.Cursor, (int) value);
+            get => (CursorMode)Glfw.GetInputMode(Window, InputMode.Cursor);
+            set => Glfw.SetInputMode(Window, InputMode.Cursor, (int)value);
         }
 
         /// <summary>
@@ -364,7 +364,7 @@ namespace GLFW
         /// <value>
         ///     The monitor.
         /// </value>
-        public Monitor Monitor => Glfw.GetWindowMonitor(Window);
+        public Structs.Monitor Monitor => Glfw.GetWindowMonitor(Window);
 
         /// <summary>
         ///     Gets or sets the mouse position in screen-coordinates relative to the client area of the window.
@@ -435,9 +435,9 @@ namespace GLFW
         /// </summary>
         public bool StickyKeys
         {
-            get => Glfw.GetInputMode(Window, InputMode.StickyKeys) == (int) Constants.True;
+            get => Glfw.GetInputMode(Window, InputMode.StickyKeys) == (int)Constants.True;
             set =>
-                Glfw.SetInputMode(Window, InputMode.StickyKeys, value ? (int) Constants.True : (int) Constants.False);
+                Glfw.SetInputMode(Window, InputMode.StickyKeys, value ? (int)Constants.True : (int)Constants.False);
         }
 
         /// <summary>
@@ -452,10 +452,10 @@ namespace GLFW
         /// </summary>
         public bool StickyMouseButtons
         {
-            get => Glfw.GetInputMode(Window, InputMode.StickyMouseButton) == (int) Constants.True;
+            get => Glfw.GetInputMode(Window, InputMode.StickyMouseButton) == (int)Constants.True;
             set =>
                 Glfw.SetInputMode(Window, InputMode.StickyMouseButton,
-                    value ? (int) Constants.True : (int) Constants.False);
+                    value ? (int)Constants.True : (int)Constants.False);
         }
 
         /// <summary>
@@ -499,7 +499,7 @@ namespace GLFW
             get
             {
                 var monitor = Monitor;
-                return Glfw.GetVideoMode(monitor == Monitor.None ? Glfw.PrimaryMonitor : monitor);
+                return Glfw.GetVideoMode(monitor == Structs.Monitor.None ? Glfw.PrimaryMonitor : monitor);
             }
         }
 
@@ -556,7 +556,7 @@ namespace GLFW
         /// <summary>
         ///     Initializes a new instance of the <see cref="NativeWindow" /> class.
         /// </summary>
-        public NativeWindow() : this(800, 600, string.Empty, Monitor.None, Window.None)
+        public NativeWindow() : this(800, 600, string.Empty, Structs.Monitor.None, Window.None)
         {
         }
 
@@ -566,7 +566,7 @@ namespace GLFW
         /// <param name="width">The desired width, in screen coordinates, of the window. This must be greater than zero.</param>
         /// <param name="height">The desired height, in screen coordinates, of the window. This must be greater than zero.</param>
         /// <param name="title">The initial window title.</param>
-        public NativeWindow(int width, int height, [CanBeNull] string title) : this(width, height, title, Monitor.None,
+        public NativeWindow(int width, int height, [CanBeNull] string title) : this(width, height, title, Structs.Monitor.None,
             Window.None)
         {
         }
@@ -582,7 +582,7 @@ namespace GLFW
         ///     A window instance whose context to share resources with, or <see cref="GLFW.Window.None" /> to not share
         ///     resources..
         /// </param>
-        public NativeWindow(int width, int height, [CanBeNull] string title, Monitor monitor, Window share) : base(true)
+        public NativeWindow(int width, int height, [CanBeNull] string title, Structs.Monitor monitor, Window share) : base(true)
         {
             this.title = title ?? string.Empty;
             Window = Glfw.CreateWindow(width, height, title ?? string.Empty, monitor, share);
@@ -604,7 +604,7 @@ namespace GLFW
         {
             if (Maximized)
                 return;
-            var monitor = Monitor == Monitor.None ? Glfw.PrimaryMonitor : Monitor;
+            var monitor = Monitor == Structs.Monitor.None ? Glfw.PrimaryMonitor : Monitor;
             var videoMode = Glfw.GetVideoMode(monitor);
             var size = Size;
             Position = new Point((videoMode.Width - size.Width) / 2, (videoMode.Height - size.Height) / 2);
@@ -641,7 +641,7 @@ namespace GLFW
         ///     Sets the window fullscreen on the specified monitor.
         /// </summary>
         /// <param name="monitor">The monitor to display the window fullscreen.</param>
-        public void Fullscreen(Monitor monitor)
+        public void Fullscreen(Structs.Monitor monitor)
         {
             Glfw.SetWindowMonitor(Window, monitor, 0, 0, 0, 0, -1);
         }
@@ -697,7 +697,7 @@ namespace GLFW
         ///     <para>Standard sizes are 16x16, 32x32, and 48x48.</para>
         /// </summary>
         /// <param name="images">One or more images to set as an icon.</param>
-        public void SetIcons([JetBrains.Annotations.NotNull] params Image[] images)
+        public void SetIcons(params Structs.Image[] images)
         {
             Glfw.SetWindowIcon(Window, images.Length, images);
         }
@@ -715,8 +715,8 @@ namespace GLFW
         /// <param name="width">The desired width, in screen coordinates, of the client area or video mode.</param>
         /// <param name="height">The desired height, in screen coordinates, of the client area or video mode.</param>
         /// <param name="refreshRate">The desired refresh rate, in Hz, of the video mode, or <see cref="Constants.Default" />.</param>
-        public void SetMonitor(Monitor monitor, int x, int y, int width, int height,
-            int refreshRate = (int) Constants.Default)
+        public void SetMonitor(Structs.Monitor monitor, int x, int y, int width, int height,
+            int refreshRate = (int)Constants.Default)
         {
             Glfw.SetWindowMonitor(Window, monitor, x, y, width, height, refreshRate);
         }
@@ -976,7 +976,7 @@ namespace GLFW
         ///     Raises the <see cref="FileDrop" /> event.
         /// </summary>
         /// <param name="paths">The filenames of the dropped files.</param>
-        protected virtual void OnFileDrop([JetBrains.Annotations.NotNull] string[] paths)
+        protected virtual void OnFileDrop(string[] paths)
         {
             FileDrop?.Invoke(this, new FileDropEventArgs(paths));
         }

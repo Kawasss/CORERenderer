@@ -1,10 +1,10 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
-	/// <summary>
-	///     Strongly-typed values for commonly used constants.
-	///     <para>You are free to use the integer value instead of these constants.</para>
-	/// </summary>
-	public enum Constants
+    /// <summary>
+    ///     Strongly-typed values for commonly used constants.
+    ///     <para>You are free to use the integer value instead of these constants.</para>
+    /// </summary>
+    public enum Constants
     {
         /// <summary>
         ///     No preference or don't care, use default value.

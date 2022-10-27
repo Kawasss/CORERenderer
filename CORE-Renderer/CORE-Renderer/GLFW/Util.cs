@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using JetBrains.Annotations;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     internal static class Util
     {

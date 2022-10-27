@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Structs
 {
     /// <summary>
     ///     Describes the gamma ramp for a monitor.
@@ -46,7 +46,7 @@ namespace GLFW
                 Red = red;
                 Green = green;
                 Blue = blue;
-                Size = (uint) red.Length;
+                Size = (uint)red.Length;
             }
             else
             {

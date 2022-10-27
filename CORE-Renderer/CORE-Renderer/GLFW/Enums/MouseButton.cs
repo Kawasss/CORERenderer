@@ -1,27 +1,27 @@
-﻿namespace GLFW
+﻿namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Strongly-typed enumeration describing mouse buttons.
     /// </summary>
     public enum MouseButton
     {
-	    /// <summary>
-	    ///     Mouse button 1.
-	    ///     <para>Same as <see cref="Left" />.</para>
-	    /// </summary>
-	    Button1 = 0,
+        /// <summary>
+        ///     Mouse button 1.
+        ///     <para>Same as <see cref="Left" />.</para>
+        /// </summary>
+        Button1 = 0,
 
-	    /// <summary>
-	    ///     Mouse button 2.
-	    ///     <para>Same as <see cref="Right" />.</para>
-	    /// </summary>
-	    Button2 = 1,
+        /// <summary>
+        ///     Mouse button 2.
+        ///     <para>Same as <see cref="Right" />.</para>
+        /// </summary>
+        Button2 = 1,
 
-	    /// <summary>
-	    ///     Mouse button 3.
-	    ///     <para>Same as <see cref="Middle" />.</para>
-	    /// </summary>
-	    Button3 = 2,
+        /// <summary>
+        ///     Mouse button 3.
+        ///     <para>Same as <see cref="Middle" />.</para>
+        /// </summary>
+        Button3 = 2,
 
         /// <summary>
         ///     Mouse button 4.

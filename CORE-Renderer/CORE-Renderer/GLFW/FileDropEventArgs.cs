@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Arguments supplied with file drag-drop events.

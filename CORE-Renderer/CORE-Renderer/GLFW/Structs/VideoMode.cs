@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Structs
 {
     /// <summary>
     ///     Structure that describes a single video mode.

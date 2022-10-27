@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GLFW
+namespace CORERenderer.GLFW.Enums
 {
     /// <summary>
     ///     Describes bitwise combination of modifier keys.

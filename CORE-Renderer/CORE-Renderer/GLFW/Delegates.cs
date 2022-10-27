@@ -1,7 +1,8 @@
-﻿using System;
+﻿using CORERenderer.GLFW.Enums;
+using CORERenderer.GLFW.Structs;
 using System.Runtime.InteropServices;
 
-namespace GLFW
+namespace CORERenderer.GLFW
 {
     /// <summary>
     ///     Function signature for receiving error callbacks.
@@ -123,7 +124,7 @@ namespace GLFW
     /// <param name="monitor">The monitor that was connected or disconnected.</param>
     /// <param name="status">The connection status.</param>
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void MonitorCallback(Monitor monitor, ConnectionStatus status);
+    public delegate void MonitorCallback(Structs.Monitor monitor, ConnectionStatus status);
 
     /// <summary>
     ///     This is the function signature for window iconify/restore callback functions.
