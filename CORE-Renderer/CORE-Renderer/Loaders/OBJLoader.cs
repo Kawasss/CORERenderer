@@ -103,7 +103,6 @@ namespace CORERenderer.Loaders
             FReader(stringF, out fValues, out VectorfValues);
 
             outVertices = new float[VectorfValues.Count * 8];
-            Console.WriteLine(VectorfValues.Count);
             int t = 0;
             for (int i = 0; i < VectorfValues.Count; i++)
             {
