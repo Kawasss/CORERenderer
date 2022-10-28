@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+using System.Collections;
 
 namespace CORERenderer.Loaders
 {
@@ -40,11 +42,6 @@ namespace CORERenderer.Loaders
             List<Vector3> VectorfValues = new();
 
             List<string> usemtls = new();
-
-            List<string> stringVertices = new();
-            List<string> stringNormals = new();
-            List<string> stringUV = new();
-            List<string> stringF = new();
             
             List<string> oValues = new();
             List<string> sValues = new();
@@ -66,8 +63,7 @@ namespace CORERenderer.Loaders
 
             List<string> unreadableLines = new();
 
-            int unreadableLinesi = 1;
-
+            Console.WriteLine($"Reading {filename}:");
             //maybe could be done better?
             foreach (string n in tempString)
             {
@@ -86,15 +82,45 @@ namespace CORERenderer.Loaders
                         break;
 
                     case "v ": //vector
-                        stringVertices.Add(n);
+                        int[] localV = new int[3];
+                        int z = 0;
+                        for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                        {
+                            localV[z] = i;
+                            z++;
+                        }
+                        for (int i = 0; i < localV.Length - 1; i++)
+                        {
+                            vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture));
+                        }
+                        vertices.Add(float.Parse(n[localV[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
 
                     case "vn": //vector normal
-                        stringNormals.Add(n);
+                        int[] localVn = new int[3];
+                        int y = 0;
+                        for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                        {
+                            localVn[y] = i;
+                            y++;
+                        }
+                        for (int i = 0; i < localVn.Length - 1; i++)
+                        {
+                            normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture));
+                        }
+                        normals.Add(float.Parse(n[localVn[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
 
                     case "vt": //UV coordinates
-                        stringUV.Add(n);
+                        int[] localVt = new int[2];
+                        int x = 0;
+                        for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                        {
+                            localVt[x] = i;
+                            x++;
+                        }
+                        UVCoordinates.Add(float.Parse(n[localVt[0]..localVt[1]], CultureInfo.InvariantCulture));
+                        UVCoordinates.Add(float.Parse(n[localVt[1]..n.Length], CultureInfo.InvariantCulture));
                         break;
 
                     case "s ": //s value
@@ -106,44 +132,76 @@ namespace CORERenderer.Loaders
                         break;
 
                     case "f ": //v / vn / vt indicator
-                        stringF.Add(n);
+                        List<int> local = new();
+                        List<int> local2;
+                        List<string> local3 = new();
+
+                        //isolates the indices into ../../.. then by / so the int value remains
+                        for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                        {
+                            local.Add(i);
+                        }
+
+                        //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
+                        for (int i = 0; i < local.Count - 1; i++)
+                        {
+                            local3.Add(n[(local[i] + 1)..local[i + 1]]);
+                        }
+                        local3.Add(n[(local[local.Count - 1] + 1)..n.Length]);
+
+                        //isolates each int from local ( ../../.. ) and parses it
+                        foreach (string s in local3)
+                        {
+                            local2 = new(); //new list because otherwise its .Count is too big for it to handle
+
+                            for (int i = s.IndexOf("/"); i > -1; i = s.IndexOf("/", i + 1))
+                            {
+                                local2.Add(i);
+                            }
+                            //isolates the int values by taking the space between the / indexes
+                            fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
+                            //checks if its an indice without texture coords ( ../../.. or ..//.. )
+                            if (local2[0] != local2[1] - 1)
+                            {
+                                fValues.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
+                            }
+                            else
+                            {
+                                fValues.Add(0);
+                            }
+                            fValues.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
+                        }
                         break;
 
                     default:
-                        //Console.WriteLine($"Couldn't read '{n}' on line {Array.FindIndex(tempString, z => z == n)}, ignoring line");
                         unreadableLines.Add(n);
-                        Console.Write($"\rCouldn't read {unreadableLinesi} lines in {filename}, log unreadableLines for each line                     ");
-                        unreadableLinesi++;
-                        List<string> local = tempString.ToList();
-                        local.Remove(n);
-                        tempString = local.ToArray();
                         break;
                 }
+                
+            }
+            if (unreadableLines.Count > 0)
+            {
+                Console.WriteLine($" Couldn't read {unreadableLines.Count} lines in {filename}");
             }
 
-            //below not compatible with o's yet
-            ValueReader(stringVertices, out vertices, out vectorVertices);
-            ValueReader(stringNormals, out normals, out vectorNormals);
-            ValueReader(stringUV, out UVCoordinates, out vectorUVCoordinates);
+            Console.WriteLine(vertices[4626]);
 
-            FReader(stringF, out fValues, out VectorfValues);
-
-            outVertices = new float[VectorfValues.Count * 8];
+            outVertices = new float[fValues.Count / 3 * 8];
             int t = 0;
-            for (int i = 0; i < VectorfValues.Count; i++)
+            for (int i = 0; i < fValues.Count; i += 3)
             {
-                outVertices[t] = vectorVertices[(int)VectorfValues[i].x - 1].x;
-                outVertices[t + 1] = vectorVertices[(int)VectorfValues[i].x - 1].y;
-                outVertices[t + 2] = vectorVertices[(int)VectorfValues[i].x - 1].z;
+                outVertices[t] = vertices[(fValues[i] * 3) - 3];
+                outVertices[t + 1] = vertices[(fValues[i] * 3) - 2];
+                outVertices[t + 2] = vertices[(fValues[i] * 3) - 1];
 
-                outVertices[t + 3] = vectorNormals[(int)VectorfValues[i].z - 1].x;
-                outVertices[t + 4] = vectorNormals[(int)VectorfValues[i].z - 1].y;
-                outVertices[t + 5] = vectorNormals[(int)VectorfValues[i].z - 1].z;
+                outVertices[t + 3] = normals[(fValues[i + 2] * 3) - 3];
+                outVertices[t + 4] = normals[(fValues[i + 2] * 3) - 2];
+                outVertices[t + 5] = normals[(fValues[i + 2] * 3) - 1];
 
-                if ((int)VectorfValues[i].y - 1 != -1)
+                if ((fValues[i + 1] * 2) - 1 != -1)
                 {
-                    outVertices[t + 6] = vectorUVCoordinates[(int)VectorfValues[i].y - 1].x;
-                    outVertices[t + 7] = vectorUVCoordinates[(int)VectorfValues[i].y - 1].y;
+                    outVertices[t + 6] = UVCoordinates[(fValues[i + 1] * 2) - 2];
+                    outVertices[t + 7] = UVCoordinates[(fValues[i + 1] * 2) - 1];
                 } else
                 {
                     outVertices[t + 6] = 0;
@@ -151,113 +209,12 @@ namespace CORERenderer.Loaders
                 }
                 t += 8;
             }
+
+            Console.WriteLine($"finished reading {filename}");
+
             Console.WriteLine();
 
             return true;
-        }
-
-        //need to make readable with commentary asap, will forget how it works in a week
-        private void FReader(List<string> stringList, out List<int> intList, out List<Vector3> vectorList)
-        {
-            intList = new();
-            vectorList = new();
-
-            foreach (string n in stringList)
-            {
-                List<int> local = new();
-                List<int> local2;
-                List<string> local3 = new();
-
-                //isolates the indices into ../../.. then by / so the int value remains
-                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                {
-                    local.Add(i);
-                }
-                
-                //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
-                for (int i = 0; i < local.Count - 1; i++) 
-                {
-                    local3.Add( n[ ( local[i] + 1 ) .. local[ i + 1 ]] );
-                }
-                local3.Add( n[( local[ local.Count - 1 ] + 1) .. n.Length] );
-
-                //isolates each int from local (../../..) and parses it
-                foreach (string s in local3)
-                {
-                    local2 = new(); //new list because otherwise its .Count is too big for it to handle
-
-                    for (int i = s.IndexOf("/"); i > -1; i = s.IndexOf("/", i + 1))
-                    {
-                        local2.Add(i);
-                    }
-                    //isolates the int values by taking the space between the / indexes
-                    intList.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
-                    if (local2[0] != local2[1] - 1)
-                    {
-                        intList.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
-                    } else
-                    {
-                        intList.Add(0);
-                    }
-                    intList.Add(int.Parse(s[( local2[local2.Count - 1] + 1 ) .. s.Length], CultureInfo.InvariantCulture));  
-                }
-            }
-            for (int i = 0; i < intList.Count; i += 3)
-            {
-                vectorList.Add(new Vector3(intList[i], intList[i + 1], intList[i + 2]));
-            }
-        }
-
-        //finds the places of the values, isolates them and converts them to be usable
-        private void ValueReader(List<string> stringList, out List<float> floatList, out List<Vector3> vectorList)
-        {
-            floatList = new();
-            vectorList = new();
-
-            foreach (string n in stringList)
-            {
-                int[] local = new int[3];
-                int z = 0;
-                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                {
-                    local[z] = i;
-                    z++;
-                }
-                floatList.Add(float.Parse(n[local[0]..local[1]], CultureInfo.InvariantCulture));
-                floatList.Add(float.Parse(n[local[1]..local[2]], CultureInfo.InvariantCulture));
-                floatList.Add(float.Parse(n[local[2]..n.Length], CultureInfo.InvariantCulture)); 
-            }
-
-            //previous 3 lines compressed into one for a new vector
-            for (int i = 0; i < floatList.Count; i += 3)
-            {
-                vectorList.Add(new Vector3(floatList[i], floatList[i + 1], floatList[i + 2]));
-            }
-        }
-
-        private void ValueReader(List<string> stringList, out List<float> floatList, out List<Vector2> vectorList)
-        {
-            floatList = new();
-            vectorList = new();
-
-            foreach (string n in stringList)
-            {
-                int[] local = new int[3];
-                int z = 0;
-                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                {
-                    local[z] = i;
-                    z++;
-                }
-                floatList.Add(float.Parse(n[local[0]..local[1]], CultureInfo.InvariantCulture));
-                floatList.Add(float.Parse(n[local[1]..n.Length], CultureInfo.InvariantCulture));
-            }
-
-            //previous 3 lines compressed into one for a new vector
-            for (int i = 0; i < floatList.Count; i += 2)
-            {
-                vectorList.Add(new Vector2(floatList[i], floatList[i + 1]));
-            }
         }
     }
 }

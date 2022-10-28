@@ -133,6 +133,7 @@ namespace CORERenderer
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices);
             new OBJLoader().LoadOBJ($"None", out dummyVertices);
 
             vertexBufferObject = glGenBuffer();
@@ -180,11 +181,11 @@ namespace CORERenderer
             }
 
             //loads in and uses textures
-            diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2.png");
-            specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2_specular.png");
+            //diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2.png");
+            //specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2_specular.png");
 
-            diffuseTexture.Use(GL_TEXTURE0);
-            specularTexture.Use(GL_TEXTURE1);
+            //diffuseTexture.Use(GL_TEXTURE0);
+            //specularTexture.Use(GL_TEXTURE1);
 
             camera = new Camera(new(0, 1, -3), COREMain.Width / COREMain.Height);
 
@@ -238,18 +239,12 @@ namespace CORERenderer
             shader.SetMatrix("view", camera.GetArcBallViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
-            //draws 10 objects
             glBindVertexArray(vertexArrayObject);
-            //for (int i = 0; i < 10; i++)
-            //{
-            Matrix model = Matrix.IdentityMatrix;//(cubePos[i]);
-                //float angle = /20 * i;
-                //model = model.MultiplyWith(MathC.GetRotationXMatrix(angle)).MultiplyWith(MathC.GetRotationZMatrix(angle));
 
-                shader.SetMatrix("model", model);
+            Matrix model = Matrix.IdentityMatrix;
 
-                glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8);
-            //}
+            shader.SetMatrix("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8);
 
             //assigns all the values for placement of the light source
             /*lightShader.Use();
