@@ -95,6 +95,7 @@ namespace CORERenderer
         };*/
 
         private static float[] vertices;
+        private static float[] dummyVertices;
 
         static readonly Vector3[] cubePos =
         {
@@ -131,7 +132,8 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            OBJLoader.LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices);
+            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices);
+            new OBJLoader().LoadOBJ($"None", out dummyVertices);
 
             vertexBufferObject = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
