@@ -1,6 +1,4 @@
 ﻿#version 460 core
-out vec3 nearPoint;
-out vec3 farPoint;
 out vec3 coor;
 out vec3 oPlayerPos;
 

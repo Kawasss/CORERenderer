@@ -49,53 +49,10 @@ namespace CORERenderer
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        /*private readonly float[] vertices = {
-            //positions           //normals            //texture coords
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-             0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-             0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
-        };*/
-
-        private static float[] vertices;
+        public static float[] vertices;
+        public static uint[] indices;
         private static float[] dummyVertices;
+        private static uint[] dummyIndices;
 
         static readonly Vector3[] cubePos =
         {
@@ -132,9 +89,10 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices);
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices);
-            new OBJLoader().LoadOBJ($"None", out dummyVertices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
+            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
+            new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices);
 
             vertexBufferObject = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
@@ -144,9 +102,12 @@ namespace CORERenderer
                 glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
             }
 
+            elementBufferObject = glGenBuffer();
+            
+
             //initialises given shaders
             shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); //specify the type of light
-            lightShader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lampShader.frag");
+            lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
 
             { //assignes values from vertices to the vertex buffer object
@@ -154,16 +115,23 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObject);
 
                 int vertexLocation = shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); //8 *
                 glEnableVertexAttribArray((uint)vertexLocation);
 
-                int vertexLocation2 = shader.GetAttribLocation("aNormal");
-                glVertexAttribPointer((uint)vertexLocation2, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
+                glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
                 glEnableVertexAttribArray((uint)vertexLocation2);
 
-                int vertexLocation3 = shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation3, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+                int vertexLocation3 = shader.GetAttribLocation("aNormal");
+                glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
                 glEnableVertexAttribArray((uint)vertexLocation3);
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
+                fixed (uint* temp2 = &indices[0])
+                {
+                    IntPtr intptr = new(temp2);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                }
             }
 
             { //assignes values from vertices to the vertex buffer object for the light source
@@ -181,13 +149,13 @@ namespace CORERenderer
             }
 
             //loads in and uses textures
-            //diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2.png");
-            //specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\container2_specular.png");
+            diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png");
+            specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholderspecular.png");
 
-            //diffuseTexture.Use(GL_TEXTURE0);
-            //specularTexture.Use(GL_TEXTURE1);
+            diffuseTexture.Use(GL_TEXTURE0);
+            specularTexture.Use(GL_TEXTURE1);
 
-            camera = new Camera(new(0, 1, -3), COREMain.Width / COREMain.Height);
+            camera = new Camera(new(0, 1, 5), COREMain.Width / COREMain.Height);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
@@ -210,26 +178,39 @@ namespace CORERenderer
             shader.Use();
 
             shader.SetVector3("viewPos", camera.position);
-            shader.SetFloat("material.shininess", 2.0f);
 
-            //assigns all of the values for the 4 active light sources
-            for (int i = 0; i < 4; i++)
+            //textures
+            shader.SetFloat("material.shininess", 2.0f);
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.specular", GL_TEXTURE1);
+
+            //directional light
+            shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+            shader.SetVector3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
+            shader.SetVector3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+            shader.SetVector3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+
+            shader.SetVector3("pointLights[0].position", 10, 5, 10);
+
+            shader.SetVector3("pointLights[1].position", -10, 5, -10);
+
+            for (int i = 0; i < 2; i++)
             {
-                shader.SetVector3($"pointLights[{i}].position", pointLightPositions[i]);
-                shader.SetVector3($"pointLights[{i}].ambient", 0.02f, 0.02f, 0.02f);
-                shader.SetVector3($"pointLights[{i}].diffuse", 0.8f, 0.8f, 0.8f);
-                shader.SetVector3($"pointLights[{i}].specular", 1.0f, 1.0f, 1.0f);
+                shader.SetVector3($"pointLights[{i}].position", 0, 10, 0);
                 shader.SetFloat($"pointLights[{i}].constant", 1.0f);
-                shader.SetFloat($"pointLights[{i}].linear", 0.07f);
-                shader.SetFloat($"pointLights[{i}].quadratic", 0.017f);
+                shader.SetFloat($"pointLights[{i}].linear", 0.022f);
+                shader.SetFloat($"pointLights[{i}].quadratic", 0.0019f);
+                shader.SetVector3($"pointLights[{i}].ambient", 0.2f, 0.2f, 0.2f);
+                shader.SetVector3($"pointLights[{i}].diffuse", 0.5f, 0.5f, 0.5f);
+                shader.SetVector3($"pointLights[{i}].specular", 1.0f, 1.0f, 1.0f);
             }
 
             //spotLight
             shader.SetVector3("spotLight.position", camera.position);
             shader.SetVector3("spotLight.direction", camera.front);
             shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-            shader.SetVector3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-            shader.SetVector3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+            shader.SetVector3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.specular", 0.0f, 0.0f, 0.0f);
             shader.SetFloat("spotLight.constant", 1.0f);
             shader.SetFloat("spotLight.linear", 0.09f);
             shader.SetFloat("spotLight.quadratic", 0.032f);
@@ -244,23 +225,23 @@ namespace CORERenderer
             Matrix model = Matrix.IdentityMatrix;
 
             shader.SetMatrix("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8);
+            //glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8); 
+            glDrawElements(GL_TRIANGLES, indices.Length, GL_UNSIGNED_INT, (void*)0);
 
             //assigns all the values for placement of the light source
-            /*lightShader.Use();
+            lightShader.Use();
             lightShader.SetMatrix("view", camera.GetViewMatrix());
             lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
 
             glBindVertexArray(vertexArrayObjectLightSource);
-            //for (int i = 0; i < 4; i++)
-            //{
-                //Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(pointLightPositions[i]));
-                //model = model.MultiplyWith(MathC.GetScalingMatrix(0.2f));
 
-                lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(0, 0, -1)));
+            lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(5, 5, 5)).MultiplyWith(MathC.GetScalingMatrix(0.2f)));
 
-                glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8);*/
-            //}
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(0, 10, 0)).MultiplyWith(MathC.GetScalingMatrix(0.2f)));
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
 
             //assigns all the values for placement of the grid
             gridShader.Use();
@@ -291,7 +272,7 @@ namespace CORERenderer
 
             camera.Debug();
 
-            const float CAMERA_SPEED = 1.1f;
+            const float CAMERA_SPEED = 1.01f;
             const float SENSITIVITY = 0.1f;
 
             InputState state = Glfw.GetMouseButton(window, MouseButton.Left);
@@ -305,32 +286,32 @@ namespace CORERenderer
 
                 if (Glfw.GetKey(window, Keys.W) == InputState.Press)
                 {
-                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Subtract(v1);
                 }
                 if (Glfw.GetKey(window, Keys.S) == InputState.Press)
                 {
-                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Add(v1);
                 }
                 if (Glfw.GetKey(window, Keys.A) == InputState.Press)
                 {
-                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Add(v1);
                 }
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press)
                 {
-                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Subtract(v1);
                 }
                 if (Glfw.GetKey(window, Keys.Space) == InputState.Press)
                 {
-                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Add(v1);
                 }
                 if (Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
                 {
-                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * delta);
+                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * 0.001f);
                     camera.position = camera.position.Subtract(v1);
                 }
                 //rotating the camera with mouse movement

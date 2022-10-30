@@ -12,6 +12,8 @@ C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\runtime
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\COREMath.dll
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\COREMath.pdb
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.csproj.AssemblyReference.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORERenderer.GLFW.Strings.resources
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORERenderer.Properties.Resources.resources
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.csproj.GenerateResource.cache
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.AssemblyInfoInputs.cache
@@ -23,5 +25,3 @@ C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\refint\
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.pdb
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.genruntimeconfig.cache
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\ref\CORE-Renderer.dll
-C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORERenderer.GLFW.Strings.resources
-C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORERenderer.Properties.Resources.resources

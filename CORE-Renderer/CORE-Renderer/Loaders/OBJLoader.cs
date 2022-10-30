@@ -13,11 +13,12 @@ namespace CORERenderer.Loaders
 {
     public class OBJLoader
     {
-        public bool LoadOBJ(string path, out float[] outVertices)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
+        public bool LoadOBJ(string path, out float[] outVertices, out uint[] outIndices)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
         {
             if (path == "None")
             {
                 outVertices = Array.Empty<float>();
+                outIndices = Array.Empty<uint>();
                 return false;
             }
 
@@ -30,16 +31,14 @@ namespace CORERenderer.Loaders
             string filename = path[(temp[^1] + 1)..];
 
             List<float> vertices = new();
-            List<Vector3> vectorVertices = new();
+            List<float> tempVertices = new();
 
             List<float> normals = new();
-            List<Vector3> vectorNormals = new();
 
             List<float> UVCoordinates = new();
-            List<Vector2> vectorUVCoordinates = new();
 
             List<int> fValues = new();
-            List<Vector3> VectorfValues = new();
+            List<uint> indicesValues = new();
 
             List<string> usemtls = new();
             
@@ -47,6 +46,9 @@ namespace CORERenderer.Loaders
             List<string> sValues = new();
 
             List<int> oPositions = new();
+
+            List<int> bindingsV = new();
+            List<int> bindingsN = new();
 
             List<float> ambient;
             List<float> diffuse;
@@ -63,10 +65,17 @@ namespace CORERenderer.Loaders
 
             List<string> unreadableLines = new();
 
+            bool withTextures = true;
+
             Console.WriteLine($"Reading {filename}:");
             //maybe could be done better?
-            foreach (string n in tempString)
+            int a = 0;
+            //randomly causes a crash (?????????)
+            Parallel.ForEach(tempString, (line, _, lineNumber) =>
             {
+                //foreach (string n in tempString)
+                //{
+                string n = line;
                 switch (n[0..2])
                 {
                     case "# ": //comment
@@ -91,7 +100,7 @@ namespace CORERenderer.Loaders
                         }
                         for (int i = 0; i < localV.Length - 1; i++)
                         {
-                            vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture));
+                            vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture)); //random crashes here (?)
                         }
                         vertices.Add(float.Parse(n[localV[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
@@ -106,7 +115,7 @@ namespace CORERenderer.Loaders
                         }
                         for (int i = 0; i < localVn.Length - 1; i++)
                         {
-                            normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture));
+                            normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture)); //random crashes here (?)
                         }
                         normals.Add(float.Parse(n[localVn[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
@@ -152,63 +161,101 @@ namespace CORERenderer.Loaders
                         //isolates each int from local ( ../../.. ) and parses it
                         foreach (string s in local3)
                         {
+
                             local2 = new(); //new list because otherwise its .Count is too big for it to handle
 
                             for (int i = s.IndexOf("/"); i > -1; i = s.IndexOf("/", i + 1))
                             {
                                 local2.Add(i);
                             }
-                            //isolates the int values by taking the space between the / indexes
-                            fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
-                            //checks if its an indice without texture coords ( ../../.. or ..//.. )
-                            if (local2[0] != local2[1] - 1)
+                            if (withTextures)
                             {
-                                fValues.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
+                                //isolates the int values by taking the space between the / indexes
+                                fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
+                                //checks if its an indice without texture coords ( ../../.. or ..//.. )
+                                if (local2[0] != local2[1] - 1)
+                                {
+                                    fValues.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
+                                }
+                                else
+                                {
+                                    withTextures = false;
+                                    //fValues.Add(0);
+                                }
+                                fValues.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
                             }
-                            else
+                            //binds the vertice with its normal values
+                            if (!bindingsV.Contains(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture)))
                             {
-                                fValues.Add(0);
+                                bindingsV.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
+                                bindingsN.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
                             }
-                            fValues.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
                         }
+                        if (local3.Count == 3)
+                        {
+                            for (int i = 0; i < 3; i++)
+                            {
+                                indicesValues.Add(uint.Parse(local3[i][..local3[i].IndexOf("/")], CultureInfo.InvariantCulture) - 1);
+                            }
+                        }
+                        if (local3.Count == 4)
+                        {
+                            indicesValues.Add(uint.Parse(local3[0][..local3[0].IndexOf("/")], CultureInfo.InvariantCulture) - 1);
+                            indicesValues.Add(uint.Parse(local3[1][..local3[1].IndexOf("/")], CultureInfo.InvariantCulture) - 1);
+                            indicesValues.Add(uint.Parse(local3[3][..local3[3].IndexOf("/")], CultureInfo.InvariantCulture) - 1);
+                            for (int i = 1; i < 4; i++)
+                            {
+                                indicesValues.Add(uint.Parse(local3[i][..local3[i].IndexOf("/")], CultureInfo.InvariantCulture) - 1);
+                            }
+                        }
+
                         break;
 
                     default:
                         unreadableLines.Add(n);
                         break;
                 }
-                
-            }
+                //Console.Write($"\r {n}                                                  ");
+            });
+
             if (unreadableLines.Count > 0)
             {
                 Console.WriteLine($" Couldn't read {unreadableLines.Count} lines in {filename}");
             }
 
-            Console.WriteLine(vertices[4626]);
+            Console.WriteLine(" done reading all lines, assigning values...");
 
-            outVertices = new float[fValues.Count / 3 * 8];
+            //outVertices = new float[vertices.Count + UVCoordinates.Count + normals.Count];//outVertices = new float[fValues.Count / 3 * 8];
+            int e = 0;
             int t = 0;
-            for (int i = 0; i < fValues.Count; i += 3)
-            {
-                outVertices[t] = vertices[(fValues[i] * 3) - 3];
-                outVertices[t + 1] = vertices[(fValues[i] * 3) - 2];
-                outVertices[t + 2] = vertices[(fValues[i] * 3) - 1];
-
-                outVertices[t + 3] = normals[(fValues[i + 2] * 3) - 3];
-                outVertices[t + 4] = normals[(fValues[i + 2] * 3) - 2];
-                outVertices[t + 5] = normals[(fValues[i + 2] * 3) - 1];
-
-                if ((fValues[i + 1] * 2) - 1 != -1)
+            Parallel.For(0, vertices.Count, j => {
+                //for (int i = 0; i < vertices.Count; i += 3) //fValues.Count
+                //{
+                int t = 0;
+                tempVertices.Add(vertices[t]);
+                tempVertices.Add(vertices[t + 1]);
+                tempVertices.Add(vertices[t + 2]);
+                t += 3;
+                if (withTextures)//((fValues[i + 1] * 2) - 1 != -1)
                 {
-                    outVertices[t + 6] = UVCoordinates[(fValues[i + 1] * 2) - 2];
-                    outVertices[t + 7] = UVCoordinates[(fValues[i + 1] * 2) - 1];
-                } else
-                {
-                    outVertices[t + 6] = 0;
-                    outVertices[t + 7] = 0;
+                    tempVertices.Add(UVCoordinates[e]);
+                    tempVertices.Add(UVCoordinates[e + 1]);
+                    e += 2;
                 }
-                t += 8;
-            }
+                else
+                {
+                    tempVertices.Add(0);
+                    tempVertices.Add(0);
+                }
+                //Console.WriteLine($"{bindingsV.IndexOf(i / 3 + 1)}//{(bindingsN[bindingsV.IndexOf(i / 3 + 1)])}");
+                int location = bindingsN[bindingsV[vertices.IndexOf(vertices[j]) / 3 + 1] - 1];
+                tempVertices.Add(normals[location - 1] * 3 - 1);//outVertices[t + 5] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3];
+                tempVertices.Add(normals[location] * 3);//outVertices[t + 6] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3 + 1];
+                tempVertices.Add(normals[location - 1] * 3 + 1);//outVertices[t + 7] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3 + 2];
+            });
+
+            outVertices = tempVertices.ToArray();
+            outIndices = indicesValues.ToArray();
 
             Console.WriteLine($"finished reading {filename}");
 
@@ -218,4 +265,3 @@ namespace CORERenderer.Loaders
         }
     }
 }
- 

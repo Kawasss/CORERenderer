@@ -38,8 +38,9 @@ struct PointLight
 	float linear;
 	float quadratic;
 };
-#define NR_POINTS_LIGHTS 4
+#define NR_POINTS_LIGHTS 2
 uniform PointLight pointLights[NR_POINTS_LIGHTS];
+//uniform PointLight pointLight;
 
 struct Material 
 {
@@ -141,7 +142,7 @@ void main()
 
 	vec3 result = CalcDirLight(dirLight, norm, viewDir);
 
-	for (int i = 0; i < NR_POINTS_LIGHTS; i++)
+	for (int i = 0; i < NR_POINTS_LIGHTS; i++) 
 	{
 		result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
 	}
