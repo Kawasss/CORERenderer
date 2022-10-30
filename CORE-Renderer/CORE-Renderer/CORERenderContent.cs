@@ -89,8 +89,8 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
-            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
+            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
             new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices);
 

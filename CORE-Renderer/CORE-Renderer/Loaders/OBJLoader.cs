@@ -70,12 +70,12 @@ namespace CORERenderer.Loaders
             Console.WriteLine($"Reading {filename}:");
             //maybe could be done better?
             int a = 0;
-            //randomly causes a crash (?????????)
-            Parallel.ForEach(tempString, (line, _, lineNumber) =>
-            {
-                //foreach (string n in tempString)
-                //{
-                string n = line;
+            ////randomly causes a crash (?????????)
+            //Parallel.ForEach(tempString, (line, _, lineNumber) =>
+            //{
+            foreach (string n in tempString)
+                {
+                //string n = line;
                 switch (n[0..2])
                 {
                     case "# ": //comment
@@ -100,7 +100,7 @@ namespace CORERenderer.Loaders
                         }
                         for (int i = 0; i < localV.Length - 1; i++)
                         {
-                            vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture)); //random crashes here (?)
+                            vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture)); ////random crashes here (?)
                         }
                         vertices.Add(float.Parse(n[localV[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
@@ -115,7 +115,7 @@ namespace CORERenderer.Loaders
                         }
                         for (int i = 0; i < localVn.Length - 1; i++)
                         {
-                            normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture)); //random crashes here (?)
+                            normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture)); ////random crashes here (?)
                         }
                         normals.Add(float.Parse(n[localVn[2]..n.Length], CultureInfo.InvariantCulture));
                         break;
@@ -216,7 +216,7 @@ namespace CORERenderer.Loaders
                         break;
                 }
                 //Console.Write($"\r {n}                                                  ");
-            });
+            }//);
 
             if (unreadableLines.Count > 0)
             {
@@ -226,33 +226,29 @@ namespace CORERenderer.Loaders
             Console.WriteLine(" done reading all lines, assigning values...");
 
             //outVertices = new float[vertices.Count + UVCoordinates.Count + normals.Count];//outVertices = new float[fValues.Count / 3 * 8];
-            int e = 0;
-            int t = 0;
-            Parallel.For(0, vertices.Count, j => {
-                //for (int i = 0; i < vertices.Count; i += 3) //fValues.Count
-                //{
-                int t = j;
-                tempVertices.Add(vertices[t]);
-                tempVertices.Add(vertices[t + 1]);
-                tempVertices.Add(vertices[t + 2]);
-                t += 3;
-                if (withTextures)//((fValues[i + 1] * 2) - 1 != -1)
+           // Parallel.For(0, vertices.Count, index => {
+                int e = 0;
+                for (int i = 0; i < vertices.Count; i += 3) //fValues.Count
                 {
-                    tempVertices.Add(UVCoordinates[e]);
-                    tempVertices.Add(UVCoordinates[e + 1]);
-                    e += 2;
-                }
-                else
-                {
-                    tempVertices.Add(0);
-                    tempVertices.Add(0);
-                }
-                //Console.WriteLine($"{bindingsV.IndexOf(i / 3 + 1)}//{(bindingsN[bindingsV.IndexOf(i / 3 + 1)])}");
-                int location = bindingsN[bindingsV[vertices.IndexOf(vertices[j]) / 3 + 1] - 1];
-                tempVertices.Add(normals[location - 1] * 3 - 1);//outVertices[t + 5] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3];
-                tempVertices.Add(normals[location] * 3);//outVertices[t + 6] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3 + 1];
-                tempVertices.Add(normals[location - 1] * 3 + 1);//outVertices[t + 7] = 0;//normals[(bindingsN[bindingsV.IndexOf(i / 3 + 1)] - 1) * 3 + 2];
-            });
+                    tempVertices.Add(vertices[i]);
+                    tempVertices.Add(vertices[i + 1]);
+                    tempVertices.Add(vertices[i + 2]);
+                    if (withTextures)
+                    {
+                        tempVertices.Add(UVCoordinates[e]);
+                        tempVertices.Add(UVCoordinates[e + 1]);
+                        e += 2;
+                    }
+                    else
+                    {
+                        tempVertices.Add(0);
+                        tempVertices.Add(0);
+                    }
+                    int location = bindingsN[bindingsV[vertices.IndexOf(vertices[i]) / 3 + 1] - 1];
+                    tempVertices.Add(normals[location] * 3 - 1);
+                    tempVertices.Add(normals[location] * 3);
+                    tempVertices.Add(normals[location] * 3 + 1);
+                }//);
 
             outVertices = tempVertices.ToArray();
             outIndices = indicesValues.ToArray();
