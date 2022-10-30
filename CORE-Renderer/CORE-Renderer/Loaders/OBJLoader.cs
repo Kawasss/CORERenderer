@@ -231,7 +231,7 @@ namespace CORERenderer.Loaders
             Parallel.For(0, vertices.Count, j => {
                 //for (int i = 0; i < vertices.Count; i += 3) //fValues.Count
                 //{
-                int t = 0;
+                int t = j;
                 tempVertices.Add(vertices[t]);
                 tempVertices.Add(vertices[t + 1]);
                 tempVertices.Add(vertices[t + 2]);

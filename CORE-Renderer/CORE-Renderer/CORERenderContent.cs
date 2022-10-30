@@ -272,7 +272,7 @@ namespace CORERenderer
 
             camera.Debug();
 
-            const float CAMERA_SPEED = 1.01f;
+            const float CAMERA_SPEED = 1.05f;
             const float SENSITIVITY = 0.1f;
 
             InputState state = Glfw.GetMouseButton(window, MouseButton.Left);
