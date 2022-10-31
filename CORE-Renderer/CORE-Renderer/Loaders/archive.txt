@@ -101,3 +101,19 @@
                 vectorList.Add(new Vector2(floatList[i], floatList[i + 1]));
             }
         }
+
+
+        if (withTextures)
+                                {
+                                    if (local2[0] != local2[1] - 1)
+                                    {
+                                        fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
+                                        fValues.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
+                                    }
+                                    else
+                                    {
+                                        withTextures = false;
+                                        //fValues.Add(0);
+                                    }
+                                    fValues.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
+                                }

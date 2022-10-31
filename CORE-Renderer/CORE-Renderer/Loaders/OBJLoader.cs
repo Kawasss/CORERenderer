@@ -183,33 +183,19 @@ namespace CORERenderer.Loaders
                             }
                             if (s.Contains("/"))
                             {
-                                //isolates the int values by taking the space between the / indexes
-                                //fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
-                                //checks if its an indice without texture coords ( ../../.. or ..//.. )
-                                if (withTextures)
-                                {
-                                    if (local2[0] != local2[1] - 1)
-                                    {
-                                        fValues.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
-                                        fValues.Add(int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture));
-                                    }
-                                    else
-                                    {
-                                        withTextures = false;
-                                        //fValues.Add(0);
-                                    }
-                                    fValues.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
-                                }
-                            
                                 //binds the vertice with its normal values
-                                if (!bindingsV.Contains(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture)))
-                                {
-                                    bindingsV.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
-                                    bindingsN.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
-                                }
+                            if (!bindingsV.Contains(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture)))
+                            {
+                                bindingsV.Add(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture));
+                                bindingsN.Add(int.Parse(s[(local2[local2.Count - 1] + 1)..s.Length], CultureInfo.InvariantCulture));
+                            }
                             } else
                             {
                                 onlyVertices = true;
+                            }
+                            if (local2[0] == local2[1] - 1)
+                            {
+                                withTextures = false;
                             }
                         }
                         if (local3.Count == 3 && !onlyVertices)
