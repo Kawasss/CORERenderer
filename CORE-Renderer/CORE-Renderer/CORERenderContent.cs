@@ -43,6 +43,9 @@ namespace CORERenderer
         static float mousePosX;
         static float mousePosY;
 
+        static string mtllib;
+        static string dummyMtllib;
+
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         static string? directory = Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
@@ -89,11 +92,11 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\test.obj", out vertices, out indices);
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\FinalBaseMesh.obj", out vertices, out indices);
+            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices, out mtllib);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
-            new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices);
+            new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices, out dummyMtllib);
 
             vertexBufferObject = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
@@ -223,7 +226,7 @@ namespace CORERenderer
 
             glBindVertexArray(vertexArrayObject);
 
-            Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetScalingMatrix(0.1f));
+            Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetScalingMatrix(1f));
 
             shader.SetMatrix("model", model);
             //glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8); 

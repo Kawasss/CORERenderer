@@ -13,12 +13,13 @@ namespace CORERenderer.Loaders
 {
     public class OBJLoader
     {
-        public bool LoadOBJ(string path, out float[] outVertices, out uint[] outIndices)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
+        public bool LoadOBJ(string path, out float[] outVertices, out uint[] outIndices, out string mtllib)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
         {
             if (path == "None")
             {
                 outVertices = Array.Empty<float>();
                 outIndices = Array.Empty<uint>();
+                mtllib = null;
                 return false;
             }
 
@@ -29,6 +30,11 @@ namespace CORERenderer.Loaders
                 temp.Add(i);
             }
             string filename = path[(temp[^1] + 1)..];
+
+            if (path[(path.Length - 4)..] != ".obj" || path[(path.Length - 4)..] != ".OBJ")
+            {
+                Console.WriteLine($"Invalid file format for {filename}");
+            }
 
             List<float> vertices = new();
             List<float> tempVertices = new();
@@ -50,16 +56,18 @@ namespace CORERenderer.Loaders
             List<int> bindingsV = new();
             List<int> bindingsN = new();
 
+            List<float> shininess;
             List<float> ambient;
             List<float> diffuse;
             List<float> specular;
-            List<float> transparent;
-            List<float> shininess;
+            List<float> opticalDensity;
             List<int> illum;
+            List<float> transparent;
             List<string> texture;
-            List<string> map;
+            List<string> diffuseMap;
+            List<string> specularMap;
 
-            string mtllib = "Null";
+            mtllib = null;
 
             string[] tempString = File.ReadAllLines(path);
 
@@ -76,6 +84,10 @@ namespace CORERenderer.Loaders
             //{
             foreach (string n in tempString)
                 {
+                if (n.Length < 3)
+                {
+                    break;
+                }
                 //string n = line;
                 switch (n[0..2])
                 {
@@ -286,6 +298,19 @@ namespace CORERenderer.Loaders
 
             outVertices = tempVertices.ToArray();
             outIndices = indicesValues.ToArray();
+
+            if (mtllib != null)
+            {
+                new MTLLoader().LoadMTL
+                (
+                    $"{path[..temp[^1]]}\\{mtllib}", 
+                    out shininess, out ambient, 
+                    out diffuse, out specular, 
+                    out opticalDensity, out illum, 
+                    out transparent, out texture, 
+                    out diffuseMap, out specularMap
+                );
+            }
 
             Console.WriteLine($"finished reading {filename}");
 
