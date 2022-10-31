@@ -89,7 +89,8 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
+            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\test.obj", out vertices, out indices);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
             new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices);
@@ -222,7 +223,7 @@ namespace CORERenderer
 
             glBindVertexArray(vertexArrayObject);
 
-            Matrix model = Matrix.IdentityMatrix;
+            Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetScalingMatrix(0.1f));
 
             shader.SetMatrix("model", model);
             //glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8); 
