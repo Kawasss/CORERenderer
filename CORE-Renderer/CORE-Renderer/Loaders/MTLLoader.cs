@@ -139,7 +139,6 @@ namespace CORERenderer.Loaders
                         break;
 
                     case "ma":
-                        string s = GetMapType(n);
                         switch (n[0..6])
                         {
                             case "map_Kd":
@@ -164,26 +163,6 @@ namespace CORERenderer.Loaders
             }
 
             return true;
-        }
-
-        private static string GetMapType(string s)
-        {
-            string s2 = "-1";
-
-            if (s[..6] == "map_Kd")
-            {
-                s2 = "Kd" + s[7..];
-            }
-            else if (s[..6] == "map_d ")
-            {
-                s2 = "_d" + s[6..];
-            }
-            else if (s[..6] == "map_Ks")
-            {
-                s2 = "Ks" + s[6..];
-            }
-
-            return s2;
         }
     }
 }

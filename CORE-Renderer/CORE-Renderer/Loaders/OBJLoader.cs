@@ -181,7 +181,7 @@ namespace CORERenderer.Loaders
                             {
                                 local2.Add(i);
                             }
-                            if (s.Contains("/"))
+                            if (s.Contains('/'))
                             {
                                 //binds the vertice with its normal values
                             if (!bindingsV.Contains(int.Parse(s[..local2[0]], CultureInfo.InvariantCulture)))
