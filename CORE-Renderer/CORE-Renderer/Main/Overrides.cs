@@ -20,6 +20,19 @@ namespace CORERenderer
     {
         public unsafe static void AlwaysLoad()
         {
+            //creating the window
+            Glfw.Init();
+            Glfw.WindowHint(Hint.ContextVersionMajor, 3);
+            Glfw.WindowHint(Hint.ContextVersionMinor, 3);
+            Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
+
+            window = Glfw.CreateWindow(Width, Height, "CORE renderer", Monitor.None, Window.None);
+            if (window == null)
+            {
+                Console.WriteLine("Failed to create a window");
+            }
+            Console.WriteLine("Successfully created window");
+
             Stream stream = File.OpenRead($"{CORERenderContent.pathRenderer}\\logos\\logo4.png");
 
             ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
