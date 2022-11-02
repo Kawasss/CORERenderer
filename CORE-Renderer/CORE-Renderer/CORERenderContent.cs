@@ -29,6 +29,8 @@ namespace CORERenderer
 
         static private Body object1;
 
+        static private Obj obj;
+
         static Vector3 lastPos;
 
         static private uint vertexBufferObject;
@@ -47,7 +49,7 @@ namespace CORERenderer
         static string dummyMtllib;
 
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        static string? directory = Path.GetDirectoryName(root);
+        static string directory = Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
@@ -92,18 +94,20 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+            obj = new($"{pathRenderer}\\loaders\\testOBJ\\logo.obj");
+
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\FinalBaseMesh.obj", out vertices, out indices);
-            new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices, out mtllib);
+            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices, out mtllib);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
             //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
-            new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices, out dummyMtllib);
+            //new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices, out dummyMtllib);
 
             vertexBufferObject = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-            fixed (float* temp = &vertices[0])
+            fixed (float* temp = &obj.vertices[0])
             {
                 IntPtr intptr = new(temp);
-                glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, obj.vertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
             }
 
             elementBufferObject = glGenBuffer();
@@ -131,10 +135,10 @@ namespace CORERenderer
                 glEnableVertexAttribArray((uint)vertexLocation3);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
-                fixed (uint* temp2 = &indices[0])
+                fixed (uint* temp2 = &obj.indices[0])
                 {
                     IntPtr intptr = new(temp2);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.indices.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
                 }
             }
 
@@ -152,12 +156,9 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
-            //loads in and uses textures
-            diffuseTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png");
-            specularTexture = Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholderspecular.png");
-
-            diffuseTexture.Use(GL_TEXTURE0);
-            specularTexture.Use(GL_TEXTURE1);
+            //uses textures
+            //obj.DiffuseMap[0].Use(GL_TEXTURE0);
+            obj.SpecularMap[0].Use(GL_TEXTURE1);
 
             camera = new Camera(new(0, 1, 5), COREMain.Width / COREMain.Height);
 
@@ -184,7 +185,7 @@ namespace CORERenderer
             shader.SetVector3("viewPos", camera.position);
 
             //textures
-            shader.SetFloat("material.shininess", 2.0f);
+            shader.SetFloat("material.shininess", obj.Shininess[0]);
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             shader.SetInt("material.specular", GL_TEXTURE1);
 
@@ -198,6 +199,7 @@ namespace CORERenderer
 
             shader.SetVector3("pointLights[1].position", -10, 5, -10);
 
+            //point lights
             for (int i = 0; i < 2; i++)
             {
                 shader.SetVector3($"pointLights[{i}].position", 0, 10, 0);
@@ -230,7 +232,7 @@ namespace CORERenderer
 
             shader.SetMatrix("model", model);
             //glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8); 
-            glDrawElements(GL_TRIANGLES, indices.Length, GL_UNSIGNED_INT, (void*)0);
+            glDrawElements(GL_TRIANGLES, obj.indices.Length, GL_UNSIGNED_INT, (void*)0);
 
             //assigns all the values for placement of the light source
             lightShader.Use();
