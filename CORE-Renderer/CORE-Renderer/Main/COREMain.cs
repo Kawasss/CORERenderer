@@ -35,27 +35,10 @@ namespace CORERenderer.Main
             }
             Console.WriteLine("Successfully created window");
 
-            Stream stream = File.OpenRead($"{CORERenderContent.pathRenderer}\\logos\\logo4.png");
-
-            ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
-
-            Image[] images = new Image[1];
-            fixed (byte* temp = &image.Data[0])
-            {
-                IntPtr ptr = new(temp);
-                images[0] = new Image(image.Width, image.Height, ptr);
-            }
-            Glfw.SetWindowIcon(window, 1, images);
-
-            Glfw.SetScrollCallback(window, CORERenderContent.ScrollCallback);
-
-            Glfw.MakeContextCurrent(window);
-            Import(Glfw.GetProcAddress);
-            Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
-
-            new CORERenderContent().OnLoad();
-
             CORERenderContent render = new();
+
+            Rendering.AlwaysLoad();
+            render.OnLoad();
 
             //render loop
             while (!Glfw.WindowShouldClose(window))
@@ -63,19 +46,13 @@ namespace CORERenderer.Main
                 time += Glfw.Time - time;
                 render.EveryFrame(window, (float)(time / 1000));
 
+                Rendering.AlwaysRender();
                 render.RenderEveryFrame();
 
                 Glfw.PollEvents();
             }
             Console.WriteLine("shutting down");
             Glfw.Terminate();
-        }
-
-        static void FramebufferSizeCallBack(Window window, int width, int height)
-        {
-            glViewport(0, 0, width, height);
-            Width = width;
-            Height = height;
         }
     }
 }

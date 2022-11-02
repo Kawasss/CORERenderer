@@ -13,7 +13,7 @@ using CORERenderer.GLFW.Structs;
 
 namespace CORERenderer
 {
-    class CORERenderContent : Overrides
+    class CORERenderContent : Rendering
     {
         static private Shader shader;
         static private Shader lightShader;
