@@ -11,9 +11,9 @@ using System.Collections;
 
 namespace CORERenderer.Loaders
 {
-    public class OBJLoader
+    public partial class Readers
     {
-        public bool LoadOBJ(string path, out float[] outVertices, out uint[] outIndices, out string mtllib)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
+        public static bool LoadOBJ(string path, out float[] outVertices, out uint[] outIndices, out string mtllib)//, out Vector3[] vertices, out Vector2[] UVs, out Vector3[] normals)
         {
             if (path == "None")
             {
@@ -85,11 +85,11 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "mt": //mtllib (maybe better way?)
-                            mtllib = n[7..MTLLoader.Length(n)]; //"mtllib " is 7 chars long
+                            mtllib = n[7..Length(n)]; //"mtllib " is 7 chars long
                             break;
 
                         case "o ": //texture name
-                            oValues.Add(n[2..MTLLoader.Length(n)]);
+                            oValues.Add(n[2..Length(n)]);
                             oPositions.Add(Array.FindIndex(tempString, z => z == n));
                             break;
 
@@ -105,7 +105,7 @@ namespace CORERenderer.Loaders
                             {
                                 vertices.Add(float.Parse(n[localV[i]..localV[i + 1]], CultureInfo.InvariantCulture)); ////random crashes here (?)
                             }
-                            vertices.Add(float.Parse(n[localV[2]..MTLLoader.Length(n)], CultureInfo.InvariantCulture));
+                            vertices.Add(float.Parse(n[localV[2]..Length(n)], CultureInfo.InvariantCulture));
                             break;
 
                         case "vn": //vector normal
@@ -120,7 +120,7 @@ namespace CORERenderer.Loaders
                             {
                                 normals.Add(float.Parse(n[localVn[i]..localVn[i + 1]], CultureInfo.InvariantCulture)); ////random crashes here (?)
                             }
-                            normals.Add(float.Parse(n[localVn[2]..MTLLoader.Length(n)], CultureInfo.InvariantCulture));
+                            normals.Add(float.Parse(n[localVn[2]..Length(n)], CultureInfo.InvariantCulture));
                             break;
 
                         case "vt": //UV coordinates
@@ -132,7 +132,7 @@ namespace CORERenderer.Loaders
                                 x++;
                             }
                             UVCoordinates.Add(float.Parse(n[localVt[0]..localVt[1]], CultureInfo.InvariantCulture));
-                            UVCoordinates.Add(float.Parse(n[localVt[1]..MTLLoader.Length(n)], CultureInfo.InvariantCulture));
+                            UVCoordinates.Add(float.Parse(n[localVt[1]..Length(n)], CultureInfo.InvariantCulture));
                             break;
 
                         case "s ": //s value
@@ -159,7 +159,7 @@ namespace CORERenderer.Loaders
                             {
                                 local3.Add(n[(local[i] + 1)..local[i + 1]]);
                             }
-                            local3.Add(n[(local[^1] + 1)..MTLLoader.Length(n)]);
+                            local3.Add(n[(local[^1] + 1)..Length(n)]);
 
                             //isolates each int from local ( ../../.. ) and parses it
                             foreach (string s in local3)

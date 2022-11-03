@@ -12,11 +12,11 @@ using System.Security.Cryptography;
 
 namespace CORERenderer.Loaders
 {
-    public class MTLLoader
+    public partial class Readers
     {
-        public static int Length(string s1) { if (!s1.Contains('#')) return s1.Length; else return s1.IndexOf("#"); }
+        private static int Length(string s1) { if (!s1.Contains('#')) return s1.Length; else return s1.IndexOf("#"); }
 
-        public bool LoadMTL
+        public static bool LoadMTL
         (
             string path, 
             out List<float> shininess,

@@ -2,11 +2,6 @@
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using StbImageSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Monitor = CORERenderer.GLFW.Structs.Monitor;
 using Image = CORERenderer.GLFW.Structs.Image;
 using static CORERenderer.GL;
@@ -16,9 +11,9 @@ using CORERenderer.Main;
 
 namespace CORERenderer
 {
-    public class Rendering : COREMain
+    public class Rendering : COREMain, ICommonData
     {
-        public unsafe static void AlwaysLoad()
+        public unsafe void AlwaysLoad()
         {
             //creating the window
             Glfw.Init();
@@ -28,9 +23,8 @@ namespace CORERenderer
 
             window = Glfw.CreateWindow(Width, Height, "CORE renderer", Monitor.None, Window.None);
             if (window == null)
-            {
                 Console.WriteLine("Failed to create a window");
-            }
+
             Console.WriteLine("Successfully created window");
 
             Stream stream = File.OpenRead($"{CORERenderContent.pathRenderer}\\logos\\logo4.png");
@@ -44,24 +38,16 @@ namespace CORERenderer
                 images[0] = new Image(image.Width, image.Height, ptr);
             }
             Glfw.SetWindowIcon(window, 1, images);
-
+            
             Glfw.SetScrollCallback(window, CORERenderContent.ScrollCallback);
 
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
-            Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
         }
 
-        public unsafe static void AlwaysRender()
+        public unsafe virtual void AlwaysRender()
         {
             //render stuff that is constant and doesnt change, tried to put grid rendering here but didnt work?
-        }
-
-        static void FramebufferSizeCallBack(Window window, int width, int height)
-        {
-            glViewport(0, 0, width, height);
-            Width = width;
-            Height = height;
         }
 
         public unsafe virtual void OnLoad()

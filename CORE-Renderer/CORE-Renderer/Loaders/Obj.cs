@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
-using COREMath;
+﻿using COREMath;
 using CORERenderer.textures;
 
 namespace CORERenderer.Loaders
 {
-    public class Obj
+    public class Obj : Readers
     {
         public readonly float[] vertices;
         public readonly uint[] indices;
@@ -28,29 +21,27 @@ namespace CORERenderer.Loaders
         public readonly Texture[] DiffuseMap;
         public readonly Texture[] SpecularMap;
 
+        public readonly string name = null;
+
         public Obj(string path)
         {
-            bool loaded = new OBJLoader().LoadOBJ(path, out vertices, out indices, out string mtllib);
-            _ = new OBJLoader().LoadOBJ(path, out _, out _, out _);
+            bool loaded = LoadOBJ(path, out vertices, out indices, out string mtllib);
+            _ = LoadOBJ(path, out _, out _, out _);
 
             List<int> temp = new();
 
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
-            {
                 temp.Add(i);
-            }
+
+            name = path[(temp[^1] + 1)..];
 
             if (!loaded)
-            {
-                throw new Exception($"Invalid file format for {path[(temp[^1] + 1)..]} (!.obj && !.OBJ)");
-            }
+                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
 
             if (mtllib == null)
-            {
                 return;
-            }
 
-            new MTLLoader().LoadMTL
+            loaded = LoadMTL
             (
                 $"{path[..(temp[^1] + 1)]}{mtllib}", out List<float> shininess, 
                 out List<Vector3>  ambient, out List<Vector3> diffuse,
@@ -60,6 +51,8 @@ namespace CORERenderer.Loaders
                 out List<Texture> specularMap
             );
 
+            if (!loaded)
+                throw new Exception($"Invalid file format for {name} (!.mtl && !.MTL)");
 
             //puts all of the data into arrays
             Shininess = shininess.ToArray();

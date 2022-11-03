@@ -5,7 +5,6 @@ using CORERenderer.Main;
 using CORERenderer.Loaders;
 using CORERenderer.shaders;
 using CORERenderer.textures;
-using CORERenderer.Bodies;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
@@ -13,7 +12,9 @@ using CORERenderer.GLFW.Structs;
 
 namespace CORERenderer
 {
-    class CORERenderContent : Rendering
+    
+
+    class CORERenderContent : Rendering, ICommonData
     {
         static private Shader shader;
         static private Shader lightShader;
@@ -25,9 +26,7 @@ namespace CORERenderer
         static private Matrix view;
         static private Matrix projection;
 
-        static private Camera camera;
-
-        static private Body object1;
+        static public Camera camera;
 
         static private Obj obj;
 
@@ -165,10 +164,11 @@ namespace CORERenderer
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
 
-            //object1 = new($"{pathRenderer}\\loaders\\testOBJ\\logo.obj");
-            
-
-            Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); Console.WriteLine(); //more space for debug
+            //resets all of the printed lines before this
+            Console.CursorTop = 0;
+            for (int i = 0; i <= 50; i++)
+                Console.WriteLine("                                                                                                 "); //space needed to replace all characters
+            Console.CursorTop = 0;
         }
 
         public unsafe override void RenderEveryFrame()
@@ -248,7 +248,10 @@ namespace CORERenderer
             lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(0, 10, 0)).MultiplyWith(MathC.GetScalingMatrix(0.2f)));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
+        public override void AlwaysRender()
+        {
             //assigns all the values for placement of the grid
             gridShader.Use();
 
@@ -260,8 +263,6 @@ namespace CORERenderer
 
             glBindVertexArray(vertexArrayObjectGrid);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            Glfw.SwapBuffers(COREMain.window);
         }
 
         public override void EveryFrame(Window window, float delta)
@@ -275,8 +276,6 @@ namespace CORERenderer
                 Glfw.SetWindowShouldClose(window, true);
                 Console.WriteLine("Window closed");
             }
-
-            camera.Debug();
 
             const float CAMERA_SPEED = 1.05f;
             const float SENSITIVITY = 0.1f;
@@ -367,6 +366,12 @@ namespace CORERenderer
         public static void ScrollCallback(Window window, double x, double y)
         {
             camera.Fov -= (float)y * 1.5f;
+        }
+
+        public void Render()
+        {
+            RenderEveryFrame();
+            AlwaysRender();
         }
     }
 }

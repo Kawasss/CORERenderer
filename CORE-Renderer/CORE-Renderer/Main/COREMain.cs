@@ -1,13 +1,6 @@
-﻿using System;
-using COREMath;
-using static CORERenderer.GL;
-using StbImageSharp;
-using CORERenderer;
-using CORERenderer.GLFW;
-using CORERenderer.GLFW.Enums;
+﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
-using Monitor = CORERenderer.GLFW.Structs.Monitor;
-using Image = CORERenderer.GLFW.Structs.Image;
+using static CORERenderer.GL;
 
 namespace CORERenderer.Main
 {
@@ -18,28 +11,49 @@ namespace CORERenderer.Main
         public static int Height = 600;
         public static Window window;
 
+        public static int fps = 0;
+
         private static double time = 0;
+        private static double time2 = 0;
 
         public unsafe static void Main(string[] args)
         {
             CORERenderContent render = new();
+            Rendering basic = new();
 
-            Rendering.AlwaysLoad();
+            basic.AlwaysLoad();
             render.OnLoad();
+
+            Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
 
             //render loop
             while (!Glfw.WindowShouldClose(window))
             {
-                time += Glfw.Time - time;
+                time2 = Glfw.Time;
+                Console.Write($"\rfps: {fps}         \n");
+
                 render.EveryFrame(window, (float)(time / 1000));
 
-                Rendering.AlwaysRender();
-                render.RenderEveryFrame();
+                //basic.AlwaysRender();
+                //render.RenderEveryFrame();
+                render.Render();
+                time = Glfw.Time - time2;
+                fps = (int)(1 / time);
 
+                Console.CursorTop = 0;
+                Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }
             Console.WriteLine("shutting down");
             Glfw.Terminate();
         }
+
+        static void FramebufferSizeCallBack(Window window, int width, int height)
+        {
+            glViewport(0, 0, width, height);
+            Width = width;
+            Height = height;
+        }
+
     }
 }

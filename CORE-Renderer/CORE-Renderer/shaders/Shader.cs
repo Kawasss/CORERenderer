@@ -9,7 +9,7 @@ using COREMath;
 
 namespace CORERenderer.shaders
 {
-    class Shader
+    public class Shader
     {
         public readonly uint Handle;
         public string vertexShaderSource;
