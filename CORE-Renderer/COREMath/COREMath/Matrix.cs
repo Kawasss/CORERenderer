@@ -67,6 +67,22 @@
         }
 
         /// <summary>
+        /// Gives a transformation matrix with the given vectors
+        /// </summary>
+        /// <param name="v1">Scaling value</param>
+        /// <param name="v2">Translation vector</param>
+        public Matrix(float v1, Vector3 v2)
+        {
+            this.matrix4x4 = new float[4, 4]
+            {
+                { v1, 0, 0, v2.x },
+                { 0, v1, 0, v2.y },
+                { 0, 0, v1, v2.z },
+                { 0, 0, 0,     1 }
+             };
+        }
+
+        /// <summary>
         /// Gives a scaling or translation matrix of the given vector
         /// </summary>
         /// <param name="isScalingVector">True if the vector is a scaling vector, false if translation vector</param>

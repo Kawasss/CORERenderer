@@ -1,4 +1,6 @@
-﻿namespace COREMath
+﻿using System.Globalization;
+
+namespace COREMath
 {
     public class Vector3
     {
@@ -6,11 +8,41 @@
         public float y;
         public float z;
 
+        public float[] xyz = new float[3];
+
         public Vector3()
         {
             this.x = 0;
             this.y = 0;
             this.z = 0;
+            for (int i = 0; i < 3; i++)
+                this.xyz[i] = 0;
+        }
+
+        public Vector3(string x, string y, string z)
+        {
+            bool sX = float.TryParse(x, NumberStyles.Any, CultureInfo.InvariantCulture, out this.x);
+            bool sY = float.TryParse(y, NumberStyles.Any, CultureInfo.InvariantCulture, out this.y);
+            bool sZ = float.TryParse(z, NumberStyles.Any, CultureInfo.InvariantCulture, out this.z);
+
+            if (!sX)
+            {
+                Console.WriteLine($"Couldn't parse {x}, set to 0");
+                this.x = 0;
+            }
+            if (!sY)
+            {
+                Console.WriteLine($"Couldn't parse {y}, set to 0");
+                this.y = 0;
+            }
+            if (!sZ)
+            {
+                Console.WriteLine($"Couldn't parse {z}, set to 0");
+                this.z = 0;
+            }
+            this.xyz[0] = this.x;
+            this.xyz[1] = this.y;
+            this.xyz[2] = this.z;
         }
 
         public Vector3(float X, float Y, float Z)
@@ -18,6 +50,9 @@
             this.x = X;
             this.y = Y;
             this.z = Z;
+            this.xyz[0] = this.x;
+            this.xyz[1] = this.y;
+            this.xyz[2] = this.z;
         }
 
         public static Vector3 Zero = new(0, 0, 0);

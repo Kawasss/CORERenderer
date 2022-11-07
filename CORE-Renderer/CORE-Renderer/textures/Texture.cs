@@ -8,13 +8,14 @@ using System.Drawing.Drawing2D;
 using static CORERenderer.GL;
 using GLFW;
 using StbImageSharp;
-
+using System.Drawing.Imaging;
 
 namespace CORERenderer.textures
 {
     public class Texture
     {
         public readonly uint Handle;
+        public readonly ImageResult Image;
 
         public static unsafe Texture ReadFromFile(string imagePath)
         {
@@ -25,8 +26,13 @@ namespace CORERenderer.textures
 
             StbImage.stbi_set_flip_vertically_on_load(1);
 
-            ImageResult image = ImageResult.FromStream(File.OpenRead(imagePath), ColorComponents.RedGreenBlueAlpha);
+            if (!File.Exists(imagePath))
+            {
+                Console.WriteLine("Couldnt find given texture, using default texture");
+                imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
+            }
 
+            ImageResult image = ImageResult.FromStream(File.OpenRead(imagePath), ColorComponents.RedGreenBlueAlpha);
             fixed (byte* temp = &image.Data[0])
             {
                 IntPtr ptr = new(temp);
@@ -41,12 +47,13 @@ namespace CORERenderer.textures
 
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            return new Texture(handle);
+            return new Texture(handle, image);
         }
 
-        public Texture(uint newHandle)
+        public Texture(uint newHandle, ImageResult image)
         {
             Handle = newHandle;
+            Image = image;
         }
 
         public void Use(int texture)

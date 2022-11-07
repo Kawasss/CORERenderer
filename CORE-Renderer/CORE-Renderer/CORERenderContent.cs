@@ -14,7 +14,7 @@ namespace CORERenderer
 {
     
 
-    class CORERenderContent : Rendering, ICommonData
+    public class CORERenderContent : Rendering, ICommonData
     {
         static private Shader shader;
         static private Shader lightShader;
@@ -32,9 +32,6 @@ namespace CORERenderer
 
         static Vector3 lastPos;
 
-        static private uint vertexBufferObject;
-        static private uint elementBufferObject;
-        static private uint vertexArrayObject;
         static private uint vertexArrayObjectLightSource;
         static private uint vertexArrayObjectGrid;
         static private double time;
@@ -44,9 +41,6 @@ namespace CORERenderer
         static float mousePosX;
         static float mousePosY;
 
-        static string mtllib;
-        static string dummyMtllib;
-
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         static string directory = Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
@@ -55,30 +49,6 @@ namespace CORERenderer
 
         public static float[] vertices;
         public static uint[] indices;
-        private static float[] dummyVertices;
-        private static uint[] dummyIndices;
-
-        static readonly Vector3[] cubePos =
-        {
-            new Vector3(0, 0, 0),
-            new Vector3(2, 5, -15),
-            new Vector3(-1.5f, -2.2f, -2.5f),
-            new Vector3(-3.8f, -2.0f, -12.3f),
-            new Vector3(2.4f, -0.4f, -3.5f),
-            new Vector3(-1.7f,  3.0f, -7.5f),
-            new Vector3(1.3f, -2.0f, -2.5f),
-            new Vector3(1.5f,  2.0f, -2.5f),
-            new Vector3(1.5f,  0.2f, -1.5f),
-            new Vector3(-1.3f,  1.0f, -1.5f)
-        };
-
-        static readonly Vector3[] pointLightPositions =
-        {
-            new Vector3(0.7f, 0.2f, 2),
-            new Vector3(2.3f, -3.3f, -4),
-            new Vector3(-4, 2, 12),
-            new Vector3(0, 0, -3)
-        };
 
         static public Vector3 lightPos = new(0.6f, 1, 1f);
 
@@ -93,61 +63,16 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            obj = new($"{pathRenderer}\\loaders\\testOBJ\\logo.obj");
-
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\FinalBaseMesh.obj", out vertices, out indices);
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj", out vertices, out indices, out mtllib);
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\bugatti.obj", out vertices, out indices);
-            //new OBJLoader().LoadOBJ($"{pathRenderer}\\loaders\\testOBJ\\logo.obj", out vertices, out indices);
-            //new OBJLoader().LoadOBJ($"None", out dummyVertices, out dummyIndices, out dummyMtllib);
-
-            vertexBufferObject = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-            fixed (float* temp = &obj.vertices[0])
-            {
-                IntPtr intptr = new(temp);
-                glBufferData(GL_ARRAY_BUFFER, obj.vertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
-            }
-
-            elementBufferObject = glGenBuffer();
+            obj = new($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj");
             
-
             //initialises given shaders
-            shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); //specify the type of light
+            //shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); unneeded if obj.cs is done
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
-
-            { //assignes values from vertices to the vertex buffer object
-                vertexArrayObject = glGenVertexArray();
-                glBindVertexArray(vertexArrayObject);
-
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); //8 *
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation2);
-
-                int vertexLocation3 = shader.GetAttribLocation("aNormal");
-                glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation3);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
-                fixed (uint* temp2 = &obj.indices[0])
-                {
-                    IntPtr intptr = new(temp2);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.indices.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
-                }
-            }
 
             { //assignes values from vertices to the vertex buffer object for the light source
                 vertexArrayObjectLightSource = glGenVertexArray();
                 glBindVertexArray(vertexArrayObjectLightSource);
-
-                int vertexLocation = lightShader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray((uint)vertexLocation);
             }
 
             { //allows the grid to render bufferless
@@ -155,20 +80,18 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
-            //uses textures
-            //obj.DiffuseMap[0].Use(GL_TEXTURE0);
-            obj.SpecularMap[0].Use(GL_TEXTURE1);
+            camera = new Camera(new(0, 1, 5), Width / Height);
 
-            camera = new Camera(new(0, 1, 5), COREMain.Width / COREMain.Height);
+            //Glfw.SetScrollCallback(window, ScrollCallback);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
 
             //resets all of the printed lines before this
-            Console.CursorTop = 0;
+            /*Console.CursorTop = 0;
             for (int i = 0; i <= 50; i++)
                 Console.WriteLine("                                                                                                 "); //space needed to replace all characters
-            Console.CursorTop = 0;
+            Console.CursorTop = 0;*/
         }
 
         public unsafe override void RenderEveryFrame()
@@ -179,60 +102,7 @@ namespace CORERenderer
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //assigns all the values to the object shaders for proper lighting and placement
-            shader.Use();
-
-            shader.SetVector3("viewPos", camera.position);
-
-            //textures
-            shader.SetFloat("material.shininess", obj.Shininess[0]);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            shader.SetInt("material.specular", GL_TEXTURE1);
-
-            //directional light
-            shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-            shader.SetVector3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
-            shader.SetVector3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-            shader.SetVector3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-            shader.SetVector3("pointLights[0].position", 10, 5, 10);
-
-            shader.SetVector3("pointLights[1].position", -10, 5, -10);
-
-            //point lights
-            for (int i = 0; i < 2; i++)
-            {
-                shader.SetVector3($"pointLights[{i}].position", 0, 10, 0);
-                shader.SetFloat($"pointLights[{i}].constant", 1.0f);
-                shader.SetFloat($"pointLights[{i}].linear", 0.022f);
-                shader.SetFloat($"pointLights[{i}].quadratic", 0.0019f);
-                shader.SetVector3($"pointLights[{i}].ambient", 0.2f, 0.2f, 0.2f);
-                shader.SetVector3($"pointLights[{i}].diffuse", 0.5f, 0.5f, 0.5f);
-                shader.SetVector3($"pointLights[{i}].specular", 1.0f, 1.0f, 1.0f);
-            }
-
-            //spotLight
-            shader.SetVector3("spotLight.position", camera.position);
-            shader.SetVector3("spotLight.direction", camera.front);
-            shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-            shader.SetVector3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
-            shader.SetVector3("spotLight.specular", 0.0f, 0.0f, 0.0f);
-            shader.SetFloat("spotLight.constant", 1.0f);
-            shader.SetFloat("spotLight.linear", 0.09f);
-            shader.SetFloat("spotLight.quadratic", 0.032f);
-            shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
-            shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
-
-            shader.SetMatrix("view", camera.GetArcBallViewMatrix());
-            shader.SetMatrix("projection", camera.GetProjectionMatrix());
-
-            glBindVertexArray(vertexArrayObject);
-
-            Matrix model = Matrix.IdentityMatrix.MultiplyWith(MathC.GetScalingMatrix(1f));
-
-            shader.SetMatrix("model", model);
-            //glDrawArrays(GL_TRIANGLES, 0, vertices.Length / 8); 
-            glDrawElements(GL_TRIANGLES, obj.indices.Length, GL_UNSIGNED_INT, (void*)0);
+            obj.Render(camera);
 
             //assigns all the values for placement of the light source
             lightShader.Use();
@@ -363,15 +233,9 @@ namespace CORERenderer
         }
 
         //zoom in or out
-        public static void ScrollCallback(Window window, double x, double y)
+        public void ScrollCallback(Window window, double x, double y)
         {
             camera.Fov -= (float)y * 1.5f;
-        }
-
-        public void Render()
-        {
-            RenderEveryFrame();
-            AlwaysRender();
         }
     }
 }

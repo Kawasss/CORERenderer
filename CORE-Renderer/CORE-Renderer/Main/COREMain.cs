@@ -13,13 +13,17 @@ namespace CORERenderer.Main
 
         public static int fps = 0;
 
+        public static CORERenderContent render;
+        public static Rendering basic;
+
         private static double time = 0;
         private static double time2 = 0;
+        public static bool showFps = false;
 
         public unsafe static void Main(string[] args)
         {
-            CORERenderContent render = new();
-            Rendering basic = new();
+            render = new();
+            basic = new();
 
             basic.AlwaysLoad();
             render.OnLoad();
@@ -30,17 +34,18 @@ namespace CORERenderer.Main
             while (!Glfw.WindowShouldClose(window))
             {
                 time2 = Glfw.Time;
-                Console.Write($"\rfps: {fps}         \n");
+                if (showFps)
+                    Console.Write($"\rfps: {fps}         \n");
 
                 render.EveryFrame(window, (float)(time / 1000));
 
-                //basic.AlwaysRender();
-                //render.RenderEveryFrame();
-                render.Render();
+                render.RenderEveryFrame();
+                render.AlwaysRender();
+
                 time = Glfw.Time - time2;
                 fps = (int)(1 / time);
 
-                Console.CursorTop = 0;
+                //Console.CursorTop = 0;
                 Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }

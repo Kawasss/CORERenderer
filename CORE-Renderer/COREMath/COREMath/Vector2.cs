@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,16 +12,40 @@ namespace COREMath
         public float x;
         public float y;
 
+        public float[] xy = new float[2];
+
         public Vector2()
         {
             this.x = 0;
             this.y = 0;
+            xy[0] = x;
+            xy[1] = y;
+        }
+
+        public Vector2(string x, string y)
+        {
+            bool sX = float.TryParse(x, NumberStyles.Any, CultureInfo.InvariantCulture, out this.x);
+            bool sY = float.TryParse(y, NumberStyles.Any, CultureInfo.InvariantCulture, out this.y);
+
+            if (!sX)
+            {
+                Console.WriteLine($"Couldn't parse {x}, set to 0");
+                this.x = 0;
+            } if (!sY)
+            {
+                Console.WriteLine($"Couldn't parse {y}, set to 0");
+                this.y = 0;
+            }
+            xy[0] = this.x;
+            xy[1] = this.y;
         }
 
         public Vector2(float X, float Y)
         {
             this.x = X;
             this.y = Y;
+            xy[0] = this.x;
+            xy[1] = this.y;
         }
 
         public static Vector2 Zero = new(0, 0);

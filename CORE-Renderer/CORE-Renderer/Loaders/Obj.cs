@@ -1,32 +1,42 @@
 ﻿using COREMath;
 using CORERenderer.textures;
+using System.CodeDom.Compiler;
+using static CORERenderer.GL;
+using CORERenderer.shaders;
+using System.Runtime.CompilerServices;
+using CORERenderer.GLFW.Structs;
 
 namespace CORERenderer.Loaders
 {
     public class Obj : Readers
     {
-        public readonly float[] vertices;
-        public readonly uint[] indices;
+        public readonly List<List<float>> vertices;
+        public readonly List<List<uint>> indices;
 
-        public float[] Shininess;
-        public float[] OpticalDensity;
-        public int[] Illum;
-        public float[] Transparency;
+        //public readonly Material[] Materials;
+        public readonly List<Material> Materials;
 
-        public readonly Vector3[] Ambient;
-        public readonly Vector3[] Diffuse;
-        public readonly Vector3[] Specular;
-
-        public readonly Texture[] Texture;
-        public readonly Texture[] DiffuseMap;
-        public readonly Texture[] SpecularMap;
+        private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 
         public readonly string name = null;
 
+        private List<uint> GeneratedBuffers;
+        private List<uint> GeneratedVAOs;
+        private List<uint> elementBufferObject;
+
+        public float Scaling = 1.0f;
+        public Vector3 translation = Vector3.Zero;
+
         public Obj(string path)
-        {
+        {;
             bool loaded = LoadOBJ(path, out vertices, out indices, out string mtllib);
-            _ = LoadOBJ(path, out _, out _, out _);
+            /*_ = LoadOBJ(null, out _, out _, out _); 
+            * originally made to trigger garbage collection to free the memory, but idont know if it actually works
+            * removed because it triggers an error related to corrupted or removed memory
+            */
+
+            if (!loaded)
+                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
 
             List<int> temp = new();
 
@@ -35,38 +45,145 @@ namespace CORERenderer.Loaders
 
             name = path[(temp[^1] + 1)..];
 
-            if (!loaded)
-                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
-
-            if (mtllib == null)
-                return;
-
             loaded = LoadMTL
             (
-                $"{path[..(temp[^1] + 1)]}{mtllib}", out List<float> shininess, 
-                out List<Vector3>  ambient, out List<Vector3> diffuse,
-                out List<Vector3> specular, out List<float> opticalDensity, 
-                out List<int> illum, out List<float> transparency, 
-                out List<Texture> texture, out List<Texture> diffuseMap, 
-                out List<Texture> specularMap
+                $"{path[..(temp[^1] + 1)]}{mtllib}", out Materials, out int error
             );
-
             if (!loaded)
-                throw new Exception($"Invalid file format for {name} (!.mtl && !.MTL)");
+            {
+                switch (error)
+                {
+                    case -1:
+                        throw new Exception($"Invalid file format for {name}, should at with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");                     
+                    case 0:
+                        Console.WriteLine($"No material library found for {name} (error == 0)");
+                        break;
+                    case 1:
+                        break;
+                    default:
+                        throw new Exception($"Undefined error: {error}");
+                }     
+            }
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                for (int j = 4; j < vertices[i].Count; j += 8)
+                {
+                    vertices[i][j - 1] *= Materials[i].DiffuseMap.Image.Width;
+                    vertices[i][j] *= Materials[i].DiffuseMap.Image.Height;
+                }
+            }
+            
 
-            //puts all of the data into arrays
-            Shininess = shininess.ToArray();
-            OpticalDensity = opticalDensity.ToArray();
-            Illum = illum.ToArray();
-            Transparency = transparency.ToArray();
+            GenerateBuffers();
+        }
 
-            Ambient = ambient.ToArray();
-            Diffuse = diffuse.ToArray();
-            Specular = specular.ToArray();
+        public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
+        {
+            shader.Use();
+            
+            shader.SetVector3("viewPos", camera.position);
 
-            Texture = texture.ToArray();
-            DiffuseMap = diffuseMap.ToArray();
-            SpecularMap = specularMap.ToArray();
+            //all till the last for loop is temporary
+            //directional light
+            shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+            shader.SetVector3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
+            shader.SetVector3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+            shader.SetVector3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+
+            shader.SetVector3("pointLights[0].position", 10, 5, 10);
+
+            shader.SetVector3("pointLights[1].position", -10, 5, -10);
+
+            //point lights
+            for (int j = 0; j < 2; j++) 
+            {
+                shader.SetVector3($"pointLights[{j}].position", 0, 10, 0);
+                shader.SetFloat($"pointLights[{j}].constant", 1.0f);
+                shader.SetFloat($"pointLights[{j}].linear", 0.022f);
+                shader.SetFloat($"pointLights[{j}].quadratic", 0.0019f);
+                shader.SetVector3($"pointLights[{j}].ambient", 0.2f, 0.2f, 0.2f);
+                shader.SetVector3($"pointLights[{j}].diffuse", 0.5f, 0.5f, 0.5f);
+                shader.SetVector3($"pointLights[{j}].specular", 1.0f, 1.0f, 1.0f);
+            }
+
+            //spotLight
+            shader.SetVector3("spotLight.position", camera.position);
+            shader.SetVector3("spotLight.direction", camera.front);
+            shader.SetVector3("spotLight.ambient", 0.2f, 0.2f, 0.2f);
+            shader.SetVector3("spotLight.diffuse", 0.5f, 0.5f, 0.5f);
+            shader.SetVector3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+            shader.SetFloat("spotLight.constant", 1.0f);
+            shader.SetFloat("spotLight.linear", 0.09f);
+            shader.SetFloat("spotLight.quadratic", 0.032f);
+            shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
+            shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
+
+            shader.SetMatrix("view", camera.GetViewMatrix());
+            shader.SetMatrix("projection", camera.GetProjectionMatrix());
+
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                Materials[i].DiffuseMap.Use(GL_TEXTURE0);
+                Materials[i].SpecularMap.Use(GL_TEXTURE1);
+
+                glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
+
+                shader.SetFloat("material.shininess", Materials[i].Shininess);
+                shader.SetInt("material.diffuse", GL_TEXTURE0);
+                if (Materials[i].Illum == 2)
+                    shader.SetInt("material.specular", GL_TEXTURE1);
+
+                shader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(new Matrix(Scaling, translation)));
+
+                glBindVertexArray(GeneratedVAOs[i]);
+                glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+            } 
+        }
+
+        private unsafe void GenerateBuffers()
+        {
+            GeneratedBuffers = new();
+            GeneratedVAOs = new();
+            elementBufferObject = new();
+
+            for (int i = 0; i < vertices.Count; i++) //is currently one because theres only one instance of vertices, might change in the future 
+            {
+                float[] local = vertices[i].ToArray();
+                uint buffer = glGenBuffer();
+                glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                fixed (float* temp = &local[0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ARRAY_BUFFER, local.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                }
+                GeneratedBuffers.Add(buffer);
+
+                uint GeneratedVAO = glGenVertexArray();
+                glBindVertexArray(GeneratedVAO);
+                //could be put in a for loop but not that necessary
+                int vertexLocation = shader.GetAttribLocation("aPos");
+                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+                glEnableVertexAttribArray((uint)vertexLocation);
+
+                int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
+                glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                glEnableVertexAttribArray((uint)vertexLocation2);
+
+                int vertexLocation3 = shader.GetAttribLocation("aNormal");
+                glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+                glEnableVertexAttribArray((uint)vertexLocation3);
+
+                uint[] local2 = indices[i].ToArray();
+                uint local3 = glGenBuffer();
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);
+                fixed (uint* temp = &local2[0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, local2.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                }
+                elementBufferObject.Add(local3);
+                GeneratedVAOs.Add(GeneratedVAO);
+            }
         }
     }  
 }

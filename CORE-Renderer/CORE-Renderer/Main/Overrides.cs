@@ -38,8 +38,6 @@ namespace CORERenderer
                 images[0] = new Image(image.Width, image.Height, ptr);
             }
             Glfw.SetWindowIcon(window, 1, images);
-            
-            Glfw.SetScrollCallback(window, CORERenderContent.ScrollCallback);
 
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
