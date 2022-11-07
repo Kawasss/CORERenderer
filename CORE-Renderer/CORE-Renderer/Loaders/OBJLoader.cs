@@ -44,17 +44,14 @@ namespace CORERenderer.Loaders
 
             outIndices = new();
 
-            //List<List<float>> vertices = new();
             List<Vector3> vertices = new();
             
             List<string> verticePositions = new();
             List<string> UVPositions = new();
             List<string> normalPositions = new();
 
-            //List<List<float>> normals = new();
             List<Vector3> normals = new();
 
-            //List<List<float>> UVCoordinates = new();
             List<Vector2> UVCoordinates = new();
 
             List<int> fValues = new();
@@ -85,7 +82,6 @@ namespace CORERenderer.Loaders
             List<string> unreadableLines = new();
 
             bool withTextures = true;
-            bool onlyVertices = false;
 
             Console.WriteLine($"Reading {filename}:");
             
@@ -203,7 +199,7 @@ namespace CORERenderer.Loaders
 
                                         for (int l = 0; l < 3; l++)
                                             outVertices[i].Add(vertices[int.Parse(s[..local2[0]], CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                        if (withTextures && !onlyVertices)
+                                        if (withTextures)
                                         {
                                             outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].x);
                                             outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].y);
@@ -211,7 +207,7 @@ namespace CORERenderer.Loaders
                                             for (int l = 0; l < 3; l++)
                                                 outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
                                         }
-                                        else if (!withTextures && !onlyVertices)
+                                        else if (!withTextures)
                                         {
                                             outVertices[i].Add(0);
                                             outVertices[i].Add(0);

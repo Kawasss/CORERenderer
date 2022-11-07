@@ -201,6 +201,9 @@ namespace CORERenderer.Loaders
             Diffuse = new(0.5f, 0.5f, 0.5f);
             Specular = new(1, 1, 1);
             EmissiveCoefficient = Vector3.Zero;
+            Illum = 2;
+            Shininess = 32;
+
         }
     }
 }
