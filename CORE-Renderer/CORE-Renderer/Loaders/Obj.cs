@@ -29,7 +29,7 @@ namespace CORERenderer.Loaders
 
         public Obj(string path)
         {;
-            bool loaded = LoadOBJ(path, out vertices, out indices, out string mtllib);
+            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out string mtllib);
             /*_ = LoadOBJ(null, out _, out _, out _); 
             * originally made to trigger garbage collection to free the memory, but i dont know if it actually works
             * removed because it triggers an error related to corrupted or removed memory
@@ -47,7 +47,7 @@ namespace CORERenderer.Loaders
 
             loaded = LoadMTL
             (
-                $"{path[..(temp[^1] + 1)]}{mtllib}", out Materials, out int error
+                $"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out int error
             );
             if (!loaded)
             {
@@ -64,18 +64,11 @@ namespace CORERenderer.Loaders
                         throw new Exception($"Undefined error: {error}");
                 }     
             }
-            //scales the texture coordinates to the image coordinates
-            /*for (int i = 0; i < vertices.Count; i++)
+            if (Materials.Count > 0)
             {
-                for (int j = 4; j < vertices[i].Count; j += 8)
-                {
-                    vertices[i][j - 1] *= Materials[i].DiffuseMap.Image.Width;
-                    vertices[i][j] *= Materials[i].DiffuseMap.Image.Height;
-                }
-            }*/
-            Materials[0].DiffuseMap.Use(GL_TEXTURE0);
-            Materials[0].SpecularMap.Use(GL_TEXTURE1);
-
+                Materials[0].Texture.Use(GL_TEXTURE0);
+                Materials[0].SpecularMap.Use(GL_TEXTURE1);
+            }
             GenerateBuffers();
         }
 
@@ -125,12 +118,13 @@ namespace CORERenderer.Loaders
 
             for (int i = 0; i < Materials.Count; i++)
             {
-                Materials[i].DiffuseMap.Use(GL_TEXTURE0);
+                Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
 
                 glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
+                Console.WriteLine(Materials[i].Shininess);
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
                 shader.SetInt("material.specular", GL_TEXTURE1);
 

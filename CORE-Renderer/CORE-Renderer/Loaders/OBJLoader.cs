@@ -15,13 +15,14 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static bool LoadOBJ(string path, out List<List<float>> outVertices, out List<List<uint>> outIndices, out string mtllib)
+        public static bool LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out string mtllib)
         { //maybe do the same as with loadmtl, custom class for all the data
             if (path == null)
             {
                 outVertices = new();
                 outIndices = new();
                 mtllib = null;
+                mtlNames = new();
                 return false;
             }
 
@@ -38,7 +39,7 @@ namespace CORERenderer.Loaders
                 outVertices = new();
                 outIndices = new();
                 mtllib = null;
-                
+                mtlNames = new();
                 return false;
             }
 
@@ -69,6 +70,8 @@ namespace CORERenderer.Loaders
             List<int> bindingsT = new();
 
             List<int> bindings = new();
+
+            mtlNames = new();
 
             string[] file = File.ReadAllLines(path);
 
@@ -167,7 +170,7 @@ namespace CORERenderer.Loaders
                                 break;
 
                             case "us": //usemtl (maybe better way?)
-                                usemtls.Add(n[7..]); //"usemtl " is 7 chars long
+                                mtlNames.Add(n[7..]); //"usemtl " is 7 chars long
                                 break;
 
                             case "f ": //v / vn / vt indicator
@@ -246,7 +249,8 @@ namespace CORERenderer.Loaders
 
                                     for (int k = 1; k < local3.Count; k++)
                                         outIndices[i].Add((uint)indiceBinder[local3[k]]);*/
-                                    // the one commentary above can also be used, it just changes what order the triangles are drawn in
+
+                                    // the commentary above can also be used, it just changes what order the triangles are drawn in
                                     // if deciding on better looking good, definitely the one above, but this is just the alpha
                                     outIndices[i].Add((uint)indiceBinder[local3[0]]);
                                     outIndices[i].Add((uint)indiceBinder[local3[1]]);

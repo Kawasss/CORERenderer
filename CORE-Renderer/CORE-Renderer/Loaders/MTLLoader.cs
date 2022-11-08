@@ -20,10 +20,19 @@ namespace CORERenderer.Loaders
             if (!s1.Contains('#')) 
                 return s1.Length; 
             else 
-                return s1.IndexOf("#"); 
+                return s1.IndexOf('#'); 
+        }
+        private static Vector3 GetVector3(string s, string s1, string s2) //removes incredibly long and repetitive lines of code
+        {
+            return new
+            (
+                float.Parse(s, CultureInfo.InvariantCulture),
+                float.Parse(s1, CultureInfo.InvariantCulture),
+                float.Parse(s2, CultureInfo.InvariantCulture)
+            );
         }
 
-        public static bool LoadMTL (string path, out List<Material> materials, out int error)
+        public static bool LoadMTL(string path, List<string> mtlNames, out List<Material> materials, out int error)
         {
             List<int> temp = new();
 
@@ -34,12 +43,12 @@ namespace CORERenderer.Loaders
             if (filename == "None")
             {
                 materials = new();
-                materials.Add(new());
                 error = 0;
                 return false;
             }
 
             materials = new();
+            List<Material> tempMtl = new();
 
             List<string> materialNames = new();
 
@@ -47,6 +56,8 @@ namespace CORERenderer.Loaders
 
             List<int> mtlPositions = new();
             List<string[]> mtlData = new();
+
+            Dictionary<string, int> materialOrder = new();
 
             if ((path[(path.Length - 4)..] != ".mtl" && path[(path.Length - 4)..] != ".MTL") || !File.Exists(path))
             {
@@ -61,117 +72,114 @@ namespace CORERenderer.Loaders
             string[] file = File.ReadAllLines(path);
 
             for (int i = 0; i < file.Length; i++)
-            {
                 if (file[i].Length > 5 && file[i][0..6] == "newmtl")
-                {
-                    materialNames.Add(file[i][7..]);
                     mtlPositions.Add(Array.FindIndex(file, z => z == file[i])); //maybe change to just mtlPositions.Add(i), test first tho
-                }
-            }
             //adds all of the data of one material into an array
             for (int i = 0; i < mtlPositions.Count - 1; i++)
                 mtlData.Add(file[mtlPositions[i]..mtlPositions[i + 1]]);
             mtlData.Add(file[mtlPositions[^1]..]);
-            
+
+
+            if (mtlData.Count == 0)
+            {
+                materials.Add(new());
+                error = 0;
+                return false;
+            }
+
             for (int k = 0; k < mtlData.Count; k++)
             {
                 Material material = new();
                 for (int j = 0; j < mtlData[k].Length; j++)
                 {
-                    string n = mtlData[k][j][..Length(file[k])];
-                    if (n.Length > 3)
+                    string n = mtlData[k][j][..Length(mtlData[k][j])];
+                    if (n.Length == 0) //removes empty lines so that errors arent produced later on
+                        n = "  ";
+                    switch (n[0..2])
                     {
-                        switch (n[0..2])
-                        {
-                            case "  ": //empty lines
-                                break;
+                        case "  ": //empty lines
+                            break;
 
-                            case "Ns": //shininess
-                                material.Shininess = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
-                                break;
+                        case "ne": //newmtl
+                            material.Name = n[7..];
+                            break;
 
-                            case "Ka": //ambient
-                                List<int> local1 = new(); //isolates all 3 values with the spaces inbetween them
-                                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                {
-                                    local1.Add(i);
-                                }
-                                material.Ambient =
-                                new(
-                                       float.Parse(n[local1[0]..local1[1]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local1[1]..local1[2]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local1[^1]..Length(n)], CultureInfo.InvariantCulture)
-                                   );
-                                break;
+                        case "Ns": //shininess
+                            material.Shininess = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            break;
 
-                            case "Ks": //specular
-                                List<int> local2 = new(); //isolates all 3 values with the spaces inbetween them
-                                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                {
-                                    local2.Add(i);
-                                }
-                                material.Specular =
-                                new(
-                                       float.Parse(n[local2[0]..local2[1]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local2[1]..local2[2]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local2[^1]..Length(n)], CultureInfo.InvariantCulture)
-                                   );
-                                break;
+                        case "Ka": //ambient
+                            List<int> local1 = new(); //isolates all 3 values with the spaces inbetween them
+                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                            {
+                                local1.Add(i);
+                            }
+                            material.Ambient = GetVector3(n[local1[0]..local1[1]], n[local1[1]..local1[2]], n[local1[^1]..Length(n)]);
+                            break;
 
-                            case "Ke": //emissive coefficient //currently unused
-                                List<int> local3 = new(); //isolates all 3 values with the spaces inbetween them
-                                for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                {
-                                    local3.Add(i);
-                                }
-                                material.EmissiveCoefficient =
-                                new(
-                                       float.Parse(n[local3[0]..local3[1]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local3[1]..local3[2]], CultureInfo.InvariantCulture),
-                                       float.Parse(n[local3[^1]..Length(n)], CultureInfo.InvariantCulture)
-                                   );
-                                break;
+                        case "Ks": //specular
+                            List<int> local2 = new(); //isolates all 3 values with the spaces inbetween them
+                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                            {
+                                local2.Add(i);
+                            }
+                            material.Specular = GetVector3(n[local2[0]..local2[1]], n[local2[1]..local2[2]], n[local2[^1]..Length(n)]);
+                            break;
 
-                            case "Ni":
-                                material.OpticalDensity = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
-                                break;
+                        case "Ke": //emissive coefficient //currently unused
+                            List<int> local3 = new(); //isolates all 3 values with the spaces inbetween them
+                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                            {
+                                local3.Add(i);
+                            }
+                            material.EmissiveCoefficient = GetVector3(n[local3[0]..local3[1]], n[local3[1]..local3[2]], n[local3[^1]..Length(n)]);
+                            break;
 
-                            case "il":
-                                material.Illum = int.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
-                                break;
+                        case "Ni":
+                            material.OpticalDensity = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            break;
 
-                            case "d ":
-                                material.Transparency = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
-                                break;
+                        case "il":
+                            material.Illum = int.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            break;
 
-                            case "ma":
-                                switch (n[0..6])
-                                {
-                                    case "map_Kd":
-                                        material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
-                                        break;
-                                    case "map_d ":
-                                        material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[6..Length(n)]}");
-                                        break;
-                                    case "map_Ks":
-                                        material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
-                                        break;
-                                    default:
-                                        unreadableLines.Add(n);
-                                        break;
-                                }
-                                break;
+                        case "d ":
+                            material.Transparency = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            break;
 
-                            default:
-                                if (n[0] == '#')
+                        case "ma":
+                            switch (n[0..6])
+                            {
+                                case "map_Kd":
+                                    material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
                                     break;
-                                unreadableLines.Add(n);
+                                case "map_d ":
+                                    material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[6..Length(n)]}");
+                                    break;
+                                case "map_Ks":
+                                    material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
+                                    break;
+                                default:
+                                    unreadableLines.Add(n);
+                                    break;
+                            }
+                            break;
+
+                        default:
+                            if (n[0] == '#')
                                 break;
-                        }
+                            unreadableLines.Add(n);
+                            break;
                     }
                 }
-                materials.Add(material);
+                tempMtl.Add(material);
             }
+            //puts the materials in the correct of first being called
+            for (int i = 0; i < mtlNames.Count; i++)
+                for (int j = 0; j < tempMtl.Count; j++)
+                    if (mtlNames[i] == tempMtl[j].Name)
+                        materials.Add(tempMtl[j]);
+
             error = 1;
             return true;
         }
@@ -179,6 +187,7 @@ namespace CORERenderer.Loaders
 
     public class Material
     {
+        public string Name;
         public float Shininess;
         public Vector3 Ambient;
         public Vector3 Diffuse;
@@ -193,7 +202,8 @@ namespace CORERenderer.Loaders
 
         public Material()
         {
-            Texture = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png"); //CORE, as of now, doesnt use textures, only diffuse and specular maps
+            Name = "placeholder";
+            Texture = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png"); //for now textures and diffuse maps are the same
             DiffuseMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png");
             SpecularMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholderspecular.png");
 
