@@ -1,6 +1,7 @@
 ﻿using System;
 using COREMath;
 using static CORERenderer.GL;
+using CORERenderer.CRS;
 using CORERenderer.Main;
 using CORERenderer.Loaders;
 using CORERenderer.shaders;
@@ -79,6 +80,10 @@ namespace CORERenderer
             }
 
             camera = new Camera(new(0, 1, 5), Width / Height);
+
+
+            CRS.CRS.GenerateCRS("test");
+
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");

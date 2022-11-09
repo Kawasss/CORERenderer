@@ -29,9 +29,7 @@ namespace CORERenderer.Loaders
             List<int> temp = new();
 
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
-            {
                 temp.Add(i);
-            }
             string filename = path[(temp[^1] + 1)..];
 
             if (path[(path.Length - 4)..] != ".obj" && path[(path.Length - 4)..] != ".OBJ")
