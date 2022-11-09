@@ -23,7 +23,7 @@ namespace CORERenderer.Loaders
                 outIndices = new();
                 mtllib = null;
                 mtlNames = new();
-                return false;
+                return true;
             }
 
             List<int> temp = new();
@@ -46,16 +46,10 @@ namespace CORERenderer.Loaders
             outIndices = new();
 
             List<Vector3> vertices = new();
-            
-            List<string> verticePositions = new();
-            List<string> UVPositions = new();
-            List<string> normalPositions = new();
 
             List<Vector3> normals = new();
 
             List<Vector2> UVCoordinates = new();
-
-            List<int> fValues = new();
 
             List<string> usemtls = new();
             
@@ -64,10 +58,6 @@ namespace CORERenderer.Loaders
 
             List<int> oPositions = new();
             List<string[]> oData = new();
-
-            List<int> bindingsV = new();
-            List<int> bindingsN = new();
-            List<int> bindingsT = new();
 
             List<int> bindings = new();
 
@@ -86,7 +76,7 @@ namespace CORERenderer.Loaders
 
             bool withTextures = true;
 
-            Console.WriteLine($"Reading {filename}:");
+            //Console.WriteLine($"Reading {filename}:");
             
 
             for (int i = 0; i < file.Length; i++)
@@ -273,12 +263,18 @@ namespace CORERenderer.Loaders
                     }
                 }
             }
+            file = Array.Empty<string>();
+            indiceBinder = new();
+            UVCoordinates = new();
+            vertices = new();
+            normals = new();
+            oData = new();
             if (unreadableLines.Count > 0)
                 Console.WriteLine($" Couldn't read {unreadableLines.Count} lines in {filename}");
 
-            Console.WriteLine($"finished reading {filename}");
+            //Console.WriteLine($"finished reading {filename}");
 
-            Console.WriteLine();
+            //Console.WriteLine();
 
             return true;
         }

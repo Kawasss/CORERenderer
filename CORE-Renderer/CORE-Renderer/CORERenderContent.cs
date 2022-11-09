@@ -8,29 +8,27 @@ using CORERenderer.textures;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
-
+using System.Runtime.CompilerServices;
 
 namespace CORERenderer
 {
     
 
-    public class CORERenderContent : Rendering, ICommonData
+    public class CORERenderContent : Rendering, EngineProperties
     {
-        static private Shader shader;
         static private Shader lightShader;
         static private Shader gridShader;
 
-        static private Texture diffuseTexture;
-        static private Texture specularTexture;
-
-        static private Matrix view;
-        static private Matrix projection;
-
         static public Camera camera;
 
-        static private Obj obj;
+        static private List<Obj> objs = new();
 
         static Vector3 lastPos;
+
+        static bool loaded = false;
+        static bool loadable = true;
+        static bool singleHighlighted = true;
+        static bool canChange = true;
 
         static private uint vertexArrayObjectLightSource;
         static private uint vertexArrayObjectGrid;
@@ -51,6 +49,8 @@ namespace CORERenderer
         public static uint[] indices;
 
         static public Vector3 lightPos = new(0.6f, 1, 1f);
+        static private int currentObj = 0;
+        static private int called = 0;
 
         public unsafe override void OnLoad()
         {
@@ -63,8 +63,6 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            obj = new($"{pathRenderer}\\loaders\\testOBJ\\human_low.obj");
-            
             //initialises given shaders
             //shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); unneeded if obj.cs is done
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
@@ -82,8 +80,6 @@ namespace CORERenderer
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
-            //Glfw.SetScrollCallback(window, ScrollCallback);
-
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
 
@@ -92,6 +88,10 @@ namespace CORERenderer
             for (int i = 0; i <= 50; i++)
                 Console.WriteLine("                                                                                                 "); //space needed to replace all characters
             Console.CursorTop = 0;*/
+
+            EngineProperties.showFrameTime = true;
+            EngineProperties.showFPS = true;
+            EngineProperties.maxFPS = 60;
         }
 
         public unsafe override void RenderEveryFrame()
@@ -102,7 +102,11 @@ namespace CORERenderer
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            obj.Render(camera);
+            for (int i = 0; i < objs.Count; i++)
+            {
+                objs[i].Render(camera);
+            }
+                    
 
             //assigns all the values for placement of the light source
             lightShader.Use();
@@ -141,6 +145,11 @@ namespace CORERenderer
             mousePosX = (float)mousePosXD;
             mousePosY = (float)mousePosYD;
 
+            if (called <= 500)
+                called++;
+            if (called > 500)
+                canChange = true;
+
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
             {
                 Glfw.SetWindowShouldClose(window, true);
@@ -152,7 +161,65 @@ namespace CORERenderer
 
             InputState state = Glfw.GetMouseButton(window, MouseButton.Left);
 
-            InputState state2 = Glfw.GetMouseButton(window, MouseButton.Middle);
+            InputState state2 = Glfw.GetMouseButton(window, MouseButton.Right);
+
+            //!!temporary debug movement for obj files !!rewrite
+            if (state2 == InputState.Press && state != InputState.Press) //
+            {   //calls the logic checks for highlighting the current object
+                if (Glfw.GetKey(window, Keys.D) == InputState.Press && loaded && canChange)
+                    HighlightLogic();
+                //code below loads in new objects and checks if they can be loaded in
+                if (Glfw.GetKey(window, Keys.E) == InputState.Press)
+                    loadable = true;
+                if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)// && !loaded)
+                {
+                    if (loadable)
+                        objs.Add(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
+                    if (objs.Count > 1)
+                        objs[^2].highlighted = false;
+                    objs[^1].highlighted = true;
+                    currentObj = objs.Count - 1;
+                    loaded = true;
+                    loadable = false;
+                }
+                //code below is checking if the current is selected and moves, transforms or rotates the object
+                if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].rotationX += 0.01f; //obj
+                if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].rotationY += 0.01f; //obj
+                if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].rotationZ += 0.01f; //obj
+
+
+                if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].Scaling -= 0.00015f; //obj
+                if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].Scaling += 0.00015f; //obj
+
+
+                if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].translation.y += 0.0002f; //obj
+
+                if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].translation.y -= 0.0002f; //obj
+
+                if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
+                    if (objs[currentObj].highlighted)
+                        objs[currentObj].translation.x -= 0.0002f; //obj
+
+                if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
+                {
+                    Console.WriteLine(currentObj);
+                    objs[currentObj].translation.x += 0.0002f; //obj
+                }
+            }
 
             //basic movement
             if (state == InputState.Press)
@@ -207,35 +274,63 @@ namespace CORERenderer
                 }
             }
 
-            if (state2 == InputState.Press) //doesnt work
-            {
-                if (firstMove)
-                {
-                    lastPos = new(mousePosX, 0, mousePosY);
-                    firstMove = false;
-                }
-                else
-                {
-                    float deltaX = mousePosX - lastPos.x;
-                    float deltaY = lastPos.z - mousePosY;
-
-                    lastPos = new(mousePosX, 0, mousePosY);
-
-                    camera.Yaw += deltaX * SENSITIVITY;
-                    camera.Pitch -= deltaY * SENSITIVITY;
-                }
-            }
-
             if (state != InputState.Press && state2 != InputState.Press)
             {
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
             }
         }
 
-        //zoom in or out
+        //handles all of the logic for deciding which object to select, highlight and manipulate
+        private void HighlightLogic()
+        {
+            canChange = false;
+            called = 0;
+            currentObj++;
+            if (currentObj >= objs.Count)
+            {
+                if (objs.Count == 1 && currentObj >= objs.Count && singleHighlighted)
+                {
+                    objs[0].highlighted = false;
+                    singleHighlighted = false;
+                }
+                else if (objs.Count == 1)
+                {
+                    objs[0].highlighted = true;
+                    singleHighlighted = true;
+                }
+
+                if (objs.Count > 1)
+                {
+                    objs[0].highlighted = true;
+                    objs[^1].highlighted = false;
+                }
+                currentObj = 0;
+            }
+
+            if (currentObj > 0 && currentObj < objs.Count - 1)
+            {
+                objs[currentObj].highlighted = true;
+                objs[currentObj - 1].highlighted = false;
+                objs[currentObj + 1].highlighted = false;
+            }
+            else if (currentObj == 0 && objs.Count > 1)
+            {
+                objs[currentObj].highlighted = true;
+                objs[^1].highlighted = false;
+                objs[1].highlighted = false;
+            }
+            else if (currentObj == objs.Count - 1 && objs.Count > 1)
+            {
+                objs[currentObj].highlighted = true;
+                objs[currentObj - 1].highlighted = false;
+                objs[0].highlighted = false;
+            }
+        }
+
+        //zoom in or out !!Unused due to new architecture
         public void ScrollCallback(Window window, double x, double y)
         {
-            camera.Fov -= (float)y * 1.5f;
+            CORERenderContent.camera.Fov -= (float)y * 1.5f;
         }
     }
 }

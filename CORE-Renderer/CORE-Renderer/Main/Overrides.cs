@@ -11,7 +11,7 @@ using CORERenderer.Main;
 
 namespace CORERenderer
 {
-    public class Rendering : COREMain, ICommonData
+    public class Rendering : COREMain, EngineProperties
     {
         public unsafe void AlwaysLoad()
         {

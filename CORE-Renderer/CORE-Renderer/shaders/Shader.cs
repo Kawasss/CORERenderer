@@ -74,8 +74,15 @@ namespace CORERenderer.shaders
             glUseProgram(Handle);
 
             int location = glGetUniformLocation(Handle, name);
-
             glUniform1i(location, value);
+        }
+
+        public void SetBool(string name, bool value)
+        {
+            glUseProgram(Handle);
+
+            int location = glGetUniformLocation(Handle, name);
+            glUniform1i(location, value ? 1 : 0);
         }
 
         public void SetFloat(string name, float value)

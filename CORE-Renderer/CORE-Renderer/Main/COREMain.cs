@@ -4,7 +4,7 @@ using static CORERenderer.GL;
 
 namespace CORERenderer.Main
 {
-    public class COREMain
+    public class COREMain : EngineProperties
     {
         [NotNull]
         public static int Width = 800;
@@ -18,7 +18,6 @@ namespace CORERenderer.Main
 
         private static double time = 0;
         private static double time2 = 0;
-        public static bool showFps = false;
 
         public unsafe static void Main(string[] args)
         {
@@ -28,37 +27,49 @@ namespace CORERenderer.Main
             basic.AlwaysLoad();
             render.OnLoad();
 
+            double minimumFrameTime = EPL.RunEngineLogic();
+            float currentFrameTime = 0;
+
+            Glfw.SetScrollCallback(window, render.ScrollCallback);
             Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
 
             //render loop
             while (!Glfw.WindowShouldClose(window))
             {
                 time2 = Glfw.Time;
-                if (showFps)
-                    Console.Write($"\rfps: {fps}         \n");
+                if (EngineProperties.showFPS && !EngineProperties.showFrameTime)
+                    Console.Write($"\rfps: {fps}         ");
+                if (EngineProperties.showFrameTime && !EngineProperties.showFPS)
+                    Console.Write($"\rframetime: {Math.Round(currentFrameTime * 1000, 3)}");
+                if (EngineProperties.showFPS && EngineProperties.showFrameTime)
+                    Console.Write($"\rfps: {fps}   frametime: {Math.Round(currentFrameTime * 1000, 3)}                  ");
 
-                render.EveryFrame(window, (float)(time / 1000));
+                render.EveryFrame(window, currentFrameTime);
 
                 render.RenderEveryFrame();
                 render.AlwaysRender();
 
+                fps = (int)(1 / currentFrameTime);
                 time = Glfw.Time - time2;
-                fps = (int)(1 / time);
+                
+                currentFrameTime = 0;
+                while (currentFrameTime < minimumFrameTime)
+                    currentFrameTime += (float)time;
 
                 //Console.CursorTop = 0;
                 Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }
+            Console.WriteLine();
             Console.WriteLine("shutting down");
             Glfw.Terminate();
         }
 
-        static void FramebufferSizeCallBack(Window window, int width, int height)
+        static private void FramebufferSizeCallBack(Window window, int width, int height)
         {
             glViewport(0, 0, width, height);
             Width = width;
             Height = height;
         }
-
     }
 }

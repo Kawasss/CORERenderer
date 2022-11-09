@@ -15,7 +15,6 @@ namespace CORERenderer.textures
     public class Texture
     {
         public readonly uint Handle;
-        public readonly ImageResult Image;
 
         public static unsafe Texture ReadFromFile(string imagePath)
         {
@@ -47,13 +46,12 @@ namespace CORERenderer.textures
 
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            return new Texture(handle, image);
+            return new Texture(handle);
         }
 
-        public Texture(uint newHandle, ImageResult image)
+        public Texture(uint newHandle)
         {
             Handle = newHandle;
-            Image = image;
         }
 
         public void Use(int texture)

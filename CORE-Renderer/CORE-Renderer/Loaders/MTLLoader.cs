@@ -34,12 +34,20 @@ namespace CORERenderer.Loaders
 
         public static bool LoadMTL(string path, List<string> mtlNames, out List<Material> materials, out int error)
         {
+            if (path == null)
+            {
+                materials = new();
+                error = 0;
+                return false;
+            }
+
             List<int> temp = new();
 
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
                 temp.Add(i);
             string filename = path[(temp[^1] + 1)..];
             //0 = no mtllib given (name == None), -1  = no (readable) file found
+
             if (filename == "None")
             {
                 materials = new();
@@ -159,6 +167,9 @@ namespace CORERenderer.Loaders
                                 case "map_Ks":
                                     material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
                                     break;
+                                case "map_Bu": //bump map
+                                    Console.WriteLine($"Unsupported map type: Bump map at {n}");
+                                    break;
                                 default:
                                     unreadableLines.Add(n);
                                     break;
@@ -174,11 +185,16 @@ namespace CORERenderer.Loaders
                 }
                 tempMtl.Add(material);
             }
+            Console.WriteLine($"Couldnt read {unreadableLines.Count} lines");
+
             //puts the materials in the correct of first being called
             for (int i = 0; i < mtlNames.Count; i++)
                 for (int j = 0; j < tempMtl.Count; j++)
                     if (mtlNames[i] == tempMtl[j].Name)
                         materials.Add(tempMtl[j]);
+            tempMtl = new();
+
+            materialOrder = new();
 
             error = 1;
             return true;
