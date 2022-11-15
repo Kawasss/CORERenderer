@@ -76,12 +76,12 @@ namespace CORERenderer
 
         public Matrix GetViewMatrix()
         {
-            return MathC.LookAt(position, position.Add(front), up);
+            return MathC.LookAt(position, position + front, up);
         }
 
         public Matrix GetArcBallViewMatrix()
         {
-            return MathC.LookAt(position, position.Add(front), up);
+            return MathC.LookAt(position, position + front, up);
         }
 
         private void UpdateVectors()

@@ -276,36 +276,6 @@
         }
 
         /// <summary>
-        /// Makes the current matrix the sum of the current matrix and a given matrix
-        /// </summary>
-        /// <param name="matrix"></param>
-        public void Add(float[,] matrix)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    this.matrix4x4[i, j] = this.matrix4x4[i, j] + matrix[i, j];
-                }
-            }
-        }
-
-        /// <summary>
-        /// Subtracts a matrix from the current matrix
-        /// </summary>
-        /// <param name="matrix"></param>
-        public void Subtract(float[,] matrix)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    this.matrix4x4[i, j] = this.matrix4x4[i, j] - matrix[i, j];
-                }
-            }
-        }
-
-        /// <summary>
         /// Replaces a specified value with a given value
         /// </summary>
         /// <param name="row">Row of the current value</param>
@@ -320,15 +290,17 @@
         /// Multiplies each value of the matrix with a scalar
         /// </summary>
         /// <param name="scalar"></param>
-        public void Scalar(float scalar)
+        public static Matrix operator * (Matrix matrix, float scalar)
         {
+            Matrix local = new();
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    this.matrix4x4[i, j] = this.matrix4x4[i, j] * scalar;
+                    local.matrix4x4[i, j] = matrix.matrix4x4[i, j] * scalar;
                 }
             }
+            return local;
         }
 
         /// <summary>
@@ -336,7 +308,7 @@
         /// </summary>
         /// <param name="matrix"></param>
         /// <returns>current vector multiplied with current vector</returns>
-        public Matrix MultiplyWith(Matrix classMatrix)
+        public static Matrix operator * (Matrix classMatrix, Matrix classMatrix2)
         {
             float[,] matrix = classMatrix.matrix4x4;
             float[,] newMatrix = new float[4, 4];
@@ -347,7 +319,7 @@
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        newMatrix[j, i] += this.matrix4x4[j, h] * matrix[h, i];
+                        newMatrix[j, i] += classMatrix.matrix4x4[j, h] * classMatrix2.matrix4x4[h, i];
                     }
                 }
             }
@@ -362,7 +334,7 @@
         /// </summary>
         /// <param name="vector"></param>
         /// <returns>A new vector containing the product of the matrix and vector</returns>
-        public Vector4 MultiplyWith(Vector4 vector)
+        public static Vector4 operator * (Vector4 vector, Matrix matrix)
         {
             float[] fArray = new float[4];
             float[] axisArray = new float[4] { vector.x, vector.y, vector.z, vector.w };
@@ -370,7 +342,7 @@
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    fArray[i] += this.matrix4x4[i, j] * axisArray[j];
+                    fArray[i] += matrix.matrix4x4[i, j] * axisArray[j];
                 }
             }
             Vector4 newVector = new(fArray[0], fArray[1], fArray[2], fArray[3]);
@@ -382,7 +354,7 @@
         /// Does matrix - matrix multiplication on the current matrix class with another matrix
         /// </summary>
         /// <param name="matrix"></param>
-        public void MultiplyWith(float[,] matrix)
+        public static Matrix operator * (Matrix matrix, float[,] matrix2)
         {
             float[,] newMatrix = new float[4, 4];
 
@@ -392,32 +364,13 @@
                 {
                     for (int j = 0; j < 4; j++)
                     {
-                        newMatrix[j, i] += this.matrix4x4[j, h] * matrix[h, i];
+                        newMatrix[j, i] += matrix.matrix4x4[j, h] * matrix2[h, i];
                     }
                 }
             }
 
             newMatrix[3, 3] = 1;
-            matrix4x4 = newMatrix;
-        }
-
-        public void MultiplyWith(float v1)
-        {
-            float[,] newMatrix = new float[4, 4];
-
-            for (int h = 0; h < 4; h++)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        newMatrix[j, i] += this.matrix4x4[j, h] * v1;
-                    }
-                }
-            }
-
-            newMatrix[3, 3] = 1;
-            matrix4x4 = newMatrix;
+            return new(newMatrix);
         }
 
         /// <summary>

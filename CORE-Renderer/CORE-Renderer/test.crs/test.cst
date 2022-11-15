@@ -1,0 +1,33 @@
+<obj id = "0">
+    name = c4520;
+    vertices = 0.csv;
+    indices = 0.csi;
+    mtllib = 0.mtl;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
+</obj>
+<obj id = "1">
+    name = c4520;
+    vertices = 1.csv;
+    indices = 1.csi;
+    mtllib = 1.mtl;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
+</obj>
+<obj id = "2">
+    name = c4520;
+    vertices = 2.csv;
+    indices = 2.csi;
+    mtllib = 2.mtl;
+    scale = 1.0;
+   translation = 4,960707, 4,712595, 0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
+</obj>

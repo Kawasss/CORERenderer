@@ -4,25 +4,27 @@ using CORERenderer.textures;
 using System.CodeDom.Compiler;
 using static CORERenderer.GL;
 using CORERenderer.shaders;
+using CORERenderer;
 using System.Runtime.CompilerServices;
 using CORERenderer.GLFW.Structs;
+using System.IO;
 
 namespace CORERenderer.Loaders
 {
     public class Obj : Readers
     {
-        public readonly List<List<float>> vertices;
-        public readonly List<List<uint>> indices;
+        public List<List<float>> vertices;
+        public List<List<uint>> indices;
 
         public readonly List<Material> Materials;
 
         private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 
-        public readonly string name = null;
+        public readonly string name = "PLACEHOLDER";
 
-        private List<uint> GeneratedBuffers;
-        private List<uint> GeneratedVAOs;
-        private List<uint> elementBufferObject;
+        private List<uint> GeneratedBuffers = new();
+        private List<uint> GeneratedVAOs = new();
+        private List<uint> elementBufferObject = new();
 
         public float Scaling = 1.0f;
         public Vector3 translation = Vector3.Zero;
@@ -32,17 +34,13 @@ namespace CORERenderer.Loaders
 
         public bool highlighted = false;
 
+        public Obj() { }
         public Obj(string path)
         {
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out string mtllib);
             _ = LoadOBJ(null, out _, out _, out _, out _);
-            float Scaling = 1.0f;
-            Vector3 translation = Vector3.Zero;
-            float rotationX = 0.0f;
-            float rotationY = 0.0f;
-            float rotationZ = 0.0f;
 
-            int error = 0;
+            int error;
             if (!loaded)
                 throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
             if (path != null)
@@ -52,7 +50,7 @@ namespace CORERenderer.Loaders
                 for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
                     temp.Add(i);
 
-                name = path[(temp[^1] + 1)..];
+                name = path[(temp[^1] + 1)..path.IndexOf(".obj")];
 
                 loaded = LoadMTL
                 (
@@ -79,12 +77,14 @@ namespace CORERenderer.Loaders
                         throw new Exception($"Undefined error: {error}");
                 }     
             }
+            
             if (Materials.Count > 0)
             {
                 Materials[0].Texture.Use(GL_TEXTURE0);
                 Materials[0].SpecularMap.Use(GL_TEXTURE1);
             }
-            int aa = 0;
+            GenerateBuffers();
+            /*int aa = 0;
             for (int i = 0; i < vertices.Count; i++)
                 for (int j = 0; j < vertices[i].Count; j++)
                     aa++;
@@ -92,9 +92,46 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < indices.Count; i++)
                 for (int j = 0; j < indices[i].Count; j++)
                     ab++;
-            //Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");
+            Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
+        }
 
-            GenerateBuffers();
+        /// <summary>
+        /// !!only gives the .mtl values
+        /// </summary>
+        /// <param name="objPath"></param>
+        /// <param name="mtlPath"></param>
+        public Obj(string objPath, string mtlPath)
+        {
+            int error;
+            bool loaded;
+            LoadOBJ(objPath, out List<string> mtlNames, out _, out _, out string mtllib);
+            if (objPath != null)
+            {
+                loaded = LoadMTL
+                (
+                    $"{mtlPath}\\{mtllib}", mtlNames, out Materials, out error
+                );
+            }
+            else
+                loaded = LoadMTL
+                (
+                    null, mtlNames, out Materials, out error
+                );
+            if (!loaded)
+            {
+                switch (error)
+                {
+                    case -1:
+                        throw new Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
+                    case 0:
+                        Console.WriteLine($"No material library found for {name} (error == 0)");
+                        break;
+                    case 1:
+                        break;
+                    default:
+                        throw new Exception($"Undefined error: {error}");
+                }
+            }
         }
 
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
@@ -147,7 +184,7 @@ namespace CORERenderer.Loaders
             {
                 Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
-
+                
                 glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
@@ -163,17 +200,17 @@ namespace CORERenderer.Loaders
                 if (rotationZ >= 360)
                     rotationZ = 0;
                 shader.SetMatrix("model", Matrix.IdentityMatrix
-                      .MultiplyWith(new Matrix(Scaling, translation))
-                      .MultiplyWith(MathC.GetRotationXMatrix(rotationX))
-                      .MultiplyWith(MathC.GetRotationYMatrix(rotationY))
-                      .MultiplyWith(MathC.GetRotationZMatrix(rotationZ)));
+                      * new Matrix(Scaling, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
 
                 glBindVertexArray(GeneratedVAOs[i]);
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
             } 
         }
 
-        private unsafe void GenerateBuffers()
+        public unsafe void GenerateBuffers()
         {
             GeneratedBuffers = new();
             GeneratedVAOs = new();

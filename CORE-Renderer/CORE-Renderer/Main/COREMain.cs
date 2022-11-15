@@ -24,6 +24,8 @@ namespace CORERenderer.Main
             render = new();
             basic = new();
 
+            EnginePresets.SetPresets();
+
             basic.AlwaysLoad();
             render.OnLoad();
 

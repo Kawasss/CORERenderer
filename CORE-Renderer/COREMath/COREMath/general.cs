@@ -15,24 +15,9 @@ namespace COREMath
 
         static string path = directory.Substring(0, MathCIndex) + "CORE-Renderer\\COREMath\\COREMath\\LookUpTables";
 
-        public static Vector3 Translate(Vector3 vector, float v1, float v2, float v3)
-        {
-            return vector.Add(v2, v2, v3);
-        }
-
-        public static Vector3 Translate(Vector3 vector, Vector3 vector2)
-        {
-            return vector.Add(vector2);
-        }
-
-        public static Vector3 Scale(Vector3 vector, float v1)
-        {
-            return vector.Scalar(v1);
-        }
-
         public static Matrix LookAt(Vector3 eye, Vector3 target, Vector3 up)
         {
-            Vector3 z = Normalize(target.Subtract(eye)); //forward eye.Subtract(target)
+            Vector3 z = Normalize(target - eye); //forward eye.Subtract(target)
             Vector3 x = Normalize(GetCrossProduct(up, z)); //right
             Vector3 y = GetCrossProduct(z, x); //camera up
 

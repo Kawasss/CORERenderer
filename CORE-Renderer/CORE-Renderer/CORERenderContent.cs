@@ -22,8 +22,6 @@ namespace CORERenderer
 
         static public Camera camera;
 
-        static private List<Obj> objs = new();
-
         static Vector3 lastPos;
 
         static bool loaded = false;
@@ -40,6 +38,8 @@ namespace CORERenderer
         static float mousePosX;
         static float mousePosY;
 
+        public static CRS.CRS givenCRS;
+
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         static string directory = Path.GetDirectoryName(root);
         static int MathCIndex = directory.IndexOf("CORE-Renderer");
@@ -52,6 +52,8 @@ namespace CORERenderer
         static public Vector3 lightPos = new(0.6f, 1, 1f);
         static private int currentObj = 0;
         static private int called = 0;
+
+        static public int placeholder = 0; //temporary for .crs related issues
 
         public unsafe override void OnLoad()
         {
@@ -82,7 +84,9 @@ namespace CORERenderer
             camera = new Camera(new(0, 1, 5), Width / Height);
 
 
-            CRS.CRS.GenerateCRS("test");
+            givenCRS = CRS.CRS.GenerateCRS("test");
+            //givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
+
 
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
@@ -93,10 +97,6 @@ namespace CORERenderer
             for (int i = 0; i <= 50; i++)
                 Console.WriteLine("                                                                                                 "); //space needed to replace all characters
             Console.CursorTop = 0;*/
-
-            EngineProperties.showFrameTime = true;
-            EngineProperties.showFPS = true;
-            EngineProperties.maxFPS = 60;
         }
 
         public unsafe override void RenderEveryFrame()
@@ -107,11 +107,10 @@ namespace CORERenderer
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            for (int i = 0; i < objs.Count; i++)
+            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
             {
-                objs[i].Render(camera);
+                givenCRS.allOBJs[i].Render(camera);
             }
-                    
 
             //assigns all the values for placement of the light source
             lightShader.Use();
@@ -120,11 +119,11 @@ namespace CORERenderer
 
             glBindVertexArray(vertexArrayObjectLightSource);
 
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(5, 5, 5)).MultiplyWith(MathC.GetScalingMatrix(0.2f)));
+            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(5, 5, 5) * MathC.GetScalingMatrix(0.2f));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(MathC.GetTranslationMatrix(0, 10, 0)).MultiplyWith(MathC.GetScalingMatrix(0.2f)));
+            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(0, 10, 0) * MathC.GetScalingMatrix(0.2f));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -134,7 +133,7 @@ namespace CORERenderer
             //assigns all the values for placement of the grid
             gridShader.Use();
 
-            gridShader.SetMatrix("model", Matrix.IdentityMatrix.MultiplyWith(new Matrix(true, 100 * MathC.GetLengthOf(camera.position))));
+            gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 100 * MathC.GetLengthOf(camera.position)));
             gridShader.SetMatrix("view", camera.GetArcBallViewMatrix());
             gridShader.SetMatrix("projection", camera.GetProjectionMatrix());
 
@@ -179,51 +178,49 @@ namespace CORERenderer
                 if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)// && !loaded)
                 {
                     if (loadable)
-                        objs.Add(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
-                    if (objs.Count > 1)
-                        objs[^2].highlighted = false;
-                    objs[^1].highlighted = true;
-                    currentObj = objs.Count - 1;
+                        givenCRS.CSTAddObj(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
+                    if (givenCRS.allOBJs.Count > 1)
+                        givenCRS.allOBJs[^2].highlighted = false;
+                    givenCRS.allOBJs[^1].highlighted = true;
+                    currentObj = givenCRS.allOBJs.Count - 1;
                     loaded = true;
                     loadable = false;
+                    givenCRS.nextUnusedID++; //may not be best solution but works atleast
                 }
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].rotationX += 0.01f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.RotateXObj(currentObj, 15f * delta); //obj
                 if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].rotationY += 0.01f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.RotateYObj(currentObj, 15f * delta); //obj
                 if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].rotationZ += 0.01f; //obj
-
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.RotateZObj(currentObj, 15f * delta); //obj
 
                 if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].Scaling -= 0.00015f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.ScaleObj(currentObj, -2f * delta); //obj
                 if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].Scaling += 0.00015f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.ScaleObj(currentObj, 2f * delta); //obj
 
 
                 if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].translation.y += 0.0002f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.TranslateObj(currentObj, new(0, 1f * delta, 0)); //obj
 
                 if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].translation.y -= 0.0002f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.TranslateObj(currentObj, new(0, -1f * delta, 0)); //obj
 
                 if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
-                    if (objs[currentObj].highlighted)
-                        objs[currentObj].translation.x -= 0.0002f; //obj
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.TranslateObj(currentObj, new(-1f * delta, 0, 0)); //obj
 
                 if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
-                {
-                    Console.WriteLine(currentObj);
-                    objs[currentObj].translation.x += 0.0002f; //obj
-                }
+                    if (givenCRS.allOBJs[currentObj].highlighted)
+                        givenCRS.TranslateObj(currentObj, new(1f * delta, 0, 0)); //obj
             }
 
             //basic movement
@@ -232,35 +229,22 @@ namespace CORERenderer
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
 
                 if (Glfw.GetKey(window, Keys.W) == InputState.Press)
-                {
-                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Subtract(v1);
-                }
+                    camera.position -= camera.front * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.S) == InputState.Press)
-                {
-                    Vector3 v1 = camera.front.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Add(v1);
-                }
+                    camera.position += camera.front * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.A) == InputState.Press)
-                {
-                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Add(v1);
-                }
+                    camera.position += camera.right * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press)
-                {
-                    Vector3 v1 = camera.right.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Subtract(v1);
-                }
+                    camera.position -= camera.right * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.Space) == InputState.Press)
-                {
-                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Add(v1);
-                }
+                    camera.position += camera.up * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
-                {
-                    Vector3 v1 = camera.up.Scalar(CAMERA_SPEED * 0.001f);
-                    camera.position = camera.position.Subtract(v1);
-                }
+                    camera.position -= camera.up * (CAMERA_SPEED * delta);
                 //rotating the camera with mouse movement
                 if (firstMove)
                 {
@@ -279,10 +263,11 @@ namespace CORERenderer
                 }
             }
 
+            if (Glfw.GetKey(window, Keys.S) == InputState.Press && Glfw.GetKey(window, Keys.LeftControl) == InputState.Press)
+                givenCRS.SaveChanges();
+
             if (state != InputState.Press && state2 != InputState.Press)
-            {
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
-            }
         }
 
         //handles all of the logic for deciding which object to select, highlight and manipulate
@@ -291,44 +276,44 @@ namespace CORERenderer
             canChange = false;
             called = 0;
             currentObj++;
-            if (currentObj >= objs.Count)
+            if (currentObj >= givenCRS.allOBJs.Count)
             {
-                if (objs.Count == 1 && currentObj >= objs.Count && singleHighlighted)
+                if (givenCRS.allOBJs.Count == 1 && currentObj >= givenCRS.allOBJs.Count && singleHighlighted)
                 {
-                    objs[0].highlighted = false;
+                    givenCRS.allOBJs[0].highlighted = false;
                     singleHighlighted = false;
                 }
-                else if (objs.Count == 1)
+                else if (givenCRS.allOBJs.Count == 1)
                 {
-                    objs[0].highlighted = true;
+                    givenCRS.allOBJs[0].highlighted = true;
                     singleHighlighted = true;
                 }
 
-                if (objs.Count > 1)
+                if (givenCRS.allOBJs.Count > 1)
                 {
-                    objs[0].highlighted = true;
-                    objs[^1].highlighted = false;
+                    givenCRS.allOBJs[0].highlighted = true;
+                    givenCRS.allOBJs[^1].highlighted = false;
                 }
                 currentObj = 0;
             }
 
-            if (currentObj > 0 && currentObj < objs.Count - 1)
+            if (currentObj > 0 && currentObj < givenCRS.allOBJs.Count - 1)
             {
-                objs[currentObj].highlighted = true;
-                objs[currentObj - 1].highlighted = false;
-                objs[currentObj + 1].highlighted = false;
+                givenCRS.allOBJs[currentObj].highlighted = true;
+                givenCRS.allOBJs[currentObj - 1].highlighted = false;
+                givenCRS.allOBJs[currentObj + 1].highlighted = false;
             }
-            else if (currentObj == 0 && objs.Count > 1)
+            else if (currentObj == 0 && givenCRS.allOBJs.Count > 1)
             {
-                objs[currentObj].highlighted = true;
-                objs[^1].highlighted = false;
-                objs[1].highlighted = false;
+                givenCRS.allOBJs[currentObj].highlighted = true;
+                givenCRS.allOBJs[^1].highlighted = false;
+                givenCRS.allOBJs[1].highlighted = false;
             }
-            else if (currentObj == objs.Count - 1 && objs.Count > 1)
+            else if (currentObj == givenCRS.allOBJs.Count - 1 && givenCRS.allOBJs.Count > 1)
             {
-                objs[currentObj].highlighted = true;
-                objs[currentObj - 1].highlighted = false;
-                objs[0].highlighted = false;
+                givenCRS.allOBJs[currentObj].highlighted = true;
+                givenCRS.allOBJs[currentObj - 1].highlighted = false;
+                givenCRS.allOBJs[0].highlighted = false;
             }
         }
 

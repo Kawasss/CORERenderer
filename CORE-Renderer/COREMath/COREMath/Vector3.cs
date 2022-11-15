@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Numerics;
 
 namespace COREMath
 {
@@ -54,6 +55,12 @@ namespace COREMath
             this.xyz[1] = this.y;
             this.xyz[2] = this.z;
         }
+        public Vector3(Vector2 v1)
+        {
+            this.x = v1.x;
+            this.y = v1.y;
+            this.z = 0;
+        }
 
         public static Vector3 Zero = new(0, 0, 0);
 
@@ -61,60 +68,50 @@ namespace COREMath
         public static Vector3 UnitVectorY = new(0, 1, 0);
         public static Vector3 UnitVectorZ = new(0, 0, 1);
 
-        public Vector3 Subtract(Vector3 vector)
+        public static Vector3 operator - (Vector3 v1, Vector3 v2)
         {
-            float newx = this.x - vector.x;
-            float newy = this.y - vector.y;
-            float newz = this.z - vector.z;
-
-            Vector3 newVector = new(newx, newy, newz);
-            return newVector;
-        }
-
-        public Vector3 Add(Vector3 vector)
-        {
-            Vector3 newVector = new(0, 0, 0)
+            return new()
             {
-                x = vector.x + this.x,
-                y = vector.y + this.y,
-                z = vector.z + this.z
+                x = v1.x - v2.x,
+                y = v1.y - v2.y,
+                z = v1.z - v2.z
             };
-            return newVector;
         }
 
-        public Vector3 Add(float v1, float v2, float v3)
+        public static Vector3 operator + (Vector3 v1, Vector3 v2)
         {
-            Vector3 newVector = new(0, 0, 0)
+            
+            return new()
             {
-                x = v1 + this.x,
-                y = v2 + this.y,
-                z = v3 + this.z
+                x = v1.x + v2.x,
+                y = v1.y + v2.y,
+                z = v1.z + v2.z
             };
-            return newVector;
         }
 
-        public Vector3 Scalar(float value)
+        public static Vector3 operator * (Vector3 v1, float value)
         {
-            Vector3 v1 = new(this.x, this.y, this.z);
-            v1.x *= value;
-            v1.y *= value;
-            v1.z *= value;
-
-            return v1;
+            return new()
+            {
+                x = v1.x * value,
+                y = v1.y * value,
+                z = v1.z * value
+            };
         }
 
         /// <summary>
         /// Multiplies the vector with another vector
         /// </summary>
-        /// <param name="vector"></param>
-        public Vector3 MulitplyBy(Vector3 vector)
+        /// <param name="v1"></param>
+        /// <param name = "v2"></param>
+        public static Vector3 operator * (Vector3 v1, Vector3 v2)
         {
-            Vector3 newVector = new();
-            newVector.x = this.x * vector.x;
-            newVector.y = this.y * vector.y;
-            newVector.z = this.z * vector.z;
-
-            return newVector;
+            return new()
+            {
+                x = v1.x * v2.x,
+                y = v1.y * v2.y,
+                z = v1.z * v2.z
+            };
         }
 
         /// <summary>
