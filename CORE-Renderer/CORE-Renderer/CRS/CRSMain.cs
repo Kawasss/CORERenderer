@@ -20,7 +20,7 @@ namespace CORERenderer.CRS
         public List<Obj> allOBJs = new();
         private Dictionary<string, int> nameIDBinder = new();
 
-        public struct ObjectInstance
+        public struct ObjectInstance //contains all the metadata for one object in the CRS directory
         {
             public ObjectInstance(FileStream csv, FileStream csi, string csvP, string csiP, int amountVerticeGroups, int amountIndiceGroups)
             {
@@ -41,7 +41,7 @@ namespace CORERenderer.CRS
         public List<ObjectInstance> allObjectInstances = new();
 
         CRS(string name, string path, string[] cstLines, FileStream cstFile)
-        {
+        {   //sets all the CRS information
             this.name = name;
             this.path = path;
             this.cstFile = cstFile;
@@ -50,7 +50,7 @@ namespace CORERenderer.CRS
         }
 
         private void UpdateIDs()
-        {
+        {   //binds the current ID to the name of the current obj
             if (nameIDBinder.Count != 0)
             {
                 for (int i = 0; i < allOBJs.Count; i++)

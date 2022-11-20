@@ -98,7 +98,7 @@ namespace CORERenderer.Loaders
         }
 
         /// <summary>
-        /// !!only gives the .mtl values
+        /// !!only gives the .mtl values, leaves the indices and vertices empty for the CRS to write to
         /// </summary>
         /// <param name="objPath"></param>
         /// <param name="mtlPath"></param>

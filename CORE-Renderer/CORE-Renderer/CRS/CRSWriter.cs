@@ -23,13 +23,18 @@ namespace CORERenderer.CRS
             if (Directory.Exists(path)) //add option to read existing .crs
                 throw new Exception("file with given name already exists, cannot create new file");
 
+            //creates directory for the files
             System.IO.Directory.CreateDirectory(path);
             File.SetAttributes(path, FileAttributes.System);
+
+            //creates the file for the directory icon and writes the imaga data to it
             File.Create(image).Close();
             File.Copy($"{CORERenderContent.pathRenderer}\\logos\\logo4.ico", image, true);
             File.SetAttributes(image, FileAttributes.Hidden);
-            FileStream DekstopIni = File.Create($"{path}\\Desktop.ini");
 
+            FileStream DeskstopIni = File.Create($"{path}\\Desktop.ini");
+
+            //creates the Desktop.ini file for the directory settings and the icon of it
             string DesktopContent = 
                 """
                 [.ShellClassInfo]
@@ -40,11 +45,13 @@ namespace CORERenderer.CRS
                 InfoTip=CORE Rendering Scene
                 """;
             byte[] writeDesktop = Encoding.Unicode.GetBytes(DesktopContent);
-            DekstopIni.Write(writeDesktop);
+            DeskstopIni.Write(writeDesktop);
+            DeskstopIni.Close();
 
             File.SetAttributes($"{path}\\Desktop.ini", FileAttributes.Hidden);
             File.SetAttributes($"{path}\\Desktop.ini", FileAttributes.System); 
 
+            //creates the empty cst file for the CSTAddObj() to write to
             FileStream cst = File.Create($"{path}\\{name}.cst");//CoreSceneTransformations
             cst.Close();
 
@@ -61,7 +68,7 @@ namespace CORERenderer.CRS
                 backslashIndexes.Add(i);
             string objName = pathToOBJ[(backslashIndexes[^1] + 1)..^4];
 
-            //writes the object attributes
+            //writes the default object attributes
             string addOBJ =
                $"""
                 <obj id = "{nextUnusedID}">
@@ -87,7 +94,7 @@ namespace CORERenderer.CRS
 
             Obj newOBJ = new(pathToOBJ);
 
-            //creates the mtl file bound to the object
+            //creates the mtl file bound to the object, saving all the mtl data to a new file like the vertices and indices is too much effort for the efficiency it gives
             File.Create($"{path}\\{nextUnusedID}.mtl").Close();
             File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{newOBJ.mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
 
@@ -95,7 +102,7 @@ namespace CORERenderer.CRS
 
             //writes all the vertice and indice values to their respective files
             using (StreamWriter sw = new StreamWriter(csvFile))
-            {
+            {   //writes all the vertices and indices, with each object or "o" in the obj file being seperate by "</vertices>" or "</indices>"
                 using (StreamWriter sw1 = new(csiFile))
                 {
                     for (int i = 0; i < newOBJ.vertices.Count; i++)
@@ -119,8 +126,8 @@ namespace CORERenderer.CRS
             this.UpdateIDs();
         }
 
-        public void SaveChanges() //currently only saves the changes made to the last object
-        {   //applies all of the changes made to the local version of the cst file and then writes that data to the real version
+        public void SaveChanges()
+        {   //creates a local string to save all changes to which will then be written to an empty version of the .cst file
             string local0 = string.Empty;
             using (FileStream filestream = File.Open($"{path}\\{name}.cst", FileMode.Open))
                 lock (filestream)

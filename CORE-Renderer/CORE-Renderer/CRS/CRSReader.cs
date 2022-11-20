@@ -35,7 +35,7 @@ namespace CORERenderer.CRS
         /// <param name="linePlace">place of the variable</param>
         /// <returns>float value assigned to the variable</returns>
         private float GetObjFloat(int linePlace)
-        {
+        {   //gets a float by using the syntax of the .cst
             int local2 = this.cstLines[linePlace].IndexOf('=');
             int local3 = this.cstLines[linePlace].IndexOf(';');
 
@@ -47,7 +47,7 @@ namespace CORERenderer.CRS
         /// <param name="linePlace">place of the variable</param>
         /// <returns>vector3 value assigned to the variable</returns>
         private Vector3 GetObjVector3(int linePlace)
-        {
+        {   //gets a vector3 by using the syntax of the .cst
             int local2 = this.cstLines[linePlace].IndexOf('=');
             int local3 = this.cstLines[linePlace].IndexOf(';');
             int local4 = this.cstLines[linePlace].IndexOf(',');
