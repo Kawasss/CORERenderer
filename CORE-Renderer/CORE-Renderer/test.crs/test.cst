@@ -4,28 +4,31 @@
     indices = 0.csi;
     mtllib = 0.mtl;
     scale = 1;
-    translation = -2,396883, 2,2808728, 0;
-    rotateX = 0;
-    rotateY = 0;
-    rotateZ = 0;
-</obj><obj id = "1">
-    name = c4520;
-    vertices = 1.csv;
-    indices = 1.csi;
-    mtllib = 1.mtl;
-    scale = 1;
-    translation = -1,6059493, -2,466951, 0;
-    rotateX = 47,16172;
-    rotateY = 47,16172;
-    rotateZ = 43,920773;
-</obj><obj id = "2">
-    name = c4520;
-    vertices = 2.csv;
-    indices = 2.csi;
-    mtllib = 2.mtl;
-    scale = 2,7554917;
-    translation = 0, 0, 0;
+    translation = 1,2256325, 1,3561175, 0;
     rotateX = 0;
     rotateY = 0;
     rotateZ = 0;
 </obj>
+<obj id = "1">
+    name = c4520;
+    vertices = 1.csv;
+    indices = 1.csi;
+    mtllib = 1.mtl;
+    scale = 4,271067;
+    translation = 0, 0, 0;
+    rotateX = 27,301935;
+    rotateY = 27,175627;
+    rotateZ = 26,845144;
+</obj>
+<obj id = "2">
+    name = c4520;
+    vertices = 2.csv;
+    indices = 2.csi;
+    mtllib = 2.mtl;
+    scale = 0,01;
+    translation = 0, -0,8352705, 0;
+    rotateX = 0;
+    rotateY = 0;
+    rotateZ = 0;
+</obj>
+
