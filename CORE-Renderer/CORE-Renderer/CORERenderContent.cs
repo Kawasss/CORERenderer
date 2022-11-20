@@ -190,37 +190,37 @@ namespace CORERenderer
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.RotateXObj(currentObj, 15f * delta); //obj
+                        givenCRS.allOBJs[currentObj].rotationX += 15f * delta;
                 if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.RotateYObj(currentObj, 15f * delta); //obj
+                        givenCRS.allOBJs[currentObj].rotationY += 15f * delta;
                 if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.RotateZObj(currentObj, 15f * delta); //obj
+                        givenCRS.allOBJs[currentObj].rotationZ += 15f * delta;
 
                 if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.ScaleObj(currentObj, -2f * delta); //obj
+                        givenCRS.allOBJs[currentObj].Scaling -= 2f * delta;
                 if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.ScaleObj(currentObj, 2f * delta); //obj
+                        givenCRS.allOBJs[currentObj].Scaling += 2f * delta;
 
 
                 if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.TranslateObj(currentObj, new(0, 1f * delta, 0)); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(0, 1f * delta, 0); //obj
 
                 if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.TranslateObj(currentObj, new(0, -1f * delta, 0)); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(0, 1f * delta, 0); //obj
 
                 if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.TranslateObj(currentObj, new(-1f * delta, 0, 0)); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(1f * delta, 0, 0); //obj
 
                 if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.TranslateObj(currentObj, new(1f * delta, 0, 0)); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(1f * delta, 0, 0); //obj
             }
 
             //basic movement

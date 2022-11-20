@@ -34,10 +34,12 @@ namespace CORERenderer.Loaders
 
         public bool highlighted = false;
 
+        public string mtllib;
+
         public Obj() { }
         public Obj(string path)
         {
-            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out string mtllib);
+            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
             _ = LoadOBJ(null, out _, out _, out _, out _);
 
             int error;
