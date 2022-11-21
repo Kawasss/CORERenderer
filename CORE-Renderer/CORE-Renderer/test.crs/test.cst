@@ -3,32 +3,42 @@
     vertices = 0.csv;
     indices = 0.csi;
     mtllib = 0.mtl;
-    scale = 1;
-    translation = 1,2256325, 1,3561175, 0;
-    rotateX = 0;
-    rotateY = 0;
-    rotateZ = 0;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
 </obj>
 <obj id = "1">
     name = c4520;
     vertices = 1.csv;
     indices = 1.csi;
     mtllib = 1.mtl;
-    scale = 4,271067;
-    translation = 0, 0, 0;
-    rotateX = 27,301935;
-    rotateY = 27,175627;
-    rotateZ = 26,845144;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
 </obj>
 <obj id = "2">
     name = c4520;
     vertices = 2.csv;
     indices = 2.csi;
     mtllib = 2.mtl;
-    scale = 0,01;
-    translation = 0, -0,8352705, 0;
-    rotateX = 0;
-    rotateY = 0;
-    rotateZ = 0;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
 </obj>
-
+<obj id = "3">
+    name = c4520;
+    vertices = 3.csv;
+    indices = 3.csi;
+    mtllib = 3.mtl;
+    scale = 1.0;
+    translation = 0.0, 0.0, 0.0;
+    rotateX = 0.0;
+    rotateY = 0.0;
+    rotateZ = 0.0;
+</obj>

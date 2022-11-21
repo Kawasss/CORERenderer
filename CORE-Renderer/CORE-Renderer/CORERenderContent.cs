@@ -51,7 +51,7 @@ namespace CORERenderer
 
         static public Vector3 lightPos = new(0.6f, 1, 1f);
         static private int currentObj = 0;
-        static private int called = 0;
+        static private float called = 0;
 
         static public int placeholder = 0; //temporary for .crs related issues
 
@@ -149,9 +149,9 @@ namespace CORERenderer
             mousePosX = (float)mousePosXD;
             mousePosY = (float)mousePosYD;
 
-            if (called <= 500)
-                called++;
-            if (called > 500)
+            if (called <= 0.4f)
+                called += delta;
+            if (called > 0.4f)
                 canChange = true;
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
@@ -178,14 +178,13 @@ namespace CORERenderer
                 if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)// && !loaded)
                 {
                     if (loadable)
+                    {
                         givenCRS.CSTAddObj(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
-                    if (givenCRS.allOBJs.Count > 1)
-                        givenCRS.allOBJs[^2].highlighted = false;
-                    givenCRS.allOBJs[^1].highlighted = true;
-                    currentObj = givenCRS.allOBJs.Count - 1;
-                    loaded = true;
-                    loadable = false;
-                    givenCRS.nextUnusedID++; //may not be best solution but works atleast
+                        loaded = true;
+                        loadable = false;
+                        HighlightLogic();
+                        givenCRS.nextUnusedID++; //may not be best solution but works atleast
+                    } 
                 }
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
@@ -278,43 +277,18 @@ namespace CORERenderer
             currentObj++;
             if (currentObj >= givenCRS.allOBJs.Count)
             {
-                if (givenCRS.allOBJs.Count == 1 && currentObj >= givenCRS.allOBJs.Count && singleHighlighted)
-                {
-                    givenCRS.allOBJs[0].highlighted = false;
-                    singleHighlighted = false;
-                }
-                else if (givenCRS.allOBJs.Count == 1)
-                {
-                    givenCRS.allOBJs[0].highlighted = true;
-                    singleHighlighted = true;
-                }
-
-                if (givenCRS.allOBJs.Count > 1)
-                {
-                    givenCRS.allOBJs[0].highlighted = true;
-                    givenCRS.allOBJs[^1].highlighted = false;
-                }
                 currentObj = 0;
-            }
 
-            if (currentObj > 0 && currentObj < givenCRS.allOBJs.Count - 1)
-            {
-                givenCRS.allOBJs[currentObj].highlighted = true;
-                givenCRS.allOBJs[currentObj - 1].highlighted = false;
-                givenCRS.allOBJs[currentObj + 1].highlighted = false;
-            }
-            else if (currentObj == 0 && givenCRS.allOBJs.Count > 1)
-            {
-                givenCRS.allOBJs[currentObj].highlighted = true;
                 givenCRS.allOBJs[^1].highlighted = false;
-                givenCRS.allOBJs[1].highlighted = false;
-            }
-            else if (currentObj == givenCRS.allOBJs.Count - 1 && givenCRS.allOBJs.Count > 1)
-            {
                 givenCRS.allOBJs[currentObj].highlighted = true;
-                givenCRS.allOBJs[currentObj - 1].highlighted = false;
-                givenCRS.allOBJs[0].highlighted = false;
+                
             }
+            else if (givenCRS.allOBJs.Count > 1)
+            {
+                givenCRS.allOBJs[currentObj - 1].highlighted = false;
+                givenCRS.allOBJs[currentObj].highlighted = true;
+            }
+            givenCRS.allOBJs[currentObj].highlighted = true;
         }
 
         //zoom in or out !!Unused due to new architecture

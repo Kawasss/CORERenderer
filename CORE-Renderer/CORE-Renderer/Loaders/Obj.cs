@@ -65,21 +65,8 @@ namespace CORERenderer.Loaders
                         null, mtlNames, out Materials, out error
                     );
             if (!loaded)
-            {
-                switch (error)
-                {
-                    case -1:
-                        throw new Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");                     
-                    case 0:
-                        Console.WriteLine($"No material library found for {name} (error == 0)");
-                        break;
-                    case 1:
-                        break;
-                    default:
-                        throw new Exception($"Undefined error: {error}");
-                }     
-            }
-            
+                ErrorLogic(error);
+
             if (Materials.Count > 0)
             {
                 Materials[0].Texture.Use(GL_TEXTURE0);
@@ -95,6 +82,13 @@ namespace CORERenderer.Loaders
                 for (int j = 0; j < indices[i].Count; j++)
                     ab++;
             Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
+        }
+
+        public Obj(string mtlPath, List<string> mtlNames)
+        {
+            bool loaded = LoadMTL(mtlPath, mtlNames, out Materials, out int error);
+            if (!loaded)
+                ErrorLogic(error);
         }
 
         /// <summary>
@@ -120,20 +114,7 @@ namespace CORERenderer.Loaders
                     null, mtlNames, out Materials, out error
                 );
             if (!loaded)
-            {
-                switch (error)
-                {
-                    case -1:
-                        throw new Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
-                    case 0:
-                        Console.WriteLine($"No material library found for {name} (error == 0)");
-                        break;
-                    case 1:
-                        break;
-                    default:
-                        throw new Exception($"Undefined error: {error}");
-                }
-            }
+                ErrorLogic(error);
         }
 
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
@@ -255,6 +236,22 @@ namespace CORERenderer.Loaders
                 }
                 elementBufferObject.Add(local3);
                 GeneratedVAOs.Add(GeneratedVAO);
+            }
+        }
+
+        public void ErrorLogic(int error)
+        {
+            switch (error)
+            {
+                case -1:
+                    throw new Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
+                case 0:
+                    Console.WriteLine($"No material library found for {name} (error == 0)");
+                    break;
+                case 1:
+                    break;
+                default:
+                    throw new Exception($"Undefined error: {error}");
             }
         }
     }  

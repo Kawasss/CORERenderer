@@ -73,8 +73,8 @@ namespace CORERenderer.CRS
                $"""
                 <obj id = "{nextUnusedID}">
                     name = {objName};
-                    vertices = {nextUnusedID}.csv;
-                    indices = {nextUnusedID}.csi;
+                    vertices = {nextUnusedID}.cv;
+                    indices = {nextUnusedID}.ci;
                     mtllib = {nextUnusedID}.mtl;
                     scale = 1.0;
                     translation = 0.0, 0.0, 0.0;
@@ -107,7 +107,7 @@ namespace CORERenderer.CRS
                 {
                     for (int i = 0; i < newOBJ.vertices.Count; i++)
                     {
-                        sw.Write($"<vertices id = {i}>\n");
+                        sw.Write($"<vertices id = \"{i}\" materialName = \"{newOBJ.Materials[i].Name}\">\n");
                         for (int j = 0; j < newOBJ.vertices[i].Count; j++)
                             sw.Write($"{newOBJ.vertices[i][j]}\n");
                         sw.Write("</vertices>\n");
@@ -115,7 +115,7 @@ namespace CORERenderer.CRS
 
                     for (int i = 0; i < newOBJ.indices.Count; i++)
                     {
-                        sw1.Write($"<indices id = {i}>\n");
+                        sw1.Write($"<indices id = \"{i}\">\n");
                         for (int j = 0; j < newOBJ.indices[i].Count; j++)
                             sw1.Write($"{newOBJ.indices[i][j]}\n");
                         sw1.Write($"</indices>\n");
@@ -139,8 +139,8 @@ namespace CORERenderer.CRS
                 $"""
                 <obj id = "{i}">
                     name = {allOBJs[i].name};
-                    vertices = {i}.csv;
-                    indices = {i}.csi;
+                    vertices = {i}.cv;
+                    indices = {i}.ci;
                     mtllib = {i}.mtl;
                     scale = {allOBJs[i].Scaling};
                     translation = {allOBJs[i].translation.x}, {allOBJs[i].translation.y}, {allOBJs[i].translation.z};

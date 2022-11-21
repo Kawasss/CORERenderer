@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using COREMath;
@@ -27,6 +28,62 @@ namespace CORERenderer.CRS
             }
 
             return true;
+        }
+
+        public static CRS ReadCRS(string path)
+        {
+            if (!CheckCRS(path))
+                throw new Exception($"invalid file at {path}");
+
+            //finds the name of the file from the given path
+            List<int> temp = new();
+            for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
+                temp.Add(i);
+            string name = path[(temp[^1] + 1)..path[^4]];
+            CRS newCRS = new(path, name, File.ReadAllLines($"{path}\\{name}.cst"), File.Create($"{path}\\{name}.cst"));
+
+            //finds the amount of objects in the scene and the place of their information in the .cst file
+            string[] allLines = File.ReadAllLines(path);
+
+            int amountOfObjects = 0;
+            List<int> ObjectLocations = new();
+            for (int i = 0; i < allLines.Length; i++)
+                if (allLines[i][0..4] == "<obj")
+                {
+                    ObjectLocations.Add(i);
+                    amountOfObjects++;
+                }
+
+            List<string> materialNames = new();
+            for (int i = 0; i < amountOfObjects; i++)
+            {
+                //gets all of the material names for the current obj file so that the mtl file can be read
+                string[] local = File.ReadAllLines($"{path}\\{i}.cv");
+                for (int j = 0; j < local.Length; j++)
+                    if (local[j] == "<vertices")
+                    {
+                        int index = local[j].IndexOf("materialName = \"");
+                        materialNames.Add(local[j][(index + 1)..local[j].IndexOf('"', index + 1)]); //maybe index + 1 if error?
+                    }
+                newCRS.allOBJs.Add(new($"{path}\\{i}.mtl", materialNames));
+
+                //reads and writes all of the vertice values of one group per loop to the current Obj
+                string[] verticeGroup;
+                if (i != ObjectLocations.Count - 1)
+                    verticeGroup = allLines[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
+                else
+                    verticeGroup = allLines[(ObjectLocations[i] + 1)..];
+
+                for (int j = 0; j < materialNames.Count; j++)
+                {
+                    newCRS.allOBJs[i].vertices.Add(new());
+                    for (int k = 0; k < verticeGroup.Length; k++)
+                        newCRS.allOBJs[i].vertices[j].Add(float.Parse(verticeGroup[k]));
+                }
+                //do same for indices
+            }
+
+            return newCRS;
         }
 
         /// <summary>
