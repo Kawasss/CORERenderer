@@ -43,7 +43,7 @@ namespace CORERenderer.CRS
             CRS newCRS = new(path, name, File.ReadAllLines($"{path}\\{name}.cst"), File.Create($"{path}\\{name}.cst"));
 
             //finds the amount of objects in the scene and the place of their information in the .cst file
-            string[] allLines = File.ReadAllLines(path);
+            string[] allLines = File.ReadAllLines($"{path}\\{name}.cst");
 
             int amountOfObjects = 0;
             List<int> ObjectLocations = new();
@@ -68,20 +68,34 @@ namespace CORERenderer.CRS
                 newCRS.allOBJs.Add(new($"{path}\\{i}.mtl", materialNames));
 
                 //reads and writes all of the vertice values of one group per loop to the current Obj
-                string[] verticeGroup;
+                string[] group;
                 if (i != ObjectLocations.Count - 1)
-                    verticeGroup = allLines[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
+                    group = local[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
+                else //does last object seperately because out of bounds error
+                    group = local[(ObjectLocations[i] + 1)..];
+
+                for (int j = 0; j < materialNames.Count; j++) //uses amount of materials since its material has its own vertice group
+                {   //loops through all the vertices in a group / material and parses it to the current obj's vertice group
+                    newCRS.allOBJs[i].vertices.Add(new());
+                    for (int k = 0; k < group.Length; k++)
+                        newCRS.allOBJs[i].vertices[j].Add(float.Parse(group[k])); 
+                }
+                //same as above, just with the indice groups
+                local = File.ReadAllLines($"{path}\\{i}.ci");
+
+                if (i != ObjectLocations.Count - 1)
+                    group = local[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
                 else
-                    verticeGroup = allLines[(ObjectLocations[i] + 1)..];
+                    group = local[(ObjectLocations[i] + 1)..];
 
                 for (int j = 0; j < materialNames.Count; j++)
                 {
-                    newCRS.allOBJs[i].vertices.Add(new());
-                    for (int k = 0; k < verticeGroup.Length; k++)
-                        newCRS.allOBJs[i].vertices[j].Add(float.Parse(verticeGroup[k]));
+                    newCRS.allOBJs[i].indices.Add(new());
+                    for (int k = 0; k < group.Length; k++)
+                        newCRS.allOBJs[i].indices[j].Add(uint.Parse(group[k]));
                 }
-                //do same for indices
             }
+            newCRS.nextUnusedID = amountOfObjects + 1; //sets the next unused id correctly given the amount of objects
 
             return newCRS;
         }
