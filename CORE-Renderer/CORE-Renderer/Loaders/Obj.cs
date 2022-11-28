@@ -1,5 +1,6 @@
 ﻿using COREMath;
 using System;
+using CORERenderer.Main;
 using CORERenderer.textures;
 using System.CodeDom.Compiler;
 using static CORERenderer.GL;
@@ -89,32 +90,9 @@ namespace CORERenderer.Loaders
             bool loaded = LoadMTL(mtlPath, mtlNames, out Materials, out int error);
             if (!loaded)
                 ErrorLogic(error);
-        }
 
-        /// <summary>
-        /// !!only gives the .mtl values, leaves the indices and vertices empty for the CRS to write to
-        /// </summary>
-        /// <param name="objPath"></param>
-        /// <param name="mtlPath"></param>
-        public Obj(string objPath, string mtlPath)
-        {
-            int error;
-            bool loaded;
-            LoadOBJ(objPath, out List<string> mtlNames, out _, out _, out string mtllib);
-            if (objPath != null)
-            {
-                loaded = LoadMTL
-                (
-                    $"{mtlPath}\\{mtllib}", mtlNames, out Materials, out error
-                );
-            }
-            else
-                loaded = LoadMTL
-                (
-                    null, mtlNames, out Materials, out error
-                );
-            if (!loaded)
-                ErrorLogic(error);
+            vertices = new();
+            indices = new();
         }
 
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override

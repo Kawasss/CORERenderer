@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CORERenderer.Loaders;
 using CORERenderer;
+using CORERenderer.Main;
 
 namespace CORERenderer.CRS
 {
@@ -20,24 +21,7 @@ namespace CORERenderer.CRS
         public List<Obj> allOBJs = new();
         private Dictionary<string, int> nameIDBinder = new();
 
-        public struct ObjectInstance //contains all the metadata for one object in the CRS directory
-        {
-            public ObjectInstance(FileStream csv, FileStream csi, string csvP, string csiP, int amountVerticeGroups, int amountIndiceGroups)
-            {
-                csvFile = csv;
-                csiFile = csi;
-                csvPath = csvP;
-                csiPath = csiP;
-                amountOfVerticeGroups = amountVerticeGroups;
-                amountOfIndiceGroups = amountIndiceGroups;
-            }
-            public FileStream csvFile;
-            public FileStream csiFile;
-            public string csvPath;
-            public string csiPath;
-            public int amountOfVerticeGroups;
-            public int amountOfIndiceGroups;
-        }
+        
         public List<ObjectInstance> allObjectInstances = new();
 
         CRS(string name, string path, string[] cstLines, FileStream cstFile)
@@ -64,5 +48,13 @@ namespace CORERenderer.CRS
             else
                 nameIDBinder.Add(allOBJs[0].name, nextUnusedID);   
         }
+
+        public static CRS LoadCRS(string path, string name)
+        {
+            if (Directory.Exists(path))
+                return ReadCRS(path);
+            else
+                return GenerateCRS(path, name);
+        } 
     }
 }

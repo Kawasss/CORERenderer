@@ -4,43 +4,27 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using COREMath;
+using CORERenderer.Loaders;
 
 namespace CORERenderer.CRS
 {
     public partial class CRS
     {
-        public static bool CheckCRS(string path)
-        { //checks the given path if the file is in the correct format etc.
-            if (!File.Exists(path))
-                return false;
-
-            List<int> nameFinder = new();
-            for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
-                nameFinder.Add(i);
-            string filename = path[(nameFinder[^1] + 1)..];
-
-            if (filename[^4..].ToLower() != ".crs")
-            {
-                Console.WriteLine($"invalid file {filename}");
-                return false;
-            }
-
-            return true;
-        }
-
         public static CRS ReadCRS(string path)
         {
-            if (!CheckCRS(path))
-                throw new Exception($"invalid file at {path}");
-
             //finds the name of the file from the given path
             List<int> temp = new();
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
                 temp.Add(i);
-            string name = path[(temp[^1] + 1)..path[^4]];
-            CRS newCRS = new(path, name, File.ReadAllLines($"{path}\\{name}.cst"), File.Create($"{path}\\{name}.cst"));
+            
+            string name = path[(temp[^1] + 1)..^4];
+
+            FileStream fileStream = File.OpenRead($"{path}\\{name}.cst");
+            fileStream.Close();
+            CRS newCRS = new(name, path, File.ReadAllLines($"{path}\\{name}.cst"), fileStream);
 
             //finds the amount of objects in the scene and the place of their information in the .cst file
             string[] allLines = File.ReadAllLines($"{path}\\{name}.cst");
@@ -48,7 +32,7 @@ namespace CORERenderer.CRS
             int amountOfObjects = 0;
             List<int> ObjectLocations = new();
             for (int i = 0; i < allLines.Length; i++)
-                if (allLines[i][0..4] == "<obj")
+                if (allLines[i].Length >= 4 && allLines[i][..4] == "<obj")
                 {
                     ObjectLocations.Add(i);
                     amountOfObjects++;
@@ -60,7 +44,7 @@ namespace CORERenderer.CRS
                 //gets all of the material names for the current obj file so that the mtl file can be read
                 string[] local = File.ReadAllLines($"{path}\\{i}.cv");
                 for (int j = 0; j < local.Length; j++)
-                    if (local[j] == "<vertices")
+                    if (local[j].Length > 2 && local[j][..2] == "<v")
                     {
                         int index = local[j].IndexOf("materialName = \"");
                         materialNames.Add(local[j][(index + 1)..local[j].IndexOf('"', index + 1)]); //maybe index + 1 if error?
@@ -78,7 +62,9 @@ namespace CORERenderer.CRS
                 {   //loops through all the vertices in a group / material and parses it to the current obj's vertice group
                     newCRS.allOBJs[i].vertices.Add(new());
                     for (int k = 0; k < group.Length; k++)
-                        newCRS.allOBJs[i].vertices[j].Add(float.Parse(group[k])); 
+                        if (group[k][0] != '<')
+                            newCRS.allOBJs[i].vertices[j].Add(float.Parse(group[k]));
+                        
                 }
                 //same as above, just with the indice groups
                 local = File.ReadAllLines($"{path}\\{i}.ci");
@@ -92,10 +78,13 @@ namespace CORERenderer.CRS
                 {
                     newCRS.allOBJs[i].indices.Add(new());
                     for (int k = 0; k < group.Length; k++)
-                        newCRS.allOBJs[i].indices[j].Add(uint.Parse(group[k]));
+                        if (group[k][0] != '<')
+                            newCRS.allOBJs[i].indices[j].Add(uint.Parse(group[k]));
                 }
             }
-            newCRS.nextUnusedID = amountOfObjects + 1; //sets the next unused id correctly given the amount of objects
+            for (int i = 0; i < newCRS.allOBJs.Count; i++)
+                newCRS.allOBJs[i].GenerateBuffers();
+            newCRS.nextUnusedID = amountOfObjects; //sets the next unused id correctly given the amount of objects
 
             return newCRS;
         }

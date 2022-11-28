@@ -26,7 +26,6 @@ namespace CORERenderer
 
         static bool loaded = false;
         static bool loadable = true;
-        static bool singleHighlighted = true;
         static bool canChange = true;
 
         static private uint vertexArrayObjectLightSource;
@@ -84,7 +83,7 @@ namespace CORERenderer
             camera = new Camera(new(0, 1, 5), Width / Height);
 
 
-            givenCRS = CRS.CRS.GenerateCRS("test");
+            givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
             //givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
 
 

@@ -15,17 +15,18 @@ namespace CORERenderer.CRS
 {
     public partial class CRS : EngineProperties
     {
-        public static CRS GenerateCRS(string name) //in future make it so that it takes requests for places to generate
+        public static CRS GenerateCRS(string path, string name) //in future make it so that it takes requests for places to generate
         {                                          //for now its in the main path of the renderer
-            string path = $"{CORERenderContent.pathRenderer}\\{name}.crs"; //!!change if directory can be asked
             string image = $"{path}\\folder.ico";
 
-            if (Directory.Exists(path)) //add option to read existing .crs
+            if (Directory.Exists($"{CORERenderContent.pathRenderer}\\{name}.crs")) //shouldnt be needed since LoadCRS() checks this but just in case
                 throw new Exception("file with given name already exists, cannot create new file");
 
             //creates directory for the files
             System.IO.Directory.CreateDirectory(path);
             File.SetAttributes(path, FileAttributes.System);
+
+            path = $"{CORERenderContent.pathRenderer}\\{name}.crs";
 
             //creates the file for the directory icon and writes the imaga data to it
             File.Create(image).Close();

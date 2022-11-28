@@ -1,4 +1,4 @@
-<vertices id = 0>
+<vertices id = "0" materialName = "c1200_2">
 0
 1,21579
 0,827834
@@ -137760,7 +137760,7 @@
 -0,4068
 -0,6682
 </vertices>
-<vertices id = 1>
+<vertices id = "1" materialName = "c1200_1">
 0
 1,734525
 0,679556
@@ -231986,7 +231986,7 @@
 0,0277
 -0,848
 </vertices>
-<vertices id = 2>
+<vertices id = "2" materialName = "c1200_0">
 0,580536
 1,401731
 1,087014
@@ -255436,7 +255436,7 @@
 -0,3065
 0,0663
 </vertices>
-<vertices id = 3>
+<vertices id = "3" materialName = "c1200_4">
 -0,291972
 1,532083
 -0,094239
@@ -287454,7 +287454,7 @@
 -0,0833
 -0,9729
 </vertices>
-<vertices id = 4>
+<vertices id = "4" materialName = "c1200_3">
 -0,048147
 1,380673
 1,058831
