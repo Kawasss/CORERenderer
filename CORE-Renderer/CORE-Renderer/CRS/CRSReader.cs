@@ -19,72 +19,16 @@ namespace CORERenderer.CRS
             List<int> temp = new();
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
                 temp.Add(i);
-            
+
             string name = path[(temp[^1] + 1)..^4];
 
             FileStream fileStream = File.OpenRead($"{path}\\{name}.cst");
             fileStream.Close();
             CRS newCRS = new(name, path, File.ReadAllLines($"{path}\\{name}.cst"), fileStream);
 
-            //finds the amount of objects in the scene and the place of their information in the .cst file
-            string[] allLines = File.ReadAllLines($"{path}\\{name}.cst");
-
-            int amountOfObjects = 0;
-            List<int> ObjectLocations = new();
-            for (int i = 0; i < allLines.Length; i++)
-                if (allLines[i].Length >= 4 && allLines[i][..4] == "<obj")
-                {
-                    ObjectLocations.Add(i);
-                    amountOfObjects++;
-                }
-
             List<string> materialNames = new();
-            for (int i = 0; i < amountOfObjects; i++)
-            {
-                //gets all of the material names for the current obj file so that the mtl file can be read
-                string[] local = File.ReadAllLines($"{path}\\{i}.cv");
-                for (int j = 0; j < local.Length; j++)
-                    if (local[j].Length > 2 && local[j][..2] == "<v")
-                    {
-                        int index = local[j].IndexOf("materialName = \"");
-                        materialNames.Add(local[j][(index + 1)..local[j].IndexOf('"', index + 1)]); //maybe index + 1 if error?
-                    }
-                newCRS.allOBJs.Add(new($"{path}\\{i}.mtl", materialNames));
 
-                //reads and writes all of the vertice values of one group per loop to the current Obj
-                string[] group;
-                if (i != ObjectLocations.Count - 1)
-                    group = local[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
-                else //does last object seperately because out of bounds error
-                    group = local[(ObjectLocations[i] + 1)..];
-
-                for (int j = 0; j < materialNames.Count; j++) //uses amount of materials since its material has its own vertice group
-                {   //loops through all the vertices in a group / material and parses it to the current obj's vertice group
-                    newCRS.allOBJs[i].vertices.Add(new());
-                    for (int k = 0; k < group.Length; k++)
-                        if (group[k][0] != '<')
-                            newCRS.allOBJs[i].vertices[j].Add(float.Parse(group[k]));
-                        
-                }
-                //same as above, just with the indice groups
-                local = File.ReadAllLines($"{path}\\{i}.ci");
-
-                if (i != ObjectLocations.Count - 1)
-                    group = local[(ObjectLocations[i] + 1)..(ObjectLocations[i + 1] - 1)]; //maybe ObjectLocations[i] + 1 if error?
-                else
-                    group = local[(ObjectLocations[i] + 1)..];
-
-                for (int j = 0; j < materialNames.Count; j++)
-                {
-                    newCRS.allOBJs[i].indices.Add(new());
-                    for (int k = 0; k < group.Length; k++)
-                        if (group[k][0] != '<')
-                            newCRS.allOBJs[i].indices[j].Add(uint.Parse(group[k]));
-                }
-            }
-            for (int i = 0; i < newCRS.allOBJs.Count; i++)
-                newCRS.allOBJs[i].GenerateBuffers();
-            newCRS.nextUnusedID = amountOfObjects; //sets the next unused id correctly given the amount of objects
+            
 
             return newCRS;
         }

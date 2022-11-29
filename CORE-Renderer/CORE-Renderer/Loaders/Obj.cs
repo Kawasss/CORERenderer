@@ -17,7 +17,7 @@ namespace CORERenderer.Loaders
         public List<List<float>> vertices;
         public List<List<uint>> indices;
 
-        public readonly List<Material> Materials;
+        public List<Material> Materials;
 
         private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 

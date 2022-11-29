@@ -49,224 +49,196 @@ namespace CORERenderer.Loaders
 
             List<Vector2> UVCoordinates = new();
 
-            List<string> usemtls = new();
-            
-            List<string> oValues = new();
             List<string> sValues = new();
-
-            List<int> oPositions = new();
-            List<string[]> oData = new();
-
-            List<int> bindings = new();
 
             mtlNames = new();
 
-            string[] file = File.ReadAllLines(path);
-
             mtllib = "None"; //not null for later mtl use
-            for (int i = 0; i < file.Length; i++)
-            {
-                if (file[i].Contains("mtllib"))
-                    mtllib = file[i][7..];
-            }
 
             List<string> unreadableLines = new();
 
             bool withTextures = true;
 
             //Console.WriteLine($"Reading {filename}:");
-            
-
-            for (int i = 0; i < file.Length; i++)
-            {
-                if (file[i][0..2] == "o ")
-                {
-                    oValues.Add(file[i][2..Length(file[i])]);
-                    oPositions.Add(Array.FindIndex(file, z => z == file[i])); //maybe change to just oPositions.Add(i), test first tho
-                }
-            }
-
-            if (oPositions.Count > 0)
-            {
-                for (int i = 0; i < oPositions.Count - 1; i++)
-                    oData.Add(file[oPositions[i]..oPositions[i + 1]]);
-                oData.Add(file[oPositions[^1]..]);
-            }
-            else
-            {
-                oData.Add(file);
-            }
 
             int aa = 0;
             outVertices = new();
             Dictionary<string, int> indiceBinder = new();
-            for (int i = 0; i < oData.Count; i++)
+
+            using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (BufferedStream bs = new(fs))
+            using (StreamReader sr = new(bs))
             {
-                outIndices.Add(new List<uint>());
-                outVertices.Add(new List<float>());
-                for (int j = 0; j < oData[i].Length; j++)
+                int currentgroup = -1; //becomes 0 when the first object is found, remains -1 so that it can be detected if it doesnt use objects
+                for (string n = sr.ReadLine(); n != null; n = sr.ReadLine())
                 {
-                    if (oData[i][j].Length > 3)
+                    if (n.Length < 2)
+                        n = "  ";
+                    switch (n[0..2])
                     {
-                        string n = oData[i][j][..Length(oData[i][j])]; //removes all commentary and improves readability a lot
-                        if (n.Length < 2)
-                            n = "  ";
-                        switch (n[0..2])
-                        {
-                            case "  ": //empty lines
-                                break;
+                        case "  ": //empty lines
+                            break;
 
-                            case "v ": //vector
-                                int[] localV = new int[4];
-                                int z = 0;
-                                for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), z++)
-                                    localV[z] = k;
-                                vertices.Add(
-                                 new(
-                                     n[localV[0]..localV[1]],
-                                     n[localV[1]..localV[2]],
-                                     n[localV[2]..]
-                                    ));
-                                break;
+                        case "o ":
+                            outIndices.Add(new());
+                            outVertices.Add(new());
+                            currentgroup++;
+                            break;
 
-                            case "vn": //vector normal
-                                int[] localVn = new int[4];
-                                int y = 0;
-                                for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), y++)
-                                    localVn[y] = k;
-                                normals.Add(
-                                    new(
-                                            n[localVn[0]..localVn[1]],
-                                            n[localVn[1]..localVn[2]],
-                                            n[localVn[2]..]
-                                       ));
-                                break;
+                        case "mt":
+                            mtllib = n[7..];
+                            break;
 
-                            case "vt": //UV coordinates
-                                int[] localVt = new int[3];
-                                int holder = n.IndexOf(" ");
-                                //finds and adds the 2 texture coordinates by the 2 spaces surrounding it
-                                UVCoordinates.Add(
-                                 new(
-                                        n[holder..n.IndexOf(" ", holder + 1)],
-                                        n[n.IndexOf(" ", holder + 1)..]
-                                    ));
-                                break;
+                        case "v ": //vector
+                            int[] localV = new int[4];
+                            int z = 0;
+                            for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), z++)
+                                localV[z] = k;
+                            vertices.Add(
+                             new(
+                                 n[localV[0]..localV[1]],
+                                 n[localV[1]..localV[2]],
+                                 n[localV[2]..]
+                                ));
+                            break;
 
-                            case "s ": //s value
-                                sValues.Add(n[2..]);
-                                break;
+                        case "vn": //vector normal
+                            int[] localVn = new int[4];
+                            int y = 0;
+                            for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), y++)
+                                localVn[y] = k;
+                            normals.Add(
+                                new(
+                                        n[localVn[0]..localVn[1]],
+                                        n[localVn[1]..localVn[2]],
+                                        n[localVn[2]..]
+                                   ));
+                            break;
 
-                            case "us": //usemtl (maybe better way?)
-                                mtlNames.Add(n[7..]); //"usemtl " is 7 chars long
-                                break;
+                        case "vt": //UV coordinates
+                            int[] localVt = new int[3];
+                            int holder = n.IndexOf(" ");
+                            //finds and adds the 2 texture coordinates by the 2 spaces surrounding it
+                            UVCoordinates.Add(
+                             new(
+                                    n[holder..n.IndexOf(" ", holder + 1)],
+                                    n[n.IndexOf(" ", holder + 1)..]
+                                ));
+                            break;
 
-                            case "f ": //v / vn / vt indicator
-                                List<int> local = new();
-                                List<int> local2 = new();
-                                List<string> local3 = new();
+                        case "s ": //s value
+                            sValues.Add(n[2..]);
+                            break;
 
-                                //code below isolates the indices into ../../.. then by / so the uint value remains
-                                for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1))
-                                    local.Add(k);
+                        case "us": //usemtl (maybe better way?)
+                            mtlNames.Add(n[7..]); //"usemtl " is 7 chars long
+                            break;
 
-                                //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
-                                for (int k = 0; k < local.Count - 1; k++)
-                                    local3.Add(n[(local[k] + 1)..local[k + 1]]);
-                                local3.Add(n[(local[^1] + 1)..]);
+                        case "f ": //v / vn / vt indicator
+                            if (currentgroup == -1)
+                            {
+                                outIndices.Add(new());
+                                outVertices.Add(new());
+                                currentgroup = 0;
+                            }
+                            int i = currentgroup; //improves readability
 
-                                //isolates each int from local ( ../../.. ) and parses it
-                                foreach (string s in local3)
+                            List<int> local = new();
+                            List<int> local2 = new();
+                            List<string> local3 = new();
+
+                            //code below isolates the indices into ../../.. then by / so the uint value remains
+                            for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1))
+                                local.Add(k);
+
+                            //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
+                            for (int k = 0; k < local.Count - 1; k++)
+                                local3.Add(n[(local[k] + 1)..local[k + 1]]);
+                            local3.Add(n[(local[^1] + 1)..]);
+
+                            //isolates each int from local ( ../../.. ) and parses it
+                            foreach (string s in local3)
+                            {
+                                if (s.Contains('/'))
                                 {
-                                    if (s.Contains('/'))
+                                    local2 = new();
+                                    //gets all of the index surrounding the ints, making them parsable
+                                    for (int k = s.IndexOf("/"); k > -1; k = s.IndexOf("/", k + 1))
+                                        local2.Add(k);
+
+                                    if (local2[0] == local2[1] - 1)
+                                        withTextures = false;
+
+                                    for (int l = 0; l < 3; l++)
+                                        outVertices[i].Add(vertices[int.Parse(s[..local2[0]], CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                    if (withTextures)
                                     {
-                                        local2 = new();
-                                        //gets all of the index surrounding the ints, making them parsable
-                                        for (int k = s.IndexOf("/"); k > -1; k = s.IndexOf("/", k + 1))
-                                            local2.Add(k);
-                                        
-                                        if (local2[0] == local2[1] - 1)
-                                            withTextures = false;
+                                        outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].x);
+                                        outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].y);
 
                                         for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(vertices[int.Parse(s[..local2[0]], CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                        if (withTextures)
-                                        {
-                                            outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].x);
-                                            outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].y);
-
-                                            for (int l = 0; l < 3; l++)
-                                                outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                        }
-                                        else if (!withTextures)
-                                        {
-                                            outVertices[i].Add(0);
-                                            outVertices[i].Add(0);
-
-                                            for (int l = 0; l < 3; l++)
-                                                outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                        }   
+                                            outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
                                     }
+                                    else if (!withTextures)
+                                    {
+                                        outVertices[i].Add(0);
+                                        outVertices[i].Add(0);
+
+                                        for (int l = 0; l < 3; l++)
+                                            outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                    }
+                                }
+                                else
+                                {
+                                    for (int l = 0; l < 3; l++)
+                                        outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                    for (int l = 0; l < 5; l++)
+                                        outVertices[i].Add(0);
+                                }
+
+                                if (!indiceBinder.ContainsKey(s))
+                                {
+                                    if (i == 0)
+                                        indiceBinder.Add(s, aa);
                                     else
-                                    {
-                                        for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                        for (int l = 0; l < 5; l++)
-                                            outVertices[i].Add(0);
-                                    }
-
-                                    if (!indiceBinder.ContainsKey(s))
-                                    {
-                                        if (i == 0)
-                                            indiceBinder.Add(s, aa);
-                                        else
-                                            indiceBinder.Add(s, aa);
-                                    }
-                                    aa++;
+                                        indiceBinder.Add(s, aa);
                                 }
-                                if (local3.Count == 3)
-                                {
-                                    for (int k = 0; k < local3.Count; k++)
+                                aa++;
+                            }
+                            if (local3.Count == 3)
+                            {
+                                for (int k = 0; k < local3.Count; k++)
                                     outIndices[i].Add((uint)indiceBinder[local3[k]]);
-                                }
-                                else if (local3.Count == 4)
-                                {
-                                    /*outIndices[i].Add((uint)indiceBinder[local3[0]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[1]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[3]]);
+                            }
+                            else if (local3.Count == 4)
+                            {
+                                /*outIndices[i].Add((uint)indiceBinder[local3[0]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[1]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[3]]);
 
-                                    for (int k = 1; k < local3.Count; k++)
-                                        outIndices[i].Add((uint)indiceBinder[local3[k]]);*/
+                                for (int k = 1; k < local3.Count; k++)
+                                    outIndices[i].Add((uint)indiceBinder[local3[k]]);*/
 
-                                    // the commentary above can also be used, it just changes what order the triangles are drawn in
-                                    // if deciding on better looking good, definitely the one above, but this is just the alpha
-                                    outIndices[i].Add((uint)indiceBinder[local3[0]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[1]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[2]]);
+                                // the commentary above can also be used, it just changes what order the triangles are drawn in
+                                // if deciding on better looking good, definitely the one above, but this is just the alpha
+                                outIndices[i].Add((uint)indiceBinder[local3[0]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[1]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[2]]);
 
-                                    outIndices[i].Add((uint)indiceBinder[local3[0]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[2]]);
-                                    outIndices[i].Add((uint)indiceBinder[local3[3]]); 
-                                }
+                                outIndices[i].Add((uint)indiceBinder[local3[0]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[2]]);
+                                outIndices[i].Add((uint)indiceBinder[local3[3]]);
+                            }
+                            break;
+
+                        default:
+                            if (n[0] == '#')
                                 break;
-
-                            default:
-                                if (oData[i][j][0] == '#')
-                                    break;
-                                if (oData[i][j][..2] == "o ")
-                                    break;
-                                unreadableLines.Add(n);
-                                break;
-                        }
+                            unreadableLines.Add(n);
+                            break;
                     }
                 }
             }
-            file = Array.Empty<string>();
-            indiceBinder = new();
-            UVCoordinates = new();
-            vertices = new();
-            normals = new();
-            oData = new();
             if (unreadableLines.Count > 0)
                 Console.WriteLine($" Couldn't read {unreadableLines.Count} lines in {filename}");
 
