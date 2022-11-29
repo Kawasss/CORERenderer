@@ -32,7 +32,7 @@ namespace CORERenderer.Loaders
                 temp.Add(i);
             string filename = path[(temp[^1] + 1)..];
 
-            if (path[(path.Length - 4)..] != ".obj" && path[(path.Length - 4)..] != ".OBJ")
+            if (path[^4..].ToLower() != ".obj")
             {
                 outVertices = new();
                 outIndices = new();
@@ -59,7 +59,7 @@ namespace CORERenderer.Loaders
 
             bool withTextures = true;
 
-            //Console.WriteLine($"Reading {filename}:");
+            Console.WriteLine($"Reading {filename}:");
 
             int aa = 0;
             outVertices = new();
@@ -220,7 +220,7 @@ namespace CORERenderer.Loaders
                                     outIndices[i].Add((uint)indiceBinder[local3[k]]);*/
 
                                 // the commentary above can also be used, it just changes what order the triangles are drawn in
-                                // if deciding on better looking good, definitely the one above, but this is just the alpha
+                                // if deciding on better looking code, definitely the one above, but functionality wise no difference
                                 outIndices[i].Add((uint)indiceBinder[local3[0]]);
                                 outIndices[i].Add((uint)indiceBinder[local3[1]]);
                                 outIndices[i].Add((uint)indiceBinder[local3[2]]);
@@ -242,9 +242,9 @@ namespace CORERenderer.Loaders
             if (unreadableLines.Count > 0)
                 Console.WriteLine($" Couldn't read {unreadableLines.Count} lines in {filename}");
 
-            //Console.WriteLine($"finished reading {filename}");
+            Console.WriteLine($"finished reading {filename}");
 
-            //Console.WriteLine();
+            Console.WriteLine();
 
             return true;
         }

@@ -52,9 +52,15 @@ namespace CORERenderer.CRS
         public static CRS LoadCRS(string path, string name)
         {
             if (Directory.Exists(path))
+            {
+                Console.WriteLine("Found file, reading..");
                 return ReadCRS(path);
+            }
             else
+            {
+                Console.WriteLine("Creating new file..");
                 return GenerateCRS(path, name);
+            }
         } 
     }
 }
