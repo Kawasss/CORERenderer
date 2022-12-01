@@ -56,7 +56,7 @@ namespace CORERenderer.CRS
             FileStream cst = File.Create($"{path}\\{name}.cst");//CoreSceneTransformations
             cst.Close();
 
-            return new(name, path, File.ReadAllLines($"{path}\\{name}.cst"), cst);
+            return new(name, path, cst);
         }
 
         public void CSTAddObj(string pathToOBJ)
@@ -74,8 +74,7 @@ namespace CORERenderer.CRS
                $"""
                 <obj id = "{nextUnusedID}">
                     name = {objName};
-                    vertices = {nextUnusedID}.cv;
-                    indices = {nextUnusedID}.ci;
+                    objFile = {nextUnusedID}.obj;
                     mtllib = {nextUnusedID}.mtl;
                     scale = 1.0;
                     translation = 0.0, 0.0, 0.0;
@@ -87,47 +86,26 @@ namespace CORERenderer.CRS
 
             using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                 sw.WriteLine(addOBJ);
-            this.cstLines = File.ReadAllLines($"{path}\\{name}.cst");
 
             //creates the vertices and indices files
             FileStream csvFile = File.Create($"{path}\\{nextUnusedID}.cv");
             FileStream csiFile = File.Create($"{path}\\{nextUnusedID}.ci");
 
-            Obj newOBJ = new(pathToOBJ);
+            allOBJs.Add(new(pathToOBJ));
 
-            //creates the mtl file bound to the object, saving all the mtl data to a new file like the vertices and indices is too much effort for the efficiency it gives
+            //creates the mtl file bound to the object
             File.Create($"{path}\\{nextUnusedID}.mtl").Close();
-            File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{newOBJ.mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
+            File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{allOBJs[^1].mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
 
-            this.allObjectInstances.Add(new(csvFile, csiFile, $"{path}\\{nextUnusedID}.cv", $"{path}\\{nextUnusedID}.ci", newOBJ.vertices.Count, newOBJ.indices.Count));
+            File.Create($"{path}\\{nextUnusedID}.obj").Close();
+            File.Copy($"{pathToOBJ}", $"{path}\\{nextUnusedID}.obj", true);
 
-            //writes all the vertice and indice values to their respective files
-            using (StreamWriter sw = new StreamWriter(csvFile))
-            {   //writes all the vertices and indices, with each object or "o" in the obj file being seperate by "</vertices>" or "</indices>"
-                using (StreamWriter sw1 = new(csiFile))
-                {
-                    for (int i = 0; i < newOBJ.vertices.Count; i++)
-                    {
-                        sw.Write($"<vertices id = \"{i}\" materialName = \"{newOBJ.Materials[i].Name}\">\n");
-                        for (int j = 0; j < newOBJ.vertices[i].Count; j++)
-                            sw.Write($"{newOBJ.vertices[i][j]}\n");
-                        sw.Write("</vertices>\n");
-                    }
+            this.allObjectInstances.Add(new(csvFile, csiFile, $"{path}\\{nextUnusedID}.obj", allOBJs[^1].vertices.Count, allOBJs[^1].indices.Count));
 
-                    for (int i = 0; i < newOBJ.indices.Count; i++)
-                    {
-                        sw1.Write($"<indices id = \"{i}\">\n");
-                        for (int j = 0; j < newOBJ.indices[i].Count; j++)
-                            sw1.Write($"{newOBJ.indices[i][j]}\n");
-                        sw1.Write($"</indices>\n");
-                    }
-                }  
-            }
-            allOBJs.Add(newOBJ);
             this.UpdateIDs();
         }
 
-        public void SaveChanges()
+        public void SaveChanges() //only works with object modifications, not with objects themselves
         {   //creates a local string to save all changes to which will then be written to an empty version of the .cst file
             string local0 = string.Empty;
             using (FileStream filestream = File.Open($"{path}\\{name}.cst", FileMode.Open))
@@ -140,8 +118,7 @@ namespace CORERenderer.CRS
                 $"""
                 <obj id = "{i}">
                     name = {allOBJs[i].name};
-                    vertices = {i}.cv;
-                    indices = {i}.ci;
+                    objFile = {i}.obj;
                     mtllib = {i}.mtl;
                     scale = {allOBJs[i].Scaling};
                     translation = {allOBJs[i].translation.x}, {allOBJs[i].translation.y}, {allOBJs[i].translation.z};
@@ -154,7 +131,6 @@ namespace CORERenderer.CRS
             }
             using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                 sw.WriteLine(local0);
-            this.cstLines = File.ReadAllLines($"{path}\\{name}.cst");
 
             Console.Write("\rSaved changes                                               \n");
         }

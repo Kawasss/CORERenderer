@@ -274,23 +274,19 @@ namespace CORERenderer
             canChange = false;
             called = 0;
             currentObj++;
-            if (currentObj >= givenCRS.allOBJs.Count)
+            if (currentObj >= givenCRS.allOBJs.Count - 1)
             {
                 currentObj = 0;
-
                 givenCRS.allOBJs[^1].highlighted = false;
-                givenCRS.allOBJs[currentObj].highlighted = true;
-                
+
             }
             else if (givenCRS.allOBJs.Count > 1)
-            {
                 givenCRS.allOBJs[currentObj - 1].highlighted = false;
-                givenCRS.allOBJs[currentObj].highlighted = true;
-            }
+
             givenCRS.allOBJs[currentObj].highlighted = true;
         }
 
-        //zoom in or out !!Unused due to new architecture
+        //zoom in or out
         public void ScrollCallback(Window window, double x, double y)
         {
             CORERenderContent.camera.Fov -= (float)y * 1.5f;

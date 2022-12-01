@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Transactions;
 using System.Security.Cryptography;
 using System.Drawing;
+using System.Xml.Linq;
 
 namespace CORERenderer.Loaders
 {
@@ -58,15 +59,7 @@ namespace CORERenderer.Loaders
 
             materials = new();
             List<Material> tempMtl = new();
-
-            List<string> materialNames = new();
-
-            List<Vector3> emissiveCoefficient = new(); //unused
-
-            List<int> mtlPositions = new();
-            List<string[]> mtlData = new();
-
-            Dictionary<string, int> materialOrder = new();
+            Material material = new();
 
             if ((path[(path.Length - 4)..] != ".mtl" && path[(path.Length - 4)..] != ".MTL") || !File.Exists(path))
             {
@@ -76,33 +69,17 @@ namespace CORERenderer.Loaders
                 return false;
             }
 
+            bool firstMTLPassed = false;
+
             List<string> unreadableLines = new();
 
-            string[] file = File.ReadAllLines(path);
-
-            for (int i = 0; i < file.Length; i++)
-                if (file[i].Length > 5 && file[i][0..6] == "newmtl")
-                    mtlPositions.Add(Array.FindIndex(file, z => z == file[i])); //maybe change to just mtlPositions.Add(i), test first tho
-            //adds all of the data of one material into an array
-            for (int i = 0; i < mtlPositions.Count - 1; i++)
-                mtlData.Add(file[mtlPositions[i]..mtlPositions[i + 1]]);
-            mtlData.Add(file[mtlPositions[^1]..]);
-
-
-            if (mtlData.Count == 0)
+            using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (BufferedStream bs = new(fs))
+            using (StreamReader sr = new(bs))
             {
-                materials.Add(new());
-                error = 0;
-                return false;
-            }
-
-            for (int k = 0; k < mtlData.Count; k++)
-            {
-                Material material = new();
-                for (int j = 0; j < mtlData[k].Length; j++)
+                for (string n = sr.ReadLine(); n != null; n = sr.ReadLine())
                 {
-                    string n = mtlData[k][j][..Length(mtlData[k][j])];
-                    if (n.Length == 0) //removes empty lines so that errors arent produced later on
+                    if (n.Length < 2) //removes empty lines so that errors arent produced later on
                         n = "  ";
                     switch (n[0..2])
                     {
@@ -110,7 +87,11 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "ne": //newmtl
-                            material.Name = n[7..];
+                            if (!firstMTLPassed)
+                                firstMTLPassed = true; //if its the first material dont add the current material, because that one is empty
+                            else
+                                tempMtl.Add(material);
+                            material = new() {Name = n[7..]};
                             break;
 
                         case "Ns": //shininess
@@ -120,27 +101,21 @@ namespace CORERenderer.Loaders
                         case "Ka": //ambient
                             List<int> local1 = new(); //isolates all 3 values with the spaces inbetween them
                             for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                            {
                                 local1.Add(i);
-                            }
                             material.Ambient = GetVector3(n[local1[0]..local1[1]], n[local1[1]..local1[2]], n[local1[^1]..Length(n)]);
                             break;
 
                         case "Ks": //specular
                             List<int> local2 = new(); //isolates all 3 values with the spaces inbetween them
                             for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                            {
                                 local2.Add(i);
-                            }
                             material.Specular = GetVector3(n[local2[0]..local2[1]], n[local2[1]..local2[2]], n[local2[^1]..Length(n)]);
                             break;
 
                         case "Ke": //emissive coefficient //currently unused
                             List<int> local3 = new(); //isolates all 3 values with the spaces inbetween them
                             for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                            {
                                 local3.Add(i);
-                            }
                             material.EmissiveCoefficient = GetVector3(n[local3[0]..local3[1]], n[local3[1]..local3[2]], n[local3[^1]..Length(n)]);
                             break;
 
@@ -192,12 +167,12 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < mtlNames.Count; i++)
                 for (int j = 0; j < tempMtl.Count; j++)
                     if (mtlNames[i] == tempMtl[j].Name)
-                        materials.Add(tempMtl[j]);
-            tempMtl = new();
-
-            materialOrder = new();
-
+                        materials.Add(tempMtl[j]); 
+            Console.WriteLine(materials.Count); //debug
             error = 1;
+
+            for (int i = 0; i < 100000; i++) //debug
+                Console.Write("\rstalling...");
             return true;
         }
     }

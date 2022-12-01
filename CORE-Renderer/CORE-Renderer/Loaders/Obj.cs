@@ -145,7 +145,7 @@ namespace CORERenderer.Loaders
             {
                 Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
-                
+
                 glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);

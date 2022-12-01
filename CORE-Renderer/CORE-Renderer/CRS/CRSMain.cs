@@ -15,8 +15,6 @@ namespace CORERenderer.CRS
         public string path = null;
         public int nextUnusedID;
         public FileStream cstFile;
-        
-        private string[] cstLines;
 
         public List<Obj> allOBJs = new();
         private Dictionary<string, int> nameIDBinder = new();
@@ -24,12 +22,11 @@ namespace CORERenderer.CRS
         
         public List<ObjectInstance> allObjectInstances = new();
 
-        CRS(string name, string path, string[] cstLines, FileStream cstFile)
+        CRS(string name, string path, FileStream cstFile)
         {   //sets all the CRS information
             this.name = name;
             this.path = path;
             this.cstFile = cstFile;
-            this.cstLines = cstLines;
             nextUnusedID = 0;
         }
 

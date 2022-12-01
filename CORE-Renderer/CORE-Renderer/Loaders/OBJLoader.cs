@@ -245,7 +245,9 @@ namespace CORERenderer.Loaders
             Console.WriteLine($"finished reading {filename}");
 
             Console.WriteLine();
-
+            Console.WriteLine(mtlNames.Count);
+            for (int i = 0; i < 100000; i++) //debug
+                Console.Write("\rstalling...");
             return true;
         }
     }
