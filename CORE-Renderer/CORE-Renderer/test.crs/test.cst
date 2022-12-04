@@ -19,3 +19,13 @@ rotateY = 0;
 rotateZ = 0;
 </obj>
 
+<obj id = "2">
+name = c4520;
+objFile = 2.obj;
+mtllib = 2.mtl;
+scale = 1.0;
+translation = 0.0, 0.0, 0.0;
+rotateX = 0.0;
+rotateY = 0.0;
+rotateZ = 0.0;
+</obj>

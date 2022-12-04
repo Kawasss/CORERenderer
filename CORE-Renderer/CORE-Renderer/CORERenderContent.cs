@@ -104,8 +104,6 @@ namespace CORERenderer
             for (int i = 0; i < givenCRS.allOBJs.Count; i++)
             {
                 givenCRS.allOBJs[i].Render(camera);
-                if (GetError() != GL_NO_ERROR)
-                    Console.WriteLine(GetError());
             }
 
             //assigns all the values for placement of the light source

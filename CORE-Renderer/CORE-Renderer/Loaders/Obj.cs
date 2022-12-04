@@ -164,6 +164,12 @@ namespace CORERenderer.Loaders
             if (rotationZ >= 360)
                 rotationZ = 0;
 
+            shader.SetMatrix("model", Matrix.IdentityMatrix
+                      * new Matrix(Scaling, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
+
             for (int i = 0; i < Materials.Count; i++)
             {
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject[i]); //moving this to line 185 renders the first buffer, placing it here renders a different buffer (???)
@@ -175,13 +181,6 @@ namespace CORERenderer.Loaders
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
                 shader.SetInt("material.specular", GL_TEXTURE1);
-
-                
-                shader.SetMatrix("model", Matrix.IdentityMatrix
-                      * new Matrix(Scaling, translation)
-                      * (MathC.GetRotationXMatrix(rotationX)
-                      * MathC.GetRotationYMatrix(rotationY)
-                      * MathC.GetRotationZMatrix(rotationZ)));
 
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
             } 
