@@ -52,6 +52,7 @@ uniform Material material;
 
 uniform vec3 viewPos;
 uniform int highlighted;
+uniform float distanceObject;
 
 in vec2 TexCoords;
 

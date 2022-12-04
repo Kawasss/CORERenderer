@@ -71,7 +71,7 @@ namespace CORERenderer
 
         public Matrix GetProjectionMatrix()
         {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.1f, 100f);
+            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.01f, 100f);
         }
 
         public Matrix GetViewMatrix()

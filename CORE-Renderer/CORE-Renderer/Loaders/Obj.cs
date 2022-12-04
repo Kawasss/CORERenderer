@@ -141,9 +141,9 @@ namespace CORERenderer.Loaders
             //spotLight
             shader.SetVector3("spotLight.position", camera.position);
             shader.SetVector3("spotLight.direction", camera.front);
-            shader.SetVector3("spotLight.ambient", 0.2f, 0.2f, 0.2f);
-            shader.SetVector3("spotLight.diffuse", 0.5f, 0.5f, 0.5f);
-            shader.SetVector3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+            shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.specular", 0.0f, 0.0f, 0.0f);
             shader.SetFloat("spotLight.constant", 1.0f);
             shader.SetFloat("spotLight.linear", 0.09f);
             shader.SetFloat("spotLight.quadratic", 0.032f);
@@ -169,7 +169,7 @@ namespace CORERenderer.Loaders
                 Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
 
-                glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject[i]);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
