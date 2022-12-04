@@ -166,10 +166,11 @@ namespace CORERenderer.Loaders
 
             for (int i = 0; i < Materials.Count; i++)
             {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject[i]); //moving this to line 185 renders the first buffer, placing it here renders a different buffer (???)
+                glBindVertexArray(GeneratedVAOs[i]);
+
                 Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject[i]);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
@@ -182,7 +183,6 @@ namespace CORERenderer.Loaders
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
 
-                glBindVertexArray(GeneratedVAOs[i]);
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
             } 
         }

@@ -1,21 +1,21 @@
 <obj id = "0">
-name = c4520;
+name = PLACEHOLDER;
 objFile = 0.obj;
 mtllib = 0.mtl;
 scale = 1;
-translation = 0.055313703, 0.101126015, 0;
+translation = 0.718198, 0.765111, 0;
+rotateX = 0;
+rotateY = 0;
+rotateZ = 0;
+</obj>
+<obj id = "1">
+name = PLACEHOLDER;
+objFile = 1.obj;
+mtllib = 1.mtl;
+scale = 1;
+translation = -0.19882585, -0.07311139, 0;
 rotateX = 0;
 rotateY = 0;
 rotateZ = 0;
 </obj>
 
-<obj id = "1">
-name = c4520;
-objFile = 1.obj;
-mtllib = 1.mtl;
-scale = 1.0;
-translation = 0.0, 0.0, 0.0;
-rotateX = 0.0;
-rotateY = 0.0;
-rotateZ = 0.0;
-</obj>
