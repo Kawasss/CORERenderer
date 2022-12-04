@@ -15,7 +15,7 @@ using System.Xml.Linq;
 
 namespace CORERenderer.Loaders
 {
-    public partial class Readers
+    public partial class Readers : LoaderDebug
     {
         private static int Length(string s1) 
         { 
@@ -135,18 +135,26 @@ namespace CORERenderer.Loaders
                             switch (n[0..6])
                             {
                                 case "map_Kd":
-                                    material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
+                                    if (!n.Contains("  "))
+                                        material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    else 
+                                        material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
                                     break;
                                 case "map_d ":
-                                    material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[6..Length(n)]}");
+                                    if (!n.Contains("  "))
+                                        material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    else
+                                        material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
                                     break;
                                 case "map_Ks":
-                                    material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[7..Length(n)]}");
-                                    break;
-                                case "map_Bu": //bump map
-                                    Console.WriteLine($"Unsupported map type: Bump map at {n}");
+                                    if (!n.Contains("  "))
+                                        material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    else
+                                        material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
                                     break;
                                 default:
+                                    if (LoaderDebug.showErrors)
+                                        Console.WriteLine($"Unsupported map type: {n[..n.IndexOf(' ')]} at {n}");
                                     unreadableLines.Add(n);
                                     break;
                             }
@@ -161,18 +169,16 @@ namespace CORERenderer.Loaders
                 }
                 tempMtl.Add(material);
             }
-            Console.WriteLine($"Couldnt read {unreadableLines.Count} lines");
+            if (unreadableLines.Count > 0)
+                Console.WriteLine($"Couldnt read {unreadableLines.Count} lines");
 
             //puts the materials in the correct of first being called
             for (int i = 0; i < mtlNames.Count; i++)
                 for (int j = 0; j < tempMtl.Count; j++)
                     if (mtlNames[i] == tempMtl[j].Name)
                         materials.Add(tempMtl[j]); 
-            Console.WriteLine(materials.Count); //debug
             error = 1;
 
-            for (int i = 0; i < 100000; i++) //debug
-                Console.Write("\rstalling...");
             return true;
         }
     }

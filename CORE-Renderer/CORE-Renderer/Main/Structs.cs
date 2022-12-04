@@ -13,16 +13,12 @@ namespace CORERenderer.Main
     /// </summary>
     public struct ObjectInstance 
     {
-        public ObjectInstance(FileStream csv, FileStream csi, string objP, int amountVerticeGroups, int amountIndiceGroups)
+        public ObjectInstance(string objP, int amountVerticeGroups, int amountIndiceGroups)
         {
-            csvFile = csv;
-            csiFile = csi;
             objPath = objP;
             amountOfVerticeGroups = amountVerticeGroups;
             amountOfIndiceGroups = amountIndiceGroups;
         }
-        public FileStream csvFile;
-        public FileStream csiFile;
         public string objPath;
         public int amountOfVerticeGroups;
         public int amountOfIndiceGroups;

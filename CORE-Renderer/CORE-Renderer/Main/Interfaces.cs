@@ -9,6 +9,11 @@ namespace CORERenderer.Main
         public static int maxFPS = 1000;
     }
 
+    public interface LoaderDebug
+    {
+        public static bool showErrors = false;
+    }
+
     /// <summary>
     /// contains all methods for working with the engine properties
     /// </summary>

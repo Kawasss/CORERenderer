@@ -30,7 +30,7 @@ namespace CORERenderer.textures
 
             if (!File.Exists(imagePath))
             {
-                Console.WriteLine("Couldnt find given texture, using default texture");
+                Console.WriteLine($"Couldnt find given texture at {imagePath}, using default texture");
                 imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
             }
 
@@ -67,4 +67,4 @@ namespace CORERenderer.textures
             glBindTexture(GL_TEXTURE_2D, Handle);
         }
     }
-}
+} 

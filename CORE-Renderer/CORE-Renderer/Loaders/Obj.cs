@@ -41,12 +41,11 @@ namespace CORERenderer.Loaders
         public Obj(string path)
         {
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
-            _ = LoadOBJ(null, out _, out _, out _, out _);
 
             int error;
             if (!loaded)
                 throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
-            if (path != null)
+            if (path != null || !File.Exists(path))
             {
                 List<int> temp = new();
 
@@ -85,14 +84,29 @@ namespace CORERenderer.Loaders
             Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
         }
 
-        public Obj(string mtlPath, List<string> mtlNames)
+        public Obj(string objPath, string mtlPath)
         {
-            bool loaded = LoadMTL(mtlPath, mtlNames, out Materials, out int error);
+            bool loaded = LoadOBJ(objPath, out List<string> mtlNames, out vertices, out indices, out mtllib);
+
+            int error;
+            if (!loaded)
+                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
+            if (objPath != null || !File.Exists(objPath))
+                loaded = LoadMTL(mtlPath, mtlNames, out Materials, out error);
+            else
+                loaded = LoadMTL
+                    (
+                        null, mtlNames, out Materials, out error
+                    );
             if (!loaded)
                 ErrorLogic(error);
 
-            vertices = new();
-            indices = new();
+            /*if (Materials.Count > 0)
+            {
+                Materials[0].Texture.Use(GL_TEXTURE0);
+                Materials[0].SpecularMap.Use(GL_TEXTURE1);
+            }*/
+            GenerateBuffers();
         }
 
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
@@ -141,6 +155,15 @@ namespace CORERenderer.Loaders
 
             shader.SetBool("highlighted", highlighted);
 
+            if (Scaling < 0.01f)
+                Scaling = 0.01f;
+            if (rotationX >= 360)
+                rotationX = 0;
+            if (rotationY >= 360)
+                rotationY = 0;
+            if (rotationZ >= 360)
+                rotationZ = 0;
+
             for (int i = 0; i < Materials.Count; i++)
             {
                 Materials[i].Texture.Use(GL_TEXTURE0);
@@ -152,14 +175,7 @@ namespace CORERenderer.Loaders
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
                 shader.SetInt("material.specular", GL_TEXTURE1);
 
-                if (Scaling < 0.01f)
-                    Scaling = 0.01f;
-                if (rotationX >= 360)
-                    rotationX = 0;
-                if (rotationY >= 360)
-                    rotationY = 0;
-                if (rotationZ >= 360)
-                    rotationZ = 0;
+                
                 shader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)
                       * (MathC.GetRotationXMatrix(rotationX)
@@ -177,8 +193,9 @@ namespace CORERenderer.Loaders
             GeneratedVAOs = new();
             elementBufferObject = new();
 
-            for (int i = 0; i < vertices.Count; i++) //is currently one because theres only one instance of vertices, might change in the future 
+            for (int i = 0; i < vertices.Count; i++)
             {
+                //gets current vertices and puts in a buffer
                 float[] local = vertices[i].ToArray();
                 uint buffer = glGenBuffer();
                 glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -189,21 +206,26 @@ namespace CORERenderer.Loaders
                 }
                 GeneratedBuffers.Add(buffer);
 
+                //generates vao and binds it gives it its values
                 uint GeneratedVAO = glGenVertexArray();
                 glBindVertexArray(GeneratedVAO);
                 //could be put in a for loop but not that necessary
+                //3D coordinates
                 int vertexLocation = shader.GetAttribLocation("aPos");
                 glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
                 glEnableVertexAttribArray((uint)vertexLocation);
 
+                //UV texture coordinates
                 int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
                 glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
                 glEnableVertexAttribArray((uint)vertexLocation2);
 
+                //normal coordinates
                 int vertexLocation3 = shader.GetAttribLocation("aNormal");
                 glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
                 glEnableVertexAttribArray((uint)vertexLocation3);
 
+                //adds ebo to the vao
                 uint[] local2 = indices[i].ToArray();
                 uint local3 = glGenBuffer();
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);

@@ -1,22 +1,14 @@
-﻿using COREMath;
-using CORERenderer.Loaders;
-using CORERenderer.Main;
-using System.Security.AccessControl;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Net.Http.Headers;
+﻿using CORERenderer.Main;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace CORERenderer.CRS
 {
     public partial class CRS : EngineProperties
     {
         public static CRS GenerateCRS(string path, string name) //in future make it so that it takes requests for places to generate
-        {                                          //for now its in the main path of the renderer
+        {                                                       //for now its in the main path of the renderer
             string image = $"{path}\\folder.ico";
 
             if (Directory.Exists($"{CORERenderContent.pathRenderer}\\{name}.crs")) //shouldnt be needed since LoadCRS() checks this but just in case
@@ -73,36 +65,56 @@ namespace CORERenderer.CRS
             string addOBJ =
                $"""
                 <obj id = "{nextUnusedID}">
-                    name = {objName};
-                    objFile = {nextUnusedID}.obj;
-                    mtllib = {nextUnusedID}.mtl;
-                    scale = 1.0;
-                    translation = 0.0, 0.0, 0.0;
-                    rotateX = 0.0;
-                    rotateY = 0.0;
-                    rotateZ = 0.0;
+                name = {objName};
+                objFile = {nextUnusedID}.obj;
+                mtllib = {nextUnusedID}.mtl;
+                scale = 1.0;
+                translation = 0.0, 0.0, 0.0;
+                rotateX = 0.0;
+                rotateY = 0.0;
+                rotateZ = 0.0;
                 </obj>
                 """;
 
             using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                 sw.WriteLine(addOBJ);
 
-            //creates the vertices and indices files
-            FileStream csvFile = File.Create($"{path}\\{nextUnusedID}.cv");
-            FileStream csiFile = File.Create($"{path}\\{nextUnusedID}.ci");
-
             allOBJs.Add(new(pathToOBJ));
 
             //creates the mtl file bound to the object
             File.Create($"{path}\\{nextUnusedID}.mtl").Close();
             File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{allOBJs[^1].mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
+            
+            for (int i = 0; i < allOBJs[^1].Materials.Count; i++)
+            {
+                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}"))
+                {
+                    File.Create($"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}").Close();
+                    File.Copy(allOBJs[^1].Materials[i].DiffuseMap.path, $"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}", true);
+                    Console.WriteLine(allOBJs[^1].Materials[i].DiffuseMap.name);
+                }
+                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}"))
+                {
+                    File.Create($"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}").Close();
+                    File.Copy(allOBJs[^1].Materials[i].SpecularMap.path, $"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}", true);
+                    Console.WriteLine(allOBJs[^1].Materials[i].SpecularMap.name);
+                }
+                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].Texture.name}"))
+                {
+                    File.Create($"{path}\\{allOBJs[^1].Materials[i].Texture.name}").Close();
+                    File.Copy(allOBJs[^1].Materials[i].Texture.path, $"{path}\\{allOBJs[^1].Materials[i].Texture.name}", true);
+                    Console.WriteLine(allOBJs[^1].Materials[i].Texture.name);
+                }
+            }
 
             File.Create($"{path}\\{nextUnusedID}.obj").Close();
             File.Copy($"{pathToOBJ}", $"{path}\\{nextUnusedID}.obj", true);
 
-            this.allObjectInstances.Add(new(csvFile, csiFile, $"{path}\\{nextUnusedID}.obj", allOBJs[^1].vertices.Count, allOBJs[^1].indices.Count));
+            this.allObjectInstances.Add(new($"{path}\\{nextUnusedID}.obj", allOBJs[^1].vertices.Count, allOBJs[^1].indices.Count));
 
             this.UpdateIDs();
+            CORERenderContent.currentObj = nextUnusedID - 1;
+            CORERenderContent.HighlightLogic();
         }
 
         public void SaveChanges() //only works with object modifications, not with objects themselves
@@ -117,14 +129,14 @@ namespace CORERenderer.CRS
                 local0 += 
                 $"""
                 <obj id = "{i}">
-                    name = {allOBJs[i].name};
-                    objFile = {i}.obj;
-                    mtllib = {i}.mtl;
-                    scale = {allOBJs[i].Scaling};
-                    translation = {allOBJs[i].translation.x}, {allOBJs[i].translation.y}, {allOBJs[i].translation.z};
-                    rotateX = {allOBJs[i].rotationX};
-                    rotateY = {allOBJs[i].rotationY};
-                    rotateZ = {allOBJs[i].rotationZ};
+                name = {allOBJs[i].name};
+                objFile = {i}.obj;
+                mtllib = {i}.mtl;
+                scale = {allOBJs[i].Scaling.ToString(CultureInfo.InvariantCulture)};
+                translation = {allOBJs[i].translation.x.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.y.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.z.ToString(CultureInfo.InvariantCulture)};
+                rotateX = {allOBJs[i].rotationX.ToString(CultureInfo.InvariantCulture)};
+                rotateY = {allOBJs[i].rotationY.ToString(CultureInfo.InvariantCulture)};
+                rotateZ = {allOBJs[i].rotationZ.ToString(CultureInfo.InvariantCulture)};
                 </obj>
 
                 """;
@@ -132,7 +144,7 @@ namespace CORERenderer.CRS
             using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                 sw.WriteLine(local0);
 
-            Console.Write("\rSaved changes                                               \n");
+            Console.Write("\rSaved changes                                               ");
         }
     }
 }

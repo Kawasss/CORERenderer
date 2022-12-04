@@ -1,15 +1,10 @@
-﻿using System;
-using COREMath;
+﻿using COREMath;
 using static CORERenderer.GL;
-using CORERenderer.CRS;
 using CORERenderer.Main;
-using CORERenderer.Loaders;
 using CORERenderer.shaders;
-using CORERenderer.textures;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
-using System.Runtime.CompilerServices;
 
 namespace CORERenderer
 {
@@ -24,7 +19,7 @@ namespace CORERenderer
 
         static Vector3 lastPos;
 
-        static bool loaded = false;
+        public static bool loaded = false;
         static bool loadable = true;
         static bool canChange = true;
 
@@ -49,7 +44,7 @@ namespace CORERenderer
         public static uint[] indices;
 
         static public Vector3 lightPos = new(0.6f, 1, 1f);
-        static private int currentObj = 0;
+        static public int currentObj = 0;
         static private float called = 0;
 
         static public int placeholder = 0; //temporary for .crs related issues
@@ -148,9 +143,9 @@ namespace CORERenderer
             mousePosX = (float)mousePosXD;
             mousePosY = (float)mousePosYD;
 
-            if (called <= 0.4f)
+            if (called <= 0.3f)
                 called += delta;
-            if (called > 0.4f)
+            if (called > 0.3f)
                 canChange = true;
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
@@ -269,21 +264,43 @@ namespace CORERenderer
         }
 
         //handles all of the logic for deciding which object to select, highlight and manipulate
-        private void HighlightLogic()
+        public static void HighlightLogic()
         {
             canChange = false;
             called = 0;
-            currentObj++;
-            if (currentObj >= givenCRS.allOBJs.Count - 1)
+            if (currentObj == -1)
             {
                 currentObj = 0;
-                givenCRS.allOBJs[^1].highlighted = false;
-
+                givenCRS.allOBJs[0].highlighted = true;
+                return;
             }
-            else if (givenCRS.allOBJs.Count > 1)
-                givenCRS.allOBJs[currentObj - 1].highlighted = false;
-
-            givenCRS.allOBJs[currentObj].highlighted = true;
+            if (currentObj == 0)
+            {
+                if (givenCRS.allOBJs.Count > 1)
+                {
+                    givenCRS.allOBJs[currentObj + 1].highlighted = true;
+                    givenCRS.allOBJs[currentObj].highlighted = false;
+                    currentObj++;
+                    return;
+                }
+                if (!givenCRS.allOBJs[0].highlighted)
+                {
+                    givenCRS.allOBJs[0].highlighted = true;
+                    return;
+                }
+                givenCRS.allOBJs[0].highlighted = false;
+                return;
+            }
+            if (currentObj >= givenCRS.allOBJs.Count - 1)
+            {
+                givenCRS.allOBJs[^1].highlighted = false;
+                givenCRS.allOBJs[0].highlighted = true;
+                currentObj = 0;
+                return;
+            }
+            givenCRS.allOBJs[currentObj].highlighted = false;
+            givenCRS.allOBJs[currentObj + 1].highlighted = true;
+            currentObj++;
         }
 
         //zoom in or out
