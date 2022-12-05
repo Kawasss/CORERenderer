@@ -23,9 +23,10 @@ namespace CORERenderer.Loaders
 
         public readonly string name = "PLACEHOLDER";
 
-        private List<uint> GeneratedBuffers = new();
-        private List<uint> GeneratedVAOs = new();
-        private List<uint> elementBufferObject = new();
+        //not safe to make them public but is needed to delete them
+        public List<uint> GeneratedBuffers = new();
+        public List<uint> GeneratedVAOs = new();
+        public List<uint> elementBufferObject = new();
 
         public float Scaling = 1.0f;
         public Vector3 translation = Vector3.Zero;
@@ -36,6 +37,8 @@ namespace CORERenderer.Loaders
         public bool highlighted = false;
 
         public string mtllib;
+
+        public int ID;
 
         public Obj() { }
         public Obj(string path)
@@ -170,9 +173,10 @@ namespace CORERenderer.Loaders
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
 
-            for (int i = 0; i < Materials.Count; i++)
+            /*for (int i = 0; i < Materials.Count; i++)
             {
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject[i]); //moving this to line 185 renders the first buffer, placing it here renders a different buffer (???)
+                //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]); //moving this to line 185 renders the first buffer, placing it here renders a different buffer (???)
+                glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
                 glBindVertexArray(GeneratedVAOs[i]);
 
                 Materials[i].Texture.Use(GL_TEXTURE0);
@@ -182,8 +186,34 @@ namespace CORERenderer.Loaders
                 shader.SetInt("material.diffuse", GL_TEXTURE0);
                 shader.SetInt("material.specular", GL_TEXTURE1);
 
+                
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
-            } 
+            } */
+            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[0]);
+            glBindVertexArray(GeneratedVAOs[0]);
+
+            Materials[0].Texture.Use(GL_TEXTURE0);
+            Materials[0].SpecularMap.Use(GL_TEXTURE1);
+
+            shader.SetFloat("material.shininess", Materials[0].Shininess);
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.specular", GL_TEXTURE1);
+
+
+            glDrawElements(GL_TRIANGLES, indices[0].Count, GL_UNSIGNED_INT, (void*)0);
+
+            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[1]);
+            glBindVertexArray(GeneratedVAOs[1]);
+
+            Materials[1].Texture.Use(GL_TEXTURE0);
+            Materials[1].SpecularMap.Use(GL_TEXTURE1);
+
+            shader.SetFloat("material.shininess", Materials[1].Shininess);
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.specular", GL_TEXTURE1);
+
+
+            glDrawElements(GL_TRIANGLES, indices[1].Count, GL_UNSIGNED_INT, (void*)0);
         }
 
         public unsafe void GenerateBuffers()
@@ -236,6 +266,7 @@ namespace CORERenderer.Loaders
                 elementBufferObject.Add(local3);
                 GeneratedVAOs.Add(GeneratedVAO);
             }
+            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[0]);
         }
 
         public void ErrorLogic(int error)

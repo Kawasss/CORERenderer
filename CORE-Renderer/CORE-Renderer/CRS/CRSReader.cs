@@ -100,7 +100,8 @@ namespace CORERenderer.CRS
                 }
                 newCRS.nextUnusedID = currentOBJ + 1;
                 CORERenderContent.currentObj = -1;
-                CORERenderContent.loaded = true;
+                if (newCRS.allOBJs.Count > 0)
+                    CORERenderContent.loaded = true;
             }
             
 

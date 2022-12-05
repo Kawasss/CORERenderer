@@ -180,6 +180,8 @@ namespace CORERenderer
                         givenCRS.nextUnusedID++; //may not be best solution but works atleast
                     } 
                 }
+                if (Glfw.GetKey(window, Keys.Backspace) == InputState.Press && loaded)
+                    givenCRS.RemoveObject(currentObj);
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)

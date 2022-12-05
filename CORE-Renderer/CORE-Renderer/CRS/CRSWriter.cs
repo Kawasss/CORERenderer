@@ -2,10 +2,12 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
+using CORERenderer.Loaders;
+using static CORERenderer.GL;
 
 namespace CORERenderer.CRS
 {
-    public partial class CRS : EngineProperties
+    public partial class CRS : Obj, EngineProperties
     {
         public static CRS GenerateCRS(string path, string name) //in future make it so that it takes requests for places to generate
         {                                                       //for now its in the main path of the renderer
@@ -28,7 +30,7 @@ namespace CORERenderer.CRS
             FileStream DeskstopIni = File.Create($"{path}\\Desktop.ini");
 
             //creates the Desktop.ini file for the directory settings and the icon of it
-            string DesktopContent = 
+            string DesktopContent =
                 """
                 [.ShellClassInfo]
                 ConfirmFileOp=0
@@ -42,7 +44,7 @@ namespace CORERenderer.CRS
             DeskstopIni.Close();
 
             File.SetAttributes($"{path}\\Desktop.ini", FileAttributes.Hidden);
-            File.SetAttributes($"{path}\\Desktop.ini", FileAttributes.System); 
+            File.SetAttributes($"{path}\\Desktop.ini", FileAttributes.System);
 
             //creates the empty cst file for the CSTAddObj() to write to
             FileStream cst = File.Create($"{path}\\{name}.cst");//CoreSceneTransformations
@@ -84,7 +86,7 @@ namespace CORERenderer.CRS
             //creates the mtl file bound to the object
             File.Create($"{path}\\{nextUnusedID}.mtl").Close();
             File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{allOBJs[^1].mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
-            
+
             for (int i = 0; i < allOBJs[^1].Materials.Count; i++)
             {
                 if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}"))
@@ -112,6 +114,8 @@ namespace CORERenderer.CRS
 
             this.allObjectInstances.Add(new($"{path}\\{nextUnusedID}.obj", allOBJs[^1].vertices.Count, allOBJs[^1].indices.Count));
 
+            this.allOBJs[^1].ID = nextUnusedID;
+
             this.UpdateIDs();
             CORERenderContent.currentObj = nextUnusedID - 1;
             CORERenderContent.HighlightLogic();
@@ -126,7 +130,7 @@ namespace CORERenderer.CRS
 
             for (int i = 0; i < nextUnusedID; i++)
             {
-                local0 += 
+                local0 +=
                 $"""
                 <obj id = "{i}">
                 name = {allOBJs[i].name};
@@ -145,6 +149,87 @@ namespace CORERenderer.CRS
                 sw.WriteLine(local0);
 
             Console.Write("\rSaved changes                                               ");
+        }
+
+        public void RemoveObject(int ID)
+        {
+            if (ID < this.allOBJs.Count)
+            {
+                glDeleteBuffers(this.allOBJs[ID].GeneratedBuffers.ToArray());
+                glDeleteBuffers(this.allOBJs[ID].elementBufferObject.ToArray());
+                glDeleteVertexArrays(this.allOBJs[ID].GeneratedVAOs.ToArray());
+
+                for (int i = 0; i < this.allOBJs.Count; i++)
+                    for (int j = 0; j < this.allOBJs[i].Materials.Count; j++)
+                    {
+                        glDeleteTexture(this.allOBJs[i].Materials[j].Texture.Handle);
+                        glDeleteTexture(this.allOBJs[i].Materials[j].SpecularMap.Handle);
+                        glDeleteTexture(this.allOBJs[i].Materials[j].DiffuseMap.Handle);
+                    }
+
+                this.allOBJs.RemoveAt(ID);
+                nextUnusedID -= 1;
+
+                int newID = 0;
+                for (int i = ID; i < this.allOBJs.Count; i++)
+                {
+                    if (File.Exists($"{path}\\{i}.obj") && File.Exists($"{path}\\{i}.mtl"))
+                    {
+                        File.Move($"{path}\\{i}.obj", $"{path}\\{newID}.obj");
+                        File.Move($"{path}\\{i}.obj", $"{path}\\{newID}.mtl");
+                        newID++;
+                    }
+                    else if (File.Exists($"{path}\\{i}.obj"))
+                    {
+                        File.Move($"{path}\\{i}.obj", $"{path}\\{newID}.obj");
+                        newID++;
+                    }
+                }
+
+                File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.obj");
+                if (File.Exists($"{CORERenderContent.givenCRS.path}\\{ID}.mtl"))
+                    File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.mtl");
+
+                string local0 = string.Empty;
+                using (FileStream filestream = File.Open($"{path}\\{name}.cst", FileMode.Open))
+                    lock (filestream)
+                        filestream.SetLength(0);
+                if (nextUnusedID != 0)
+                {
+                    for (int i = 0; i < nextUnusedID; i++)
+                    {
+                        local0 +=
+                        $"""
+                    <obj id = "{i}">
+                    name = {allOBJs[i].name};
+                    objFile = {i}.obj;
+                    mtllib = {i}.mtl;
+                    scale = {allOBJs[i].Scaling.ToString(CultureInfo.InvariantCulture)};
+                    translation = {allOBJs[i].translation.x.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.y.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.z.ToString(CultureInfo.InvariantCulture)};
+                    rotateX = {allOBJs[i].rotationX.ToString(CultureInfo.InvariantCulture)};
+                    rotateY = {allOBJs[i].rotationY.ToString(CultureInfo.InvariantCulture)};
+                    rotateZ = {allOBJs[i].rotationZ.ToString(CultureInfo.InvariantCulture)};
+                    </obj>
+
+                    """;
+                    }
+                    using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
+                        sw.WriteLine(local0);
+                }
+
+                CORERenderContent.givenCRS.RemoveObject(ID);
+
+                if (this.allOBJs.Count > 0)
+                {
+                    CORERenderContent.HighlightLogic();
+                    CORERenderContent.currentObj = ID;
+                }
+                else
+                {
+                    CORERenderContent.currentObj = -1;
+                    CORERenderContent.loaded = false;
+                }
+            }
         }
     }
 }
