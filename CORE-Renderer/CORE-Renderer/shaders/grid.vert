@@ -12,8 +12,8 @@ uniform mat4 projection;
 uniform vec3 playerPos;
 
 vec3 coordinates[6] = vec3[](
-	vec3(-1, 0, -1), vec3(1, 0, -1), vec3(1, 0, 1),
-    vec3(1, 0, 1), vec3(-1, 0, 1), vec3(-1, 0, -1)
+	vec3(-1, 0, -1), vec3(1, 0, 1), vec3(1, 0, -1),
+    vec3(1, 0, 1), vec3(-1, 0, -1), vec3(-1, 0, 1)
 );
 
 void main() 

@@ -1,0 +1,9 @@
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.csproj.AssemblyReference.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.csproj.ResolveComReference.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORERenderer.GLFW.Strings.resources
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORERenderer.Properties.Resources.resources
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.csproj.GenerateResource.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.AssemblyInfoInputs.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.AssemblyInfo.cs
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0-windows\CORE-Renderer.csproj.CoreCompileInputs.cache

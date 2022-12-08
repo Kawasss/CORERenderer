@@ -38,7 +38,7 @@ namespace CORERenderer
             get => MathC.RadToDeg(pitch);
             set
             {
-                float angle = MathC.Clamp(value, -89, 89);
+                float angle = MathC.Clamp(value, -119, 119);
                 pitch = MathC.DegToRad(angle);
                 UpdateVectors();
             }

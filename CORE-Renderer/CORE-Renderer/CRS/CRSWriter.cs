@@ -63,6 +63,8 @@ namespace CORERenderer.CRS
                 backslashIndexes.Add(i);
             string objName = pathToOBJ[(backslashIndexes[^1] + 1)..^4];
 
+            allOBJs.Add(new(pathToOBJ));
+
             //writes the default object attributes
             string addOBJ =
                $"""
@@ -81,11 +83,12 @@ namespace CORERenderer.CRS
             using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                 sw.WriteLine(addOBJ);
 
-            allOBJs.Add(new(pathToOBJ));
-
             //creates the mtl file bound to the object
             File.Create($"{path}\\{nextUnusedID}.mtl").Close();
-            File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{allOBJs[^1].mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
+            if (allOBJs[^1].mtllib != "default")
+                File.Copy($"{pathToOBJ[..backslashIndexes[^1]]}\\{allOBJs[^1].mtllib}", $"{path}\\{nextUnusedID}.mtl", true);
+            else
+                File.Copy($"{CORERenderContent.pathRenderer}\\Loaders\\default.mtl", $"{path}\\{nextUnusedID}.mtl", true);
 
             for (int i = 0; i < allOBJs[^1].Materials.Count; i++)
             {

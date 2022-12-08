@@ -3,13 +3,12 @@ using static CORERenderer.OpenGL.GL;
 using CORERenderer.Main;
 using CORERenderer.shaders;
 using CORERenderer.GLFW;
-using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
+using CORERenderer.GLFW.Enums;
+using System.IO;
 
 namespace CORERenderer
 {
-
-
     public class CORERenderContent : Rendering, EngineProperties
     {
         static private Shader lightShader;
@@ -56,16 +55,18 @@ namespace CORERenderer
             Console.WriteLine();
             MathC.Initialize(false);
 
-            glEnable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
+            glEnable(GL_DEPTH_TEST);
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+            glFrontFace(GL_CCW);
             givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
             //initialises given shaders
-            //shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); unneeded if obj.cs is done
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
 
@@ -87,6 +88,7 @@ namespace CORERenderer
 
         public unsafe override void RenderEveryFrame()
         {
+
             time += Glfw.Time - time * 2;
 
             //sets background color
@@ -97,6 +99,8 @@ namespace CORERenderer
             {
                 givenCRS.allOBJs[i].Render(camera);
             }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             //assigns all the values for placement of the light source
             lightShader.Use();
@@ -142,7 +146,6 @@ namespace CORERenderer
                 canChange = true;
                 canDelete = true;
             }
-                
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
             {
@@ -157,6 +160,17 @@ namespace CORERenderer
 
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Right);
 
+            if (Glfw.GetKey(window, Keys.L) == InputState.Press && loaded)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            } 
+            if (Glfw.GetKey(window, Keys.L) == InputState.Release && loaded)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_CULL_FACE);
+            }
+
             //!!temporary debug movement for obj files !!rewrite
             if (state2 == InputState.Press && state != InputState.Press) //
             {   //calls the logic checks for highlighting the current object
@@ -169,10 +183,11 @@ namespace CORERenderer
                 {
                     if (loadable)
                     {
-                        givenCRS.CSTAddObj(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
+                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
                         loaded = true;
                         loadable = false;
-                        HighlightLogic();
+                        if (givenCRS.allOBJs.Count > 0)
+                            HighlightLogic();
                         givenCRS.nextUnusedID++; //may not be best solution but works atleast
                     } 
                 }

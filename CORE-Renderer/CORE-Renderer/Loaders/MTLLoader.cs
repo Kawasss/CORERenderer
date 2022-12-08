@@ -1,17 +1,7 @@
 ﻿using COREMath;
 using CORERenderer.textures;
 using CORERenderer.Main;
-using CORERenderer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Globalization;
-using System.Transactions;
-using System.Security.Cryptography;
-using System.Drawing;
-using System.Xml.Linq;
 
 namespace CORERenderer.Loaders
 {
@@ -56,6 +46,8 @@ namespace CORERenderer.Loaders
                 error = 0;
                 return false;
             }
+
+            Console.WriteLine("Reading .mtl file..");
 
             materials = new();
             List<Material> tempMtl = new();

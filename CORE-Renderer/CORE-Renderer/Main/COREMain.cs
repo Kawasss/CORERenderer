@@ -7,8 +7,8 @@ namespace CORERenderer.Main
     public class COREMain : EngineProperties
     {
         [NotNull]
-        public static int Width = 800;
-        public static int Height = 600;
+        public static int Width = 2560; //1024
+        public static int Height = 1440; //576
         public static Window window;
 
         public static int fps = 0;
@@ -62,7 +62,7 @@ namespace CORERenderer.Main
                 Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }
-            Console.WriteLine();
+            Console.WriteLine(); 
             Console.WriteLine("shutting down");
             Glfw.Terminate();
         }

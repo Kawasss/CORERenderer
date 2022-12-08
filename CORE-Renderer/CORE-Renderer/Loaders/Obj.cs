@@ -1,13 +1,7 @@
 ﻿using COREMath;
-using System;
 using CORERenderer.Main;
-using CORERenderer.textures;
-using System.CodeDom.Compiler;
 using static CORERenderer.OpenGL.GL;
 using CORERenderer.shaders;
-using System.Runtime.CompilerServices;
-using CORERenderer.GLFW.Structs;
-using System.IO;
 
 namespace CORERenderer.Loaders
 {
@@ -18,6 +12,11 @@ namespace CORERenderer.Loaders
 
         public List<Material> Materials;
 
+        /*
+         * $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag" for normal lighting
+         * $"{CORERenderContent.pathRenderer}\\shaders\\depthVisualizer.frag" for showing the depth
+         * $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag" for outlining the current object
+         */
         public readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 
         public readonly string name = "PLACEHOLDER";
@@ -56,10 +55,16 @@ namespace CORERenderer.Loaders
 
                 name = path[(temp[^1] + 1)..path.IndexOf(".obj")];
 
-                loaded = LoadMTL
-                (
-                    $"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error
-                );
+                if (mtllib != "default")
+                    loaded = LoadMTL
+                    (
+                        $"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error
+                    );
+                else
+                    loaded = LoadMTL
+                    (
+                        $"{CORERenderContent.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials, out error
+                    );
             }
             else
                 loaded = LoadMTL
@@ -99,11 +104,6 @@ namespace CORERenderer.Loaders
             if (!loaded)
                 ErrorLogic(error);
 
-            /*if (Materials.Count > 0)
-            {
-                Materials[0].Texture.Use(GL_TEXTURE0);
-                Materials[0].SpecularMap.Use(GL_TEXTURE1);
-            }*/
             GenerateBuffers();
 
             shader.SetInt("material.diffuse", GL_TEXTURE0);
@@ -113,11 +113,8 @@ namespace CORERenderer.Loaders
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
         {
             shader.Use();
-            
-            shader.SetVector3("viewPos", camera.position);
 
-            //all till the last for loop is temporary
-            
+            shader.SetVector3("viewPos", camera.position);
 
             //spotLight
             shader.SetVector3("spotLight.position", camera.position);
@@ -133,8 +130,6 @@ namespace CORERenderer.Loaders
 
             shader.SetMatrix("view", camera.GetViewMatrix());
             shader.SetMatrix("projection", camera.GetProjectionMatrix());
-
-            shader.SetBool("highlighted", highlighted);
 
             if (Scaling < 0.01f)
                 Scaling = 0.01f;
@@ -153,6 +148,7 @@ namespace CORERenderer.Loaders
 
             for (int i = 0; i < Materials.Count; i++)
             {
+
                 glBindVertexArray(GeneratedVAOs[i]);
 
                 //directional light
@@ -239,7 +235,6 @@ namespace CORERenderer.Loaders
                     elementBufferObject.Add(local3);
                 }
             }
-            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[0]);
         }
 
         public void ErrorLogic(int error)

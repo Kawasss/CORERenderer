@@ -1,15 +1,5 @@
 ﻿using COREMath;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
-using System.Collections;
-using System.IO.Pipes;
-using Microsoft.Win32.SafeHandles;
 
 namespace CORERenderer.Loaders
 {
@@ -53,7 +43,7 @@ namespace CORERenderer.Loaders
 
             mtlNames = new();
 
-            mtllib = "None"; //not null for later mtl use
+            mtllib = "default"; //not null for later mtl use
 
             List<string> unreadableLines = new();
 
@@ -91,6 +81,8 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "v ": //vector
+                            if (n.Contains("v  "))
+                                n = "vv " + n[3..];
                             int[] localV = new int[4];
                             int z = 0;
                             for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), z++)
@@ -104,6 +96,8 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "vn": //vector normal
+                            if (n.Contains("vn  "))
+                                n = "vvn " + n[4..];
                             int[] localVn = new int[4];
                             int y = 0;
                             for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), y++)
@@ -117,6 +111,8 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "vt": //UV coordinates
+                            if (n.Contains("vt  "))
+                                n = "vvt " + n[4..];
                             int[] localVt = new int[3];
                             int holder = n.IndexOf(" ");
                             //finds and adds the 2 texture coordinates by the 2 spaces surrounding it
@@ -150,12 +146,13 @@ namespace CORERenderer.Loaders
 
                             //code below isolates the indices into ../../.. then by / so the uint value remains
                             for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1))
-                                local.Add(k);
+                                if (k != n.Length - 1)
+                                    local.Add(k);
 
-                            //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
-                            for (int k = 0; k < local.Count - 1; k++)
-                                local3.Add(n[(local[k] + 1)..local[k + 1]]);
-                            local3.Add(n[(local[^1] + 1)..]);
+                                //isolates the indices to ../../.. by using the indexes of the surrounding " "'s
+                                for (int k = 0; k < local.Count - 1; k++)
+                                    local3.Add(n[(local[k] + 1)..local[k + 1]]);
+                                local3.Add(n[(local[^1] + 1)..]);
 
                             //isolates each int from local ( ../../.. ) and parses it
                             foreach (string s in local3)
@@ -182,17 +179,20 @@ namespace CORERenderer.Loaders
                                     }
                                     else if (!withTextures)
                                     {
-                                        outVertices[i].Add(0);
-                                        outVertices[i].Add(0);
+                                        outVertices[i].Add((float)new Random().NextDouble());
+                                        outVertices[i].Add((float)new Random().NextDouble());
 
                                         for (int l = 0; l < 3; l++)
                                             outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
                                     }
                                 }
-                                else
+                                else if (!s.Contains('/'))
                                 {
                                     for (int l = 0; l < 3; l++)
-                                        outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                    {
+                                        outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]);;
+                                    }
+                                        
                                     for (int l = 0; l < 5; l++)
                                         outVertices[i].Add(0);
                                 }
