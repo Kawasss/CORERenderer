@@ -1,6 +1,6 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main
 {

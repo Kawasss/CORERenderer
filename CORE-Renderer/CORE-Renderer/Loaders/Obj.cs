@@ -3,9 +3,8 @@ using System;
 using CORERenderer.Main;
 using CORERenderer.textures;
 using System.CodeDom.Compiler;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using CORERenderer.shaders;
-using CORERenderer;
 using System.Runtime.CompilerServices;
 using CORERenderer.GLFW.Structs;
 using System.IO;
@@ -19,7 +18,7 @@ namespace CORERenderer.Loaders
 
         public List<Material> Materials;
 
-        private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
+        public readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 
         public readonly string name = "PLACEHOLDER";
 
@@ -40,10 +39,10 @@ namespace CORERenderer.Loaders
 
         public int ID;
 
-        public Obj() { }
         public Obj(string path)
         {
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
+            GenerateBuffers();
 
             int error;
             if (!loaded)
@@ -69,13 +68,7 @@ namespace CORERenderer.Loaders
                     );
             if (!loaded)
                 ErrorLogic(error);
-
-            if (Materials.Count > 0)
-            {
-                Materials[0].Texture.Use(GL_TEXTURE0);
-                Materials[0].SpecularMap.Use(GL_TEXTURE1);
-            }
-            GenerateBuffers();
+            
             /*int aa = 0;
             for (int i = 0; i < vertices.Count; i++)
                 for (int j = 0; j < vertices[i].Count; j++)
@@ -86,6 +79,8 @@ namespace CORERenderer.Loaders
                     ab++;
             Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
         }
+
+        public Obj() { } //this has to exist otherwise it results in an error???
 
         public Obj(string objPath, string mtlPath)
         {
@@ -110,6 +105,9 @@ namespace CORERenderer.Loaders
                 Materials[0].SpecularMap.Use(GL_TEXTURE1);
             }*/
             GenerateBuffers();
+
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.specular", GL_TEXTURE1);
         }
 
         public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
@@ -119,27 +117,7 @@ namespace CORERenderer.Loaders
             shader.SetVector3("viewPos", camera.position);
 
             //all till the last for loop is temporary
-            //directional light
-            shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-            shader.SetVector3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
-            shader.SetVector3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-            shader.SetVector3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-            shader.SetVector3("pointLights[0].position", 10, 5, 10);
-
-            shader.SetVector3("pointLights[1].position", -10, 5, -10);
-
-            //point lights
-            for (int j = 0; j < 2; j++) 
-            {
-                shader.SetVector3($"pointLights[{j}].position", 0, 10, 0);
-                shader.SetFloat($"pointLights[{j}].constant", 1.0f);
-                shader.SetFloat($"pointLights[{j}].linear", 0.022f);
-                shader.SetFloat($"pointLights[{j}].quadratic", 0.0019f);
-                shader.SetVector3($"pointLights[{j}].ambient", 0.2f, 0.2f, 0.2f);
-                shader.SetVector3($"pointLights[{j}].diffuse", 0.5f, 0.5f, 0.5f);
-                shader.SetVector3($"pointLights[{j}].specular", 1.0f, 1.0f, 1.0f);
-            }
+            
 
             //spotLight
             shader.SetVector3("spotLight.position", camera.position);
@@ -173,47 +151,39 @@ namespace CORERenderer.Loaders
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
 
-            /*for (int i = 0; i < Materials.Count; i++)
+            for (int i = 0; i < Materials.Count; i++)
             {
-                //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]); //moving this to line 185 renders the first buffer, placing it here renders a different buffer (???)
-                glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
                 glBindVertexArray(GeneratedVAOs[i]);
+
+                //directional light
+                shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+                shader.SetVector3("dirLight.ambient", Materials[i].Ambient.x / 5, Materials[i].Ambient.y / 5, Materials[i].Ambient.z / 5);
+                shader.SetVector3("dirLight.diffuse", Materials[i].Diffuse.x / 5, Materials[i].Diffuse.y / 5, Materials[i].Diffuse.z / 5);
+                shader.SetVector3("dirLight.specular", Materials[i].Specular.x / 5, Materials[i].Specular.y / 5, Materials[i].Specular.z / 5);
+
+                shader.SetVector3("pointLights[0].position", 10, 5, 10);
+
+                shader.SetVector3("pointLights[1].position", -10, 5, -10);
+
+                //point lights
+                for (int j = 0; j < 2; j++)
+                {
+                    shader.SetVector3($"pointLights[{j}].position", 0, 10, 0);
+                    shader.SetFloat($"pointLights[{j}].constant", 1.0f);
+                    shader.SetFloat($"pointLights[{j}].linear", 0.022f);
+                    shader.SetFloat($"pointLights[{j}].quadratic", 0.0019f);
+                    shader.SetVector3($"pointLights[{j}].ambient", Materials[i].Ambient.x / 5, Materials[i].Ambient.y / 5, Materials[i].Ambient.z / 5);
+                    shader.SetVector3($"pointLights[{j}].diffuse", Materials[i].Diffuse.x / 5, Materials[i].Diffuse.y / 5, Materials[i].Diffuse.z / 5);
+                    shader.SetVector3($"pointLights[{j}].specular", Materials[i].Specular.x / 5, Materials[i].Specular.y / 5, Materials[i].Specular.z / 5);
+                }
 
                 Materials[i].Texture.Use(GL_TEXTURE0);
                 Materials[i].SpecularMap.Use(GL_TEXTURE1);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
-                shader.SetInt("material.diffuse", GL_TEXTURE0);
-                shader.SetInt("material.specular", GL_TEXTURE1);
 
-                
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
-            } */
-            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[0]);
-            glBindVertexArray(GeneratedVAOs[0]);
-
-            Materials[0].Texture.Use(GL_TEXTURE0);
-            Materials[0].SpecularMap.Use(GL_TEXTURE1);
-
-            shader.SetFloat("material.shininess", Materials[0].Shininess);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            shader.SetInt("material.specular", GL_TEXTURE1);
-
-
-            glDrawElements(GL_TRIANGLES, indices[0].Count, GL_UNSIGNED_INT, (void*)0);
-
-            //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[1]);
-            glBindVertexArray(GeneratedVAOs[1]);
-
-            Materials[1].Texture.Use(GL_TEXTURE0);
-            Materials[1].SpecularMap.Use(GL_TEXTURE1);
-
-            shader.SetFloat("material.shininess", Materials[1].Shininess);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            shader.SetInt("material.specular", GL_TEXTURE1);
-
-
-            glDrawElements(GL_TRIANGLES, indices[1].Count, GL_UNSIGNED_INT, (void*)0);
+            }
         }
 
         public unsafe void GenerateBuffers()
@@ -222,49 +192,52 @@ namespace CORERenderer.Loaders
             GeneratedVAOs = new();
             elementBufferObject = new();
 
-            for (int i = 0; i < vertices.Count; i++)
+            for (int i = 0; i < vertices.Count; i++) //i = 0, i++ etc
             {
-                //gets current vertices and puts in a buffer
-                float[] local = vertices[i].ToArray();
-                uint buffer = glGenBuffer();
-                glBindBuffer(GL_ARRAY_BUFFER, buffer);
-                fixed (float* temp = &local[0])
                 {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ARRAY_BUFFER, local.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                    //gets current vertices and puts in a buffer
+                    float[] local = vertices[i].ToArray();
+                    uint buffer = glGenBuffer();
+                    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+
+                    fixed (float* temp = &local[0])
+                    {
+                        IntPtr intptr = new(temp);
+                        glBufferData(GL_ARRAY_BUFFER, local.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                    }
+                    GeneratedBuffers.Add(buffer);
                 }
-                GeneratedBuffers.Add(buffer);
-
-                //generates vao and binds it gives it its values
-                uint GeneratedVAO = glGenVertexArray();
-                glBindVertexArray(GeneratedVAO);
-                //could be put in a for loop but not that necessary
-                //3D coordinates
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                //UV texture coordinates
-                int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation2);
-
-                //normal coordinates
-                int vertexLocation3 = shader.GetAttribLocation("aNormal");
-                glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation3);
-
-                //adds ebo to the vao
-                uint[] local2 = indices[i].ToArray();
-                uint local3 = glGenBuffer();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);
-                fixed (uint* temp = &local2[0])
                 {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, local2.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                    //could be put in a for loop but not that necessary
+                    uint GeneratedVAO = glGenVertexArray();
+                    glBindVertexArray(GeneratedVAO);
+                    GeneratedVAOs.Add(GeneratedVAO);
+                    //3D coordinates
+                    int vertexLocation = shader.GetAttribLocation("aPos");
+                    glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+                    glEnableVertexAttribArray((uint)vertexLocation);
+
+                    //UV texture coordinates
+                    int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
+                    glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation2);
+
+                    //normal coordinates
+                    int vertexLocation3 = shader.GetAttribLocation("aNormal");
+                    glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation3);
+
+                    //adds ebo to the vao
+                    uint[] local2 = indices[i].ToArray();
+                    uint local3 = glGenBuffer();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);
+                    fixed (uint* temp = &local2[0])
+                    {
+                        IntPtr intptr = new(temp);
+                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, local2.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                    }
+                    elementBufferObject.Add(local3);
                 }
-                elementBufferObject.Add(local3);
-                GeneratedVAOs.Add(GeneratedVAO);
             }
             //glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[0]);
         }

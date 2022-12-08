@@ -3,7 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
 using CORERenderer.Loaders;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.CRS
 {
@@ -153,22 +153,28 @@ namespace CORERenderer.CRS
 
         public void RemoveObject(int ID)
         {
+            CORERenderContent.canDelete = false;
             if (ID < this.allOBJs.Count)
             {
                 glDeleteBuffers(this.allOBJs[ID].GeneratedBuffers.ToArray());
                 glDeleteBuffers(this.allOBJs[ID].elementBufferObject.ToArray());
                 glDeleteVertexArrays(this.allOBJs[ID].GeneratedVAOs.ToArray());
 
-                for (int i = 0; i < this.allOBJs.Count; i++)
-                    for (int j = 0; j < this.allOBJs[i].Materials.Count; j++)
-                    {
-                        glDeleteTexture(this.allOBJs[i].Materials[j].Texture.Handle);
-                        glDeleteTexture(this.allOBJs[i].Materials[j].SpecularMap.Handle);
-                        glDeleteTexture(this.allOBJs[i].Materials[j].DiffuseMap.Handle);
-                    }
+                for (int j = 0; j < this.allOBJs[ID].Materials.Count; j++)
+                {
+                    glDeleteTexture(this.allOBJs[ID].Materials[j].Texture.Handle);
+                    glDeleteTexture(this.allOBJs[ID].Materials[j].SpecularMap.Handle);
+                    glDeleteTexture(this.allOBJs[ID].Materials[j].DiffuseMap.Handle);
+                }
+
+                glDeleteShader(this.allOBJs[ID].shader.Handle);
 
                 this.allOBJs.RemoveAt(ID);
                 nextUnusedID -= 1;
+
+                File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.obj");
+                if (File.Exists($"{CORERenderContent.givenCRS.path}\\{ID}.mtl"))
+                    File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.mtl");
 
                 int newID = 0;
                 for (int i = ID; i < this.allOBJs.Count; i++)
@@ -186,10 +192,6 @@ namespace CORERenderer.CRS
                     }
                 }
 
-                File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.obj");
-                if (File.Exists($"{CORERenderContent.givenCRS.path}\\{ID}.mtl"))
-                    File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.mtl");
-
                 string local0 = string.Empty;
                 using (FileStream filestream = File.Open($"{path}\\{name}.cst", FileMode.Open))
                     lock (filestream)
@@ -200,18 +202,18 @@ namespace CORERenderer.CRS
                     {
                         local0 +=
                         $"""
-                    <obj id = "{i}">
-                    name = {allOBJs[i].name};
-                    objFile = {i}.obj;
-                    mtllib = {i}.mtl;
-                    scale = {allOBJs[i].Scaling.ToString(CultureInfo.InvariantCulture)};
-                    translation = {allOBJs[i].translation.x.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.y.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.z.ToString(CultureInfo.InvariantCulture)};
-                    rotateX = {allOBJs[i].rotationX.ToString(CultureInfo.InvariantCulture)};
-                    rotateY = {allOBJs[i].rotationY.ToString(CultureInfo.InvariantCulture)};
-                    rotateZ = {allOBJs[i].rotationZ.ToString(CultureInfo.InvariantCulture)};
-                    </obj>
+                        <obj id = "{i}">
+                        name = {allOBJs[i].name};
+                        objFile = {i}.obj;
+                        mtllib = {i}.mtl;
+                        scale = {allOBJs[i].Scaling.ToString(CultureInfo.InvariantCulture)};
+                        translation = {allOBJs[i].translation.x.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.y.ToString(CultureInfo.InvariantCulture)}, {allOBJs[i].translation.z.ToString(CultureInfo.InvariantCulture)};
+                        rotateX = {allOBJs[i].rotationX.ToString(CultureInfo.InvariantCulture)};
+                        rotateY = {allOBJs[i].rotationY.ToString(CultureInfo.InvariantCulture)};
+                        rotateZ = {allOBJs[i].rotationZ.ToString(CultureInfo.InvariantCulture)};
+                        </obj>
 
-                    """;
+                        """;
                     }
                     using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                         sw.WriteLine(local0);

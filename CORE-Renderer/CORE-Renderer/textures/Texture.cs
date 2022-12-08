@@ -5,7 +5,7 @@ using System.IO;
 using System.Collections;
 using System.Text;
 using System.Drawing.Drawing2D;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using GLFW;
 using StbImageSharp;
 using System.Drawing.Imaging;

@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using GLFW;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using COREMath;
 
 namespace CORERenderer.shaders
@@ -140,11 +140,6 @@ namespace CORERenderer.shaders
                 glDeleteProgram(Handle);
                 disposedValue = true;
             }
-        }
-
-        ~Shader()
-        {
-            glDeleteProgram(Handle);
         }
 
         public void Dispose()

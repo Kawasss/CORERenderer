@@ -1,5 +1,5 @@
 ﻿using COREMath;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using CORERenderer.Main;
 using CORERenderer.shaders;
 using CORERenderer.GLFW;
@@ -8,7 +8,7 @@ using CORERenderer.GLFW.Structs;
 
 namespace CORERenderer
 {
-    
+
 
     public class CORERenderContent : Rendering, EngineProperties
     {
@@ -22,6 +22,7 @@ namespace CORERenderer
         public static bool loaded = false;
         static bool loadable = true;
         static bool canChange = true;
+        public static bool canDelete = false;
 
         static private uint vertexArrayObjectLightSource;
         static private uint vertexArrayObjectGrid;
@@ -58,7 +59,10 @@ namespace CORERenderer
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
             glEnable(GL_TEXTURE_2D);
+            glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
             //initialises given shaders
             //shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); unneeded if obj.cs is done
@@ -77,20 +81,8 @@ namespace CORERenderer
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
-
-            givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
-            //givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
-
-
-
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
-
-            //resets all of the printed lines before this
-            /*Console.CursorTop = 0;
-            for (int i = 0; i <= 50; i++)
-                Console.WriteLine("                                                                                                 "); //space needed to replace all characters
-            Console.CursorTop = 0;*/
         }
 
         public unsafe override void RenderEveryFrame()
@@ -146,7 +138,11 @@ namespace CORERenderer
             if (called <= 0.3f)
                 called += delta;
             if (called > 0.3f)
+            {
                 canChange = true;
+                canDelete = true;
+            }
+                
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
             {
@@ -180,8 +176,8 @@ namespace CORERenderer
                         givenCRS.nextUnusedID++; //may not be best solution but works atleast
                     } 
                 }
-                if (Glfw.GetKey(window, Keys.Backspace) == InputState.Press && loaded)
-                    givenCRS.RemoveObject(currentObj);
+                if (Glfw.GetKey(window, Keys.Backspace) == InputState.Press && loaded && canDelete)
+                    givenCRS.RemoveObject(givenCRS.allOBJs[currentObj].ID);
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)

@@ -4,7 +4,7 @@ using CORERenderer.GLFW.Structs;
 using StbImageSharp;
 using Monitor = CORERenderer.GLFW.Structs.Monitor;
 using Image = CORERenderer.GLFW.Structs.Image;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using COREMath;
 using CORERenderer.shaders;
 using CORERenderer.Main;

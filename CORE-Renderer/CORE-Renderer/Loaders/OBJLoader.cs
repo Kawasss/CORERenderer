@@ -82,6 +82,7 @@ namespace CORERenderer.Loaders
                         case "o ":
                             outIndices.Add(new());
                             outVertices.Add(new());
+                            aa = 0;
                             currentgroup++;
                             break;
 
