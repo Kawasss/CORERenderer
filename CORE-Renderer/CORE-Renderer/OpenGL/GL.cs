@@ -2131,6 +2131,13 @@ namespace CORERenderer.OpenGL
         public static void glBindRenderbuffer(uint renderbuffer) => _glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
 
         /// <summary>
+        /// Bind a named renderbuffer to a renderbuffer target.
+        /// </summary>
+        /// <param name="target">Specifies the renderbuffer target of the binding operation.</param>
+        /// <param name="renderbuffer">Specifies the name of a renderbuffer object</param>
+        public static void glBindRenderbuffer(int target, uint renderbuffer) => _glBindRenderbuffer(target, renderbuffer);
+
+        /// <summary>
         ///     Deletes a single buffer object.
         /// </summary>
         /// <param name="buffer">A buffer to be deleted.</param>

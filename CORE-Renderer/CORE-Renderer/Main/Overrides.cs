@@ -43,11 +43,6 @@ namespace CORERenderer
             Import(Glfw.GetProcAddress);
         }
 
-        public unsafe virtual void AlwaysRender()
-        {
-            //render stuff that is constant and doesnt change, tried to put grid rendering here but didnt work?
-        }
-
         public unsafe virtual void OnLoad()
         {
             throw new NotImplementedException("OnLoad() has not been implemented");

@@ -49,8 +49,7 @@ namespace CORERenderer.Main
                 render.EveryFrame(window, currentFrameTime);
 
                 render.RenderEveryFrame();
-                render.AlwaysRender();
-
+                
                 fps = (int)(1 / currentFrameTime);
                 time = Glfw.Time - time2;
                 
@@ -62,7 +61,15 @@ namespace CORERenderer.Main
                 Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
             }
-            Console.WriteLine(); 
+            Console.WriteLine();
+            Console.WriteLine("Deleting buffers");
+
+            for (int i = 0; i < CORERenderContent.givenCRS.allOBJs.Count; i++)
+            {
+                CORERenderContent.givenCRS.RemoveObject(i);
+                Console.Write($"..{i}");
+            }
+
             Console.WriteLine("shutting down");
             Glfw.Terminate();
         }

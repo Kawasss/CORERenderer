@@ -188,7 +188,7 @@ namespace CORERenderer.Loaders
             GeneratedVAOs = new();
             elementBufferObject = new();
 
-            for (int i = 0; i < vertices.Count; i++) //i = 0, i++ etc
+            for (int i = 0; i < vertices.Count; i++)
             {
                 {
                     //gets current vertices and puts in a buffer
@@ -234,6 +234,8 @@ namespace CORERenderer.Loaders
                     }
                     elementBufferObject.Add(local3);
                 }
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindVertexArray(0);
             }
         }
 

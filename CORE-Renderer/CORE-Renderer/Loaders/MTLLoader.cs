@@ -53,7 +53,7 @@ namespace CORERenderer.Loaders
             List<Material> tempMtl = new();
             Material material = new();
 
-            if ((path[(path.Length - 4)..] != ".mtl" && path[(path.Length - 4)..] != ".MTL") || !File.Exists(path))
+            if ((path[(path.Length - 4)..].ToLower() != ".mtl") || !File.Exists(path))
             {
                 Console.WriteLine($"Invalid file {filename}");
                 error = -1;

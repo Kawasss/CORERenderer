@@ -13,10 +13,18 @@ namespace CORERenderer
     {
         static private Shader lightShader;
         static private Shader gridShader;
+        static private Shader framebufferShader;
 
         static public Camera camera;
 
         static Vector3 lastPos;
+
+        static uint fbo;
+        static uint framebufferVAO;
+        static uint framebufferVBO;
+
+        public static uint texture;
+        static uint rbo;
 
         public static bool loaded = false;
         static bool loadable = true;
@@ -42,6 +50,16 @@ namespace CORERenderer
 
         public static float[] vertices;
         public static uint[] indices;
+        public static float[] FrameBufferVertices = new float[]
+        {
+            -1,  1,  0,  1,
+            -1, -1,  0,  0,
+             1, -1,  1,  0,
+
+            -1,  1,  0,  1,
+             1, -1,  1,  0,
+             1,  1,  1,  1
+        };
 
         static public Vector3 lightPos = new(0.6f, 1, 1f);
         static public int currentObj = 0;
@@ -69,6 +87,58 @@ namespace CORERenderer
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+            framebufferShader = new($"{pathRenderer}\\shaders\\FrameBuffer.vert", $"{pathRenderer}\\shaders\\FrameBuffer.frag");
+
+
+
+            fbo = glGenFramebuffer();
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+            texture = glGenTexture();
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0,  GL_RGB, GL_UNSIGNED_BYTE, null);
+
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            rbo = glGenRenderbuffer();
+            glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Width, Height);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+            {
+                framebufferVBO = glGenBuffer();
+                glBindBuffer(GL_ARRAY_BUFFER, framebufferVBO);
+
+                fixed (float* temp = &FrameBufferVertices[0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ARRAY_BUFFER, FrameBufferVertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                }
+
+                framebufferVAO = glGenVertexArray();
+                glBindVertexArray(framebufferVAO);
+
+                int vertexLocation = framebufferShader.GetAttribLocation("aPos");
+                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
+                glEnableVertexAttribArray((uint)vertexLocation);
+
+                vertexLocation = framebufferShader.GetAttribLocation("aTexCoords");
+                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+                glEnableVertexAttribArray((uint)vertexLocation);
+
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindVertexArray(0);
+            }
+
+
 
             { //assignes values from vertices to the vertex buffer object for the light source
                 vertexArrayObjectLightSource = glGenVertexArray();
@@ -82,6 +152,10 @@ namespace CORERenderer
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                throw new GLFW.Exception("Framebuffer is not complete");
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
         }
@@ -90,6 +164,10 @@ namespace CORERenderer
         {
 
             time += Glfw.Time - time * 2;
+
+            //binds the correct framebuffer for accurate writing
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glEnable(GL_DEPTH_TEST);
 
             //sets background color
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -116,11 +194,8 @@ namespace CORERenderer
             lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(0, 10, 0) * MathC.GetScalingMatrix(0.2f));
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
 
-        public override void AlwaysRender()
-        {
-            //assigns all the values for placement of the grid
+
             gridShader.Use();
 
             gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 100 * MathC.GetLengthOf(camera.position)));
@@ -130,6 +205,24 @@ namespace CORERenderer
             gridShader.SetVector3("playerPos", camera.position);
 
             glBindVertexArray(vertexArrayObjectGrid);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+            glBindVertexArray(0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glDisable(GL_DEPTH_TEST);
+
+            glClearColor(1, 1, 1, 1);
+
+            framebufferShader.Use();
+
+            glBindVertexArray(framebufferVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
