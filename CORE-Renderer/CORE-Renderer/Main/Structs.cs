@@ -1,11 +1,6 @@
 ﻿using CORERenderer.textures;
 using CORERenderer.shaders;
 using COREMath;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main

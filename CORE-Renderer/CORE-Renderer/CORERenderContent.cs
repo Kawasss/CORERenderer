@@ -51,8 +51,6 @@ namespace CORERenderer
         static public int currentObj = 0;
         static private float called = 0;
 
-        static public int placeholder = 0; //temporary for .crs related issues
-
         public unsafe override void OnLoad()
         {
             Console.WriteLine("Initializing renderer");

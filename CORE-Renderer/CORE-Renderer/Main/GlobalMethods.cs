@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CORERenderer;
-using static CORERenderer.OpenGL.GL;
+﻿using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main
 {
@@ -61,7 +55,7 @@ namespace CORERenderer.Main
 
                 fb.VAO = glGenVertexArray();
                 glBindVertexArray(fb.VAO);
-
+                 
                 int vertexLocation = fb.shader.GetAttribLocation("aPos");
                 glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
                 glEnableVertexAttribArray((uint)vertexLocation);
