@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CORERenderer.Main;
+using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -2123,6 +2124,18 @@ namespace CORERenderer.OpenGL
         /// </summary>
         /// <param name="framebuffer">Specifies the name of a framebuffer object.</param>
         public static void glBindFramebuffer(uint framebuffer) => _glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        /// <summary>
+        /// Bind a named framebuffer object.
+        /// </summary>
+        /// <param name="framebuffer">Specifies the name of a framebuffer object.</param>
+        public static void glBindFramebuffer(Framebuffer framebuffer) => _glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.FBO);
+
+        /// <summary>
+        /// Bind a named framebuffer object.
+        /// </summary>
+        /// <param name="framebuffer">Specifies the name of a framebuffer object.</param>
+        public static void glBindFramebuffer(int target, Framebuffer framebuffer) => _glBindFramebuffer(target, framebuffer.FBO);
 
         /// <summary>
         /// Bind a named renderbuffer object.
