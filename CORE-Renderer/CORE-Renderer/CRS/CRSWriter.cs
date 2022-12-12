@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
+using static CORERenderer.Main.Globals;
 
 namespace CORERenderer.CRS
 {
@@ -92,23 +93,20 @@ namespace CORERenderer.CRS
 
             for (int i = 0; i < allOBJs[^1].Materials.Count; i++)
             {
-                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}"))
+                if (!File.Exists($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].DiffuseMap].name}"))
                 {
-                    File.Create($"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}").Close();
-                    File.Copy(allOBJs[^1].Materials[i].DiffuseMap.path, $"{path}\\{allOBJs[^1].Materials[i].DiffuseMap.name}", true);
-                    Console.WriteLine(allOBJs[^1].Materials[i].DiffuseMap.name);
+                    File.Create($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].DiffuseMap].name}").Close();
+                    File.Copy(Globals.usedTextures[allOBJs[^1].Materials[i].DiffuseMap].path, $"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].DiffuseMap].name}", true);
                 }
-                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}"))
+                if (!File.Exists($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].SpecularMap].name}"))
                 {
-                    File.Create($"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}").Close();
-                    File.Copy(allOBJs[^1].Materials[i].SpecularMap.path, $"{path}\\{allOBJs[^1].Materials[i].SpecularMap.name}", true);
-                    Console.WriteLine(allOBJs[^1].Materials[i].SpecularMap.name);
+                    File.Create($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].SpecularMap].name}").Close();
+                    File.Copy(Globals.usedTextures[allOBJs[^1].Materials[i].SpecularMap].path, $"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].SpecularMap].name}", true);
                 }
-                if (!File.Exists($"{path}\\{allOBJs[^1].Materials[i].Texture.name}"))
+                if (!File.Exists($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].Texture].name}"))
                 {
-                    File.Create($"{path}\\{allOBJs[^1].Materials[i].Texture.name}").Close();
-                    File.Copy(allOBJs[^1].Materials[i].Texture.path, $"{path}\\{allOBJs[^1].Materials[i].Texture.name}", true);
-                    Console.WriteLine(allOBJs[^1].Materials[i].Texture.name);
+                    File.Create($"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].Texture].name}").Close();
+                    File.Copy(Globals.usedTextures[allOBJs[^1].Materials[i].Texture].path, $"{path}\\{Globals.usedTextures[allOBJs[^1].Materials[i].Texture].name}", true);
                 }
             }
 
@@ -163,12 +161,7 @@ namespace CORERenderer.CRS
                 glDeleteBuffers(this.allOBJs[ID].elementBufferObject.ToArray());
                 glDeleteVertexArrays(this.allOBJs[ID].GeneratedVAOs.ToArray());
 
-                for (int j = 0; j < this.allOBJs[ID].Materials.Count; j++)
-                {
-                    glDeleteTexture(this.allOBJs[ID].Materials[j].Texture.Handle);
-                    glDeleteTexture(this.allOBJs[ID].Materials[j].SpecularMap.Handle);
-                    glDeleteTexture(this.allOBJs[ID].Materials[j].DiffuseMap.Handle);
-                }
+                DeleteUnusedTextures(this.allOBJs[ID]);
 
                 glDeleteShader(this.allOBJs[ID].shader.Handle);
 

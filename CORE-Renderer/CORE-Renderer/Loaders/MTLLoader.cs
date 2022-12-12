@@ -128,21 +128,24 @@ namespace CORERenderer.Loaders
                             {
                                 case "map_Kd":
                                     if (!n.Contains("  "))
-                                        material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
-                                    else 
-                                        material.Texture = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
+                                        material.Texture = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    else
+                                        material.Texture = 0;
                                     break;
                                 case "map_d ":
                                     if (!n.Contains("  "))
-                                        material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    {
+
+                                        material.DiffuseMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    }
                                     else
-                                        material.DiffuseMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
+                                        material.DiffuseMap = 0;
                                     break;
                                 case "map_Ks":
                                     if (!n.Contains("  "))
-                                        material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        material.SpecularMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
-                                        material.SpecularMap = Texture.ReadFromFile($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf("  ") + 2)..Length(n)]}");
+                                        material.SpecularMap = 1;
                                     break;
                                 default:
                                     if (LoaderDebug.showErrors)

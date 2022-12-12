@@ -8,6 +8,7 @@ using static CORERenderer.OpenGL.GL;
 using COREMath;
 using CORERenderer.shaders;
 using CORERenderer.Main;
+using CORERenderer.textures;
 
 namespace CORERenderer
 {
@@ -41,6 +42,9 @@ namespace CORERenderer
 
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
+
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png"));
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholderspecular.png"));
         }
 
         public unsafe virtual void OnLoad()

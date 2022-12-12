@@ -1,12 +1,12 @@
 ﻿using COREMath;
 using static CORERenderer.OpenGL.GL;
-using static CORERenderer.Main.GlobalMethods;
+using static CORERenderer.Main.Globals;
 using CORERenderer.Main;
 using CORERenderer.shaders;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
-using System.IO;
+using StbImageSharp;
 
 namespace CORERenderer
 {
@@ -20,6 +20,7 @@ namespace CORERenderer
         static Vector3 lastPos;
 
         static Framebuffer fbo;
+        static private Cubemap cubemap;
 
         public static bool loaded = false;
         static bool loadable = true;
@@ -66,11 +67,15 @@ namespace CORERenderer
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
+
             givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+
+            string[] faces = new string[6] { $"{pathRenderer}\\textures\\cubemap.png", $"{pathRenderer}\\textures\\cubemap.png", $"{pathRenderer}\\textures\\cubemap.png", $"{pathRenderer}\\textures\\cubemap.png", $"{pathRenderer}\\textures\\cubemap.png", $"{pathRenderer}\\textures\\cubemap.png"};
+            cubemap = GenerateCubemap(faces);
 
             fbo = GenerateFramebuffer();
 
@@ -141,6 +146,8 @@ namespace CORERenderer
             glBindVertexArray(vertexArrayObjectGrid);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            RenderCubemap(cubemap, camera);
+
             fbo.RenderFramebuffer();
         }
 
@@ -183,14 +190,14 @@ namespace CORERenderer
             }
 
             //!!temporary debug movement for obj files !!rewrite
-            if (state2 == InputState.Press && state != InputState.Press) //
+            if (state2 == InputState.Press && state != InputState.Press)
             {   //calls the logic checks for highlighting the current object
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press && loaded && canChange)
                     HighlightLogic();
                 //code below loads in new objects and checks if they can be loaded in
                 if (Glfw.GetKey(window, Keys.E) == InputState.Press)
                     loadable = true;
-                if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)// && !loaded)
+                if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)
                 {
                     if (loadable)
                     {
@@ -203,7 +210,10 @@ namespace CORERenderer
                     } 
                 }
                 if (Glfw.GetKey(window, Keys.Backspace) == InputState.Press && loaded && canDelete)
+                {
                     givenCRS.RemoveObject(givenCRS.allOBJs[currentObj].ID);
+                    HighlightLogic();
+                }
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
@@ -225,19 +235,19 @@ namespace CORERenderer
 
                 if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation += new Vector3(0, 1f * delta, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(0, 1f * delta, 0);
 
                 if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation -= new Vector3(0, 1f * delta, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(0, 1f * delta, 0);
 
                 if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation -= new Vector3(1f * delta, 0, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(1f * delta, 0, 0);
 
                 if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation += new Vector3(1f * delta, 0, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(1f * delta, 0, 0);
             }
 
             //basic movement

@@ -1,5 +1,6 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
+using CORERenderer.textures;
 using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main

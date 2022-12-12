@@ -1,15 +1,5 @@
-﻿using System;
-using System.Net;
-using System.Drawing;
-using System.IO;
-using System.Collections;
-using System.Text;
-using System.Drawing.Drawing2D;
-using static CORERenderer.OpenGL.GL;
-using GLFW;
+﻿using static CORERenderer.OpenGL.GL;
 using StbImageSharp;
-using System.Drawing.Imaging;
-using CORERenderer.GLFW;
 
 namespace CORERenderer.textures
 {

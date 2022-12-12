@@ -1,6 +1,7 @@
 ﻿using COREMath;
 using CORERenderer.Main;
 using static CORERenderer.OpenGL.GL;
+using static CORERenderer.Main.Globals;
 using CORERenderer.shaders;
 
 namespace CORERenderer.Loaders
@@ -173,8 +174,8 @@ namespace CORERenderer.Loaders
                     shader.SetVector3($"pointLights[{j}].specular", Materials[i].Specular.x / 5, Materials[i].Specular.y / 5, Materials[i].Specular.z / 5);
                 }
 
-                Materials[i].Texture.Use(GL_TEXTURE0);
-                Materials[i].SpecularMap.Use(GL_TEXTURE1);
+                usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);
+                usedTextures[Materials[i].SpecularMap].Use(GL_TEXTURE1);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
 
