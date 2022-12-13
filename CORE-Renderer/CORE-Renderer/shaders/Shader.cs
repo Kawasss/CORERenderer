@@ -36,6 +36,7 @@ namespace CORERenderer.shaders
             glAttachShader(Handle, fragmentShader);
 
             linkProgram(Handle);
+            Console.WriteLine(vertexPath);
 
             glDetachShader(Handle, vertexShader);
             glDetachShader(Handle, fragmentShader);
@@ -64,7 +65,7 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to link program, pname[0] != GL_TRUE");
+                Console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
                 Console.WriteLine(glGetProgramInfoLog(program));
             }
         }

@@ -63,7 +63,7 @@ namespace CORERenderer
 
         public Matrix GetProjectionMatrix()
         {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.01f, 100f);
+            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.01f, 1000f);
         }
 
         public Matrix GetViewMatrix()
@@ -77,7 +77,7 @@ namespace CORERenderer
             Matrix newtemp = new(new float[4, 4] { {temp.matrix4x4[0,0], temp.matrix4x4[0, 1], temp.matrix4x4[0, 1], 0 },
                                                    {temp.matrix4x4[1,0], temp.matrix4x4[1, 1], temp.matrix4x4[1, 2], 0 },
                                                    {temp.matrix4x4[2,0], temp.matrix4x4[2, 1], temp.matrix4x4[2, 2], 0 },
-                                                   {0                  , 0                   , 0                   , 0 }});
+                                                   {0                  , 0                   , 0                   , 1 }});
             return newtemp;
         }
 

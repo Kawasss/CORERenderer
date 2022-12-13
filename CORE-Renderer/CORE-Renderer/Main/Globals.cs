@@ -148,7 +148,7 @@ namespace CORERenderer.Main
 
         public static void RenderCubemap(Cubemap cubemap, Camera camera)
         {
-            glDepthMask(false);
+            glDisable(GL_CULL_FACE);
             glDepthFunc(GL_LEQUAL);
             cubemap.shader.Use();
 
@@ -156,11 +156,12 @@ namespace CORERenderer.Main
             cubemap.shader.SetMatrix("projection", camera.GetProjectionMatrix());
 
             glBindVertexArray(cubemap.VAO);
+
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.textureID);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
-            glDepthMask(true);
+            glEnable(GL_CULL_FACE);
 
             glBindVertexArray(0);
             glDepthFunc(GL_LESS);
@@ -180,7 +181,7 @@ namespace CORERenderer.Main
                 fixed (byte* temp = &image.Data[0])
                 {
                     IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
                 }
             }
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -196,6 +197,14 @@ namespace CORERenderer.Main
             glBindVertexArray(cubemapVAO);
 
             return new Cubemap { textureID = cubemapID, VAO = cubemapVAO, shader = cubemapShader };
+        }
+
+        public static unsafe Cubemap GenerateSkybox(string[] faces)
+        {
+            Cubemap skybox = GenerateCubemap(faces);
+            skybox.shader = new($"{CORERenderContent.pathRenderer}\\shaders\\skybox.vert", $"{CORERenderContent.pathRenderer}\\shaders\\skybox.frag");
+
+            return skybox;
         }
     }
 }
