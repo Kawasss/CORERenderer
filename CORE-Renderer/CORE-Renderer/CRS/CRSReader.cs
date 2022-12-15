@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using COREMath;
 using CORERenderer.Loaders;
 
-namespace CORERenderer.CRS
+namespace CORERenderer.CRSFile
 {
     public partial class CRS
     {

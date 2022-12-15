@@ -6,7 +6,7 @@ using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.Main.Globals;
 
-namespace CORERenderer.CRS
+namespace CORERenderer.CRSFile
 {
     public partial class CRS : Obj, EngineProperties
     {
@@ -214,8 +214,6 @@ namespace CORERenderer.CRS
                     using (StreamWriter sw = File.AppendText($"{path}\\{name}.cst"))
                         sw.WriteLine(local0);
                 }
-
-                CORERenderContent.givenCRS.RemoveObject(ID);
 
                 if (this.allOBJs.Count > 0)
                 {

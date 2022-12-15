@@ -12,7 +12,7 @@ using CORERenderer.textures;
 
 namespace CORERenderer
 {
-    public class Rendering : COREMain, EngineProperties
+    public class Overrides : COREMain, EngineProperties
     {
         public unsafe void AlwaysLoad()
         {

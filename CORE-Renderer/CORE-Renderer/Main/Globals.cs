@@ -1,6 +1,7 @@
 ﻿using CORERenderer.textures;
 using CORERenderer.shaders;
 using CORERenderer.Loaders;
+using COREMath;
 using CORERenderer;
 using static CORERenderer.OpenGL.GL;
 using System.Runtime.Serialization.Formatters;
@@ -146,42 +147,26 @@ namespace CORERenderer.Main
             }
         }
 
-        public static void RenderCubemap(Cubemap cubemap, Camera camera)
-        {
-            glDisable(GL_CULL_FACE);
-            glDepthFunc(GL_LEQUAL);
-            cubemap.shader.Use();
-
-            cubemap.shader.SetMatrix("view", camera.GetTranslationlessViewMatrix());
-            cubemap.shader.SetMatrix("projection", camera.GetProjectionMatrix());
-
-            glBindVertexArray(cubemap.VAO);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.textureID);
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            glEnable(GL_CULL_FACE);
-
-            glBindVertexArray(0);
-            glDepthFunc(GL_LESS);
-        }
+        
 
         public static unsafe Cubemap GenerateCubemap(string[] faces)
         {
             uint cubemapID = glGenTexture();
-            glBindTexture(GL_PROXY_TEXTURE_CUBE_MAP, cubemapID);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
+
+            StbImage.stbi_set_flip_vertically_on_load(1);
 
             for (int i = 0; i < faces.Length; i++)
             {
                 if (!File.Exists(faces[i]))
                     throw new Exception($"cubemap failed to load at: {faces[i]}"); 
 
-                ImageResult image = ImageResult.FromStream(File.OpenRead(faces[i]), ColorComponents.RedGreenBlueAlpha);
+                ImageResult image = ImageResult.FromStream(File.OpenRead(faces[i]), ColorComponents.RedGreenBlue);
                 fixed (byte* temp = &image.Data[0])
                 {
                     IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, image.Width, image.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, ptr);
                 }
             }
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -190,7 +175,7 @@ namespace CORERenderer.Main
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-            Shader cubemapShader = new Shader($"{CORERenderContent.pathRenderer}\\shaders\\cubemap.vert", $"{CORERenderContent.pathRenderer}\\shaders\\cubemap.frag");
+            Shader cubemapShader = new($"{CORERenderContent.pathRenderer}\\shaders\\cubemap.vert", $"{CORERenderContent.pathRenderer}\\shaders\\cubemap.frag");
             cubemapShader.SetInt("cubemap", GL_TEXTURE0);
 
             uint cubemapVAO = glGenVertexArray();

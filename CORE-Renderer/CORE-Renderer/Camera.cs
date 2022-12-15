@@ -30,7 +30,7 @@ namespace CORERenderer
             get => MathC.RadToDeg(pitch);
             set
             {
-                float angle = MathC.Clamp(value, -119, 119);
+                float angle = MathC.Clamp(value, -89, 89);
                 pitch = MathC.DegToRad(angle);
                 UpdateVectors();
             }
@@ -74,16 +74,11 @@ namespace CORERenderer
         public Matrix GetTranslationlessViewMatrix()
         {
             Matrix temp = MathC.LookAt(position, position + front, up);
-            Matrix newtemp = new(new float[4, 4] { {temp.matrix4x4[0,0], temp.matrix4x4[0, 1], temp.matrix4x4[0, 1], 0 },
+            Matrix newtemp = new(new float[4, 4] { {temp.matrix4x4[0,0], temp.matrix4x4[0, 1], temp.matrix4x4[0, 2], 0 },
                                                    {temp.matrix4x4[1,0], temp.matrix4x4[1, 1], temp.matrix4x4[1, 2], 0 },
                                                    {temp.matrix4x4[2,0], temp.matrix4x4[2, 1], temp.matrix4x4[2, 2], 0 },
-                                                   {0                  , 0                   , 0                   , 1 }});
+                                                   {0                  , 0                   , 0                   , 0 }});
             return newtemp;
-        }
-
-        public Matrix GetArcBallViewMatrix()
-        {
-            return MathC.LookAt(position, position + front, up);
         }
 
         private void UpdateVectors()

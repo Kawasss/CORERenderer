@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CORERenderer.Loaders;
-using CORERenderer;
+﻿using CORERenderer.Loaders;
 using CORERenderer.Main;
 
-namespace CORERenderer.CRS
+namespace CORERenderer.CRSFile
 {
     public partial class CRS
     {
@@ -59,5 +53,7 @@ namespace CORERenderer.CRS
                 return GenerateCRS(path, name);
             }
         } 
+
+        
     }
 }

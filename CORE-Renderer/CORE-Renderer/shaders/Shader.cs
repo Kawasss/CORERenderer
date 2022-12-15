@@ -36,7 +36,6 @@ namespace CORERenderer.shaders
             glAttachShader(Handle, fragmentShader);
 
             linkProgram(Handle);
-            Console.WriteLine(vertexPath);
 
             glDetachShader(Handle, vertexShader);
             glDetachShader(Handle, fragmentShader);

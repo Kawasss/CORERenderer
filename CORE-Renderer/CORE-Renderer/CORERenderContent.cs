@@ -1,23 +1,24 @@
 ﻿using COREMath;
+using CORERenderer.CRSFile;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.Main.Globals;
+using static CORERenderer.Main.Rendering;
 using CORERenderer.Main;
 using CORERenderer.shaders;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
-using StbImageSharp;
 
 namespace CORERenderer
 {
-    public class CORERenderContent : Rendering, EngineProperties
+    public class CORERenderContent : Overrides, EngineProperties
     {
-        static private Shader lightShader;
-        static private Shader gridShader;
+        static public Shader lightShader;
+        static public Shader gridShader;
 
         static public Camera camera;
 
-        static Vector3 lastPos;
+        static Vector2 lastPos;
 
         static Framebuffer fbo;
         static private Cubemap cubemap;
@@ -27,8 +28,8 @@ namespace CORERenderer
         static bool canChange = true;
         public static bool canDelete = false;
 
-        static private uint vertexArrayObjectLightSource;
-        static private uint vertexArrayObjectGrid;
+        static public uint vertexArrayObjectLightSource;
+        static public uint vertexArrayObjectGrid;
         static private double time;
         static private bool firstMove = true;
         static double mousePosXD;
@@ -36,7 +37,7 @@ namespace CORERenderer
         static float mousePosX;
         static float mousePosY;
 
-        public static CRS.CRS givenCRS;
+        public static CRS givenCRS;
 
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         static string directory = Path.GetDirectoryName(root);
@@ -44,11 +45,7 @@ namespace CORERenderer
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        public static float[] vertices;
-        public static uint[] indices;
-        
-
-        static public Vector3 lightPos = new(0.6f, 1, 1f);
+        static public List<Vector3> lightSourcePos;
         static public int currentObj = 0;
         static private float called = 0;
 
@@ -69,7 +66,7 @@ namespace CORERenderer
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
 
-            givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
+            givenCRS = CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
@@ -90,6 +87,10 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
+            lightSourcePos = new();
+            lightSourcePos.Add(new(10, 10, 10));
+            lightSourcePos.Add(new(0, 20, 0));
+
             camera = new Camera(new(0, 1, 5), Width / Height);
 
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -102,52 +103,23 @@ namespace CORERenderer
 
         public unsafe override void RenderEveryFrame()
         {
-
+            //calculates the time between frames
             time += Glfw.Time - time * 2;
 
             //binds the correct framebuffer for accurate writing
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
             glEnable(GL_DEPTH_TEST);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //sets background color
-            //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_DEPTH_BUFFER_BIT); //GL_COLOR_BUFFER_BIT | 
-
-            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
-            {
-                givenCRS.allOBJs[i].Render(camera);
-            }
+            RenderAllObjects(givenCRS);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            //assigns all the values for placement of the light source
-            lightShader.Use();
-            lightShader.SetMatrix("view", camera.GetViewMatrix());
-            lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
+            RenderLights(lightSourcePos);
+            RenderCubemap(cubemap);
+            RenderGrid();
 
-            glBindVertexArray(vertexArrayObjectLightSource);
-
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(5, 5, 5) * MathC.GetScalingMatrix(0.2f));
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(0, 10, 0) * MathC.GetScalingMatrix(0.2f));
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-
-            RenderCubemap(cubemap, camera);
-
-            gridShader.Use();
-
-            gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 100 * MathC.GetLengthOf(camera.position)));
-            gridShader.SetMatrix("view", camera.GetArcBallViewMatrix());
-            gridShader.SetMatrix("projection", camera.GetProjectionMatrix());
-
-            gridShader.SetVector3("playerPos", camera.position);
-
-            glBindVertexArray(vertexArrayObjectGrid);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //debug
             fbo.RenderFramebuffer();
         }
 
@@ -185,7 +157,7 @@ namespace CORERenderer
             } 
             if (Glfw.GetKey(window, Keys.L) == InputState.Release && loaded)
             {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                 glEnable(GL_CULL_FACE);
             }
 
@@ -275,15 +247,15 @@ namespace CORERenderer
                 //rotating the camera with mouse movement
                 if (firstMove)
                 {
-                    lastPos = new(mousePosX, 0, mousePosY);
+                    lastPos = new(mousePosX, mousePosY);
                     firstMove = false;
                 }
                 else
                 {
                     float deltaX = mousePosX - lastPos.x;
-                    float deltaY = lastPos.z - mousePosY;
+                    float deltaY = lastPos.y - mousePosY;
 
-                    lastPos = new(mousePosX, 0, mousePosY);
+                    lastPos = new(mousePosX, mousePosY);
 
                     camera.Yaw += deltaX * SENSITIVITY;
                     camera.Pitch -= deltaY * SENSITIVITY;
@@ -340,7 +312,7 @@ namespace CORERenderer
         //zoom in or out
         public void ScrollCallback(Window window, double x, double y)
         {
-            CORERenderContent.camera.Fov -= (float)y * 1.5f;
+            camera.Fov -= (float)y * 1.5f;
         }
     }
 }

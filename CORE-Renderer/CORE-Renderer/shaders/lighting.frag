@@ -40,7 +40,6 @@ struct PointLight
 };
 #define NR_POINTS_LIGHTS 2
 uniform PointLight pointLights[NR_POINTS_LIGHTS];
-//uniform PointLight pointLight;
 
 struct Material 
 {

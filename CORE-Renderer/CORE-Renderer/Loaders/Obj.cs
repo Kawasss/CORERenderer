@@ -111,15 +111,15 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.specular", GL_TEXTURE1);
         }
 
-        public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
+        public unsafe void Render() //better to make this extend to rendereveryframe() or new render override
         {
             shader.Use();
 
-            shader.SetVector3("viewPos", camera.position);
+            shader.SetVector3("viewPos", CORERenderContent.camera.position);
 
             //spotLight
-            shader.SetVector3("spotLight.position", camera.position);
-            shader.SetVector3("spotLight.direction", camera.front);
+            shader.SetVector3("spotLight.position", CORERenderContent.camera.position);
+            shader.SetVector3("spotLight.direction", CORERenderContent.camera.front);
             shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
             shader.SetVector3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
             shader.SetVector3("spotLight.specular", 0.0f, 0.0f, 0.0f);
@@ -129,8 +129,8 @@ namespace CORERenderer.Loaders
             shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
             shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
 
-            shader.SetMatrix("view", camera.GetViewMatrix());
-            shader.SetMatrix("projection", camera.GetProjectionMatrix());
+            shader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
+            shader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
 
             if (Scaling < 0.01f)
                 Scaling = 0.01f;
@@ -153,25 +153,21 @@ namespace CORERenderer.Loaders
                 glBindVertexArray(GeneratedVAOs[i]);
 
                 //directional light
-                shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-                shader.SetVector3("dirLight.ambient", Materials[i].Ambient.x / 5, Materials[i].Ambient.y / 5, Materials[i].Ambient.z / 5);
-                shader.SetVector3("dirLight.diffuse", Materials[i].Diffuse.x / 5, Materials[i].Diffuse.y / 5, Materials[i].Diffuse.z / 5);
-                shader.SetVector3("dirLight.specular", Materials[i].Specular.x / 5, Materials[i].Specular.y / 5, Materials[i].Specular.z / 5);
-
-                shader.SetVector3("pointLights[0].position", 10, 5, 10);
-
-                shader.SetVector3("pointLights[1].position", -10, 5, -10);
+                shader.SetVector3("dirLight.direction", 0.2f, 1.0f, 0.3f);
+                shader.SetVector3("dirLight.ambient", Materials[i].Ambient.x, Materials[i].Ambient.y, Materials[i].Ambient.z);
+                shader.SetVector3("dirLight.diffuse", Materials[i].Diffuse.x, Materials[i].Diffuse.y, Materials[i].Diffuse.z);
+                shader.SetVector3("dirLight.specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
 
                 //point lights
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < CORERenderContent.lightSourcePos.Count; j++)
                 {
-                    shader.SetVector3($"pointLights[{j}].position", 0, 10, 0);
+                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lightSourcePos[j].x, CORERenderContent.lightSourcePos[j].y, CORERenderContent.lightSourcePos[j].z);
                     shader.SetFloat($"pointLights[{j}].constant", 1.0f);
-                    shader.SetFloat($"pointLights[{j}].linear", 0.022f);
-                    shader.SetFloat($"pointLights[{j}].quadratic", 0.0019f);
-                    shader.SetVector3($"pointLights[{j}].ambient", Materials[i].Ambient.x / 5, Materials[i].Ambient.y / 5, Materials[i].Ambient.z / 5);
-                    shader.SetVector3($"pointLights[{j}].diffuse", Materials[i].Diffuse.x / 5, Materials[i].Diffuse.y / 5, Materials[i].Diffuse.z / 5);
-                    shader.SetVector3($"pointLights[{j}].specular", Materials[i].Specular.x / 5, Materials[i].Specular.y / 5, Materials[i].Specular.z / 5);
+                    shader.SetFloat($"pointLights[{j}].linear", 0.09f);
+                    shader.SetFloat($"pointLights[{j}].quadratic", 0.032f);
+                    shader.SetVector3($"pointLights[{j}].ambient", Materials[i].Ambient.x, Materials[i].Ambient.y, Materials[i].Ambient.z);
+                    shader.SetVector3($"pointLights[{j}].diffuse", Materials[i].Diffuse.x, Materials[i].Diffuse.y, Materials[i].Diffuse.z);
+                    shader.SetVector3($"pointLights[{j}].specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
                 }
 
                 usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);

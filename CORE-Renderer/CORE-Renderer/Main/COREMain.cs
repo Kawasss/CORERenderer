@@ -15,7 +15,7 @@ namespace CORERenderer.Main
         public static int fps = 0;
 
         public static CORERenderContent render;
-        public static Rendering basic;
+        public static Overrides overrides;
 
         private static double time = 0;
         private static double time2 = 0;
@@ -23,11 +23,11 @@ namespace CORERenderer.Main
         public unsafe static void Main(string[] args)
         {
             render = new();
-            basic = new();
+            overrides = new();
 
             EnginePresets.SetPresets();
 
-            basic.AlwaysLoad();
+            overrides.AlwaysLoad();
             render.OnLoad();
 
             double minimumFrameTime = EPL.RunEngineLogic();
@@ -63,13 +63,19 @@ namespace CORERenderer.Main
                 Glfw.PollEvents();
             }
             Console.WriteLine();
-            Console.WriteLine("Deleting buffers");
+
+            if (CORERenderContent.givenCRS.allOBJs.Count > 0)
+                Console.Write("\nDeleting buffers");
 
             for (int i = 0; i < CORERenderContent.givenCRS.allOBJs.Count; i++)
             {
-                CORERenderContent.givenCRS.RemoveObject(i);
+                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].GeneratedBuffers.ToArray());
+                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].elementBufferObject.ToArray());
+                glDeleteVertexArrays(CORERenderContent.givenCRS.allOBJs[i].GeneratedVAOs.ToArray());
+                glDeleteShader(CORERenderContent.givenCRS.allOBJs[i].shader.Handle);
                 Console.Write($"..{i}");
             }
+            Console.WriteLine();
 
             Console.WriteLine("shutting down");
             Glfw.Terminate();
