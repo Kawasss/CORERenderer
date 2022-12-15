@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CORERenderer.Loaders;
-using CORERenderer;
+﻿using CORERenderer.Loaders;
 using CORERenderer.Main;
 
-namespace CORERenderer.CRS
+namespace CORERenderer.CRSFile
 {
     public partial class CRS
     {
@@ -15,8 +9,6 @@ namespace CORERenderer.CRS
         public string path = null;
         public int nextUnusedID;
         public FileStream cstFile;
-        
-        private string[] cstLines;
 
         public List<Obj> allOBJs = new();
         private Dictionary<string, int> nameIDBinder = new();
@@ -24,12 +16,11 @@ namespace CORERenderer.CRS
         
         public List<ObjectInstance> allObjectInstances = new();
 
-        CRS(string name, string path, string[] cstLines, FileStream cstFile)
+        CRS(string name, string path, FileStream cstFile)
         {   //sets all the CRS information
             this.name = name;
             this.path = path;
             this.cstFile = cstFile;
-            this.cstLines = cstLines;
             nextUnusedID = 0;
         }
 
@@ -52,9 +43,17 @@ namespace CORERenderer.CRS
         public static CRS LoadCRS(string path, string name)
         {
             if (Directory.Exists(path))
+            {
+                Console.WriteLine("Found file, reading..");
                 return ReadCRS(path);
+            }
             else
+            {
+                Console.WriteLine("Creating new file..");
                 return GenerateCRS(path, name);
+            }
         } 
+
+        
     }
 }

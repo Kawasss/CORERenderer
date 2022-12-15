@@ -4,14 +4,15 @@ using CORERenderer.GLFW.Structs;
 using StbImageSharp;
 using Monitor = CORERenderer.GLFW.Structs.Monitor;
 using Image = CORERenderer.GLFW.Structs.Image;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using COREMath;
 using CORERenderer.shaders;
 using CORERenderer.Main;
+using CORERenderer.textures;
 
 namespace CORERenderer
 {
-    public class Rendering : COREMain, EngineProperties
+    public class Overrides : COREMain, EngineProperties
     {
         public unsafe void AlwaysLoad()
         {
@@ -21,7 +22,7 @@ namespace CORERenderer
             Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
-            window = Glfw.CreateWindow(Width, Height, "CORE renderer", Monitor.None, Window.None);
+            window = Glfw.CreateWindow(Width, Height, "CORE renderer", Glfw.PrimaryMonitor, Window.None);
             if (window == null)
                 Console.WriteLine("Failed to create a window");
 
@@ -41,11 +42,9 @@ namespace CORERenderer
 
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
-        }
 
-        public unsafe virtual void AlwaysRender()
-        {
-            //render stuff that is constant and doesnt change, tried to put grid rendering here but didnt work?
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png"));
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholderspecular.png"));
         }
 
         public unsafe virtual void OnLoad()

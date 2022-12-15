@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using GLFW;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
 using COREMath;
 
 namespace CORERenderer.shaders
@@ -64,7 +64,7 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to link program, pname[0] != GL_TRUE");
+                Console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
                 Console.WriteLine(glGetProgramInfoLog(program));
             }
         }
@@ -140,11 +140,6 @@ namespace CORERenderer.shaders
                 glDeleteProgram(Handle);
                 disposedValue = true;
             }
-        }
-
-        ~Shader()
-        {
-            glDeleteProgram(Handle);
         }
 
         public void Dispose()

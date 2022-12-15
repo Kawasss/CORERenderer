@@ -1,35 +1,35 @@
-﻿using System;
-using COREMath;
-using static CORERenderer.GL;
-using CORERenderer.CRS;
+﻿using COREMath;
+using CORERenderer.CRSFile;
+using static CORERenderer.OpenGL.GL;
+using static CORERenderer.Main.Globals;
+using static CORERenderer.Main.Rendering;
 using CORERenderer.Main;
-using CORERenderer.Loaders;
 using CORERenderer.shaders;
-using CORERenderer.textures;
 using CORERenderer.GLFW;
-using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
-using System.Runtime.CompilerServices;
+using CORERenderer.GLFW.Enums;
 
 namespace CORERenderer
 {
-    
-
-    public class CORERenderContent : Rendering, EngineProperties
+    public class CORERenderContent : Overrides, EngineProperties
     {
-        static private Shader lightShader;
-        static private Shader gridShader;
+        static public Shader lightShader;
+        static public Shader gridShader;
 
         static public Camera camera;
 
-        static Vector3 lastPos;
+        static Vector2 lastPos;
 
-        static bool loaded = false;
+        static Framebuffer fbo;
+        static private Cubemap cubemap;
+
+        public static bool loaded = false;
         static bool loadable = true;
         static bool canChange = true;
+        public static bool canDelete = false;
 
-        static private uint vertexArrayObjectLightSource;
-        static private uint vertexArrayObjectGrid;
+        static public uint vertexArrayObjectLightSource;
+        static public uint vertexArrayObjectGrid;
         static private double time;
         static private bool firstMove = true;
         static double mousePosXD;
@@ -37,7 +37,7 @@ namespace CORERenderer
         static float mousePosX;
         static float mousePosY;
 
-        public static CRS.CRS givenCRS;
+        public static CRS givenCRS;
 
         static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         static string directory = Path.GetDirectoryName(root);
@@ -45,14 +45,9 @@ namespace CORERenderer
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        public static float[] vertices;
-        public static uint[] indices;
-
-        static public Vector3 lightPos = new(0.6f, 1, 1f);
-        static private int currentObj = 0;
+        static public List<Vector3> lightSourcePos;
+        static public int currentObj = 0;
         static private float called = 0;
-
-        static public int placeholder = 0; //temporary for .crs related issues
 
         public unsafe override void OnLoad()
         {
@@ -60,15 +55,27 @@ namespace CORERenderer
             Console.WriteLine();
             MathC.Initialize(false);
 
-            glEnable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
+            glEnable(GL_DEPTH_TEST);
             glEnable(GL_TEXTURE_2D);
+            glEnable(GL_TEXTURE_CUBE_MAP);
+            glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+            glFrontFace(GL_CCW);
+
+            givenCRS = CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
+
             //initialises given shaders
-            //shader = new Shader($"{pathRenderer}\\shaders\\shader.vert", $"{pathRenderer}\\shaders\\lighting.frag"); unneeded if obj.cs is done
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+
+            string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
+            cubemap = GenerateSkybox(faces);
+
+            fbo = GenerateFramebuffer();
 
             { //assignes values from vertices to the vertex buffer object for the light source
                 vertexArrayObjectLightSource = glGenVertexArray();
@@ -80,66 +87,40 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
+            lightSourcePos = new();
+            lightSourcePos.Add(new(10, 10, 10));
+            lightSourcePos.Add(new(0, 20, 0));
+
             camera = new Camera(new(0, 1, 5), Width / Height);
 
-
-            givenCRS = CRS.CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
-            //givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
-
-
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                throw new GLFW.Exception("Framebuffer is not complete");
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
-
-            //resets all of the printed lines before this
-            /*Console.CursorTop = 0;
-            for (int i = 0; i <= 50; i++)
-                Console.WriteLine("                                                                                                 "); //space needed to replace all characters
-            Console.CursorTop = 0;*/
         }
 
         public unsafe override void RenderEveryFrame()
         {
+            //calculates the time between frames
             time += Glfw.Time - time * 2;
 
-            //sets background color
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            //binds the correct framebuffer for accurate writing
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
-            {
-                givenCRS.allOBJs[i].Render(camera);
-            }
+            RenderAllObjects(givenCRS);
 
-            //assigns all the values for placement of the light source
-            lightShader.Use();
-            lightShader.SetMatrix("view", camera.GetViewMatrix());
-            lightShader.SetMatrix("projection", camera.GetProjectionMatrix());
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            glBindVertexArray(vertexArrayObjectLightSource);
+            RenderLights(lightSourcePos);
+            RenderCubemap(cubemap);
+            RenderGrid();
 
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(5, 5, 5) * MathC.GetScalingMatrix(0.2f));
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-
-            lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(0, 10, 0) * MathC.GetScalingMatrix(0.2f));
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
-        public override void AlwaysRender()
-        {
-            //assigns all the values for placement of the grid
-            gridShader.Use();
-
-            gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 100 * MathC.GetLengthOf(camera.position)));
-            gridShader.SetMatrix("view", camera.GetArcBallViewMatrix());
-            gridShader.SetMatrix("projection", camera.GetProjectionMatrix());
-
-            gridShader.SetVector3("playerPos", camera.position);
-
-            glBindVertexArray(vertexArrayObjectGrid);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //debug
+            fbo.RenderFramebuffer();
         }
 
         public override void EveryFrame(Window window, float delta)
@@ -148,10 +129,13 @@ namespace CORERenderer
             mousePosX = (float)mousePosXD;
             mousePosY = (float)mousePosYD;
 
-            if (called <= 0.4f)
+            if (called <= 0.3f)
                 called += delta;
-            if (called > 0.4f)
+            if (called > 0.3f)
+            {
                 canChange = true;
+                canDelete = true;
+            }
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
             {
@@ -166,24 +150,41 @@ namespace CORERenderer
 
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Right);
 
+            if (Glfw.GetKey(window, Keys.L) == InputState.Press && loaded)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            } 
+            if (Glfw.GetKey(window, Keys.L) == InputState.Release && loaded)
+            {
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_CULL_FACE);
+            }
+
             //!!temporary debug movement for obj files !!rewrite
-            if (state2 == InputState.Press && state != InputState.Press) //
+            if (state2 == InputState.Press && state != InputState.Press)
             {   //calls the logic checks for highlighting the current object
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press && loaded && canChange)
                     HighlightLogic();
                 //code below loads in new objects and checks if they can be loaded in
                 if (Glfw.GetKey(window, Keys.E) == InputState.Press)
                     loadable = true;
-                if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)// && !loaded)
+                if (Glfw.GetKey(window, Keys.Q) == InputState.Press && loadable)
                 {
                     if (loadable)
                     {
-                        givenCRS.CSTAddObj(new($"{pathRenderer}\\loaders\\testOBJ\\c4520.obj"));
+                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
                         loaded = true;
                         loadable = false;
-                        HighlightLogic();
+                        if (givenCRS.allOBJs.Count > 0)
+                            HighlightLogic();
                         givenCRS.nextUnusedID++; //may not be best solution but works atleast
                     } 
+                }
+                if (Glfw.GetKey(window, Keys.Backspace) == InputState.Press && loaded && canDelete)
+                {
+                    givenCRS.RemoveObject(givenCRS.allOBJs[currentObj].ID);
+                    HighlightLogic();
                 }
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
@@ -206,19 +207,19 @@ namespace CORERenderer
 
                 if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation += new Vector3(0, 1f * delta, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(0, 1f * delta, 0);
 
                 if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation -= new Vector3(0, 1f * delta, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(0, 1f * delta, 0);
 
                 if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation -= new Vector3(1f * delta, 0, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation -= new Vector3(1f * delta, 0, 0);
 
                 if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
-                        givenCRS.allOBJs[currentObj].translation += new Vector3(1f * delta, 0, 0); //obj
+                        givenCRS.allOBJs[currentObj].translation += new Vector3(1f * delta, 0, 0);
             }
 
             //basic movement
@@ -246,15 +247,15 @@ namespace CORERenderer
                 //rotating the camera with mouse movement
                 if (firstMove)
                 {
-                    lastPos = new(mousePosX, 0, mousePosY);
+                    lastPos = new(mousePosX, mousePosY);
                     firstMove = false;
                 }
                 else
                 {
                     float deltaX = mousePosX - lastPos.x;
-                    float deltaY = lastPos.z - mousePosY;
+                    float deltaY = lastPos.y - mousePosY;
 
-                    lastPos = new(mousePosX, 0, mousePosY);
+                    lastPos = new(mousePosX, mousePosY);
 
                     camera.Yaw += deltaX * SENSITIVITY;
                     camera.Pitch -= deltaY * SENSITIVITY;
@@ -269,31 +270,49 @@ namespace CORERenderer
         }
 
         //handles all of the logic for deciding which object to select, highlight and manipulate
-        private void HighlightLogic()
+        public static void HighlightLogic()
         {
             canChange = false;
             called = 0;
-            currentObj++;
-            if (currentObj >= givenCRS.allOBJs.Count)
+            if (currentObj == -1)
             {
                 currentObj = 0;
-
-                givenCRS.allOBJs[^1].highlighted = false;
-                givenCRS.allOBJs[currentObj].highlighted = true;
-                
+                givenCRS.allOBJs[0].highlighted = true;
+                return;
             }
-            else if (givenCRS.allOBJs.Count > 1)
+            if (currentObj == 0)
             {
-                givenCRS.allOBJs[currentObj - 1].highlighted = false;
-                givenCRS.allOBJs[currentObj].highlighted = true;
+                if (givenCRS.allOBJs.Count > 1)
+                {
+                    givenCRS.allOBJs[currentObj + 1].highlighted = true;
+                    givenCRS.allOBJs[currentObj].highlighted = false;
+                    currentObj++;
+                    return;
+                }
+                if (!givenCRS.allOBJs[0].highlighted)
+                {
+                    givenCRS.allOBJs[0].highlighted = true;
+                    return;
+                }
+                givenCRS.allOBJs[0].highlighted = false;
+                return;
             }
-            givenCRS.allOBJs[currentObj].highlighted = true;
+            if (currentObj >= givenCRS.allOBJs.Count - 1)
+            {
+                givenCRS.allOBJs[^1].highlighted = false;
+                givenCRS.allOBJs[0].highlighted = true;
+                currentObj = 0;
+                return;
+            }
+            givenCRS.allOBJs[currentObj].highlighted = false;
+            givenCRS.allOBJs[currentObj + 1].highlighted = true;
+            currentObj++;
         }
 
-        //zoom in or out !!Unused due to new architecture
+        //zoom in or out
         public void ScrollCallback(Window window, double x, double y)
         {
-            CORERenderContent.camera.Fov -= (float)y * 1.5f;
+            camera.Fov -= (float)y * 1.5f;
         }
     }
 }

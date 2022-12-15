@@ -40,7 +40,6 @@ struct PointLight
 };
 #define NR_POINTS_LIGHTS 2
 uniform PointLight pointLights[NR_POINTS_LIGHTS];
-//uniform PointLight pointLight;
 
 struct Material 
 {
@@ -51,7 +50,7 @@ struct Material
 uniform Material material;
 
 uniform vec3 viewPos;
-uniform int highlighted;
+uniform float distanceObject;
 
 in vec2 TexCoords;
 
@@ -148,11 +147,6 @@ void main()
 		result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
 	}
 	result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
-
-	if (highlighted == 1)
-	{
-		result *= vec3(1, 0, 1);
-	}
 
 	FragColor = vec4(result, 1);
 }

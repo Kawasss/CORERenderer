@@ -1,14 +1,8 @@
 ﻿using COREMath;
-using System;
 using CORERenderer.Main;
-using CORERenderer.textures;
-using System.CodeDom.Compiler;
-using static CORERenderer.GL;
+using static CORERenderer.OpenGL.GL;
+using static CORERenderer.Main.Globals;
 using CORERenderer.shaders;
-using CORERenderer;
-using System.Runtime.CompilerServices;
-using CORERenderer.GLFW.Structs;
-using System.IO;
 
 namespace CORERenderer.Loaders
 {
@@ -17,15 +11,21 @@ namespace CORERenderer.Loaders
         public List<List<float>> vertices;
         public List<List<uint>> indices;
 
-        public readonly List<Material> Materials;
+        public List<Material> Materials;
 
-        private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
+        /*
+         * $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag" for normal lighting
+         * $"{CORERenderContent.pathRenderer}\\shaders\\depthVisualizer.frag" for showing the depth
+         * $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag" for outlining the current object
+         */
+        public readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
 
         public readonly string name = "PLACEHOLDER";
 
-        private List<uint> GeneratedBuffers = new();
-        private List<uint> GeneratedVAOs = new();
-        private List<uint> elementBufferObject = new();
+        //not safe to make them public but is needed to delete them
+        public List<uint> GeneratedBuffers = new();
+        public List<uint> GeneratedVAOs = new();
+        public List<uint> elementBufferObject = new();
 
         public float Scaling = 1.0f;
         public Vector3 translation = Vector3.Zero;
@@ -37,16 +37,17 @@ namespace CORERenderer.Loaders
 
         public string mtllib;
 
-        public Obj() { }
+        public int ID;
+
         public Obj(string path)
         {
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
-            _ = LoadOBJ(null, out _, out _, out _, out _);
+            GenerateBuffers();
 
             int error;
             if (!loaded)
                 throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
-            if (path != null)
+            if (path != null || !File.Exists(path))
             {
                 List<int> temp = new();
 
@@ -55,10 +56,16 @@ namespace CORERenderer.Loaders
 
                 name = path[(temp[^1] + 1)..path.IndexOf(".obj")];
 
-                loaded = LoadMTL
-                (
-                    $"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error
-                );
+                if (mtllib != "default")
+                    loaded = LoadMTL
+                    (
+                        $"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error
+                    );
+                else
+                    loaded = LoadMTL
+                    (
+                        $"{CORERenderContent.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials, out error
+                    );
             }
             else
                 loaded = LoadMTL
@@ -67,13 +74,7 @@ namespace CORERenderer.Loaders
                     );
             if (!loaded)
                 ErrorLogic(error);
-
-            if (Materials.Count > 0)
-            {
-                Materials[0].Texture.Use(GL_TEXTURE0);
-                Materials[0].SpecularMap.Use(GL_TEXTURE1);
-            }
-            GenerateBuffers();
+            
             /*int aa = 0;
             for (int i = 0; i < vertices.Count; i++)
                 for (int j = 0; j < vertices[i].Count; j++)
@@ -85,90 +86,97 @@ namespace CORERenderer.Loaders
             Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
         }
 
-        public Obj(string mtlPath, List<string> mtlNames)
+        public Obj() { } //this has to exist otherwise it results in an error???
+
+        public Obj(string objPath, string mtlPath)
         {
-            bool loaded = LoadMTL(mtlPath, mtlNames, out Materials, out int error);
+            bool loaded = LoadOBJ(objPath, out List<string> mtlNames, out vertices, out indices, out mtllib);
+
+            int error;
+            if (!loaded)
+                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
+            if (objPath != null || !File.Exists(objPath))
+                loaded = LoadMTL(mtlPath, mtlNames, out Materials, out error);
+            else
+                loaded = LoadMTL
+                    (
+                        null, mtlNames, out Materials, out error
+                    );
             if (!loaded)
                 ErrorLogic(error);
 
-            vertices = new();
-            indices = new();
+            GenerateBuffers();
+
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.specular", GL_TEXTURE1);
         }
 
-        public unsafe void Render(Camera camera) //better to make this extend to rendereveryframe() or new render override
+        public unsafe void Render() //better to make this extend to rendereveryframe() or new render override
         {
             shader.Use();
-            
-            shader.SetVector3("viewPos", camera.position);
 
-            //all till the last for loop is temporary
-            //directional light
-            shader.SetVector3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-            shader.SetVector3("dirLight.ambient", 0.1f, 0.1f, 0.1f);
-            shader.SetVector3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-            shader.SetVector3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-            shader.SetVector3("pointLights[0].position", 10, 5, 10);
-
-            shader.SetVector3("pointLights[1].position", -10, 5, -10);
-
-            //point lights
-            for (int j = 0; j < 2; j++) 
-            {
-                shader.SetVector3($"pointLights[{j}].position", 0, 10, 0);
-                shader.SetFloat($"pointLights[{j}].constant", 1.0f);
-                shader.SetFloat($"pointLights[{j}].linear", 0.022f);
-                shader.SetFloat($"pointLights[{j}].quadratic", 0.0019f);
-                shader.SetVector3($"pointLights[{j}].ambient", 0.2f, 0.2f, 0.2f);
-                shader.SetVector3($"pointLights[{j}].diffuse", 0.5f, 0.5f, 0.5f);
-                shader.SetVector3($"pointLights[{j}].specular", 1.0f, 1.0f, 1.0f);
-            }
+            shader.SetVector3("viewPos", CORERenderContent.camera.position);
 
             //spotLight
-            shader.SetVector3("spotLight.position", camera.position);
-            shader.SetVector3("spotLight.direction", camera.front);
-            shader.SetVector3("spotLight.ambient", 0.2f, 0.2f, 0.2f);
-            shader.SetVector3("spotLight.diffuse", 0.5f, 0.5f, 0.5f);
-            shader.SetVector3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+            shader.SetVector3("spotLight.position", CORERenderContent.camera.position);
+            shader.SetVector3("spotLight.direction", CORERenderContent.camera.front);
+            shader.SetVector3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
+            shader.SetVector3("spotLight.specular", 0.0f, 0.0f, 0.0f);
             shader.SetFloat("spotLight.constant", 1.0f);
             shader.SetFloat("spotLight.linear", 0.09f);
             shader.SetFloat("spotLight.quadratic", 0.032f);
             shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
             shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
 
-            shader.SetMatrix("view", camera.GetViewMatrix());
-            shader.SetMatrix("projection", camera.GetProjectionMatrix());
+            shader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
+            shader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
 
-            shader.SetBool("highlighted", highlighted);
+            if (Scaling < 0.01f)
+                Scaling = 0.01f;
+            if (rotationX >= 360)
+                rotationX = 0;
+            if (rotationY >= 360)
+                rotationY = 0;
+            if (rotationZ >= 360)
+                rotationZ = 0;
 
-            for (int i = 0; i < Materials.Count; i++)
-            {
-                Materials[i].Texture.Use(GL_TEXTURE0);
-                Materials[i].SpecularMap.Use(GL_TEXTURE1);
-                
-                glBindBuffer(GL_ARRAY_BUFFER, GeneratedBuffers[i]);
-
-                shader.SetFloat("material.shininess", Materials[i].Shininess);
-                shader.SetInt("material.diffuse", GL_TEXTURE0);
-                shader.SetInt("material.specular", GL_TEXTURE1);
-
-                if (Scaling < 0.01f)
-                    Scaling = 0.01f;
-                if (rotationX >= 360)
-                    rotationX = 0;
-                if (rotationY >= 360)
-                    rotationY = 0;
-                if (rotationZ >= 360)
-                    rotationZ = 0;
-                shader.SetMatrix("model", Matrix.IdentityMatrix
+            shader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)
                       * (MathC.GetRotationXMatrix(rotationX)
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
 
+            for (int i = 0; i < Materials.Count; i++)
+            {
+
                 glBindVertexArray(GeneratedVAOs[i]);
+
+                //directional light
+                shader.SetVector3("dirLight.direction", 0.2f, 1.0f, 0.3f);
+                shader.SetVector3("dirLight.ambient", Materials[i].Ambient.x, Materials[i].Ambient.y, Materials[i].Ambient.z);
+                shader.SetVector3("dirLight.diffuse", Materials[i].Diffuse.x, Materials[i].Diffuse.y, Materials[i].Diffuse.z);
+                shader.SetVector3("dirLight.specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
+
+                //point lights
+                for (int j = 0; j < CORERenderContent.lightSourcePos.Count; j++)
+                {
+                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lightSourcePos[j].x, CORERenderContent.lightSourcePos[j].y, CORERenderContent.lightSourcePos[j].z);
+                    shader.SetFloat($"pointLights[{j}].constant", 1.0f);
+                    shader.SetFloat($"pointLights[{j}].linear", 0.09f);
+                    shader.SetFloat($"pointLights[{j}].quadratic", 0.032f);
+                    shader.SetVector3($"pointLights[{j}].ambient", Materials[i].Ambient.x, Materials[i].Ambient.y, Materials[i].Ambient.z);
+                    shader.SetVector3($"pointLights[{j}].diffuse", Materials[i].Diffuse.x, Materials[i].Diffuse.y, Materials[i].Diffuse.z);
+                    shader.SetVector3($"pointLights[{j}].specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
+                }
+
+                usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);
+                usedTextures[Materials[i].SpecularMap].Use(GL_TEXTURE1);
+
+                shader.SetFloat("material.shininess", Materials[i].Shininess);
+
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
-            } 
+            }
         }
 
         public unsafe void GenerateBuffers()
@@ -177,43 +185,54 @@ namespace CORERenderer.Loaders
             GeneratedVAOs = new();
             elementBufferObject = new();
 
-            for (int i = 0; i < vertices.Count; i++) //is currently one because theres only one instance of vertices, might change in the future 
+            for (int i = 0; i < vertices.Count; i++)
             {
-                float[] local = vertices[i].ToArray();
-                uint buffer = glGenBuffer();
-                glBindBuffer(GL_ARRAY_BUFFER, buffer);
-                fixed (float* temp = &local[0])
                 {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ARRAY_BUFFER, local.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                    //gets current vertices and puts in a buffer
+                    float[] local = vertices[i].ToArray();
+                    uint buffer = glGenBuffer();
+                    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+
+                    fixed (float* temp = &local[0])
+                    {
+                        IntPtr intptr = new(temp);
+                        glBufferData(GL_ARRAY_BUFFER, local.Length * sizeof(float), intptr, GL_STATIC_DRAW);
+                    }
+                    GeneratedBuffers.Add(buffer);
                 }
-                GeneratedBuffers.Add(buffer);
-
-                uint GeneratedVAO = glGenVertexArray();
-                glBindVertexArray(GeneratedVAO);
-                //could be put in a for loop but not that necessary
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation2);
-
-                int vertexLocation3 = shader.GetAttribLocation("aNormal");
-                glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation3);
-
-                uint[] local2 = indices[i].ToArray();
-                uint local3 = glGenBuffer();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);
-                fixed (uint* temp = &local2[0])
                 {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, local2.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                    //could be put in a for loop but not that necessary
+                    uint GeneratedVAO = glGenVertexArray();
+                    glBindVertexArray(GeneratedVAO);
+                    GeneratedVAOs.Add(GeneratedVAO);
+                    //3D coordinates
+                    int vertexLocation = shader.GetAttribLocation("aPos");
+                    glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+                    glEnableVertexAttribArray((uint)vertexLocation);
+
+                    //UV texture coordinates
+                    int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
+                    glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation2);
+
+                    //normal coordinates
+                    int vertexLocation3 = shader.GetAttribLocation("aNormal");
+                    glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation3);
+
+                    //adds ebo to the vao
+                    uint[] local2 = indices[i].ToArray();
+                    uint local3 = glGenBuffer();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, local3);
+                    fixed (uint* temp = &local2[0])
+                    {
+                        IntPtr intptr = new(temp);
+                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, local2.Length * sizeof(uint), intptr, GL_STATIC_DRAW);
+                    }
+                    elementBufferObject.Add(local3);
                 }
-                elementBufferObject.Add(local3);
-                GeneratedVAOs.Add(GeneratedVAO);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindVertexArray(0);
             }
         }
 

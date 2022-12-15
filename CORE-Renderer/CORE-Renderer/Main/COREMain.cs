@@ -1,20 +1,21 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
-using static CORERenderer.GL;
+using CORERenderer.textures;
+using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main
 {
     public class COREMain : EngineProperties
     {
         [NotNull]
-        public static int Width = 800;
-        public static int Height = 600;
+        public static int Width = 2560; //1024
+        public static int Height = 1440; //576
         public static Window window;
 
         public static int fps = 0;
 
         public static CORERenderContent render;
-        public static Rendering basic;
+        public static Overrides overrides;
 
         private static double time = 0;
         private static double time2 = 0;
@@ -22,11 +23,11 @@ namespace CORERenderer.Main
         public unsafe static void Main(string[] args)
         {
             render = new();
-            basic = new();
+            overrides = new();
 
             EnginePresets.SetPresets();
 
-            basic.AlwaysLoad();
+            overrides.AlwaysLoad();
             render.OnLoad();
 
             double minimumFrameTime = EPL.RunEngineLogic();
@@ -49,8 +50,7 @@ namespace CORERenderer.Main
                 render.EveryFrame(window, currentFrameTime);
 
                 render.RenderEveryFrame();
-                render.AlwaysRender();
-
+                
                 fps = (int)(1 / currentFrameTime);
                 time = Glfw.Time - time2;
                 
@@ -63,6 +63,20 @@ namespace CORERenderer.Main
                 Glfw.PollEvents();
             }
             Console.WriteLine();
+
+            if (CORERenderContent.givenCRS.allOBJs.Count > 0)
+                Console.Write("\nDeleting buffers");
+
+            for (int i = 0; i < CORERenderContent.givenCRS.allOBJs.Count; i++)
+            {
+                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].GeneratedBuffers.ToArray());
+                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].elementBufferObject.ToArray());
+                glDeleteVertexArrays(CORERenderContent.givenCRS.allOBJs[i].GeneratedVAOs.ToArray());
+                glDeleteShader(CORERenderContent.givenCRS.allOBJs[i].shader.Handle);
+                Console.Write($"..{i}");
+            }
+            Console.WriteLine();
+
             Console.WriteLine("shutting down");
             Glfw.Terminate();
         }

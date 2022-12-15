@@ -1,12 +1,4 @@
 ﻿using COREMath;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CORERenderer
 {
@@ -71,7 +63,7 @@ namespace CORERenderer
 
         public Matrix GetProjectionMatrix()
         {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.1f, 100f);
+            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.01f, 1000f);
         }
 
         public Matrix GetViewMatrix()
@@ -79,9 +71,14 @@ namespace CORERenderer
             return MathC.LookAt(position, position + front, up);
         }
 
-        public Matrix GetArcBallViewMatrix()
+        public Matrix GetTranslationlessViewMatrix()
         {
-            return MathC.LookAt(position, position + front, up);
+            Matrix temp = MathC.LookAt(position, position + front, up);
+            Matrix newtemp = new(new float[4, 4] { {temp.matrix4x4[0,0], temp.matrix4x4[0, 1], temp.matrix4x4[0, 2], 0 },
+                                                   {temp.matrix4x4[1,0], temp.matrix4x4[1, 1], temp.matrix4x4[1, 2], 0 },
+                                                   {temp.matrix4x4[2,0], temp.matrix4x4[2, 1], temp.matrix4x4[2, 2], 0 },
+                                                   {0                  , 0                   , 0                   , 0 }});
+            return newtemp;
         }
 
         private void UpdateVectors()

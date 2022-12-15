@@ -8,12 +8,21 @@ namespace CORERenderer.Main
         public static bool showFrameTime = false;
         public static int maxFPS = 1000;
     }
+
+    public interface LoaderDebug
+    {
+        public static bool showErrors = false;
+    }
+
+    /// <summary>
+    /// contains all methods for working with the engine properties
+    /// </summary>
     public class EPL : EngineProperties
     {
         /// <summary>
-        /// Runs the logic on interface EngineProperties
+        /// Runs the logic on the interface EngineProperties
         /// </summary>
-        /// <returns>The minimum amount of frametime as a float</returns>
+        /// <returns>The minimum amount of frametime needed for a frame to finish rendering as a double</returns>
         public static double RunEngineLogic()
         {
             if (EngineProperties.maxFPS > 1000)

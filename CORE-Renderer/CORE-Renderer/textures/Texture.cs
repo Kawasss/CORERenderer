@@ -1,20 +1,13 @@
-﻿using System;
-using System.Net;
-using System.Drawing;
-using System.IO;
-using System.Collections;
-using System.Text;
-using System.Drawing.Drawing2D;
-using static CORERenderer.GL;
-using GLFW;
+﻿using static CORERenderer.OpenGL.GL;
 using StbImageSharp;
-using System.Drawing.Imaging;
 
 namespace CORERenderer.textures
 {
     public class Texture
     {
         public readonly uint Handle;
+        public string path;
+        public string name;
 
         public static unsafe Texture ReadFromFile(string imagePath)
         {
@@ -27,7 +20,7 @@ namespace CORERenderer.textures
 
             if (!File.Exists(imagePath))
             {
-                Console.WriteLine("Couldnt find given texture, using default texture");
+                Console.WriteLine($"Couldnt find given texture at {imagePath}, using default texture");
                 imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
             }
 
@@ -46,7 +39,11 @@ namespace CORERenderer.textures
 
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            return new Texture(handle);
+            List<int> local = new();
+            for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
+                local.Add(i);
+
+            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..]};
         }
 
         public Texture(uint newHandle)
@@ -60,4 +57,4 @@ namespace CORERenderer.textures
             glBindTexture(GL_TEXTURE_2D, Handle);
         }
     }
-}
+} 
