@@ -22,7 +22,7 @@ namespace CORERenderer
             Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
-            window = Glfw.CreateWindow(Width, Height, "CORE renderer", Glfw.PrimaryMonitor, Window.None);
+            window = Glfw.CreateWindow(Width, Height, "CORE renderer", Monitor.None, Window.None);
             if (window == null)
                 Console.WriteLine("Failed to create a window");
 

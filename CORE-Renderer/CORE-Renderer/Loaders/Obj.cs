@@ -74,16 +74,6 @@ namespace CORERenderer.Loaders
                     );
             if (!loaded)
                 ErrorLogic(error);
-            
-            /*int aa = 0;
-            for (int i = 0; i < vertices.Count; i++)
-                for (int j = 0; j < vertices[i].Count; j++)
-                    aa++;
-            int ab = 0;
-            for (int i = 0; i < indices.Count; i++)
-                for (int j = 0; j < indices[i].Count; j++)
-                    ab++;
-            Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
         }
 
         public Obj() { } //this has to exist otherwise it results in an error???
@@ -131,6 +121,8 @@ namespace CORERenderer.Loaders
 
             shader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
             shader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
+
+            shader.SetFloat("reflectiveness", 0.5f);
 
             if (Scaling < 0.01f)
                 Scaling = 0.01f;

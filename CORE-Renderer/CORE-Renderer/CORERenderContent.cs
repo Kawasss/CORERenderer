@@ -21,7 +21,7 @@ namespace CORERenderer
         static Vector2 lastPos;
 
         static Framebuffer fbo;
-        static private Cubemap cubemap;
+        static public Cubemap cubemap;
 
         public static bool loaded = false;
         static bool loadable = true;
@@ -117,7 +117,7 @@ namespace CORERenderer
 
             RenderLights(lightSourcePos);
             RenderCubemap(cubemap);
-            RenderGrid();
+            //RenderGrid();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //debug
             fbo.RenderFramebuffer();
@@ -173,7 +173,7 @@ namespace CORERenderer
                 {
                     if (loadable)
                     {
-                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
+                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\human_low.obj");
                         loaded = true;
                         loadable = false;
                         if (givenCRS.allOBJs.Count > 0)

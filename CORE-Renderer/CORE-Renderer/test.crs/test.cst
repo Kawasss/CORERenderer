@@ -1,5 +1,5 @@
 <obj id = "0">
-name = c4520;
+name = human_low;
 objFile = 0.obj;
 mtllib = 0.mtl;
 scale = 1.0;
