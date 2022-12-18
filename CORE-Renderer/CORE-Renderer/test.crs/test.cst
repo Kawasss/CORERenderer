@@ -1,10 +1,11 @@
 <obj id = "0">
-name = c4520;
+name = PLACEHOLDER;
 objFile = 0.obj;
 mtllib = 0.mtl;
-scale = 1.0;
-translation = 0.0, 0.0, 0.0;
-rotateX = 0.0;
-rotateY = 0.0;
-rotateZ = 0.0;
+scale = 1;
+translation = -0.14497621, 0.38229233, 0;
+rotateX = 47.068066;
+rotateY = 57.66692;
+rotateZ = 49.090294;
 </obj>
+

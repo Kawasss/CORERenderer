@@ -15,8 +15,6 @@ namespace CORERenderer.Main
         public static void RenderLights(List<Vector3> locations)
         {
             CORERenderContent.lightShader.Use();
-            CORERenderContent.lightShader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
-            CORERenderContent.lightShader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
 
             glBindVertexArray(CORERenderContent.vertexArrayObjectLightSource);
 
@@ -32,8 +30,6 @@ namespace CORERenderer.Main
             CORERenderContent.gridShader.Use();
 
             CORERenderContent.gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 100 * MathC.GetLengthOf(CORERenderContent.camera.position)));
-            CORERenderContent.gridShader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
-            CORERenderContent.gridShader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
 
             CORERenderContent.gridShader.SetVector3("playerPos", CORERenderContent.camera.position);
 
@@ -46,9 +42,6 @@ namespace CORERenderer.Main
             glDisable(GL_CULL_FACE);
             glDepthFunc(GL_LEQUAL);
             cubemap.shader.Use();
-
-            cubemap.shader.SetMatrix("view", CORERenderContent.camera.GetTranslationlessViewMatrix());
-            cubemap.shader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
 
             glBindVertexArray(cubemap.VAO);
 

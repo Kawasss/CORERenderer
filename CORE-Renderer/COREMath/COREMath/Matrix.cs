@@ -218,8 +218,8 @@
             float y = 2 * depthNear / (top - bottom);
             float a = (right + left) / (right - left);
             float b = (top + bottom) / (top - bottom);
-            float c = -((depthFar + depthNear) / (depthFar - depthNear));
-            float d = -((2 * depthFar * depthNear) / (depthFar - depthNear));
+            float c = -(depthFar + depthNear) / (depthFar - depthNear);
+            float d = -(2 * depthFar * depthNear) / (depthFar - depthNear);
 
             float[,] v1 = { { x, 0, a, 0 },
                             { 0, y, b, 0 },

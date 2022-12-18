@@ -2,7 +2,9 @@
 using CORERenderer.Main;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.Main.Globals;
+using CORERenderer.GLFW;
 using CORERenderer.shaders;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer.Loaders
 {
@@ -19,6 +21,8 @@ namespace CORERenderer.Loaders
          * $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag" for outlining the current object
          */
         public readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
+        public readonly Shader highlightShader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag");
+        public readonly Shader normalRenderShader = new($"{CORERenderContent.pathRenderer}\\shaders\\normal.vert", $"{CORERenderContent.pathRenderer}\\shaders\\normal.frag", $"{CORERenderContent.pathRenderer}\\shaders\\normal.geom");
 
         public readonly string name = "PLACEHOLDER";
 
@@ -33,7 +37,11 @@ namespace CORERenderer.Loaders
         public float rotationY = 0.0f;
         public float rotationZ = 0.0f;
 
+        public bool renderNormals = false;
+
         public bool highlighted = false;
+
+        public bool renderLines = false;
 
         public string mtllib;
 
@@ -46,7 +54,7 @@ namespace CORERenderer.Loaders
 
             int error;
             if (!loaded)
-                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
+                throw new GLFW.Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
             if (path != null || !File.Exists(path))
             {
                 List<int> temp = new();
@@ -74,16 +82,6 @@ namespace CORERenderer.Loaders
                     );
             if (!loaded)
                 ErrorLogic(error);
-            
-            /*int aa = 0;
-            for (int i = 0; i < vertices.Count; i++)
-                for (int j = 0; j < vertices[i].Count; j++)
-                    aa++;
-            int ab = 0;
-            for (int i = 0; i < indices.Count; i++)
-                for (int j = 0; j < indices[i].Count; j++)
-                    ab++;
-            Console.WriteLine($"\nvertices' size is: {aa * sizeof(float)} bytes, indices' size is: {ab * sizeof(int)} bytes");*/
         }
 
         public Obj() { } //this has to exist otherwise it results in an error???
@@ -94,7 +92,7 @@ namespace CORERenderer.Loaders
 
             int error;
             if (!loaded)
-                throw new Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
+                throw new GLFW.Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
             if (objPath != null || !File.Exists(objPath))
                 loaded = LoadMTL(mtlPath, mtlNames, out Materials, out error);
             else
@@ -115,6 +113,15 @@ namespace CORERenderer.Loaders
         {
             shader.Use();
 
+            if (renderLines)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            }
+
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+
             shader.SetVector3("viewPos", CORERenderContent.camera.position);
 
             //spotLight
@@ -129,17 +136,7 @@ namespace CORERenderer.Loaders
             shader.SetFloat("spotLight.cutOff", MathC.Cos(MathC.DegToRad(12.5f)));
             shader.SetFloat("spotLight.outerCutOff", MathC.Cos(MathC.DegToRad(15.0f)));
 
-            shader.SetMatrix("view", CORERenderContent.camera.GetViewMatrix());
-            shader.SetMatrix("projection", CORERenderContent.camera.GetProjectionMatrix());
-
-            if (Scaling < 0.01f)
-                Scaling = 0.01f;
-            if (rotationX >= 360)
-                rotationX = 0;
-            if (rotationY >= 360)
-                rotationY = 0;
-            if (rotationZ >= 360)
-                rotationZ = 0;
+            ClampValues();
 
             shader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)
@@ -177,9 +174,58 @@ namespace CORERenderer.Loaders
 
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
             }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            if (renderNormals)
+            {
+                normalRenderShader.Use();
+
+                normalRenderShader.SetMatrix("model", Matrix.IdentityMatrix
+                * new Matrix(Scaling, translation)
+                * (MathC.GetRotationXMatrix(rotationX)
+                * MathC.GetRotationYMatrix(rotationY)
+                * MathC.GetRotationZMatrix(rotationZ)));
+
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    glBindVertexArray(GeneratedVAOs[i]);
+                    glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+                }
+            }
         }
 
-        public unsafe void GenerateBuffers()
+        public unsafe void RenderOutlines()
+        {
+            if (highlighted)
+            {
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+
+                glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+                glStencilMask(0x00);
+                glDisable(GL_DEPTH_TEST);
+
+                highlightShader.Use();
+
+                highlightShader.SetMatrix("model", Matrix.IdentityMatrix
+                      * new Matrix(Scaling * 1.05f, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
+
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    glBindVertexArray(GeneratedVAOs[i]);
+                    glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+                }
+                glStencilMask(0xFF);
+                glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                glEnable(GL_DEPTH_TEST);
+            }
+        }
+
+        private unsafe void GenerateBuffers()
         {
             GeneratedBuffers = new();
             GeneratedVAOs = new();
@@ -236,20 +282,32 @@ namespace CORERenderer.Loaders
             }
         }
 
-        public void ErrorLogic(int error)
+        private void ErrorLogic(int error)
         {
             switch (error)
             {
                 case -1:
-                    throw new Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
+                    throw new GLFW.Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
                 case 0:
                     Console.WriteLine($"No material library found for {name} (error == 0)");
                     break;
                 case 1:
                     break;
                 default:
-                    throw new Exception($"Undefined error: {error}");
+                    throw new GLFW.Exception($"Undefined error: {error}");
             }
+        }
+
+        private void ClampValues()
+        {
+            if (Scaling < 0.01f)
+                Scaling = 0.01f;
+            if (rotationX >= 360)
+                rotationX = 0;
+            if (rotationY >= 360)
+                rotationY = 0;
+            if (rotationZ >= 360)
+                rotationZ = 0;
         }
     }  
 }

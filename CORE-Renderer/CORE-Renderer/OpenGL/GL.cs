@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using COREMath;
+using System.Numerics;
 
 namespace CORERenderer.OpenGL
 {
@@ -7335,8 +7337,31 @@ namespace CORERenderer.OpenGL
         /// <param name="bufferMode">Identifies the mode used to capture the varying variables when transform feedback is active.<para>ust be GL_INTERLEAVED_ATTRIBS or GL_SEPARATE_ATTRIBS.</para></param>
         public static void glTransformFeedbackVaryings(uint program, int count, /*const*/ byte** varyings, int bufferMode) => _glTransformFeedbackVaryings(program, count, varyings, bufferMode);
 
-        //modified constants here (not provided with base file)
+        //custom stuff here ---------------------------------------------- (some methods arent in here but those that arent overloads should be here)
+        /// <summary>
+        /// requires uniform buffer to be bound beforehand
+        /// </summary>
+        /// <param name="matrix"></param>
+        /// <param name="offset"></param>
+        public static unsafe void MatrixToUniformBuffer(Matrix matrix, int offset)
+        {
+            float[] holder = new float[16];
+            int k = 0;
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++, k++)
+                    holder[k] = matrix.matrix4x4[i, j];
+                    
+            fixed (float* temp = &holder[0])
+            {
+                IntPtr intptr = new(temp);
+                glBufferSubData(GL_UNIFORM_BUFFER, offset, GL_MAT4_FLOAT_SIZE, intptr);
+            }
+        }
+
         public const int GL_DEBUG_OUTPUT = 0x92e0;
+        public const int GL_MAT4_FLOAT_SIZE = 64;
+
+        //----------------------------------------------------------------
 
         public const int GL_DEPTH_BUFFER_BIT = 0x00000100;
         public const int GL_STENCIL_BUFFER_BIT = 0x00000400;

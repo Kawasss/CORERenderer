@@ -24,7 +24,7 @@ namespace CORERenderer.CRSFile
 
             FileStream fileStream = File.OpenRead($"{path}\\{name}.cst");
             fileStream.Close();
-            CRS newCRS = new(name, path, fileStream);
+            CRS newCRS = new(name, path, fileStream);;
 
             using (FileStream fs = File.Open($"{path}\\{name}.cst", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new(fs))
@@ -98,10 +98,14 @@ namespace CORERenderer.CRSFile
                             break;
                     }
                 }
+
                 newCRS.nextUnusedID = currentOBJ + 1;
                 CORERenderContent.currentObj = -1;
                 if (newCRS.allOBJs.Count > 0)
+                {
+                    CORERenderContent.currentObj = 0;
                     CORERenderContent.loaded = true;
+                }
             }
             
 

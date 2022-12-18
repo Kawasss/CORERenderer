@@ -8,8 +8,8 @@ namespace CORERenderer.Main
     public class COREMain : EngineProperties
     {
         [NotNull]
-        public static int Width = 2560; //1024
-        public static int Height = 1440; //576
+        public static int Width = 1000;
+        public static int Height = 800;
         public static Window window;
 
         public static int fps = 0;
