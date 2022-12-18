@@ -15,16 +15,17 @@ namespace CORERenderer.shaders
         public string vertexShaderSource;
         public string fragmentShaderSource;
         public string gridShaderSource;
+        public string geometryShaderSource = null;
 
         public Shader(string vertexPath, string fragmentPath)
         {
             vertexShaderSource = File.ReadAllText(vertexPath);
             fragmentShaderSource = File.ReadAllText(fragmentPath);
 
-            var vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            uint vertexShader = glCreateShader(GL_VERTEX_SHADER);
             glShaderSource(vertexShader, vertexShaderSource);
 
-            var fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            uint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
             glShaderSource(fragmentShader, fragmentShaderSource);
 
             compileShader(vertexShader);
@@ -41,6 +42,41 @@ namespace CORERenderer.shaders
             glDetachShader(Handle, fragmentShader);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
+        }
+
+        public Shader(string vertexPath, string fragmentPath, string geometryPath)
+        {
+            vertexShaderSource = File.ReadAllText(vertexPath);
+            fragmentShaderSource = File.ReadAllText(fragmentPath);
+            geometryShaderSource = File.ReadAllText(geometryPath);
+
+            uint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vertexShader, vertexShaderSource);
+
+            uint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fragmentShader, fragmentShaderSource);
+
+            uint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+            glShaderSource(geometryShader, geometryShaderSource);
+
+            compileShader(vertexShader);
+            compileShader(fragmentShader);
+            compileShader(geometryShader);
+
+            Handle = glCreateProgram();
+
+            glAttachShader(Handle, vertexShader);
+            glAttachShader(Handle, fragmentShader);
+            glAttachShader(Handle, geometryShader);
+
+            linkProgram(Handle);
+
+            glDetachShader(Handle, vertexShader);
+            glDetachShader(Handle, fragmentShader);
+            glDetachShader(Handle, geometryShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            glDeleteShader(geometryShader);
         }
 
         private static void compileShader(uint shader)

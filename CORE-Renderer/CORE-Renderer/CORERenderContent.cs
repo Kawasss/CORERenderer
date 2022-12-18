@@ -30,6 +30,7 @@ namespace CORERenderer
 
         static public uint vertexArrayObjectLightSource;
         static public uint vertexArrayObjectGrid;
+        static public uint uboMatrices;
         static private double time;
         static private bool firstMove = true;
         static double mousePosXD;
@@ -72,6 +73,14 @@ namespace CORERenderer
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
 
+            //creates space in the gpu memory for the global matrix uniforms
+            uboMatrices = glGenBuffer();
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
+
+            //generates the skybox
             string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
             cubemap = GenerateSkybox(faces);
 
@@ -93,6 +102,11 @@ namespace CORERenderer
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
+            //assigns values the freed up gpu memory for global uniforms
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                 throw new GLFW.Exception("Framebuffer is not complete");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -104,7 +118,12 @@ namespace CORERenderer
         public unsafe override void RenderEveryFrame()
         {
             //calculates the time between frames
-            time += Glfw.Time - time * 2;
+            time += Glfw.Time - time;
+
+            //assigns values the freed up gpu memory for global uniforms
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            MatrixToUniformBuffer(camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
+            MatrixToUniformBuffer(camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
 
             //binds the correct framebuffer for accurate writing
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -117,7 +136,7 @@ namespace CORERenderer
 
             RenderLights(lightSourcePos);
             RenderCubemap(cubemap);
-            //RenderGrid();
+            RenderGrid();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //debug
             fbo.RenderFramebuffer();
@@ -173,7 +192,7 @@ namespace CORERenderer
                 {
                     if (loadable)
                     {
-                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\human_low.obj");
+                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
                         loaded = true;
                         loadable = false;
                         if (givenCRS.allOBJs.Count > 0)
@@ -186,6 +205,11 @@ namespace CORERenderer
                     givenCRS.RemoveObject(givenCRS.allOBJs[currentObj].ID);
                     HighlightLogic();
                 }
+                if (Glfw.GetKey(window, Keys.K) == InputState.Press && loaded)
+                    givenCRS.allOBJs[currentObj].renderNormals = true;
+                else if (Glfw.GetKey(window, Keys.K) == InputState.Release && loaded)
+                    givenCRS.allOBJs[currentObj].renderNormals = false;
+
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
                     if (givenCRS.allOBJs[currentObj].highlighted)
@@ -228,16 +252,16 @@ namespace CORERenderer
                 Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
 
                 if (Glfw.GetKey(window, Keys.W) == InputState.Press)
-                    camera.position -= camera.front * (CAMERA_SPEED * delta);
-
-                if (Glfw.GetKey(window, Keys.S) == InputState.Press)
                     camera.position += camera.front * (CAMERA_SPEED * delta);
 
+                if (Glfw.GetKey(window, Keys.S) == InputState.Press)
+                    camera.position -= camera.front * (CAMERA_SPEED * delta);
+
                 if (Glfw.GetKey(window, Keys.A) == InputState.Press)
-                    camera.position += camera.right * (CAMERA_SPEED * delta);
+                    camera.position -= camera.right * (CAMERA_SPEED * delta);
 
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press)
-                    camera.position -= camera.right * (CAMERA_SPEED * delta);
+                    camera.position += camera.right * (CAMERA_SPEED * delta);
 
                 if (Glfw.GetKey(window, Keys.Space) == InputState.Press)
                     camera.position += camera.up * (CAMERA_SPEED * delta);
@@ -258,7 +282,7 @@ namespace CORERenderer
                     lastPos = new(mousePosX, mousePosY);
 
                     camera.Yaw += deltaX * SENSITIVITY;
-                    camera.Pitch -= deltaY * SENSITIVITY;
+                    camera.Pitch += deltaY * SENSITIVITY;
                 }
             }
 
