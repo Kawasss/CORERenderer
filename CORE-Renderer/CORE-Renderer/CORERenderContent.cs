@@ -57,9 +57,17 @@ namespace CORERenderer
             MathC.Initialize(false);
 
             glEnable(GL_BLEND);
+            
             glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_TEXTURE_CUBE_MAP);
+
             glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -128,17 +136,23 @@ namespace CORERenderer
             //binds the correct framebuffer for accurate writing
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
             glEnable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             RenderAllObjects(givenCRS);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+            glStencilMask(0x00);
+
             RenderLights(lightSourcePos);
+            
             RenderCubemap(cubemap);
+
             RenderGrid();
 
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //debug
+            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
+                givenCRS.allOBJs[i].RenderOutlines();
+
             fbo.RenderFramebuffer();
         }
 
@@ -170,15 +184,14 @@ namespace CORERenderer
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Right);
 
             if (Glfw.GetKey(window, Keys.L) == InputState.Press && loaded)
-            {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glDisable(GL_CULL_FACE);
-            } 
+                givenCRS.allOBJs[currentObj].renderLines = true;
             if (Glfw.GetKey(window, Keys.L) == InputState.Release && loaded)
-            {
-                //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glEnable(GL_CULL_FACE);
-            }
+                givenCRS.allOBJs[currentObj].renderLines = false;
+
+            if (Glfw.GetKey(window, Keys.K) == InputState.Press && loaded)
+                givenCRS.allOBJs[currentObj].renderNormals = true;
+            else if (Glfw.GetKey(window, Keys.K) == InputState.Release && loaded)
+                givenCRS.allOBJs[currentObj].renderNormals = false;
 
             //!!temporary debug movement for obj files !!rewrite
             if (state2 == InputState.Press && state != InputState.Press)
@@ -192,7 +205,7 @@ namespace CORERenderer
                 {
                     if (loadable)
                     {
-                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\c4520.obj");
+                        givenCRS.CSTAddObj($"{pathRenderer}\\Loaders\\testOBJ\\cube.obj");
                         loaded = true;
                         loadable = false;
                         if (givenCRS.allOBJs.Count > 0)
@@ -205,10 +218,6 @@ namespace CORERenderer
                     givenCRS.RemoveObject(givenCRS.allOBJs[currentObj].ID);
                     HighlightLogic();
                 }
-                if (Glfw.GetKey(window, Keys.K) == InputState.Press && loaded)
-                    givenCRS.allOBJs[currentObj].renderNormals = true;
-                else if (Glfw.GetKey(window, Keys.K) == InputState.Release && loaded)
-                    givenCRS.allOBJs[currentObj].renderNormals = false;
 
                 //code below is checking if the current is selected and moves, transforms or rotates the object
                 if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
@@ -298,6 +307,8 @@ namespace CORERenderer
         {
             canChange = false;
             called = 0;
+            if (givenCRS.allOBJs.Count == 0)
+                return;
             if (currentObj == -1)
             {
                 currentObj = 0;

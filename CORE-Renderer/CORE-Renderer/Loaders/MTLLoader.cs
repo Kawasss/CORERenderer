@@ -90,6 +90,13 @@ namespace CORERenderer.Loaders
                             material.Shininess = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
                             break;
 
+                        case "Kd":
+                            List<int> local0 = new(); //isolates all 3 values with the spaces inbetween them
+                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
+                                local0.Add(i);
+                            material.Diffuse = GetVector3(n[local0[0]..local0[1]], n[local0[1]..local0[2]], n[local0[^1]..Length(n)]);
+                            break;
+
                         case "Ka": //ambient
                             List<int> local1 = new(); //isolates all 3 values with the spaces inbetween them
                             for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
@@ -165,7 +172,11 @@ namespace CORERenderer.Loaders
                 tempMtl.Add(material);
             }
             if (unreadableLines.Count > 0)
-                Console.WriteLine($"Couldnt read {unreadableLines.Count} lines");
+            {
+                Console.WriteLine($"Couldnt read {unreadableLines.Count} lines:");
+                for (int i = 0; i < unreadableLines.Count; i++)
+                    Console.WriteLine($"    {unreadableLines[i]}");
+            }
 
             //puts the materials in the correct of first being called
             for (int i = 0; i < mtlNames.Count; i++)

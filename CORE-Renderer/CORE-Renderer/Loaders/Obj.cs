@@ -21,6 +21,7 @@ namespace CORERenderer.Loaders
          * $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag" for outlining the current object
          */
         public readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag");
+        public readonly Shader highlightShader = new($"{CORERenderContent.pathRenderer}\\shaders\\shader.vert", $"{CORERenderContent.pathRenderer}\\shaders\\outlining.frag");
         public readonly Shader normalRenderShader = new($"{CORERenderContent.pathRenderer}\\shaders\\normal.vert", $"{CORERenderContent.pathRenderer}\\shaders\\normal.frag", $"{CORERenderContent.pathRenderer}\\shaders\\normal.geom");
 
         public readonly string name = "PLACEHOLDER";
@@ -39,6 +40,8 @@ namespace CORERenderer.Loaders
         public bool renderNormals = false;
 
         public bool highlighted = false;
+
+        public bool renderLines = false;
 
         public string mtllib;
 
@@ -110,6 +113,15 @@ namespace CORERenderer.Loaders
         {
             shader.Use();
 
+            if (renderLines)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            }
+
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+
             shader.SetVector3("viewPos", CORERenderContent.camera.position);
 
             //spotLight
@@ -163,6 +175,8 @@ namespace CORERenderer.Loaders
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
             }
 
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
             if (renderNormals)
             {
                 normalRenderShader.Use();
@@ -178,6 +192,36 @@ namespace CORERenderer.Loaders
                     glBindVertexArray(GeneratedVAOs[i]);
                     glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
                 }
+            }
+        }
+
+        public unsafe void RenderOutlines()
+        {
+            if (highlighted)
+            {
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+
+                glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+                glStencilMask(0x00);
+                glDisable(GL_DEPTH_TEST);
+
+                highlightShader.Use();
+
+                highlightShader.SetMatrix("model", Matrix.IdentityMatrix
+                      * new Matrix(Scaling * 1.05f, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
+
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    glBindVertexArray(GeneratedVAOs[i]);
+                    glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+                }
+                glStencilMask(0xFF);
+                glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                glEnable(GL_DEPTH_TEST);
             }
         }
 

@@ -13,7 +13,7 @@ layout (std140, binding = 0) uniform Matrices
 	mat4 view;
 };
 
-const float MAGNITUDE = 0.2;
+const float MAGNITUDE = 0.1;
 
 void GenerateLine(int index)
 {
