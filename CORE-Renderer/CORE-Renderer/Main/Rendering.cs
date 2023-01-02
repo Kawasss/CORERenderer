@@ -54,5 +54,11 @@ namespace CORERenderer.Main
             glBindVertexArray(0);
             glDepthFunc(GL_LESS);
         }
+
+        public static void RenderAllObjectsAsPBRDebugs(CRS crs)
+        {
+            for (int i = 0; i < crs.allOBJs.Count; i++)
+                crs.allOBJs[i].PBRDebugRender();
+        }
     }
 }

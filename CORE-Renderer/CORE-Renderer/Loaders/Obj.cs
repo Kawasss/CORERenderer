@@ -47,6 +47,8 @@ namespace CORERenderer.Loaders
 
         public int ID;
 
+        private Shader debugShader = new($"{CORERenderContent.pathRenderer}\\shaders\\PBRDebug.vert", $"{CORERenderContent.pathRenderer}\\shaders\\PBRLighting.frag");
+
         public Obj(string path)
         {
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
@@ -209,7 +211,7 @@ namespace CORERenderer.Loaders
                 highlightShader.Use();
 
                 highlightShader.SetMatrix("model", Matrix.IdentityMatrix
-                      * new Matrix(Scaling * 1.05f, translation)
+                      * new Matrix(Scaling * 1.02f, translation)
                       * (MathC.GetRotationXMatrix(rotationX)
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
@@ -308,6 +310,62 @@ namespace CORERenderer.Loaders
                 rotationY = 0;
             if (rotationZ >= 360)
                 rotationZ = 0;
+        }
+
+        public unsafe void PBRDebugRender()
+        {
+            debugShader.Use();
+
+            if (renderLines)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            }
+
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+
+            debugShader.SetVector3("camPos", CORERenderContent.camera.position);
+            debugShader.SetFloat("metallic", 0.5f);
+            debugShader.SetFloat("roughness", 0.7f);
+            debugShader.SetVector3("albedo", 0.5f, 0, 0);
+            debugShader.SetFloat("AO", 1);
+
+            ClampValues();
+
+            debugShader.SetVector3("basicLightInfo[0].lightPosition", CORERenderContent.lightSourcePos[0]);
+            debugShader.SetVector3("basicLightInfo[0].lightColor", new(1, 1, 1));
+
+            shader.SetMatrix("model", Matrix.IdentityMatrix
+                      * new Matrix(Scaling, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
+
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                glBindVertexArray(GeneratedVAOs[i]);
+                glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+            }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            if (renderNormals)
+            {
+                normalRenderShader.Use();
+
+                normalRenderShader.SetMatrix("model", Matrix.IdentityMatrix
+                * new Matrix(Scaling, translation)
+                * (MathC.GetRotationXMatrix(rotationX)
+                * MathC.GetRotationYMatrix(rotationY)
+                * MathC.GetRotationZMatrix(rotationZ)));
+
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    glBindVertexArray(GeneratedVAOs[i]);
+                    glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+                }
+            }
         }
     }  
 }

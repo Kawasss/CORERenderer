@@ -68,6 +68,8 @@ namespace CORERenderer
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_TEXTURE_CUBE_MAP);
 
+            //glEnable(GL_FRAMEBUFFER_SRGB);
+
             glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -105,8 +107,8 @@ namespace CORERenderer
             }
 
             lightSourcePos = new();
-            lightSourcePos.Add(new(10, 10, 10));
-            lightSourcePos.Add(new(0, 20, 0));
+            //lightSourcePos.Add(new(2, 2, 2));
+            lightSourcePos.Add(new(0, 3, 0));
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
@@ -138,7 +140,8 @@ namespace CORERenderer
             glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            RenderAllObjects(givenCRS);
+            //RenderAllObjects(givenCRS);
+            RenderAllObjectsAsPBRDebugs(givenCRS);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -148,10 +151,10 @@ namespace CORERenderer
             
             RenderCubemap(cubemap);
 
-            RenderGrid();
+            //RenderGrid();
 
-            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
-                givenCRS.allOBJs[i].RenderOutlines();
+            //for (int i = 0; i < givenCRS.allOBJs.Count; i++)
+            //    givenCRS.allOBJs[i].RenderOutlines();
 
             fbo.RenderFramebuffer();
         }
@@ -196,6 +199,15 @@ namespace CORERenderer
             //!!temporary debug movement for obj files !!rewrite
             if (state2 == InputState.Press && state != InputState.Press)
             {   //calls the logic checks for highlighting the current object
+                if (Glfw.GetKey(window, Keys.R) == InputState.Press && loaded)
+                {
+                    givenCRS.allOBJs[currentObj].translation = new(0, 0, 0);
+                    givenCRS.allOBJs[currentObj].Scaling = 1;
+                    givenCRS.allOBJs[currentObj].rotationX = 0;
+                    givenCRS.allOBJs[currentObj].rotationY = 0;
+                    givenCRS.allOBJs[currentObj].rotationZ = 0;
+                }
+
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press && loaded && canChange)
                     HighlightLogic();
                 //code below loads in new objects and checks if they can be loaded in
