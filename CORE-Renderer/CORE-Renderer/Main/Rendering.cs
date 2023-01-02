@@ -12,7 +12,7 @@ namespace CORERenderer.Main
                 crs.allOBJs[i].Render();
         }
 
-        public static void RenderLights(List<Vector3> locations)
+        public static void RenderLights(List<Light> locations)
         {
             CORERenderContent.lightShader.Use();
 
@@ -20,7 +20,7 @@ namespace CORERenderer.Main
 
             for (int i = 0; i < locations.Count; i++)
             {
-                CORERenderContent.lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i]) * MathC.GetScalingMatrix(0.2f));
+                CORERenderContent.lightShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }
         }

@@ -158,9 +158,9 @@ namespace CORERenderer.Loaders
                 shader.SetVector3("dirLight.specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
 
                 //point lights
-                for (int j = 0; j < CORERenderContent.lightSourcePos.Count; j++)
+                for (int j = 0; j < CORERenderContent.lights.Count; j++)
                 {
-                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lightSourcePos[j].x, CORERenderContent.lightSourcePos[j].y, CORERenderContent.lightSourcePos[j].z);
+                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lights[j].position.x, CORERenderContent.lights[j].position.y, CORERenderContent.lights[j].position.z);
                     shader.SetFloat($"pointLights[{j}].constant", 1.0f);
                     shader.SetFloat($"pointLights[{j}].linear", 0.09f);
                     shader.SetFloat($"pointLights[{j}].quadratic", 0.032f);
@@ -259,14 +259,14 @@ namespace CORERenderer.Loaders
                     glEnableVertexAttribArray((uint)vertexLocation);
 
                     //UV texture coordinates
-                    int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
-                    glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                    glEnableVertexAttribArray((uint)vertexLocation2);
+                    vertexLocation = shader.GetAttribLocation("aTexCoords");
+                    glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation);
 
                     //normal coordinates
-                    int vertexLocation3 = shader.GetAttribLocation("aNormal");
-                    glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-                    glEnableVertexAttribArray((uint)vertexLocation3);
+                    vertexLocation = shader.GetAttribLocation("aNormal");
+                    glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation);
 
                     //adds ebo to the vao
                     uint[] local2 = indices[i].ToArray();
@@ -333,8 +333,8 @@ namespace CORERenderer.Loaders
 
             ClampValues();
 
-            debugShader.SetVector3("basicLightInfo[0].lightPosition", CORERenderContent.lightSourcePos[0]);
-            debugShader.SetVector3("basicLightInfo[0].lightColor", new(1, 1, 1));
+            debugShader.SetVector3("basicLightInfo[0].lightPosition", CORERenderContent.lights[0].position);
+            debugShader.SetVector3("basicLightInfo[0].lightColor", CORERenderContent.lights[0].color);
 
             shader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)

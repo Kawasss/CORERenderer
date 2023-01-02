@@ -2,6 +2,24 @@
   "version": 3,
   "targets": {
     "net6.0": {
+      "freetype/2.8.0.1": {
+        "type": "package",
+        "dependencies": {
+          "freetype.redist": "2.8.0.1"
+        }
+      },
+      "freetype.redist/2.8.0.1": {
+        "type": "package"
+      },
+      "SpaceWizards.SharpFont/1.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp3.0/SpaceWizards.SharpFont.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp3.0/SpaceWizards.SharpFont.dll": {}
+        }
+      },
       "StbImageSharp/2.27.13": {
         "type": "package",
         "compile": {
@@ -27,6 +45,180 @@
     }
   },
   "libraries": {
+    "freetype/2.8.0.1": {
+      "sha512": "JBRp6TPVV+G7JfUA3d8LNL7zpXfDOibQD3uqyWfrlu8J/L9XGLbKoNBZsQ9QtszckfcB3O9IxpOt33GpZ4IYcA==",
+      "type": "package",
+      "path": "freetype/2.8.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/configurations.autopkg",
+        "build/native/default-propertiesui.xml",
+        "build/native/freetype-propertiesui-4f2a3e87-b54f-462e-83e7-4b7d685e6216.xml",
+        "build/native/freetype.targets",
+        "build/native/include/freetype/config/ftconfig.h",
+        "build/native/include/freetype/config/ftheader.h",
+        "build/native/include/freetype/config/ftmodule.h",
+        "build/native/include/freetype/config/ftoption.h",
+        "build/native/include/freetype/config/ftstdlib.h",
+        "build/native/include/freetype/freetype.h",
+        "build/native/include/freetype/ftadvanc.h",
+        "build/native/include/freetype/ftautoh.h",
+        "build/native/include/freetype/ftbbox.h",
+        "build/native/include/freetype/ftbdf.h",
+        "build/native/include/freetype/ftbitmap.h",
+        "build/native/include/freetype/ftbzip2.h",
+        "build/native/include/freetype/ftcache.h",
+        "build/native/include/freetype/ftcffdrv.h",
+        "build/native/include/freetype/ftchapters.h",
+        "build/native/include/freetype/ftcid.h",
+        "build/native/include/freetype/fterrdef.h",
+        "build/native/include/freetype/fterrors.h",
+        "build/native/include/freetype/ftfntfmt.h",
+        "build/native/include/freetype/ftgasp.h",
+        "build/native/include/freetype/ftglyph.h",
+        "build/native/include/freetype/ftgxval.h",
+        "build/native/include/freetype/ftgzip.h",
+        "build/native/include/freetype/ftimage.h",
+        "build/native/include/freetype/ftincrem.h",
+        "build/native/include/freetype/ftlcdfil.h",
+        "build/native/include/freetype/ftlist.h",
+        "build/native/include/freetype/ftlzw.h",
+        "build/native/include/freetype/ftmac.h",
+        "build/native/include/freetype/ftmm.h",
+        "build/native/include/freetype/ftmodapi.h",
+        "build/native/include/freetype/ftmoderr.h",
+        "build/native/include/freetype/ftotval.h",
+        "build/native/include/freetype/ftoutln.h",
+        "build/native/include/freetype/ftpcfdrv.h",
+        "build/native/include/freetype/ftpfr.h",
+        "build/native/include/freetype/ftrender.h",
+        "build/native/include/freetype/ftsizes.h",
+        "build/native/include/freetype/ftsnames.h",
+        "build/native/include/freetype/ftstroke.h",
+        "build/native/include/freetype/ftsynth.h",
+        "build/native/include/freetype/ftsystem.h",
+        "build/native/include/freetype/fttrigon.h",
+        "build/native/include/freetype/ftttdrv.h",
+        "build/native/include/freetype/fttypes.h",
+        "build/native/include/freetype/ftwinfnt.h",
+        "build/native/include/freetype/internal/autohint.h",
+        "build/native/include/freetype/internal/ftcalc.h",
+        "build/native/include/freetype/internal/ftdebug.h",
+        "build/native/include/freetype/internal/ftdriver.h",
+        "build/native/include/freetype/internal/ftgloadr.h",
+        "build/native/include/freetype/internal/fthash.h",
+        "build/native/include/freetype/internal/ftmemory.h",
+        "build/native/include/freetype/internal/ftobjs.h",
+        "build/native/include/freetype/internal/ftpic.h",
+        "build/native/include/freetype/internal/ftrfork.h",
+        "build/native/include/freetype/internal/ftserv.h",
+        "build/native/include/freetype/internal/ftstream.h",
+        "build/native/include/freetype/internal/fttrace.h",
+        "build/native/include/freetype/internal/ftvalid.h",
+        "build/native/include/freetype/internal/internal.h",
+        "build/native/include/freetype/internal/psaux.h",
+        "build/native/include/freetype/internal/pshints.h",
+        "build/native/include/freetype/internal/services/svbdf.h",
+        "build/native/include/freetype/internal/services/svcid.h",
+        "build/native/include/freetype/internal/services/svfntfmt.h",
+        "build/native/include/freetype/internal/services/svgldict.h",
+        "build/native/include/freetype/internal/services/svgxval.h",
+        "build/native/include/freetype/internal/services/svkern.h",
+        "build/native/include/freetype/internal/services/svmetric.h",
+        "build/native/include/freetype/internal/services/svmm.h",
+        "build/native/include/freetype/internal/services/svotval.h",
+        "build/native/include/freetype/internal/services/svpfr.h",
+        "build/native/include/freetype/internal/services/svpostnm.h",
+        "build/native/include/freetype/internal/services/svprop.h",
+        "build/native/include/freetype/internal/services/svpscmap.h",
+        "build/native/include/freetype/internal/services/svpsinfo.h",
+        "build/native/include/freetype/internal/services/svsfnt.h",
+        "build/native/include/freetype/internal/services/svttcmap.h",
+        "build/native/include/freetype/internal/services/svtteng.h",
+        "build/native/include/freetype/internal/services/svttglyf.h",
+        "build/native/include/freetype/internal/services/svwinfnt.h",
+        "build/native/include/freetype/internal/sfnt.h",
+        "build/native/include/freetype/internal/t1types.h",
+        "build/native/include/freetype/internal/tttypes.h",
+        "build/native/include/freetype/t1tables.h",
+        "build/native/include/freetype/ttnameid.h",
+        "build/native/include/freetype/tttables.h",
+        "build/native/include/freetype/tttags.h",
+        "build/native/include/freetype/ttunpat.h",
+        "build/native/include/ft2build.h",
+        "build/native/lib/Win32/v120/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v120/dynamic/Release/freetype28.lib",
+        "build/native/lib/Win32/v120/static/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v120/static/Release/freetype28.lib",
+        "build/native/lib/Win32/v140/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v140/dynamic/Release/freetype28.lib",
+        "build/native/lib/Win32/v140/static/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v140/static/Release/freetype28.lib",
+        "build/native/lib/Win32/v141/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v141/dynamic/Release/freetype28.lib",
+        "build/native/lib/Win32/v141/static/Debug/freetype28d.lib",
+        "build/native/lib/Win32/v141/static/Release/freetype28.lib",
+        "build/native/lib/x64/v120/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/x64/v120/dynamic/Release/freetype28.lib",
+        "build/native/lib/x64/v120/static/Debug/freetype28d.lib",
+        "build/native/lib/x64/v120/static/Release/freetype28.lib",
+        "build/native/lib/x64/v140/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/x64/v140/dynamic/Release/freetype28.lib",
+        "build/native/lib/x64/v140/static/Debug/freetype28d.lib",
+        "build/native/lib/x64/v140/static/Release/freetype28.lib",
+        "build/native/lib/x64/v141/dynamic/Debug/freetype28d.lib",
+        "build/native/lib/x64/v141/dynamic/Release/freetype28.lib",
+        "build/native/lib/x64/v141/static/Debug/freetype28d.lib",
+        "build/native/lib/x64/v141/static/Release/freetype28.lib",
+        "build/publisher-info.txt",
+        "freetype.2.8.0.1.nupkg.sha512",
+        "freetype.nuspec"
+      ]
+    },
+    "freetype.redist/2.8.0.1": {
+      "sha512": "XGrcubNcx0ULoaYRpjI7Vb8Q4D2FjZmw454VJXD4OorB+yP6vFHZwGe8yaFg7O9YIqDFKNVhpIxiKL71xZQ1LQ==",
+      "type": "package",
+      "path": "freetype.redist/2.8.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/configurations.autopkg",
+        "build/native/bin/Win32/v120/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/Win32/v120/dynamic/Release/freetype28.dll",
+        "build/native/bin/Win32/v140/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/Win32/v140/dynamic/Release/freetype28.dll",
+        "build/native/bin/Win32/v141/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/Win32/v141/dynamic/Release/freetype28.dll",
+        "build/native/bin/x64/v120/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/x64/v120/dynamic/Release/freetype28.dll",
+        "build/native/bin/x64/v140/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/x64/v140/dynamic/Release/freetype28.dll",
+        "build/native/bin/x64/v141/dynamic/Debug/freetype28d.dll",
+        "build/native/bin/x64/v141/dynamic/Release/freetype28.dll",
+        "build/native/default-propertiesui.xml",
+        "build/native/freetype.redist.targets",
+        "build/publisher-info.txt",
+        "freetype.redist.2.8.0.1.nupkg.sha512",
+        "freetype.redist.nuspec"
+      ]
+    },
+    "SpaceWizards.SharpFont/1.0.1": {
+      "sha512": "DfQE9qUNzaUs6ehhS10bkF+dIDtVAzsK70irZ/c3FiZcuwdhaYxPt9g/uqqr7t9P9ynj2CKCv1g/Us7FjujXoA==",
+      "type": "package",
+      "path": "spacewizards.sharpfont/1.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "contentFiles/any/net45/SpaceWizards.SharpFont.dll.config",
+        "contentFiles/any/net472/SpaceWizards.SharpFont.dll.config",
+        "lib/net45/SpaceWizards.SharpFont.dll",
+        "lib/net472/SpaceWizards.SharpFont.dll",
+        "lib/netcoreapp3.0/SpaceWizards.SharpFont.dll",
+        "spacewizards.sharpfont.1.0.1.nupkg.sha512",
+        "spacewizards.sharpfont.nuspec"
+      ]
+    },
     "StbImageSharp/2.27.13": {
       "sha512": "tHnP2RHgFzWbOS96UqvRO/LYU1WmpMT1bKiig45we+rpaXacBr11Fq2IBF+MqlgyLyNXxRz18E66qr4R9YlSbg==",
       "type": "package",
@@ -48,7 +240,9 @@
   },
   "projectFileDependencyGroups": {
     "net6.0": [
-      "COREMath >= 1.0.0"
+      "COREMath >= 1.0.0",
+      "SpaceWizards.SharpFont >= 1.0.1",
+      "freetype >= 2.8.0.1"
     ]
   },
   "packageFolders": {
@@ -99,6 +293,16 @@
     "frameworks": {
       "net6.0": {
         "targetAlias": "net6.0",
+        "dependencies": {
+          "SpaceWizards.SharpFont": {
+            "target": "Package",
+            "version": "[1.0.1, )"
+          },
+          "freetype": {
+            "target": "Package",
+            "version": "[2.8.0.1, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

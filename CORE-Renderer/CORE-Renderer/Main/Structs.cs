@@ -5,6 +5,20 @@ using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main
 {
+    public struct Character
+    {
+        public uint textureID;
+        public Vector2 size;
+        public Vector2 bearing;
+        public int advance;
+    }
+
+    public struct Light
+    {
+        public Vector3 position;
+        public Vector3 color;
+    }
+
     public struct Cubemap
     {
         public uint VAO;

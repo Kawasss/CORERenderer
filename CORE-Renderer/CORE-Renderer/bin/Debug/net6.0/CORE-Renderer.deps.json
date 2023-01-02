@@ -8,10 +8,26 @@
     ".NETCoreApp,Version=v6.0": {
       "CORE-Renderer/1.0.0": {
         "dependencies": {
-          "COREMath": "1.0.0"
+          "COREMath": "1.0.0",
+          "SpaceWizards.SharpFont": "1.0.1",
+          "freetype": "2.8.0.1"
         },
         "runtime": {
           "CORE-Renderer.dll": {}
+        }
+      },
+      "freetype/2.8.0.1": {
+        "dependencies": {
+          "freetype.redist": "2.8.0.1"
+        }
+      },
+      "freetype.redist/2.8.0.1": {},
+      "SpaceWizards.SharpFont/1.0.1": {
+        "runtime": {
+          "lib/netcoreapp3.0/SpaceWizards.SharpFont.dll": {
+            "assemblyVersion": "1.0.1.0",
+            "fileVersion": "1.0.1.0"
+          }
         }
       },
       "StbImageSharp/2.27.13": {
@@ -37,6 +53,27 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "freetype/2.8.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JBRp6TPVV+G7JfUA3d8LNL7zpXfDOibQD3uqyWfrlu8J/L9XGLbKoNBZsQ9QtszckfcB3O9IxpOt33GpZ4IYcA==",
+      "path": "freetype/2.8.0.1",
+      "hashPath": "freetype.2.8.0.1.nupkg.sha512"
+    },
+    "freetype.redist/2.8.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XGrcubNcx0ULoaYRpjI7Vb8Q4D2FjZmw454VJXD4OorB+yP6vFHZwGe8yaFg7O9YIqDFKNVhpIxiKL71xZQ1LQ==",
+      "path": "freetype.redist/2.8.0.1",
+      "hashPath": "freetype.redist.2.8.0.1.nupkg.sha512"
+    },
+    "SpaceWizards.SharpFont/1.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-DfQE9qUNzaUs6ehhS10bkF+dIDtVAzsK70irZ/c3FiZcuwdhaYxPt9g/uqqr7t9P9ynj2CKCv1g/Us7FjujXoA==",
+      "path": "spacewizards.sharpfont/1.0.1",
+      "hashPath": "spacewizards.sharpfont.1.0.1.nupkg.sha512"
     },
     "StbImageSharp/2.27.13": {
       "type": "package",

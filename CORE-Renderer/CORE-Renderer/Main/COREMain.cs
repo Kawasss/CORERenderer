@@ -1,7 +1,7 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
-using CORERenderer.textures;
 using static CORERenderer.OpenGL.GL;
+using COREMath;
 
 namespace CORERenderer.Main
 {

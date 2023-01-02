@@ -8,6 +8,7 @@ using CORERenderer.shaders;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CORERenderer
 {
@@ -46,9 +47,12 @@ namespace CORERenderer
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        static public List<Vector3> lightSourcePos;
+        static public List<Light> lights;
         static public int currentObj = 0;
         static private float called = 0;
+
+        static public Font test;
+
 
         public unsafe override void OnLoad()
         {
@@ -106,9 +110,13 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
-            lightSourcePos = new();
+
+            test = new(32);
+
+
+            lights = new();
             //lightSourcePos.Add(new(2, 2, 2));
-            lightSourcePos.Add(new(0, 3, 0));
+            lights.Add(new() { position = new(0, 3, 0), color = new(1, 1, 1)});
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
@@ -147,9 +155,11 @@ namespace CORERenderer
 
             glStencilMask(0x00);
 
-            RenderLights(lightSourcePos);
+            RenderLights(lights);
             
             RenderCubemap(cubemap);
+
+            test.RenderText("This is sample text", 50f, 25.0f, 1.2f, new Vector2(1f, 0f));
 
             //RenderGrid();
 
