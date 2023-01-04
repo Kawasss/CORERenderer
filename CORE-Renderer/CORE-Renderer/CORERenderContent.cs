@@ -54,6 +54,10 @@ namespace CORERenderer
         static public Font test;
 
 
+        static Shader testshader;
+        static uint debugvbo;
+        static uint debugvao;
+
         public unsafe override void OnLoad()
         {
             Console.WriteLine("Initializing renderer");
@@ -146,9 +150,11 @@ namespace CORERenderer
             //binds the correct framebuffer for accurate writing
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
             glEnable(GL_DEPTH_TEST);
+            glClearColor(0.1f, 0.1f, 0.1f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+            
             //RenderAllObjects(givenCRS);
+
             RenderAllObjectsAsPBRDebugs(givenCRS);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -156,12 +162,10 @@ namespace CORERenderer
             glStencilMask(0x00);
 
             RenderLights(lights);
+
+            //RenderCubemap(cubemap);
             
-            RenderCubemap(cubemap);
-
-            test.RenderText("This is sample text", 50f, 25.0f, 1.2f, new Vector2(1f, 0f));
-
-            //RenderGrid();
+            RenderGrid();
 
             //for (int i = 0; i < givenCRS.allOBJs.Count; i++)
             //    givenCRS.allOBJs[i].RenderOutlines();

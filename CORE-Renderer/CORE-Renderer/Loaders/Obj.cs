@@ -172,6 +172,12 @@ namespace CORERenderer.Loaders
                 usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);
                 usedTextures[Materials[i].SpecularMap].Use(GL_TEXTURE1);
 
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE0, CORERenderContent.test.characters[0].textureID);
+
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE1, CORERenderContent.test.characters[0].textureID);
+
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
 
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
@@ -328,7 +334,7 @@ namespace CORERenderer.Loaders
             debugShader.SetVector3("camPos", CORERenderContent.camera.position);
             debugShader.SetFloat("metallic", 0.5f);
             debugShader.SetFloat("roughness", 0.7f);
-            debugShader.SetVector3("albedo", 0.5f, 0, 0);
+            debugShader.SetVector3("albedo", 0.5f, 1, 1);
             debugShader.SetFloat("AO", 1);
 
             ClampValues();
@@ -336,7 +342,7 @@ namespace CORERenderer.Loaders
             debugShader.SetVector3("basicLightInfo[0].lightPosition", CORERenderContent.lights[0].position);
             debugShader.SetVector3("basicLightInfo[0].lightColor", CORERenderContent.lights[0].color);
 
-            shader.SetMatrix("model", Matrix.IdentityMatrix
+            debugShader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)
                       * (MathC.GetRotationXMatrix(rotationX)
                       * MathC.GetRotationYMatrix(rotationY)

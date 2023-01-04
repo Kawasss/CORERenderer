@@ -3,6 +3,8 @@ using static CORERenderer.OpenGL.GL;
 using CORERenderer.Main;
 using CORERenderer.shaders;
 using COREMath;
+using System.Reflection;
+using System.ComponentModel;
 
 namespace CORERenderer
 {
@@ -11,19 +13,23 @@ namespace CORERenderer
         private uint VAO;
         private uint VBO;
 
-        private Dictionary<uint, Character> characters = new();
+        public Dictionary<byte, Character> characters = new(); //private
 
-        private readonly Shader shader = new($"{CORERenderContent.pathRenderer}\\shaders\\font.vert", $"{CORERenderContent.pathRenderer}\\shaders\\font.frag");
+        private readonly Shader shader; 
 
         public unsafe Font(uint pixelHeight)
         {
+            shader = new($"{CORERenderContent.pathRenderer}\\shaders\\Font.vert", $"{CORERenderContent.pathRenderer}\\shaders\\Font.frag");
+
             Library lib = new();
             Face face = new(lib, $"{CORERenderContent.pathRenderer}\\Fonts\\baseFont.ttf");
             face.SetPixelSizes(0, pixelHeight);
 
-            glPixelStoref(GL_UNPACK_ALIGNMENT, 1);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            for (uint c = 0; c < 128; c++)
+            glActiveTexture(GL_TEXTURE0);
+
+            for (byte c = 0; c < 128; c++)
             {
                 try
                 {
@@ -35,19 +41,19 @@ namespace CORERenderer
                     // create glyph texture
                     uint texObj = glGenTexture();
                     glBindTexture(GL_TEXTURE_2D, texObj);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, bitmap.Width, bitmap.Rows, 0, GL_RED, GL_UNSIGNED_INT, bitmap.Buffer);
-
-                    glTexParameterf((int)texObj, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                    glTexParameterf((int)texObj, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    glTexParameterf((int)texObj, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    glTexParameterf((int)texObj, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, bitmap.Width, bitmap.Rows, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap.Buffer);
+                    //(int)texObj
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
                     // add character
                     Character ch = new();
                     ch.textureID = texObj;
                     ch.size = new(bitmap.Width, bitmap.Rows);
                     ch.bearing = new(glyph.BitmapLeft, glyph.BitmapTop);
-                    ch.advance = (int)glyph.Advance.X.Value;
+                    ch.advance = glyph.Advance.X.Value;
                     characters.Add(c, ch);
                 }
                 catch (Exception ex)
@@ -57,80 +63,72 @@ namespace CORERenderer
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);
-            glPixelStoref(GL_UNPACK_ALIGNMENT, 4);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-            float[] vertices =
-            {
-                    0.0f, -1.0f,   0.0f, 0.0f,
-                    0.0f,  0.0f,   0.0f, 1.0f,
-                    1.0f,  0.0f,   1.0f, 1.0f,
-                    0.0f, -1.0f,   0.0f, 0.0f,
-                    1.0f,  0.0f,   1.0f, 1.0f,
-                    1.0f, -1.0f,   1.0f, 0.0f
-                };
-
-            /*VBO = glGenBuffer();
+            VBO = glGenBuffer();
             glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-            fixed (float* temp = &vertices[0])
-            {
-                IntPtr intptr = new(temp);
-                glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), temp, GL_STATIC_DRAW);
-            }*/
+            glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, null, GL_DYNAMIC_DRAW);
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
 
-            /*int vertexLocation = shader.GetAttribLocation("aPos");
-            glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
+            int vertexLocation = shader.GetAttribLocation("vertex");
+            glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            vertexLocation = shader.GetAttribLocation("aTexCoords");
-            glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-            glEnableVertexAttribArray((uint)vertexLocation);*/
+            shader.SetInt("Texture", GL_TEXTURE0);
         }
 
-        public void RenderText(string text, float x, float y, float scale, Vector2 direction)
+        public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction)
         {
+            glDisable(GL_CULL_FACE);
+            shader.Use();
+            shader.SetVector3("textColor", 1, 1, 1);
+            shader.SetMatrix("model", Matrix.IdentityMatrix);
+
             glActiveTexture(GL_TEXTURE0);
             glBindVertexArray(VAO);
 
-            shader.Use();
-            shader.SetVector3("textColor", 1, 1, 1);
-
-            float angle = MathF.Atan2(direction.y, direction.x);
-            Matrix rotation = MathC.GetRotationZMatrix(MathC.RadToDeg(angle));
-            Matrix translation = MathC.GetTranslationMatrix(x, y, 0);
-
-            float charX = 0;
+            //float angle = MathF.Atan2(direction.y, direction.x);
+            //Matrix rotation = MathC.GetRotationZMatrix(MathC.RadToDeg(angle));
+            //Matrix translation = MathC.GetTranslationMatrix(x, y, 0);
+            
             for (int i = 0; i < text.Length; i++)
             {
-                char c = text[i];
-
-                if (!characters.ContainsKey(c))
-                    continue;
+                byte c = (byte)text[i];
                 Character ch = characters[c];
+
+                float xpos = x + ch.bearing.x * scale;
+                float ypos = y - (ch.size.y - ch.bearing.y) * scale;
 
                 float w = ch.size.x * scale;
                 float h = ch.size.y * scale;
-                float xrel = charX + ch.bearing.x * scale;
-                float yrel = (ch.size.y - ch.bearing.y) * scale;
 
-                charX += (ch.advance >> 6) * scale;
-
-                Matrix trans = MathC.GetTranslationMatrix(xrel, yrel, 0);
-
-                shader.SetMatrix("model", Matrix.IdentityMatrix
-                * new Matrix(true, w, h, 1)
-                * trans
-                * rotation
-                * translation);
-                
+                float[] vertices = new float[] {
+                     xpos,     ypos + h,     0.0f, 0.0f,
+                     xpos,     ypos,         0.0f, 1.0f,
+                     xpos + w, ypos,         1.0f, 1.0f,
+                     xpos,     ypos + h,     0.0f, 0.0f,
+                     xpos + w, ypos,         1.0f, 1.0f,
+                     xpos + w, ypos + h,     1.0f, 0.0f
+                };
                 glBindTexture(GL_TEXTURE_2D, ch.textureID);
-                shader.SetInt("Texture", GL_TEXTURE0);
+
+                glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                fixed (float* temp = &vertices[0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), intptr);
+                }
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                
                 glDrawArrays(GL_TRIANGLES, 0, 6);
+                x += (ch.advance >> 6) * scale;
             }
+            glBindVertexArray(0);
+            glBindTexture(GL_TEXTURE0, 0);
+            glEnable(GL_CULL_FACE);
         }
     }
 }

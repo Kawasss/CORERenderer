@@ -1,10 +1,11 @@
 <obj id = "0">
-name = cube;
+name = PLACEHOLDER;
 objFile = 0.obj;
 mtllib = 0.mtl;
-scale = 1.0;
-translation = 0.0, 0.0, 0.0;
-rotateX = 0.0;
-rotateY = 0.0;
-rotateZ = 0.0;
+scale = 1;
+translation = -1.2547958, 2.515067, 0;
+rotateX = 0;
+rotateY = 0;
+rotateZ = 0;
 </obj>
+

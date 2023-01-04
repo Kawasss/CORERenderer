@@ -22,7 +22,6 @@ uniform float metallic;
 uniform float roughness;
 uniform float AO;
 
-
 vec3 FresnelSchlick(float cosTheta, vec3 FO)
 {
 	return FO + (1 - FO) * pow(1 - cosTheta, 5);

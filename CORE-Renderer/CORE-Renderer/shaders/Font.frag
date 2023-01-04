@@ -8,8 +8,7 @@ uniform vec3 textColor;
 
 void main()
 {
-	vec2 uv = TexCoords.xy;
-	float text = texture(Texture, uv).r;
+	vec4 text = vec4(1, 1, 1, texture(Texture, TexCoords).r);
 	
-	FragColor = vec4(textColor.rgb * text, text);
+	FragColor = vec4(textColor.rgb, 1) * text;
 }
