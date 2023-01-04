@@ -332,7 +332,7 @@ namespace CORERenderer.Loaders
             glStencilMask(0xFF);
 
             debugShader.SetVector3("camPos", CORERenderContent.camera.position);
-            debugShader.SetFloat("metallic", 0.5f);
+            debugShader.SetFloat("metallic", 1 f);
             debugShader.SetFloat("roughness", 0.7f);
             debugShader.SetVector3("albedo", 0.5f, 1, 1);
             debugShader.SetFloat("AO", 1);

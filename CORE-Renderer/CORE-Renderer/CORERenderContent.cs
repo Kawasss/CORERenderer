@@ -167,8 +167,8 @@ namespace CORERenderer
             
             RenderGrid();
 
-            //for (int i = 0; i < givenCRS.allOBJs.Count; i++)
-            //    givenCRS.allOBJs[i].RenderOutlines();
+            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
+                givenCRS.allOBJs[i].RenderOutlines();
 
             fbo.RenderFramebuffer();
         }
