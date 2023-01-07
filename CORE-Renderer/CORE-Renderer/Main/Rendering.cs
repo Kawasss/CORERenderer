@@ -10,11 +10,15 @@ namespace CORERenderer.Main
         public static void RenderBackground(HDRTexture h)
         {
             glDisable(GL_CULL_FACE);
+
             CORERenderContent.backgroundShader.Use();
+            CORERenderContent.backgroundShader.SetInt("environmentMap", GL_TEXTURE0);
+
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
 
-            RenderCube();
+            glDrawArrays(GL_TRIANGLES, 0, 36);//RenderCube();
+
             glEnable(GL_CULL_FACE);
         }
 

@@ -50,6 +50,8 @@ namespace CORERenderer.Loaders
 
         public int ID;
 
+        public int debug = 0;
+
         private Shader debugShader = new($"{CORERenderContent.pathRenderer}\\shaders\\PBRDebug.vert", $"{CORERenderContent.pathRenderer}\\shaders\\PBRLighting.frag");
 
         public Obj(string path)
@@ -336,6 +338,17 @@ namespace CORERenderer.Loaders
 
         public unsafe void PBRDebugRender()
         {
+            if (debug == 0)
+            {
+                material.albedoMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
+                material.normalMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_normal.png");
+                material.metallicMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_metallic.png");
+                material.roughnessMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_roughness.png");
+                material.AOMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\ao.png");
+
+                debug++;
+            }
+
             debugShader.Use();
 
             if (renderLines)

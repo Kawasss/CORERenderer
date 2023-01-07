@@ -1,5 +1,4 @@
 ﻿using static CORERenderer.OpenGL.GL;
-using StbImageSharp;
 using CORERenderer.Main;
 using COREMath;
 using CORERenderer.shaders;
@@ -20,7 +19,7 @@ namespace CORERenderer.textures
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, handle);
 
-            StbImage.stbi_set_flip_vertically_on_load(1);
+            Stbi.SetFlipVerticallyOnLoad(true);
 
             if (!File.Exists(imagePath))
             {
@@ -28,26 +27,77 @@ namespace CORERenderer.textures
                 imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
             }
 
-            ImageResult image = ImageResult.FromStream(File.OpenRead(imagePath), ColorComponents.RedGreenBlueAlpha);
-            fixed (byte* temp = &image.Data[0])
+            using (FileStream stream = File.OpenRead(imagePath))
+            using (MemoryStream memoryStream = new())
             {
-                IntPtr ptr = new(temp);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                StbiImage image;
+                stream.CopyTo(memoryStream);
+
+                image = Stbi.LoadFromMemory(memoryStream, 4);
+                fixed (byte* temp = &image.Data[0])
+                {
+                    IntPtr ptr = new(temp);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                }
+
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+                glGenerateMipmap(GL_TEXTURE_2D);
             }
 
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            List<int> local = new();
+            for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
+                local.Add(i);
+            
+            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..]};
+        }
 
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        public static unsafe Texture ReadFromSRGBFile(string imagePath)
+        {
+            uint handle = glGenTexture();
 
-            glGenerateMipmap(GL_TEXTURE_2D);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, handle);
+
+            Stbi.SetFlipVerticallyOnLoad(true);
+
+            if (!File.Exists(imagePath))
+            {
+                Console.WriteLine($"Couldnt find given texture at {imagePath}, using default texture");
+                imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
+            }
+
+            using (FileStream stream = File.OpenRead(imagePath))
+            using (MemoryStream memoryStream = new())
+            {
+                StbiImage image;
+                stream.CopyTo(memoryStream);
+
+                image = Stbi.LoadFromMemory(memoryStream, 4);
+                fixed (byte* temp = &image.Data[0])
+                {
+                    IntPtr ptr = new(temp);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                }
+
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
 
             List<int> local = new();
             for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
                 local.Add(i);
 
-            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..]};
+            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..] };
         }
 
         public Texture(uint newHandle)
@@ -83,7 +133,7 @@ namespace CORERenderer.textures
 
         public static unsafe HDRTexture ReadFromFile(string imagePath)
         {
-            StbImage.stbi_set_flip_vertically_on_load(1);
+            Stbi.SetFlipVerticallyOnLoad(true);
 
             HDRTexture h = new(glGenTexture());
 
@@ -101,7 +151,7 @@ namespace CORERenderer.textures
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, h.RBO);
 
             using (FileStream stream = File.OpenRead(imagePath))
-            using (MemoryStream memoryStream = new MemoryStream())
+            using (MemoryStream memoryStream = new())
             {
                 //if (Stbi.IsHdrFromMemory(memoryStream))
                 //{
@@ -118,10 +168,10 @@ namespace CORERenderer.textures
                     data[i] = image.Data[i];
 
                 //&image.Data[0]//&data[0]
-                fixed (float* temp = &data[0])
+                fixed (byte* temp = &image.Data[0])
                 {
                     IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, image.Width, image.Height, 0, GL_RGB, GL_FLOAT, ptr);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);//GL_FLOAT
                 }
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -138,19 +188,19 @@ namespace CORERenderer.textures
             }
 
             h.envCubeMap = glGenTexture();
-                glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
-                for (int i = 0; i < 6; i++)
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, NULL);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
+            for (int i = 0; i < 6; i++)
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, NULL);
 
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-                Matrix captureProjection = Matrix.CreatePerspectiveFOV(MathC.PiF / 2, 1, 0.1f, 10);//COREMain.Width / COREMain.Height
-                Matrix[] captureViews =
-                {
+            Matrix captureProjection = Matrix.CreatePerspectiveFOV(MathC.PiF / 2, 1, 0.1f, 10);//COREMain.Width / COREMain.Height
+            Matrix[] captureViews =
+            {
                 MathC.LookAt(new(0, 0, 0), new(1, 0, 0), new(0, -1, 0)),
                 MathC.LookAt(new(0, 0, 0), new(-1, 0, 0), new(0, -1, 0)),
                 MathC.LookAt(new(0, 0, 0), new(0, 1, 0), new(0, 0, 1)),
@@ -159,29 +209,29 @@ namespace CORERenderer.textures
                 MathC.LookAt(new(0, 0, 0), new(0, 0, -1), new(0, -1, 0)),
             };
 
-                h.shader.Use();
+            h.shader.Use();
 
-                h.shader.SetInt("equirectangularMap", GL_TEXTURE0);
-                h.shader.SetMatrix("projection", captureProjection);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, h.Handle);
+            h.shader.SetInt("equirectangularMap", GL_TEXTURE0);
+            h.shader.SetMatrix("projection", captureProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, h.Handle);
 
-                glViewport(0, 0, 512, 512);
-                glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
+            glViewport(0, 0, 512, 512);
+            glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
 
-                glDisable(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE);
 
-                for (int i = 0; i < 6; i++)
-                {
-                    h.shader.SetMatrix("view", captureViews[i]);
-                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, h.envCubeMap, 0);
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i < 6; i++)
+            {
+                h.shader.SetMatrix("view", captureViews[i]);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, h.envCubeMap, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                    Rendering.RenderCube();
-                }
+                Rendering.RenderCube();
+            }
 
-                glEnable(GL_CULL_FACE);
-                return h;
+            glEnable(GL_CULL_FACE);
+            return h;
         }
 
         public HDRTexture(uint newHandle)

@@ -27,7 +27,7 @@ namespace CORERenderer.Loaders
         {
             if (type == PBRSphereType.RustedIron)
             {
-                material.albedoMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
+                material.albedoMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
                 material.normalMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_normal.png");
                 material.metallicMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_metallic.png");
                 material.roughnessMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_roughness.png");

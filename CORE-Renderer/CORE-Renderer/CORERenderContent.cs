@@ -69,7 +69,7 @@ namespace CORERenderer
             glEnable(GL_BLEND);
             
             glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
+            glDepthFunc(GL_LEQUAL);//GL_LESS
 
             glEnable(GL_STENCIL_TEST);
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
@@ -92,7 +92,7 @@ namespace CORERenderer
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
-            backgroundShader = new($"{pathRenderer}\\shaders\\Background.vert", $"{pathRenderer}\\shaders\\Background.frag");
+            backgroundShader = new($"{pathRenderer}\\shaders\\skybox.vert", $"{pathRenderer}\\shaders\\Background.frag");
 
             //creates space in the gpu memory for the global matrix uniforms
             uboMatrices = glGenBuffer();
@@ -124,12 +124,12 @@ namespace CORERenderer
 
             test = new(32);
 
-            sphere = new(PBRSphereType.RustedIron);
+            //sphere = new(PBRSphereType.RustedIron);
 
 
             lights = new();
-            lights.Add(new() { position = new(0, 0.5f, 0.5f), color = new(1, 1, 1)});
-            lights.Add(new() { position = new(0.5f, 0.5f, 0), color = new(1, 1, 1)});
+            lights.Add(new() { position = new(0, 1f, 0f), color = new(1, 1, 1)});
+            //lights.Add(new() { position = new(0.6f, 0.6f, 0), color = new(1, 1, 1)});
 
             camera = new Camera(new(0, 1, 5), Width / Height);
 
@@ -170,9 +170,8 @@ namespace CORERenderer
 
 
             //RenderAllObjects(givenCRS);
-            sphere.Render();
-            //RenderAllObjectsAsPBRDebugs(givenCRS);
-
+            //sphere.Render();
+            RenderAllObjectsAsPBRDebugs(givenCRS);
 
 
             //------------------------------------------------------------------------------------
@@ -186,7 +185,7 @@ namespace CORERenderer
 
             //RenderCubemap(cubemap);
             
-            RenderGrid();
+            //RenderGrid();
 
             for (int i = 0; i < givenCRS.allOBJs.Count; i++)
                 givenCRS.allOBJs[i].RenderOutlines();

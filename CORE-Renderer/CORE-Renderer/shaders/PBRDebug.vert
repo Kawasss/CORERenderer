@@ -18,8 +18,8 @@ uniform mat4 model;
 void main()
 {
     TexCoords = aTexCoords;
-    WorldPos = vec3(vec4(aPos, 1.0) * model);//(vec4(aPos, 1.0) * model).xyz;
-    Normal =  aNormal * mat3(model);   
+    WorldPos = (vec4(aPos, 1.0) * model).xyz;//vec3(vec4(aPos, 1.0) * model);//
+    Normal =  mat3(model) * aNormal;   
 
     gl_Position = vec4(WorldPos, 1) * view * projection;
 }
