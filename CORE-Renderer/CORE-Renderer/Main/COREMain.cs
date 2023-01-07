@@ -22,7 +22,7 @@ namespace CORERenderer.Main
 
         private static Font debugText;
 
-        public unsafe static void Main(string[] args)
+        public unsafe static int Main(string[] args)
         {
             render = new();
             overrides = new();
@@ -83,6 +83,8 @@ namespace CORERenderer.Main
 
             Console.WriteLine("shutting down");
             Glfw.Terminate();
+
+            return 0;
         }
 
         static private void FramebufferSizeCallBack(Window window, int width, int height)

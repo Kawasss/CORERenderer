@@ -73,6 +73,16 @@ namespace CORERenderer.Main
         public int amountOfIndiceGroups;
     }
 
+    public struct PBRMaterial
+    {
+        public string Name;
+        public Texture albedoMap;
+        public Texture normalMap;
+        public Texture metallicMap;
+        public Texture roughnessMap;
+        public Texture AOMap;
+    }
+
     /// <summary>
     /// holds all the information for an OpenGL material
     /// </summary>

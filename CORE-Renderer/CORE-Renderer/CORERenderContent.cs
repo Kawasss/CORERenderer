@@ -9,6 +9,8 @@ using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
 using static System.Net.Mime.MediaTypeNames;
+using CORERenderer.Loaders;
+using CORERenderer.textures;
 
 namespace CORERenderer
 {
@@ -16,6 +18,7 @@ namespace CORERenderer
     {
         static public Shader lightShader;
         static public Shader gridShader;
+        static public Shader backgroundShader;
 
         static public Camera camera;
 
@@ -53,10 +56,9 @@ namespace CORERenderer
 
         static public Font test;
 
+        static public PBRSphere sphere;
 
-        static Shader testshader;
-        static uint debugvbo;
-        static uint debugvao;
+        static HDRTexture hdrtexture;
 
         public unsafe override void OnLoad()
         {
@@ -90,6 +92,7 @@ namespace CORERenderer
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+            backgroundShader = new($"{pathRenderer}\\shaders\\Background.vert", $"{pathRenderer}\\shaders\\Background.frag");
 
             //creates space in the gpu memory for the global matrix uniforms
             uboMatrices = glGenBuffer();
@@ -99,8 +102,12 @@ namespace CORERenderer
             glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
 
             //generates the skybox
-            string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
-            cubemap = GenerateSkybox(faces);
+            //string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
+            //cubemap = GenerateSkybox(faces);
+            
+            
+
+            //cubemap = GenerateSkybox(hdrtexture.envCubeMap);
 
             fbo = GenerateFramebuffer();
 
@@ -117,12 +124,16 @@ namespace CORERenderer
 
             test = new(32);
 
+            sphere = new(PBRSphereType.RustedIron);
+
 
             lights = new();
-            //lightSourcePos.Add(new(2, 2, 2));
-            lights.Add(new() { position = new(0, 3, 0), color = new(1, 1, 1)});
+            lights.Add(new() { position = new(0, 0.5f, 0.5f), color = new(1, 1, 1)});
+            lights.Add(new() { position = new(0.5f, 0.5f, 0), color = new(1, 1, 1)});
 
             camera = new Camera(new(0, 1, 5), Width / Height);
+
+            hdrtexture = HDRTexture.ReadFromFile($"{pathRenderer}\\textures\\hdr\\newport_loft.hdr");
 
             //assigns values the freed up gpu memory for global uniforms
             glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
@@ -132,6 +143,8 @@ namespace CORERenderer
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                 throw new GLFW.Exception("Framebuffer is not complete");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glViewport(0, 0, Width, Height);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
@@ -152,16 +165,24 @@ namespace CORERenderer
             glEnable(GL_DEPTH_TEST);
             glClearColor(0.1f, 0.1f, 0.1f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            //------------------------------------------------------------------------------------
             
+
+
             //RenderAllObjects(givenCRS);
+            sphere.Render();
+            //RenderAllObjectsAsPBRDebugs(givenCRS);
 
-            RenderAllObjectsAsPBRDebugs(givenCRS);
 
+
+            //------------------------------------------------------------------------------------
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             glStencilMask(0x00);
 
             RenderLights(lights);
+
+            RenderBackground(hdrtexture);
 
             //RenderCubemap(cubemap);
             

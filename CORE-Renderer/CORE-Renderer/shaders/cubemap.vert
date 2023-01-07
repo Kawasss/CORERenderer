@@ -59,5 +59,5 @@ uniform mat4 model;
 void main()
 {
     texCoords = coordinates[gl_VertexID].xy;    
-    gl_Position = projection * view * model * vec4(coordinates[gl_VertexID], 1.0);
+    gl_Position = vec4(coordinates[gl_VertexID], 1.0) * model * view * projection;
 }

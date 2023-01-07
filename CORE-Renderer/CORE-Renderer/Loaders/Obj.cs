@@ -5,6 +5,7 @@ using static CORERenderer.Main.Globals;
 using CORERenderer.GLFW;
 using CORERenderer.shaders;
 using CORERenderer.OpenGL;
+using CORERenderer.textures;
 
 namespace CORERenderer.Loaders
 {
@@ -14,6 +15,8 @@ namespace CORERenderer.Loaders
         public List<List<uint>> indices;
 
         public List<Material> Materials;
+
+        public PBRMaterial material; //remove when done debugging pbr
 
         /*
          * $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag" for normal lighting
@@ -106,6 +109,19 @@ namespace CORERenderer.Loaders
                 ErrorLogic(error);
 
             GenerateBuffers();
+
+            //remove when done debugging pbr
+            material.albedoMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
+            material.normalMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_normal.png");
+            material.metallicMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_metallic.png");
+            material.roughnessMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_roughness.png");
+            material.AOMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\ao.png");
+
+            shader.SetInt("albedoMap", GL_TEXTURE0);
+            shader.SetInt("normalMap", GL_TEXTURE1);
+            shader.SetInt("metallicMap", GL_TEXTURE2);
+            shader.SetInt("roughnessMap", GL_TEXTURE3);
+            shader.SetInt("aoMap", GL_TEXTURE4);
 
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             shader.SetInt("material.specular", GL_TEXTURE1);
@@ -331,16 +347,19 @@ namespace CORERenderer.Loaders
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
 
-            debugShader.SetVector3("camPos", CORERenderContent.camera.position);
-            debugShader.SetFloat("metallic", 1f);
-            debugShader.SetFloat("roughness", 0.7f);
-            debugShader.SetVector3("albedo", 0.5f, 1, 1);
-            debugShader.SetFloat("AO", 1);
-
             ClampValues();
 
-            debugShader.SetVector3("basicLightInfo[0].lightPosition", CORERenderContent.lights[0].position);
-            debugShader.SetVector3("basicLightInfo[0].lightColor", CORERenderContent.lights[0].color);
+            for (int i = 0; i < CORERenderContent.lights.Count; i++)
+            {
+                debugShader.SetVector3($"basicLightInfo[{i}].lightPosition", CORERenderContent.lights[i].position);
+                debugShader.SetVector3($"basicLightInfo[{i}].lightColor", CORERenderContent.lights[i].color);
+            }
+
+            material.albedoMap.Use(GL_TEXTURE0);
+            material.normalMap.Use(GL_TEXTURE1);
+            material.metallicMap.Use(GL_TEXTURE2);
+            material.roughnessMap.Use(GL_TEXTURE3);
+            material.AOMap.Use(GL_TEXTURE4);
 
             debugShader.SetMatrix("model", Matrix.IdentityMatrix
                       * new Matrix(Scaling, translation)

@@ -58,6 +58,7 @@
   <ItemGroup>
     <PackageReference Include="freetype" Version="2.8.0.1" />
     <PackageReference Include="SpaceWizards.SharpFont" Version="1.0.1" />
+    <PackageReference Include="StbiSharp" Version="1.2.1" />
   </ItemGroup>
 
 </Project>

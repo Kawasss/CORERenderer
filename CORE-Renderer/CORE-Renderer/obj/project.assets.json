@@ -29,6 +29,33 @@
           "lib/netstandard2.0/StbImageSharp.dll": {}
         }
       },
+      "StbiSharp/1.2.1": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp3.0/StbiSharp.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp3.0/StbiSharp.dll": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libstbi.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/osx-x64/native/libstbi.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          },
+          "runtimes/win-x64/native/stbi.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/stbi.lib": {
+            "assetType": "native",
+            "rid": "win-x64"
+          }
+        }
+      },
       "COREMath/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v6.0",
@@ -232,6 +259,25 @@
         "stbimagesharp.nuspec"
       ]
     },
+    "StbiSharp/1.2.1": {
+      "sha512": "jbi94g3UDVAC3vH6jKZmmADH4Z6tGqbcdlyGhT/WZN9UE8OjjvpGFE5zF+UCSmIdya6iJ+Zo5VvxdQywSKN0Uw==",
+      "type": "package",
+      "path": "stbisharp/1.2.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "lib/netcoreapp2.0/StbiSharp.dll",
+        "lib/netcoreapp3.0/StbiSharp.dll",
+        "lib/netstandard2.0/StbiSharp.dll",
+        "runtimes/linux-x64/native/libstbi.so",
+        "runtimes/osx-x64/native/libstbi.dylib",
+        "runtimes/win-x64/native/stbi.dll",
+        "runtimes/win-x64/native/stbi.lib",
+        "stbisharp.1.2.1.nupkg.sha512",
+        "stbisharp.nuspec"
+      ]
+    },
     "COREMath/1.0.0": {
       "type": "project",
       "path": "../COREMath/COREMath/COREMath.csproj",
@@ -242,6 +288,7 @@
     "net6.0": [
       "COREMath >= 1.0.0",
       "SpaceWizards.SharpFont >= 1.0.1",
+      "StbiSharp >= 1.2.1",
       "freetype >= 2.8.0.1"
     ]
   },
@@ -297,6 +344,10 @@
           "SpaceWizards.SharpFont": {
             "target": "Package",
             "version": "[1.0.1, )"
+          },
+          "StbiSharp": {
+            "target": "Package",
+            "version": "[1.2.1, )"
           },
           "freetype": {
             "target": "Package",
