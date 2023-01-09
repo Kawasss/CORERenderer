@@ -1,10 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "D1IhSw2L9K7C6jbgSbTjKK4dURxSu5UQUTkevA8AdkY4VTZZvivZpn8NCMJdPX0uOP1gvDa5N4OIxyXu9NVIvQ==",
+  "dgSpecHash": "ZhbxFD5AOSGTHJpfuxBJXZ1CWmXwX/vJby413EA+u37BoPyWDsckeUZ6IOlI/sIfDMggh5fAWZkHxZC5AASKAw==",
   "success": true,
   "projectFilePath": "C:\\Users\\wveen\\source\\repos\\CORE-Renderer\\CORE-Renderer\\CORE-Renderer.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\wveen\\.nuget\\packages\\stbimagesharp\\2.27.13\\stbimagesharp.2.27.13.nupkg.sha512"
+    "C:\\Users\\wveen\\.nuget\\packages\\freetype\\2.8.0.1\\freetype.2.8.0.1.nupkg.sha512",
+    "C:\\Users\\wveen\\.nuget\\packages\\freetype.redist\\2.8.0.1\\freetype.redist.2.8.0.1.nupkg.sha512",
+    "C:\\Users\\wveen\\.nuget\\packages\\spacewizards.sharpfont\\1.0.1\\spacewizards.sharpfont.1.0.1.nupkg.sha512",
+    "C:\\Users\\wveen\\.nuget\\packages\\stbimagesharp\\2.27.13\\stbimagesharp.2.27.13.nupkg.sha512",
+    "C:\\Users\\wveen\\.nuget\\packages\\stbisharp\\1.2.1\\stbisharp.1.2.1.nupkg.sha512"
   ],
   "logs": []
 }

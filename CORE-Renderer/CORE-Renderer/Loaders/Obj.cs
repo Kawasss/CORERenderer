@@ -5,6 +5,7 @@ using static CORERenderer.Main.Globals;
 using CORERenderer.GLFW;
 using CORERenderer.shaders;
 using CORERenderer.OpenGL;
+using CORERenderer.textures;
 
 namespace CORERenderer.Loaders
 {
@@ -14,6 +15,8 @@ namespace CORERenderer.Loaders
         public List<List<uint>> indices;
 
         public List<Material> Materials;
+
+        public PBRMaterial material; //remove when done debugging pbr
 
         /*
          * $"{CORERenderContent.pathRenderer}\\shaders\\lighting.frag" for normal lighting
@@ -46,6 +49,10 @@ namespace CORERenderer.Loaders
         public string mtllib;
 
         public int ID;
+
+        public int debug = 0;
+
+        private Shader debugShader = new($"{CORERenderContent.pathRenderer}\\shaders\\PBRDebug.vert", $"{CORERenderContent.pathRenderer}\\shaders\\PBRLighting.frag");
 
         public Obj(string path)
         {
@@ -105,6 +112,19 @@ namespace CORERenderer.Loaders
 
             GenerateBuffers();
 
+            //remove when done debugging pbr
+            material.albedoMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
+            material.normalMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_normal.png");
+            material.metallicMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_metallic.png");
+            material.roughnessMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_roughness.png");
+            material.AOMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\ao.png");
+
+            shader.SetInt("albedoMap", GL_TEXTURE0);
+            shader.SetInt("normalMap", GL_TEXTURE1);
+            shader.SetInt("metallicMap", GL_TEXTURE2);
+            shader.SetInt("roughnessMap", GL_TEXTURE3);
+            shader.SetInt("aoMap", GL_TEXTURE4);
+
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             shader.SetInt("material.specular", GL_TEXTURE1);
         }
@@ -156,9 +176,9 @@ namespace CORERenderer.Loaders
                 shader.SetVector3("dirLight.specular", Materials[i].Specular.x, Materials[i].Specular.y, Materials[i].Specular.z);
 
                 //point lights
-                for (int j = 0; j < CORERenderContent.lightSourcePos.Count; j++)
+                for (int j = 0; j < CORERenderContent.lights.Count; j++)
                 {
-                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lightSourcePos[j].x, CORERenderContent.lightSourcePos[j].y, CORERenderContent.lightSourcePos[j].z);
+                    shader.SetVector3($"pointLights[{j}].position", CORERenderContent.lights[j].position.x, CORERenderContent.lights[j].position.y, CORERenderContent.lights[j].position.z);
                     shader.SetFloat($"pointLights[{j}].constant", 1.0f);
                     shader.SetFloat($"pointLights[{j}].linear", 0.09f);
                     shader.SetFloat($"pointLights[{j}].quadratic", 0.032f);
@@ -169,6 +189,12 @@ namespace CORERenderer.Loaders
 
                 usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);
                 usedTextures[Materials[i].SpecularMap].Use(GL_TEXTURE1);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE0, CORERenderContent.test.characters[0].textureID);
+
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE1, CORERenderContent.test.characters[0].textureID);
 
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
 
@@ -209,7 +235,7 @@ namespace CORERenderer.Loaders
                 highlightShader.Use();
 
                 highlightShader.SetMatrix("model", Matrix.IdentityMatrix
-                      * new Matrix(Scaling * 1.05f, translation)
+                      * new Matrix(Scaling * 1.02f, translation)
                       * (MathC.GetRotationXMatrix(rotationX)
                       * MathC.GetRotationYMatrix(rotationY)
                       * MathC.GetRotationZMatrix(rotationZ)));
@@ -257,14 +283,14 @@ namespace CORERenderer.Loaders
                     glEnableVertexAttribArray((uint)vertexLocation);
 
                     //UV texture coordinates
-                    int vertexLocation2 = shader.GetAttribLocation("aTexCoords");
-                    glVertexAttribPointer((uint)vertexLocation2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                    glEnableVertexAttribArray((uint)vertexLocation2);
+                    vertexLocation = shader.GetAttribLocation("aTexCoords");
+                    glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation);
 
                     //normal coordinates
-                    int vertexLocation3 = shader.GetAttribLocation("aNormal");
-                    glVertexAttribPointer((uint)vertexLocation3, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-                    glEnableVertexAttribArray((uint)vertexLocation3);
+                    vertexLocation = shader.GetAttribLocation("aNormal");
+                    glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+                    glEnableVertexAttribArray((uint)vertexLocation);
 
                     //adds ebo to the vao
                     uint[] local2 = indices[i].ToArray();
@@ -308,6 +334,76 @@ namespace CORERenderer.Loaders
                 rotationY = 0;
             if (rotationZ >= 360)
                 rotationZ = 0;
+        }
+
+        public unsafe void PBRDebugRender()
+        {
+            if (debug == 0)
+            {
+                material.albedoMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_basecolor.png");
+                material.normalMap = Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_normal.png");
+                material.metallicMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_metallic.png");
+                material.roughnessMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\rustediron2_roughness.png");
+                material.AOMap = Texture.ReadFromSRGBFile($"{CORERenderContent.pathRenderer}\\Loaders\\PBRSphereMaterials\\ao.png");
+
+                debug++;
+            }
+
+            debugShader.Use();
+
+            if (renderLines)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+            }
+
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+
+            ClampValues();
+
+            for (int i = 0; i < CORERenderContent.lights.Count; i++)
+            {
+                debugShader.SetVector3($"basicLightInfo[{i}].lightPosition", CORERenderContent.lights[i].position);
+                debugShader.SetVector3($"basicLightInfo[{i}].lightColor", CORERenderContent.lights[i].color);
+            }
+
+            material.albedoMap.Use(GL_TEXTURE0);
+            material.normalMap.Use(GL_TEXTURE1);
+            material.metallicMap.Use(GL_TEXTURE2);
+            material.roughnessMap.Use(GL_TEXTURE3);
+            material.AOMap.Use(GL_TEXTURE4);
+
+            debugShader.SetMatrix("model", Matrix.IdentityMatrix
+                      * new Matrix(Scaling, translation)
+                      * (MathC.GetRotationXMatrix(rotationX)
+                      * MathC.GetRotationYMatrix(rotationY)
+                      * MathC.GetRotationZMatrix(rotationZ)));
+
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                glBindVertexArray(GeneratedVAOs[i]);
+                glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+            }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            if (renderNormals)
+            {
+                normalRenderShader.Use();
+
+                normalRenderShader.SetMatrix("model", Matrix.IdentityMatrix
+                * new Matrix(Scaling, translation)
+                * (MathC.GetRotationXMatrix(rotationX)
+                * MathC.GetRotationYMatrix(rotationY)
+                * MathC.GetRotationZMatrix(rotationZ)));
+
+                for (int i = 0; i < Materials.Count; i++)
+                {
+                    glBindVertexArray(GeneratedVAOs[i]);
+                    glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
+                }
+            }
         }
     }  
 }

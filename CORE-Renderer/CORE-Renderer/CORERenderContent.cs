@@ -8,6 +8,9 @@ using CORERenderer.shaders;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
+using static System.Net.Mime.MediaTypeNames;
+using CORERenderer.Loaders;
+using CORERenderer.textures;
 
 namespace CORERenderer
 {
@@ -15,6 +18,7 @@ namespace CORERenderer
     {
         static public Shader lightShader;
         static public Shader gridShader;
+        static public Shader backgroundShader;
 
         static public Camera camera;
 
@@ -46,9 +50,15 @@ namespace CORERenderer
 
         static public string pathRenderer = directory.Substring(0, MathCIndex) + "CORE-Renderer\\CORE-Renderer";
 
-        static public List<Vector3> lightSourcePos;
+        static public List<Light> lights;
         static public int currentObj = 0;
         static private float called = 0;
+
+        static public Font test;
+
+        static public PBRSphere sphere;
+
+        static HDRTexture hdrtexture;
 
         public unsafe override void OnLoad()
         {
@@ -59,7 +69,7 @@ namespace CORERenderer
             glEnable(GL_BLEND);
             
             glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
+            glDepthFunc(GL_LEQUAL);//GL_LESS
 
             glEnable(GL_STENCIL_TEST);
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
@@ -67,6 +77,8 @@ namespace CORERenderer
 
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_TEXTURE_CUBE_MAP);
+
+            //glEnable(GL_FRAMEBUFFER_SRGB);
 
             glEnable(GL_DEBUG_OUTPUT);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -80,6 +92,7 @@ namespace CORERenderer
             //initialises given shaders
             lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
             gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+            backgroundShader = new($"{pathRenderer}\\shaders\\skybox.vert", $"{pathRenderer}\\shaders\\Background.frag");
 
             //creates space in the gpu memory for the global matrix uniforms
             uboMatrices = glGenBuffer();
@@ -89,8 +102,12 @@ namespace CORERenderer
             glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
 
             //generates the skybox
-            string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
-            cubemap = GenerateSkybox(faces);
+            //string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
+            //cubemap = GenerateSkybox(faces);
+            
+            
+
+            //cubemap = GenerateSkybox(hdrtexture.envCubeMap);
 
             fbo = GenerateFramebuffer();
 
@@ -104,11 +121,19 @@ namespace CORERenderer
                 glBindVertexArray(vertexArrayObjectGrid);
             }
 
-            lightSourcePos = new();
-            lightSourcePos.Add(new(10, 10, 10));
-            lightSourcePos.Add(new(0, 20, 0));
+
+            test = new(32);
+
+            //sphere = new(PBRSphereType.RustedIron);
+
+
+            lights = new();
+            lights.Add(new() { position = new(0, 1f, 0f), color = new(1, 1, 1)});
+            //lights.Add(new() { position = new(0.6f, 0.6f, 0), color = new(1, 1, 1)});
 
             camera = new Camera(new(0, 1, 5), Width / Height);
+
+            hdrtexture = HDRTexture.ReadFromFile($"{pathRenderer}\\textures\\hdr\\newport_loft.hdr");
 
             //assigns values the freed up gpu memory for global uniforms
             glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
@@ -118,6 +143,8 @@ namespace CORERenderer
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                 throw new GLFW.Exception("Framebuffer is not complete");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glViewport(0, 0, Width, Height);
 
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
@@ -136,19 +163,29 @@ namespace CORERenderer
             //binds the correct framebuffer for accurate writing
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
             glEnable(GL_DEPTH_TEST);
+            glClearColor(0.1f, 0.1f, 0.1f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            //------------------------------------------------------------------------------------
+            
 
-            RenderAllObjects(givenCRS);
 
+            //RenderAllObjects(givenCRS);
+            //sphere.Render();
+            RenderAllObjectsAsPBRDebugs(givenCRS);
+
+
+            //------------------------------------------------------------------------------------
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             glStencilMask(0x00);
 
-            RenderLights(lightSourcePos);
-            
-            RenderCubemap(cubemap);
+            RenderLights(lights);
 
-            RenderGrid();
+            RenderBackground(hdrtexture);
+
+            //RenderCubemap(cubemap);
+            
+            //RenderGrid();
 
             for (int i = 0; i < givenCRS.allOBJs.Count; i++)
                 givenCRS.allOBJs[i].RenderOutlines();
@@ -196,6 +233,15 @@ namespace CORERenderer
             //!!temporary debug movement for obj files !!rewrite
             if (state2 == InputState.Press && state != InputState.Press)
             {   //calls the logic checks for highlighting the current object
+                if (Glfw.GetKey(window, Keys.R) == InputState.Press && loaded)
+                {
+                    givenCRS.allOBJs[currentObj].translation = new(0, 0, 0);
+                    givenCRS.allOBJs[currentObj].Scaling = 1;
+                    givenCRS.allOBJs[currentObj].rotationX = 0;
+                    givenCRS.allOBJs[currentObj].rotationY = 0;
+                    givenCRS.allOBJs[currentObj].rotationZ = 0;
+                }
+
                 if (Glfw.GetKey(window, Keys.D) == InputState.Press && loaded && canChange)
                     HighlightLogic();
                 //code below loads in new objects and checks if they can be loaded in

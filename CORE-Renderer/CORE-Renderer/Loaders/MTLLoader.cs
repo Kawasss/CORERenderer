@@ -33,6 +33,14 @@ namespace CORERenderer.Loaders
                 return false;
             }
 
+            if (!File.Exists(path))
+            {
+                Console.WriteLine($"path {path} doesnt exist");
+                materials = new();
+                error = -1;
+                return false;
+            }
+
             List<int> temp = new();
 
             for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
@@ -53,7 +61,7 @@ namespace CORERenderer.Loaders
             List<Material> tempMtl = new();
             Material material = new();
 
-            if ((path[(path.Length - 4)..].ToLower() != ".mtl") || !File.Exists(path))
+            if ((path[(path.Length - 4)..].ToLower() != ".mtl"))
             {
                 Console.WriteLine($"Invalid file {filename}");
                 error = -1;

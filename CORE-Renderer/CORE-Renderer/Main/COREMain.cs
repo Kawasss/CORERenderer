@@ -1,7 +1,7 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
-using CORERenderer.textures;
 using static CORERenderer.OpenGL.GL;
+using COREMath;
 
 namespace CORERenderer.Main
 {
@@ -20,7 +20,9 @@ namespace CORERenderer.Main
         private static double time = 0;
         private static double time2 = 0;
 
-        public unsafe static void Main(string[] args)
+        private static Font debugText;
+
+        public unsafe static int Main(string[] args)
         {
             render = new();
             overrides = new();
@@ -36,24 +38,26 @@ namespace CORERenderer.Main
             Glfw.SetScrollCallback(window, render.ScrollCallback);
             Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
 
+            debugText = new(32);
+
             //render loop
             while (!Glfw.WindowShouldClose(window))
             {
                 time2 = Glfw.Time;
-                if (EngineProperties.showFPS && !EngineProperties.showFrameTime)
-                    Console.Write($"\rfps: {fps}         ");
-                if (EngineProperties.showFrameTime && !EngineProperties.showFPS)
-                    Console.Write($"\rframetime: {Math.Round(currentFrameTime * 1000, 3)}");
-                if (EngineProperties.showFPS && EngineProperties.showFrameTime)
-                    Console.Write($"\rfps: {fps}   frametime: {Math.Round(currentFrameTime * 1000, 3)}                  ");
-
+                
                 render.EveryFrame(window, currentFrameTime);
 
                 render.RenderEveryFrame();
-                
                 fps = (int)(1 / currentFrameTime);
                 time = Glfw.Time - time2;
-                
+
+                if (EngineProperties.showFPS && !EngineProperties.showFrameTime)
+                    debugText.RenderText($"fps: {fps}", -1f, 0.96f, 0.001f, new Vector2(1, 0));
+                if (EngineProperties.showFrameTime && !EngineProperties.showFPS)
+                    debugText.RenderText($"frametime: {string.Format("{0:0.00}", currentFrameTime * 1000)} ms", -1f, 0.96f, 0.001f, new Vector2(1, 0));
+                if (EngineProperties.showFPS && EngineProperties.showFrameTime)
+                    debugText.RenderText($"fps: {fps}   frametime: {string.Format("{0:0.00}", currentFrameTime * 1000)} ms", -1f, 0.96f, 0.001f, new Vector2(1, 0));
+
                 currentFrameTime = 0;
                 while (currentFrameTime < minimumFrameTime)
                     currentFrameTime += (float)time;
@@ -79,11 +83,13 @@ namespace CORERenderer.Main
 
             Console.WriteLine("shutting down");
             Glfw.Terminate();
+
+            return 0;
         }
 
         static private void FramebufferSizeCallBack(Window window, int width, int height)
         {
-            glViewport(0, 0, width, height);
+            glViewport(0, 0, width, height / 5);
             Width = width;
             Height = height;
         }

@@ -21,3 +21,9 @@ C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Re
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.genruntimeconfig.cache
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\ref\CORE-Renderer.dll
 C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\obj\Debug\net6.0\CORE-Renderer.csproj.ResolveComReference.cache
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\SpaceWizards.SharpFont.dll
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\StbiSharp.dll
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\runtimes\linux-x64\native\libstbi.so
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\runtimes\osx-x64\native\libstbi.dylib
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\runtimes\win-x64\native\stbi.dll
+C:\Users\wveen\source\repos\CORE-Renderer\CORE-Renderer\bin\Debug\net6.0\runtimes\win-x64\native\stbi.lib

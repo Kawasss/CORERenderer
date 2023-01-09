@@ -60,6 +60,7 @@ namespace CORERenderer.Main
             glBindFramebuffer(GL_FRAMEBUFFER, fb.FBO);
 
             fb.Texture = glGenTexture();
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, fb.Texture);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, COREMain.Width, COREMain.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
@@ -184,10 +185,36 @@ namespace CORERenderer.Main
             return new Cubemap { textureID = cubemapID, VAO = cubemapVAO, shader = cubemapShader };
         }
 
+        public static unsafe Cubemap GenerateCubemap(bool addShader, uint cubemapID)
+        {
+            uint cubemapVAO = glGenVertexArray();
+            glBindVertexArray(cubemapVAO);
+
+            if (addShader)
+            {
+                Shader cubemapShader = new($"{CORERenderContent.pathRenderer}\\shaders\\cubemap.vert", $"{CORERenderContent.pathRenderer}\\shaders\\cubemap.frag");
+                cubemapShader.SetInt("cubemap", GL_TEXTURE0);
+
+                return new Cubemap { textureID = cubemapID, VAO = cubemapVAO, shader = cubemapShader };
+            }
+
+            else
+                return new Cubemap { textureID = cubemapID, VAO = cubemapVAO };
+        }
+
         public static unsafe Cubemap GenerateSkybox(string[] faces)
         {
             Cubemap skybox = GenerateCubemap(faces);
             skybox.shader = new($"{CORERenderContent.pathRenderer}\\shaders\\skybox.vert", $"{CORERenderContent.pathRenderer}\\shaders\\skybox.frag");
+
+            return skybox;
+        }
+
+        public static unsafe Cubemap GenerateSkybox(uint cubemapID)
+        {
+            Cubemap skybox = GenerateCubemap(false, cubemapID);
+            skybox.shader = new($"{CORERenderContent.pathRenderer}\\shaders\\skybox.vert", $"{CORERenderContent.pathRenderer}\\shaders\\skybox.frag");
+            skybox.shader.SetInt("cubemap", GL_TEXTURE0);
 
             return skybox;
         }

@@ -120,6 +120,7 @@ namespace CORERenderer.CRSFile
             this.UpdateIDs();
             CORERenderContent.currentObj = nextUnusedID - 1;
             CORERenderContent.HighlightLogic();
+            CORERenderContent.loaded = true;
         }
 
         public void SaveChanges() //only works with object modifications, not with objects themselves
@@ -168,9 +169,7 @@ namespace CORERenderer.CRSFile
                 this.allOBJs.RemoveAt(ID);
                 nextUnusedID -= 1;
 
-                File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.obj");
-                if (File.Exists($"{CORERenderContent.givenCRS.path}\\{ID}.mtl"))
-                    File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.mtl");
+                
 
                 int newID = 0;
                 for (int i = ID; i < this.allOBJs.Count; i++)
@@ -187,6 +186,10 @@ namespace CORERenderer.CRSFile
                         newID++;
                     }
                 }
+
+                File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.obj");
+                if (File.Exists($"{CORERenderContent.givenCRS.path}\\{ID}.mtl"))
+                    File.Delete($"{CORERenderContent.givenCRS.path}\\{ID}.mtl");
 
                 string local0 = string.Empty;
                 using (FileStream filestream = File.Open($"{path}\\{name}.cst", FileMode.Open))

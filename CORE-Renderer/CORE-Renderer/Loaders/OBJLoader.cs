@@ -73,6 +73,7 @@ namespace CORERenderer.Loaders
                             outIndices.Add(new());
                             outVertices.Add(new());
                             aa = 0;
+                            indiceBinder = new(); //if it isnt working, remove this
                             currentgroup++;
                             break;
 
@@ -177,7 +178,7 @@ namespace CORERenderer.Loaders
                                         for (int l = 0; l < 3; l++)
                                             outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
                                     }
-                                    else if (!withTextures)
+                                    else
                                     {
                                         outVertices[i].Add((float)new Random().NextDouble());
                                         outVertices[i].Add((float)new Random().NextDouble());
@@ -186,12 +187,10 @@ namespace CORERenderer.Loaders
                                             outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
                                     }
                                 }
-                                else if (!s.Contains('/'))
+                                else
                                 {
                                     for (int l = 0; l < 3; l++)
-                                    {
                                         outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]);;
-                                    }
                                         
                                     for (int l = 0; l < 5; l++)
                                         outVertices[i].Add(0);

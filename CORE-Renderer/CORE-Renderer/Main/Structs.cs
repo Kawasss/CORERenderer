@@ -5,6 +5,20 @@ using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.Main
 {
+    public struct Character
+    {
+        public uint textureID;
+        public Vector2 size;
+        public Vector2 bearing;
+        public int advance;
+    }
+
+    public struct Light
+    {
+        public Vector3 position;
+        public Vector3 color;
+    }
+
     public struct Cubemap
     {
         public uint VAO;
@@ -57,6 +71,16 @@ namespace CORERenderer.Main
         public string objPath;
         public int amountOfVerticeGroups;
         public int amountOfIndiceGroups;
+    }
+
+    public struct PBRMaterial
+    {
+        public string Name;
+        public Texture albedoMap;
+        public Texture normalMap;
+        public Texture metallicMap;
+        public Texture roughnessMap;
+        public Texture AOMap;
     }
 
     /// <summary>

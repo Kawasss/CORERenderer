@@ -8,7 +8,7 @@ namespace CORERenderer
         {
             EngineProperties.showFrameTime = true;
             EngineProperties.showFPS = true;
-            EngineProperties.maxFPS = 1000;
+            EngineProperties.maxFPS = 200;
         }
     }
 }
