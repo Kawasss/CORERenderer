@@ -25,12 +25,13 @@ namespace CORERenderer.Main
         public static CORERenderContent render;
         public static Overrides overrides;
 
+        public static RenderMode LoadFile = RenderMode.CRSFile;
+        public static string LoadFilePath;
+
         private static double time = 0;
         private static double time2 = 0;
 
         private static Font debugText;
-
-        private static Shader splashScreenShader;
 
         private static bool destroyWindow = false;
 
@@ -38,11 +39,18 @@ namespace CORERenderer.Main
         {
             Glfw.Init();
 
-            render = new();
-            overrides = new();
             splashScreen = new();
 
+            render = new();
+            overrides = new();
+
             EnginePresets.SetPresets();
+            
+            if (args.Length > 0 && args[0][^4..].ToLower() == ".obj")
+            {
+                LoadFile = RenderMode.GivenFile;
+                LoadFilePath = args[0];
+            }
 
             overrides.AlwaysLoad();
             render.OnLoad();
@@ -89,18 +97,7 @@ namespace CORERenderer.Main
             }
             Console.WriteLine();
 
-            if (CORERenderContent.givenCRS.allOBJs.Count > 0)
-                Console.Write("\nDeleting buffers");
-
-            for (int i = 0; i < CORERenderContent.givenCRS.allOBJs.Count; i++)
-            {
-                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].GeneratedBuffers.ToArray());
-                glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].elementBufferObject.ToArray());
-                glDeleteVertexArrays(CORERenderContent.givenCRS.allOBJs[i].GeneratedVAOs.ToArray());
-                glDeleteShader(CORERenderContent.givenCRS.allOBJs[i].shader.Handle);
-                Console.Write($"..{i}");
-            }
-            Console.WriteLine();
+            DeleteAllBuffers();
 
             Console.WriteLine("shutting down");
             Glfw.Terminate();
@@ -110,9 +107,37 @@ namespace CORERenderer.Main
 
         static private void FramebufferSizeCallBack(Window window, int width, int height)
         {
-            glViewport(0, 0, width, height / 5);
+            glViewport(0, 0, width, height);
             Width = width;
             Height = height;
+        }
+
+        private static void DeleteAllBuffers()
+        {
+            if (LoadFile == RenderMode.CRSFile)
+            {
+                if (CORERenderContent.givenCRS.allOBJs.Count > 0)
+                    Console.Write("\nDeleting buffers");
+
+                for (int i = 0; i < CORERenderContent.givenCRS.allOBJs.Count; i++)
+                {
+                    glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].GeneratedBuffers.ToArray());
+                    glDeleteBuffers(CORERenderContent.givenCRS.allOBJs[i].elementBufferObject.ToArray());
+                    glDeleteVertexArrays(CORERenderContent.givenCRS.allOBJs[i].GeneratedVAOs.ToArray());
+                    glDeleteShader(CORERenderContent.givenCRS.allOBJs[i].shader.Handle);
+                    Console.Write($"..{i}");
+                }
+            }
+            else if (LoadFile == RenderMode.GivenFile)
+            {
+                glDeleteBuffers(CORERenderContent.GivenObj.GeneratedBuffers.ToArray());
+                glDeleteBuffers(CORERenderContent.GivenObj.elementBufferObject.ToArray());
+                glDeleteVertexArrays(CORERenderContent.GivenObj.GeneratedVAOs.ToArray());
+                glDeleteShader(CORERenderContent.GivenObj.shader.Handle);
+                Console.Write($"..0");
+            }
+            
+            Console.WriteLine();
         }
     }
 }

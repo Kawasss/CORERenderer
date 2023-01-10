@@ -46,7 +46,7 @@ namespace CORERenderer.CRSFile
 
                         case "<o":
                             currentOBJ++;
-                            COREMain.splashScreen.WriteLine($"Reading {currentOBJ}.obj...");
+                            //COREMain.splashScreen.WriteLine($"Reading {currentOBJ}.obj...");
                             newCRS.allOBJs.Add(new($"{path}\\{currentOBJ}.obj", $"{path}\\{currentOBJ}.mtl"));
                             break;
 

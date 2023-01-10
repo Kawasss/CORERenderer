@@ -1,0 +1,12 @@
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\bin\Release\net6.0\COREMath.deps.json
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\bin\Release\net6.0\COREMath.dll
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\bin\Release\net6.0\COREMath.pdb
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.csproj.AssemblyReference.cache
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.AssemblyInfoInputs.cache
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.AssemblyInfo.cs
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.csproj.CoreCompileInputs.cache
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.dll
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\refint\COREMath.dll
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\COREMath.pdb
+C:\Users\wveen\source\repos\CORE-Renderer\COREMath\COREMath\obj\Release\net6.0\ref\COREMath.dll

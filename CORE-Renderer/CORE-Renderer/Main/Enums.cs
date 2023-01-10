@@ -10,4 +10,10 @@ namespace CORERenderer.Main
     {
         RustedIron
     }
+
+    public enum RenderMode
+    {
+        GivenFile,
+        CRSFile
+    }
 }
