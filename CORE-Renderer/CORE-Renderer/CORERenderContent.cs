@@ -11,6 +11,7 @@ using CORERenderer.GLFW.Enums;
 using static System.Net.Mime.MediaTypeNames;
 using CORERenderer.Loaders;
 using CORERenderer.textures;
+using System.Diagnostics;
 
 namespace CORERenderer
 {
@@ -26,6 +27,7 @@ namespace CORERenderer
 
         static Framebuffer fbo;
         static public Cubemap cubemap;
+        static public RenderMode rendermode;
 
         public static bool loaded = false;
         static bool loadable = true;
@@ -41,6 +43,8 @@ namespace CORERenderer
         static double mousePosYD;
         static float mousePosX;
         static float mousePosY;
+
+        static public Obj GivenObj;
 
         public static CRS givenCRS;
 
@@ -84,66 +88,78 @@ namespace CORERenderer
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
+            try
+            {
+                usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png"));
+                usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholderspecular.png"));
 
-            usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png"));
-            usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholderspecular.png"));
+                if (LoadFile == RenderMode.CRSFile)
+                    givenCRS = CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
+                else if (LoadFile == RenderMode.GivenFile)
+                    GivenObj = new(LoadFilePath);
 
-            givenCRS = CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
-            //initialises given shaders
-            lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
-            gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
-            backgroundShader = new($"{pathRenderer}\\shaders\\skybox.vert", $"{pathRenderer}\\shaders\\Background.frag");
+                //initialises given shaders
+                lightShader = new Shader($"{pathRenderer}\\shaders\\lightSource.vert", $"{pathRenderer}\\shaders\\lightSource.frag");
+                gridShader = new Shader($"{pathRenderer}\\shaders\\grid.vert", $"{pathRenderer}\\shaders\\grid.frag");
+                backgroundShader = new($"{pathRenderer}\\shaders\\skybox.vert", $"{pathRenderer}\\shaders\\Background.frag");
 
-            //creates space in the gpu memory for the global matrix uniforms
-            uboMatrices = glGenBuffer();
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
-            glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
+                //creates space in the gpu memory for the global matrix uniforms
+                uboMatrices = glGenBuffer();
+                glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+                glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
+                glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
 
-            //generates the skybox
-            //string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
-            //cubemap = GenerateSkybox(faces);
-            
-            
+                //generates the skybox
+                //string[] faces = new string[6] { $"{pathRenderer}\\textures\\right.jpg", $"{pathRenderer}\\textures\\left.jpg", $"{pathRenderer}\\textures\\top.jpg", $"{pathRenderer}\\textures\\bottom.jpg", $"{pathRenderer}\\textures\\front.jpg", $"{pathRenderer}\\textures\\back.jpg"};
+                //cubemap = GenerateSkybox(faces);
 
-            //cubemap = GenerateSkybox(hdrtexture.envCubeMap);
 
-            fbo = GenerateFramebuffer();
 
-            { //assignes values from vertices to the vertex buffer object for the light source
-                vertexArrayObjectLightSource = glGenVertexArray();
-                glBindVertexArray(vertexArrayObjectLightSource);
+                //cubemap = GenerateSkybox(hdrtexture.envCubeMap);
+
+                fbo = GenerateFramebuffer();
+
+                { //assignes values from vertices to the vertex buffer object for the light source
+                    vertexArrayObjectLightSource = glGenVertexArray();
+                    glBindVertexArray(vertexArrayObjectLightSource);
+                }
+
+                { //allows the grid to render bufferless
+                    vertexArrayObjectGrid = glGenVertexArray();
+                    glBindVertexArray(vertexArrayObjectGrid);
+                }
+                //COREMain.splashScreen.WriteLine($"Reading sphere.obj...");
+                //sphere = new(PBRSphereType.RustedIron);
+
+                lights = new();
+                lights.Add(new() { position = new(0, 1f, 0f), color = new(1, 1, 1) });
+                //lights.Add(new() { position = new(0.6f, 0.6f, 0), color = new(1, 1, 1)});
+
+                camera = new Camera(new(0, 1, 5), Width / Height);
+
+                hdrtexture = HDRTexture.ReadFromFile($"{pathRenderer}\\textures\\hdr\\newport_loft.hdr");
+
+                //assigns values the freed up gpu memory for global uniforms
+                glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+                MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+                if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                    throw new GLFW.Exception("Framebuffer is not complete");
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                glViewport(0, 0, Width, Height);
+            }
+            catch (System.Exception err)
+            {
+                Console.WriteLine(err);
+                splashScreen.WriteLine($"Error caught, Exiting application...", new Vector3(1, 0, 0));
+                Thread.Sleep(1500);
+                Environment.Exit(-1);
             }
 
-            { //allows the grid to render bufferless
-                vertexArrayObjectGrid = glGenVertexArray();
-                glBindVertexArray(vertexArrayObjectGrid);
-            }
-            COREMain.splashScreen.WriteLine($"Reading sphere.obj...");
-            sphere = new(PBRSphereType.RustedIron);
-
-            lights = new();
-            lights.Add(new() { position = new(0, 1f, 0f), color = new(1, 1, 1)});
-            //lights.Add(new() { position = new(0.6f, 0.6f, 0), color = new(1, 1, 1)});
-
-            camera = new Camera(new(0, 1, 5), Width / Height);
-
-            hdrtexture = HDRTexture.ReadFromFile($"{pathRenderer}\\textures\\hdr\\newport_loft.hdr");
-
-            //assigns values the freed up gpu memory for global uniforms
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-                throw new GLFW.Exception("Framebuffer is not complete");
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            glViewport(0, 0, Width, Height);
-
-            splashScreen.WriteLine($"Initialised in {Math.Round(Glfw.Time, 2)} seconds");
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
         }
@@ -164,12 +180,15 @@ namespace CORERenderer
             glClearColor(0.1f, 0.1f, 0.1f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
             //------------------------------------------------------------------------------------
-            
 
 
-            //RenderAllObjects(givenCRS);
-            sphere.Render();
-            //RenderAllObjectsAsPBRDebugs(givenCRS);
+            if (LoadFile == RenderMode.CRSFile)
+              RenderAllObjects(givenCRS);
+            //sphere.Render();
+            if (LoadFile == RenderMode.CRSFile)
+                RenderAllObjectsAsPBRDebugs(givenCRS);
+            if (LoadFile == RenderMode.GivenFile)
+                GivenObj.Render();
 
 
             //------------------------------------------------------------------------------------
@@ -179,14 +198,14 @@ namespace CORERenderer
 
             RenderLights(lights);
 
-            RenderBackground(hdrtexture);
+            //RenderBackground(hdrtexture);
 
             //RenderCubemap(cubemap);
             
-            //RenderGrid();
-
-            for (int i = 0; i < givenCRS.allOBJs.Count; i++)
-                givenCRS.allOBJs[i].RenderOutlines();
+            RenderGrid();
+            if (LoadFile == RenderMode.CRSFile)
+                for (int i = 0; i < givenCRS.allOBJs.Count; i++)
+                    givenCRS.allOBJs[i].RenderOutlines();
 
             fbo.RenderFramebuffer();
         }

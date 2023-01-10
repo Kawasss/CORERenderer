@@ -83,6 +83,7 @@ namespace CORERenderer.GUI
             Glfw.SwapBuffers(window);
         }
 
+
         public void WriteLine(string text) => WriteLine(text, new Vector3(1, 1, 1));
 
         public void WriteLine(string text, Vector3 color)
@@ -97,7 +98,7 @@ namespace CORERenderer.GUI
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            //font.RenderText(text, -1, -0.96f, 0.00165f, new Vector2(1, 0), color);
+            font.RenderText(text, -1, -0.96f, 0.0016f, new Vector2(1, 0), color);
 
             Glfw.SwapBuffers(window);
 
