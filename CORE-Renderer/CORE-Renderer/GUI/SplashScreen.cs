@@ -36,8 +36,8 @@ namespace CORERenderer.GUI
 
             VideoMode VM = Glfw.GetVideoMode(Glfw.PrimaryMonitor);
 
-            width = 700;//(int)(VM.Width * 0.3f);
-            height = 400;//(int)(VM.Height * 0.3f);
+            width = (int)(VM.Width * 0.25f);
+            height = (int)(VM.Height * 0.25f);
 
             window = Glfw.CreateWindow(width, height, "", Monitor.None, Window.None);
 
@@ -97,7 +97,7 @@ namespace CORERenderer.GUI
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            font.RenderText(text, -1, -0.96f, 0.00165f, new Vector2(1, 0), color);
+            //font.RenderText(text, -1, -0.96f, 0.00165f, new Vector2(1, 0), color);
 
             Glfw.SwapBuffers(window);
 
