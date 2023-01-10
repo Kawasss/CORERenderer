@@ -54,8 +54,6 @@ namespace CORERenderer
         static public int currentObj = 0;
         static private float called = 0;
 
-        static public Font test;
-
         static public PBRSphere sphere;
 
         static HDRTexture hdrtexture;
@@ -86,6 +84,9 @@ namespace CORERenderer
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
+
+            usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png"));
+            usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholderspecular.png"));
 
             givenCRS = CRS.LoadCRS($"{pathRenderer}\\test.crs", "test");
 
@@ -120,12 +121,8 @@ namespace CORERenderer
                 vertexArrayObjectGrid = glGenVertexArray();
                 glBindVertexArray(vertexArrayObjectGrid);
             }
-
-
-            test = new(32);
-
-            //sphere = new(PBRSphereType.RustedIron);
-
+            COREMain.splashScreen.WriteLine($"Reading sphere.obj...");
+            sphere = new(PBRSphereType.RustedIron);
 
             lights = new();
             lights.Add(new() { position = new(0, 1f, 0f), color = new(1, 1, 1)});
@@ -146,6 +143,7 @@ namespace CORERenderer
 
             glViewport(0, 0, Width, Height);
 
+            splashScreen.WriteLine($"Initialised in {Math.Round(Glfw.Time, 2)} seconds");
             Console.Write($"\rInitialised in {Glfw.Time} seconds                         \n");
             Console.WriteLine("Beginning render loop");
         }
@@ -170,8 +168,8 @@ namespace CORERenderer
 
 
             //RenderAllObjects(givenCRS);
-            //sphere.Render();
-            RenderAllObjectsAsPBRDebugs(givenCRS);
+            sphere.Render();
+            //RenderAllObjectsAsPBRDebugs(givenCRS);
 
 
             //------------------------------------------------------------------------------------

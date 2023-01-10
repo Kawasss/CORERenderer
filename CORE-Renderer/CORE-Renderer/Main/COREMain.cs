@@ -1,7 +1,13 @@
 ﻿using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using static CORERenderer.OpenGL.GL;
+using Monitor = CORERenderer.GLFW.Structs.Monitor;
 using COREMath;
+using CORERenderer.textures;
+using CORERenderer.GLFW.Enums;
+using CORERenderer.shaders;
+using StbImageSharp;
+using CORERenderer.GUI;
 
 namespace CORERenderer.Main
 {
@@ -11,6 +17,8 @@ namespace CORERenderer.Main
         public static int Width = 1000;
         public static int Height = 800;
         public static Window window;
+
+        public static SplashScreen splashScreen;
 
         public static int fps = 0;
 
@@ -22,10 +30,17 @@ namespace CORERenderer.Main
 
         private static Font debugText;
 
+        private static Shader splashScreenShader;
+
+        private static bool destroyWindow = false;
+
         public unsafe static int Main(string[] args)
         {
+            Glfw.Init();
+
             render = new();
             overrides = new();
+            splashScreen = new();
 
             EnginePresets.SetPresets();
 
@@ -38,7 +53,7 @@ namespace CORERenderer.Main
             Glfw.SetScrollCallback(window, render.ScrollCallback);
             Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
 
-            debugText = new(32);
+            debugText = new(32, $"{CORERenderContent.pathRenderer}\\Fonts\\baseFont.ttf");
 
             //render loop
             while (!Glfw.WindowShouldClose(window))
@@ -65,6 +80,12 @@ namespace CORERenderer.Main
                 //Console.CursorTop = 0;
                 Glfw.SwapBuffers(window);
                 Glfw.PollEvents();
+
+                if (!destroyWindow)
+                {
+                    destroyWindow = true;
+                    splashScreen.Dispose();
+                }
             }
             Console.WriteLine();
 

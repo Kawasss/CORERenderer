@@ -44,11 +44,13 @@ namespace CORERenderer.CRSFile
         {
             if (Directory.Exists(path))
             {
+                COREMain.splashScreen.WriteLine("Found file, reading..");
                 Console.WriteLine("Found file, reading..");
                 return ReadCRS(path);
             }
             else
             {
+                COREMain.splashScreen.WriteLine("Creating new file..");
                 Console.WriteLine("Creating new file..");
                 return GenerateCRS(path, name);
             }

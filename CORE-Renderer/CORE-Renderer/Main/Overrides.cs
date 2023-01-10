@@ -17,14 +17,13 @@ namespace CORERenderer
         public unsafe void AlwaysLoad()
         {
             //creating the window
-            Glfw.Init();
             Glfw.WindowHint(Hint.ContextVersionMajor, 3);
             Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
+            Glfw.WindowHint(Hint.Visible, false);
+            Glfw.WindowHint(Hint.Decorated, true);
 
             window = Glfw.CreateWindow(Width, Height, "CORE renderer", Monitor.None, Window.None);
-            if (window == null)
-                Console.WriteLine("Failed to create a window");
 
             Console.WriteLine("Successfully created window");
 
@@ -42,9 +41,6 @@ namespace CORERenderer
 
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
-
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholder.png"));
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{CORERenderContent.pathRenderer}\\textures\\placeholderspecular.png"));
         }
 
         public unsafe virtual void OnLoad()
