@@ -12,7 +12,7 @@ namespace CORERenderer.textures
         public string path;
         public string name;
 
-        public static unsafe Texture ReadFromFile(string imagePath)
+        private static unsafe Texture ReadFromColorFile(int mode, string imagePath)
         {
             uint handle = glGenTexture();
 
@@ -37,51 +37,7 @@ namespace CORERenderer.textures
                 fixed (byte* temp = &image.Data[0])
                 {
                     IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
-                }
-
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-                glGenerateMipmap(GL_TEXTURE_2D);
-            }
-
-            List<int> local = new();
-            for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
-                local.Add(i);
-            
-            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..]};
-        }
-
-        public static unsafe Texture ReadFromSRGBFile(string imagePath)
-        {
-            uint handle = glGenTexture();
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, handle);
-
-            Stbi.SetFlipVerticallyOnLoad(true);
-
-            if (!File.Exists(imagePath))
-            {
-                Console.WriteLine($"Couldnt find given texture at {imagePath}, using default texture");
-                imagePath = $"{CORERenderContent.pathRenderer}\\textures\\placeholder.png";
-            }
-
-            using (FileStream stream = File.OpenRead(imagePath))
-            using (MemoryStream memoryStream = new())
-            {
-                StbiImage image;
-                stream.CopyTo(memoryStream);
-
-                image = Stbi.LoadFromMemory(memoryStream, 4);
-                fixed (byte* temp = &image.Data[0])
-                {
-                    IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+                    glTexImage2D(GL_TEXTURE_2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
                 }
 
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -99,6 +55,20 @@ namespace CORERenderer.textures
 
             return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..] };
         }
+
+        /// <summary>
+        /// Reads the file in the RGBA color format
+        /// </summary>
+        /// <param name="imagePath"></param>
+        /// <returns></returns>
+        public static unsafe Texture ReadFromFile(string imagePath) => ReadFromColorFile(GL_RGBA, imagePath);
+
+        /// <summary>
+        /// Reads the file in the SRGB color format
+        /// </summary>
+        /// <param name="imagePath"></param>
+        /// <returns></returns>
+        public static unsafe Texture ReadFromSRGBFile(string imagePath) => ReadFromColorFile(GL_SRGB, imagePath);
 
         public Texture(uint newHandle)
         {

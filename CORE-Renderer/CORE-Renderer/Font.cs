@@ -17,12 +17,12 @@ namespace CORERenderer
 
         private readonly Shader shader; 
 
-        public unsafe Font(uint pixelHeight)
+        public unsafe Font(uint pixelHeight, string fontPath)
         {
             shader = new($"{CORERenderContent.pathRenderer}\\shaders\\Font.vert", $"{CORERenderContent.pathRenderer}\\shaders\\Font.frag");
 
             Library lib = new();
-            Face face = new(lib, $"{CORERenderContent.pathRenderer}\\Fonts\\baseFont.ttf");
+            Face face = new(lib, fontPath);
             face.SetPixelSizes(0, pixelHeight);
 
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -80,11 +80,13 @@ namespace CORERenderer
             shader.SetInt("Texture", GL_TEXTURE0);
         }
 
-        public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction)
+        public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction) => RenderText(text, x, y, scale, direction, new Vector3(1, 1, 1));
+
+        public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction, Vector3 color)
         {
             glDisable(GL_CULL_FACE);
             shader.Use();
-            shader.SetVector3("textColor", 1, 1, 1);
+            shader.SetVector3("textColor", color);
             shader.SetMatrix("model", Matrix.IdentityMatrix);
 
             glActiveTexture(GL_TEXTURE0);
@@ -93,7 +95,7 @@ namespace CORERenderer
             //float angle = MathF.Atan2(direction.y, direction.x);
             //Matrix rotation = MathC.GetRotationZMatrix(MathC.RadToDeg(angle));
             //Matrix translation = MathC.GetTranslationMatrix(x, y, 0);
-            
+
             for (int i = 0; i < text.Length; i++)
             {
                 byte c = (byte)text[i];
@@ -122,7 +124,7 @@ namespace CORERenderer
                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), intptr);
                 }
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
-                
+
                 glDrawArrays(GL_TRIANGLES, 0, 6);
                 x += (ch.advance >> 6) * scale;
             }

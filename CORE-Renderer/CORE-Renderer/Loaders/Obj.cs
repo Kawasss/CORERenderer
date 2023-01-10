@@ -190,12 +190,6 @@ namespace CORERenderer.Loaders
                 usedTextures[Materials[i].Texture].Use(GL_TEXTURE0);
                 usedTextures[Materials[i].SpecularMap].Use(GL_TEXTURE1);
 
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE0, CORERenderContent.test.characters[0].textureID);
-
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE1, CORERenderContent.test.characters[0].textureID);
-
                 shader.SetFloat("material.shininess", Materials[i].Shininess);
 
                 glDrawElements(GL_TRIANGLES, indices[i].Count, GL_UNSIGNED_INT, (void*)0);
