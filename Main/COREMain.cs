@@ -81,9 +81,9 @@ namespace CORERenderer.Main
         private static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
         private static string directory = Path.GetDirectoryName(root);
 
-        private static int MathCIndex = directory.IndexOf("COREPrototype");
+        private static int MathCIndex = directory.IndexOf("CORERenderer");
 
-        public static string pathRenderer = directory.Substring(0, MathCIndex) + "COREPrototype\\COREPrototype";
+        public static string pathRenderer = directory.Substring(0, MathCIndex) + "CORERenderer";
 
         public static int Main(string[] args)
         {
