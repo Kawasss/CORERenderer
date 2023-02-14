@@ -1,0 +1,29 @@
+# Blender MTL File: 'None'
+# Material Count: 2
+
+newmtl c1200_0
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd c3530_body.png
+map_Bump  c3530_body_n.png
+map_Ks  c3530_body_s.png
+
+newmtl c1200_1
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.000000
+illum 2
+map_Kd c3530_fin.png
+map_Bump  c3530_fin_n.png
+map_Ks  c3530_fin_s.png
+map_d  c3530_fin.png

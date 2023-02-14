@@ -1,0 +1,80 @@
+# Blender MTL File: 'None'
+# Material Count: 6
+
+newmtl m0030B1A13_0
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_N_tree_05.png
+map_Bump m13_N_tree_05_n.png
+map_Ks m13_N_tree_05_s.png
+
+newmtl m0030B1A13_1
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_N_tree_06.png
+map_Bump m13_N_tree_06_n.png
+map_Ks m13_N_tree_06_s.png
+
+newmtl m0030B1A13_2
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_mush_03.png
+map_Bump m13_mush_01_n.png
+map_Ks m13_mush_01_s.png
+
+newmtl m0030B1A13_3
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_mush_01.png
+map_Bump m13_mush_01_n.png
+map_Ks m13_mush_01_s.png
+
+newmtl m0030B1A13_4
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_mush_03.png
+map_Bump m13_mush_03_n.png
+map_Ks m13_mush_03_s.png
+
+newmtl m0030B1A13_5
+Ns 31.372549
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd m13_N_wall_02.png
+map_Bump m13_N_wall_00_n.png
+map_Ks m13_N_wall_00_s.png

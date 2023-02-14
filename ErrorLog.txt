@@ -1,0 +1,15 @@
+Error occured at 1:47:30 : 
+    System.IO.FileNotFoundException: Could not find file 'C:\Users\wveen\source\repos\COREPrototype\COREPrototype\shaders\PBRDebug.vert'.
+File name: 'C:\Users\wveen\source\repos\COREPrototype\COREPrototype\shaders\PBRDebug.vert'
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategy(FileStream fileStream, String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+   at System.IO.StreamReader.ValidateArgsAndOpenPath(String path, Encoding encoding, Int32 bufferSize)
+   at System.IO.File.InternalReadAllText(String path, Encoding encoding)
+   at System.IO.File.ReadAllText(String path)
+   at CORERenderer.shaders.Shader..ctor(String vertexPath, String fragmentPath) in C:\Users\wveen\source\repos\COREPrototype\COREPrototype\shaders\Shader.cs:line 23
+   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\COREPrototype\COREPrototype\Loaders\Model.cs:line 53
+   at CORERenderer.Scene.OnLoad() in C:\Users\wveen\source\repos\COREPrototype\COREPrototype\Scene.cs:line 36
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\COREPrototype\COREPrototype\Main\COREMain.cs:line 202

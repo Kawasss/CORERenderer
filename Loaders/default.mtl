@@ -1,0 +1,10 @@
+newmtl default
+Ns 20
+Ka 0.2 0.2 0.2
+Kd 0.5 0.5 0.5
+Ks 1.0 1.0 1.0
+Ni 1
+d 1
+illum 2
+map_Kd placeholder.png
+map_Ks placeholderspecular.png

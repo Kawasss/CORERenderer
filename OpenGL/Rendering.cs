@@ -1,0 +1,338 @@
+﻿using COREMath;
+using static CORERenderer.OpenGL.GL;
+using CORERenderer.textures;
+using CORERenderer.Main;
+
+namespace CORERenderer.OpenGL
+{
+    public class Rendering
+    {
+        private static uint lineVBO;
+        private static uint lineVAO;
+
+        public static bool cullFaces = true;
+
+        public static int drawCalls = 0;
+
+        /// <summary>
+        ///     Render primitives from array data.
+        /// </summary>
+        /// <param name="mode">Specifies what kind of primitives to render.</param>
+        /// <param name="first">Specifies the starting index in the enabled arrays.</param>
+        /// <param name="count">Specifies the number of indices to be rendered.</param>
+        public static void glDrawArrays(PrimitiveType mode, int first, int count)
+        {
+            drawCalls++;
+            GlDrawArrays((int)mode, first, count);
+        }
+
+        /// <summary>
+        ///     Render primitives from array data.
+        /// </summary>
+        /// <param name="mode">Specifies what kind of primitives to render.</param>
+        /// <param name="count">Specifies the number of elements to be rendered.</param>
+        /// <param name="type">
+        ///     Specifies the type of the values in indices.
+        /// </param>
+        /// <param name="indices">Specifies a pointer to the location where the indices are stored.</param>
+        public unsafe static void glDrawElements(PrimitiveType mode, int count, GLType type, void* indices)
+        {
+            drawCalls++;
+            GlDrawElements((int)mode, count, (int)type, indices);
+        }
+
+        /// <summary>
+        /// best to not use when drawing many lines since it will use a lot of draw calls
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="color"></param>
+        public static void RenderLine(Vector3 start, Vector3 end, Vector3 color)
+        {
+            if (lineVBO == 0)
+            {
+                GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 4);
+
+                int vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+                unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
+                glEnableVertexAttribArray((uint)vertexLocation);
+            }
+
+            GenericShaders.solidColorQuadShader.Use();
+
+            GenericShaders.solidColorQuadShader.SetVector3("color", color);
+            glDrawArrays(PrimitiveType.Lines, 0, 2);
+        }
+
+        /// <summary>
+        /// best to not use when drawing many lines since it will use a lot of draw calls
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        public static void RenderLine(Vector3 start, Vector3 end) => RenderLine(start, end, new Vector3(1, 1, 1));
+
+        /// <summary>
+        /// best to not use when drawing many lines since it will use a lot of draw calls
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        public static void RenderLine(Vector2 start, Vector2 end) => RenderLine(new Vector3(start.x, start.y, 0), new Vector3(end.x, end.y, 0), new Vector3(1, 1, 1));
+
+        public static uint GenerateBufferlessVAO()
+        {
+            //allows the object to render bufferless
+            uint VAO = glGenVertexArray();
+            glBindVertexArray(VAO);
+            return VAO;
+        }
+
+        /// <summary>
+        /// Generates an empty buffer for buffersubdata, does not active the vertex attribute arrays however.
+        /// </summary>
+        /// <param name="VBO">VBO</param>
+        /// <param name="VAO">VAO</param>
+        /// <param name="size">size of the buffer in bytes</param>
+        public static void GenerateEmptyBuffer(out uint VBO, out uint VAO, int sizeInBytes)
+        {
+            VBO = glGenBuffer();
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+            VAO = glGenVertexArray();
+            glBindVertexArray(VAO);
+
+            glBufferData(GL_ARRAY_BUFFER, sizeInBytes, (IntPtr)null, GL_DYNAMIC_DRAW);
+        }
+
+        /// <summary>
+        /// Generates a buffer with the given vertices, does not active the vertex attribute arrays however.
+        /// </summary>
+        /// <param name="VBO"></param>
+        /// <param name="VAO"></param>
+        /// <param name="vertices"></param>
+        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, float[] vertices)
+        {
+            VBO = glGenBuffer();
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            
+            VAO = glGenVertexArray();
+            glBindVertexArray(VAO);
+
+            glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), vertices, GL_STATIC_DRAW);
+        }
+
+        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Matrix[] matrices)
+        {
+            VBO = glGenBuffer();
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+            VAO = glGenVertexArray();
+            glBindVertexArray(VAO);
+
+            unsafe
+            {
+                fixed (float* temp = &matrices[0].matrix4x4[0, 0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ARRAY_BUFFER, matrices.Length * GL_MAT4_FLOAT_SIZE, temp, GL_STATIC_DRAW);
+                }
+            }
+        }
+
+        public static void GenerateFilledBuffer(out uint VBO, Matrix[] matrices)
+        {
+            VBO = glGenBuffer();
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+            unsafe
+            {
+                fixed (float* temp = &matrices[0].matrix4x4[0, 0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ARRAY_BUFFER, matrices.Length * GL_MAT4_FLOAT_SIZE, temp, GL_STATIC_DRAW);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Generates a buffer with the given vertices, does not active the vertex attribute arrays however, this expects the VAO to already be bound.
+        /// </summary>
+        /// <param name="EBO"></param>
+        /// <param name="indices"></param>
+        public static void GenerateFilledBuffer(out uint EBO, uint[] indices)
+        {
+            EBO = glGenBuffer();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Length * sizeof(uint), indices, GL_STATIC_DRAW);
+        }
+
+        //try referring to offcenter version with 0, width, height, 0.01, 100
+        public static Matrix GetOrthograpicProjectionMatrix() => Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
+
+        public static void RenderBackground(HDRTexture h)
+        {
+            GenericShaders.backgroundShader.Use();
+            GenericShaders.backgroundShader.SetInt("environmentMap", GL_TEXTURE0);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
+
+            glDrawArrays(PrimitiveType.Triangles, 0, 36);
+        }
+
+        private static int backgroundIndex = -1;
+        private static bool containsBackground = false;
+
+        public static void RenderAllModels()
+        {
+            if (cullFaces)
+                glEnable(GL_CULL_FACE);
+            else 
+                glDisable(GL_CULL_FACE);
+
+            for (int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels.Count; i++)
+            {
+                if (COREMain.scenes[COREMain.selectedScene].allModels[i].type != RenderMode.HDRFile)
+                    COREMain.scenes[COREMain.selectedScene].allModels[i].Render();
+                else
+                {
+                    backgroundIndex = i;
+                    containsBackground = true;
+                }
+
+                //if (CORERenderContent.allModels[i].highlighted && CORERenderContent.allModels[i].type == RenderMode.ObjFile)
+                //    CORERenderContent.allModels[i].RenderOutlines();
+            }
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            glStencilMask(0x00);
+
+            RenderLights(COREMain.lights);
+
+            if (containsBackground && COREMain.renderBackground)
+                COREMain.scenes[COREMain.selectedScene].allModels[backgroundIndex].RenderBackground();
+        }
+
+        public static void RenderLights(List<Light> locations)
+        {
+            GenericShaders.lightingShader.Use();
+
+            glBindVertexArray(COREMain.vertexArrayObjectLightSource);
+
+            for (int i = 0; i < locations.Count; i++)
+            {
+                GenericShaders.lightingShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
+                glDrawArrays(PrimitiveType.Triangles, 0, 36);
+            }
+        }
+
+        public static void RenderGrid()
+        {
+            GenericShaders.gridShader.Use();
+
+            GenericShaders.gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 500));
+
+            GenericShaders.gridShader.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
+
+            glDisable(GL_CULL_FACE);
+            glBindVertexArray(COREMain.vertexArrayObjectGrid);
+            glDrawArrays(PrimitiveType.Triangles, 0, 6);
+            glEnable(GL_CULL_FACE);
+        }
+
+        public static void RenderCubemap(Cubemap cubemap)
+        {
+            glDepthFunc(GL_LEQUAL);
+            cubemap.shader.Use();
+
+            glBindVertexArray(cubemap.VAO);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.textureID);
+
+            glDrawArrays(PrimitiveType.Triangles, 0, 36);
+
+            glBindVertexArray(0);
+            glDepthFunc(GL_LESS);
+        }
+
+        static uint cubeVAO;
+        static uint cubeVBO;
+
+        public unsafe static void RenderCube()
+        {
+            // initialize (if necessary)
+            if (cubeVAO == 0)
+            {
+                float[] vertices = {
+                        // back face
+                        -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+                        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+                        1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+                        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+                        -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+                        -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+                        // front face
+                        -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+                        1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+                        1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+                        1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+                        -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+                        -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+                        // left face
+                        -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+                        -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+                        -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+                        -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+                        -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+                        -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+                        // right face
+                        1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+                        1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+                        1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+                        1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+                        1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+                        1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+                        // bottom face
+                        -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+                        1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+                        1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+                        1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+                        -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+                        -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+                        // top face
+                        -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+                        1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+                        1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+                        1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+                        -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+                        -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+                    };
+                cubeVAO = glGenVertexArray();
+                cubeVBO = glGenBuffer();
+                // fill buffer
+                glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+                fixed (float* temp = &vertices[0])
+                {
+                    IntPtr intptr = new(temp);
+                    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length, intptr, GL_STATIC_DRAW);
+                }
+
+                // link vertex attributes
+                glBindVertexArray(cubeVAO);
+                glEnableVertexAttribArray(0);
+                glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                glEnableVertexAttribArray(2);
+                glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindVertexArray(0);
+            }
+            // render Cube
+            glBindVertexArray(cubeVAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, 36);
+            glBindVertexArray(0);
+        }
+    }
+}
