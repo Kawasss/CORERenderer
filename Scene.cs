@@ -21,6 +21,10 @@ namespace CORERenderer
 
         public int currentObj = -1;
 
+
+        Vector2 lastPos = null;
+
+
         public override void OnLoad()
         {
             allModels = new();
@@ -52,6 +56,13 @@ namespace CORERenderer
                 Console.WriteLine("Window closed");
             }
 
+            lastPos ??= new(mousePosX, monitorHeight - mousePosY);
+            
+            float deltaX = lastPos.x - mousePosX;
+            float deltaY = monitorHeight - mousePosY - lastPos.y;
+            
+            lastPos = new(mousePosX, monitorHeight - mousePosY);
+
             InputState state = Glfw.GetMouseButton(window, MouseButton.Middle);
 
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Left);
@@ -63,29 +74,34 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                        allModels[currentObj].rotation[allModels[currentObj].selectedSubmodel].x += 15f * delta;
+                        allModels[currentObj].rotation.x += 15f * delta;
                     if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                            allModels[currentObj].rotation[allModels[currentObj].selectedSubmodel].y += 15f * delta;
+                            allModels[currentObj].rotation.y += 15f * delta;
                     if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                            allModels[currentObj].rotation[allModels[currentObj].selectedSubmodel].z += 15f * delta;
+                            allModels[currentObj].rotation.z += 15f * delta;
 
-                    if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded) //need to support changing all axises
-                            allModels[currentObj].Scaling[allModels[currentObj].selectedSubmodel].x -= 2f * delta;
+                    if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
+                    {
+                        allModels[currentObj].Scaling.x -= 2f * delta;
+                        allModels[currentObj].Scaling.y -= 2f * delta;
+                        allModels[currentObj].Scaling.z -= 2f * delta;
+                    }
                     if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
-                            allModels[currentObj].Scaling[allModels[currentObj].selectedSubmodel].x += 2f * delta;
+                    {
+                        allModels[currentObj].Scaling.x += 2f * delta;
+                        allModels[currentObj].Scaling.y += 2f * delta;
+                        allModels[currentObj].Scaling.z += 2f * delta;
+                    }
 
 
-                    if (Glfw.GetKey(window, Keys.Up) == InputState.Press && loaded)
-                            allModels[currentObj].translation[allModels[currentObj].selectedSubmodel] += new Vector3(0, 1f * delta, 0);
+                    if (arrows.wantsToMoveYAxis && loaded)
+                            allModels[currentObj].translation += new Vector3(0, deltaY / 100, 0);
 
-                    if (Glfw.GetKey(window, Keys.Down) == InputState.Press && loaded)
-                            allModels[currentObj].translation[allModels[currentObj].selectedSubmodel] -= new Vector3(0, 1f * delta, 0);
+                    if (arrows.wantsToMoveXAxis && loaded)
+                            allModels[currentObj].translation -= new Vector3(deltaX / 100, 0, 0);
 
-                    if (Glfw.GetKey(window, Keys.Left) == InputState.Press && loaded)
-                            allModels[currentObj].translation[allModels[currentObj].selectedSubmodel] -= new Vector3(1f * delta, 0, 0);
-
-                    if (Glfw.GetKey(window, Keys.Right) == InputState.Press && loaded)
-                            allModels[currentObj].translation[allModels[currentObj].selectedSubmodel] += new Vector3(1f * delta, 0, 0);
+                    if (arrows.wantsToMoveZAxis && loaded)
+                            allModels[currentObj].translation += new Vector3(0, 0, -deltaX / 100);
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

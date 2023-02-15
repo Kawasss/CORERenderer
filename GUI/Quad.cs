@@ -244,11 +244,11 @@ namespace CORERenderer.GUI
                 }
 
             int offset = 20;
-            for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
-                for (int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames.Count; i++, offset  += 37)
+            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels) //(int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
+                foreach (Submodel submodel in model.submodels)//(int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames.Count; i++, offset  += 37)
                 {
                     //add changing selected submodel
-                    Write($"{COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames[i]}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                    Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
 
                     GenericShaders.image2DShader.Use();
 
@@ -290,6 +290,7 @@ namespace CORERenderer.GUI
                     glDrawArrays(PrimitiveType.Lines, 0, 2);
 
                     GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+                    offset += 37;
                 }
         }
 

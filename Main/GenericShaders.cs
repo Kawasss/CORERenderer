@@ -12,6 +12,7 @@ namespace CORERenderer.Main
         public static Shader GenericLightingShader;
         public static Shader solidColorQuadShader;
         public static Shader arrowShader;
+        public static Shader pickShader;
 
         public static void SetShaders()
         {
@@ -22,6 +23,7 @@ namespace CORERenderer.Main
             GenericLightingShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\lighting.frag");
             solidColorQuadShader = new($"{COREMain.pathRenderer}\\shaders\\Basic.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
             arrowShader = new($"{COREMain.pathRenderer}\\shaders\\Arrow.vert", $"{COREMain.pathRenderer}\\shaders\\Arrow.frag");
+            pickShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
         }
     }
 }

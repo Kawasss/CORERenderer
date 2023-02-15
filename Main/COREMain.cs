@@ -29,6 +29,10 @@ namespace CORERenderer.Main
         
         private static int frameCount = 0;
 
+        public static int selectedID = 0x00FFFF; //white (background)
+        private static int nextAvaibleID = 3; //first 3 IDs are used by Arrows
+        public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } set {  } } //automatically generates a new ID whenever its asked for one
+
         //uints
         public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
 
@@ -52,6 +56,7 @@ namespace CORERenderer.Main
         public static bool renderBackground = true;
         public static bool secondPassed = true;
         public static bool renderGUI = false;
+        public static bool renderIDFramebuffer = false;
 
         public static bool destroyWindow = false;
         public static bool addCube = false;
@@ -71,10 +76,12 @@ namespace CORERenderer.Main
         public static SplashScreen splashScreen;
         public static Font debugText;
         public static COREConsole console;
-        public static Mouse mouse;
+        public static Arrows arrows;
 
         //structs
         public static Window window;
+        public static Framebuffer IDFramebuffer;
+        public static Framebuffer renderFramebuffer;
 
         //misc.
         //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
@@ -180,7 +187,7 @@ namespace CORERenderer.Main
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder" });
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -190,6 +197,7 @@ namespace CORERenderer.Main
                 menu.SetBool("Render Grid", renderGrid);
                 menu.SetBool("Render Background", renderBackground);
                 menu.SetBool("Render GUI", renderGUI);
+                menu.SetBool("Render IDFramebuffer", renderIDFramebuffer);
                 menu.SetBool("Cull Faces", cullFaces);
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
@@ -202,14 +210,14 @@ namespace CORERenderer.Main
                 scenes[0].OnLoad();
                 selectedScene = 0;
 
-                Arrows arrows = new();
-                mouse = new();
+                arrows = new();
 
                 SetUniformBuffers();
 
                 Framebuffer gui = GenerateFramebuffer();
-                Framebuffer fbo = GenerateFramebuffer();
+                renderFramebuffer = GenerateFramebuffer();
                 Framebuffer wrapperFBO = GenerateFramebuffer();
+                IDFramebuffer = GenerateFramebuffer();
 
                 Glfw.SetScrollCallback(window, ScrollCallback);
                 Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
@@ -276,9 +284,6 @@ namespace CORERenderer.Main
 
                             GPUInfo.Render();
 
-                            //GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
-                            //GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
-
                             GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
                             GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
                             GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
@@ -303,9 +308,15 @@ namespace CORERenderer.Main
                         UpdateCamera(currentFrameTime);
 
                     {
-                        fbo.Bind(); //bind the framebuffer for the 3D scene
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
+                            IDFramebuffer.Bind();
+                            glEnable(GL_DEPTH_TEST);
+                            glClearColor(1f, 1f, 1f, 1);
+                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                            renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
+
                             glEnable(GL_DEPTH_TEST);
                             glClearColor(0.3f, 0.3f, 0.3f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -331,18 +342,30 @@ namespace CORERenderer.Main
                                 RenderGrid();
 
                             glClear(GL_DEPTH_BUFFER_BIT);
-
                             arrows.Render();
-
-                            mouse.Pick((int)mousePosX, Height - (int)mousePosY);
                         }
                         else
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
+
                         
                     }
 
                     glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
-                    fbo.RenderFramebuffer();
+
+                    //check for mouse picking
+                    IDFramebuffer.RenderFramebuffer();
+                    UpdateSelectedID();
+
+                    arrows.UpdateArrowsMovement();
+
+                    renderFramebuffer.RenderFramebuffer();
+
+                    if (renderIDFramebuffer)
+                    {
+                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                        IDFramebuffer.RenderFramebuffer();
+                    }
+
                     glViewport(0, 0, monitorWidth, monitorHeight);
 
                     //wrapperFBO.Bind();
@@ -362,14 +385,29 @@ namespace CORERenderer.Main
             }
             catch (System.Exception err)
             {
-                //console.WriteError(err);
-                //console.Render();
-                //Glfw.SwapBuffers(window);
                 LogError(err);
                 Thread.Sleep(1000);
                 return -1;
             }
             return 1;
+        }
+
+        public static Vector3 GenerateIDColor(int ID)
+        {
+            return new(((ID & 0x000000FF) >> 0) / 255f, ((ID & 0x0000FF00) >> 8) / 255f, ((ID & 0x00FF0000) >> 16) / 255f); //bit manipulation to convert an ID to color values
+        }
+
+        public static void UpdateSelectedID()
+        {
+            glFlush();
+            glFinish();
+
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            //read color id of mouse position
+            byte[] data = new byte[4];
+            glReadPixels((int)mousePosX, (int)(monitorHeight - mousePosY), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            //convert color id to single int for uses
+            selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
         }
 
         //zoom in or out
@@ -459,7 +497,7 @@ namespace CORERenderer.Main
 
         private static void DeleteAllBuffers()
         {
-            foreach(Scene scene in scenes)
+            /*foreach(Scene scene in scenes)
                 if (LoadFile == RenderMode.CRSFile)
                 {
                     if (scene.allModels.Count > 0)
@@ -477,7 +515,7 @@ namespace CORERenderer.Main
                         }
                     }
             }
-            Console.WriteLine();
+            Console.WriteLine();*/
         }
 
         private static void SetRenderMode(string[] arg)

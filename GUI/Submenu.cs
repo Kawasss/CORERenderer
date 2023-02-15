@@ -99,10 +99,11 @@ namespace CORERenderer.GUI
                     COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].renderNormals = isOptionTrue[list[3]];
                 }
                 COREMain.renderGUI = isOptionTrue[list[4]];
-                cullFaces = isOptionTrue[list[6]];
-                isOptionTrue[list[8]] = false;
-                COREMain.addCube = isOptionTrue[list[9]];
-                COREMain.addCylinder = isOptionTrue[list[10]];
+                COREMain.renderIDFramebuffer = isOptionTrue[list[5]];
+                cullFaces = isOptionTrue[list[7]];
+                isOptionTrue[list[9]] = false;
+                COREMain.addCube = isOptionTrue[list[10]];
+                COREMain.addCylinder = isOptionTrue[list[11]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.8f);
