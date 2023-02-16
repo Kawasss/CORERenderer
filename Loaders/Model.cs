@@ -83,22 +83,18 @@ namespace CORERenderer.Loaders
 
         private unsafe void RenderObj() //better to make this extend to rendereveryframe() or new render override
         {
+            int i = 0;
             foreach (Submodel submodel in submodels)
             {
                 submodel.renderLines = renderLines;
+                submodel.parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
 
-                if (!highlighted)
-                    highlighted = submodel.highlighted;
-
-                submodel.rotation = rotation;
-                submodel.translation = translation;
-                submodel.scaling = Scaling;
+                if (submodel.highlighted)
+                    selectedSubmodel = i;
 
                 submodel.Render();
+                i++;
             }
-            //rotation = Vector3.Zero;
-            //translation = Vector3.Zero;
-            //Scaling = new(0, 0, 0);
         }
 
         public void GenerateObj(string path)

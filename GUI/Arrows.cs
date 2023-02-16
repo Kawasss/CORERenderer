@@ -60,7 +60,7 @@ namespace CORERenderer.GUI
             if (COREMain.scenes[COREMain.selectedScene].currentObj == -1)
                 return;
 
-            maxScale = MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation);
+            maxScale = 1;// MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation);
         }
 
         public void Render()
@@ -76,7 +76,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) / maxScale) * 0.75f);
+            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].submodels[COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].selectedSubmodel].translation);// * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) / maxScale) * 0.75f);
 
             GenericShaders.arrowShader.SetVector3("color", 0, 1, 0);
 
@@ -115,7 +115,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) / maxScale) * 0.75f);
+            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].submodels[COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].selectedSubmodel].translation);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)

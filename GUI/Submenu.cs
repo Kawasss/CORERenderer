@@ -110,7 +110,6 @@ namespace CORERenderer.GUI
                 else
                     div.Write(list[i], 5, offset, 0.8f, new COREMath.Vector3(1, 0, 1));
             }
-            
         }
     }
 }

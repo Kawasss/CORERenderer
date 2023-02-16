@@ -321,7 +321,7 @@ namespace CORERenderer.Main
                             glClearColor(0.3f, 0.3f, 0.3f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-                            scenes[selectedScene].EveryFrame(window, currentFrameTime);
+                            
 
                             if (addCube)
                             {
@@ -347,7 +347,7 @@ namespace CORERenderer.Main
                         else
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
 
-                        
+                        scenes[selectedScene].EveryFrame(window, currentFrameTime);
                     }
 
                     glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space

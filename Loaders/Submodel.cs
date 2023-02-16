@@ -17,6 +17,8 @@ namespace CORERenderer.Loaders
         public Vector3 translation = new(0, 0, 0);
         public Vector3 rotation = new(0, 0, 0);
 
+        public Matrix parentModel;
+
         private List<float> vertices;
         private List<uint> indices;
 
@@ -51,6 +53,8 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
+            highlighted = COREMain.selectedID == ID;
+
             shader.Use();
 
             glStencilFunc(GL_ALWAYS, 1, 0xFF);

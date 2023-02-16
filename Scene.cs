@@ -74,34 +74,34 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                        allModels[currentObj].rotation.x += 15f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.x += 15f * delta;
                     if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                            allModels[currentObj].rotation.y += 15f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.y += 15f * delta;
                     if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                            allModels[currentObj].rotation.z += 15f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.z += 15f * delta;
 
                     if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
                     {
-                        allModels[currentObj].Scaling.x -= 2f * delta;
-                        allModels[currentObj].Scaling.y -= 2f * delta;
-                        allModels[currentObj].Scaling.z -= 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.x -= 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.y -= 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.z -= 2f * delta;
                     }
                     if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
                     {
-                        allModels[currentObj].Scaling.x += 2f * delta;
-                        allModels[currentObj].Scaling.y += 2f * delta;
-                        allModels[currentObj].Scaling.z += 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.x += 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.y += 2f * delta;
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.z += 2f * delta;
                     }
 
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                            allModels[currentObj].translation += new Vector3(0, deltaY / 100, 0);
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, deltaY / 150, 0);
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                            allModels[currentObj].translation -= new Vector3(deltaX / 100, 0, 0);
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation -= new Vector3(deltaX / 150, 0, 0);
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                            allModels[currentObj].translation += new Vector3(0, 0, -deltaX / 100);
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, 0, -deltaX / 150);
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

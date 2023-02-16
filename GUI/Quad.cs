@@ -5,6 +5,7 @@ using CORERenderer.Loaders;
 using COREMath;
 using CORERenderer.textures;
 using CORERenderer.OpenGL;
+using System.Transactions;
 
 namespace CORERenderer.GUI
 {
@@ -125,50 +126,22 @@ namespace CORERenderer.GUI
 
         private void renderModelList()
         {
-            modelList = COREMain.scenes[COREMain.selectedScene].allModels;
-
-            if (changedValue.Count == 0)
-            {
-                for (int i = 0; i < modelList.Count; i++)
-                    changedValue.Add(false);
-            }
-            if (changedValue.Count < modelList.Count)
-            {
-                for (int i = changedValue.Count - 1; i < modelList.Count; i++)
-                    changedValue.Add(false);
-            }
-
             int offset = 20;
-            for (int i = 0; i < modelList.Count; i++, offset += 37)
+            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels)
             {
                 if (!Submenu.isOpen)
                     if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
                     {   //makes the clicked object highlighted and makes all the others not highlighted
-                    
-                        if (!COREMain.scenes[COREMain.selectedScene].allModels[i].highlighted && !changedValue[i])
-                        {
-                            COREMain.scenes[COREMain.selectedScene].allModels[i].highlighted = true;
-                            //makes all other models not highlighted, because this doesnt know which object was highlighted before
-                            for (int j = 0; j < modelList.Count; j++)
-                                if (j != i)
-                                    COREMain.scenes[COREMain.selectedScene].allModels[j].highlighted = false;
-                            changedValue[i] = true;
-                            COREMain.scenes[COREMain.selectedScene].currentObj = i;
-                        }
-                        else if (!changedValue[i])
-                        {
-                            COREMain.scenes[COREMain.selectedScene].allModels[i].highlighted = false;
-                            changedValue[i] = true;
-                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
-                        }
+                        if (!model.highlighted)
+                            model.highlighted = true;
+                        else
+                            model.highlighted = false;
                     }
-                    else
-                        changedValue[i] = false;
                 
-                if (!modelList[i].highlighted)
-                    Write($"{modelList[i].name}", (int)(Width * 0.1f + 30), Height - offset);
+                if (!model.highlighted)
+                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset);
                 else
-                    Write($"{modelList[i].name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
                 
                 GenericShaders.image2DShader.Use();
 
@@ -188,11 +161,11 @@ namespace CORERenderer.GUI
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
 
                 //determines what icon to use
-                if (modelList[i].type == RenderMode.ObjFile)
+                if (model.type == RenderMode.ObjFile)
                     objIcon.Use(GL_TEXTURE0);
-                else if (modelList[i].type == RenderMode.JPGImage || modelList[i].type == RenderMode.PNGImage)
+                else if (model.type == RenderMode.JPGImage || model.type == RenderMode.PNGImage)
                     imageIcon.Use(GL_TEXTURE0);
-                else if (modelList[i].type == RenderMode.HDRFile)
+                else if (model.type == RenderMode.HDRFile)
                     hdrIcon.Use(GL_TEXTURE0);
 
                 glBindVertexArray(iconVAO);
@@ -221,34 +194,25 @@ namespace CORERenderer.GUI
 
         private void renderSubmodelList()
         {
-            int addedThisLoop = 0;
-            if (changedValue.Count == 0)
-                for (int i = 0; i < COREMain.scenes.Count; i++)
-                {
-                    while (addedThisLoop < COREMain.scenes[COREMain.selectedScene].allModels[i].submodelNames.Count)
-                    {
-                        changedValue.Add(false);
-                        addedThisLoop++;
-                    }
-                    addedThisLoop = 0;
-                }
-            else if (changedValue.Count < COREMain.scenes.Count)
-                for (int i = changedValue.Count - 1; i < COREMain.scenes.Count; i++)
-                {
-                    while (addedThisLoop < COREMain.scenes[COREMain.selectedScene].allModels[i].submodelNames.Count)
-                    {
-                        changedValue.Add(false);
-                        addedThisLoop++;
-                    }
-                    addedThisLoop = 0;
-                }
-
             int offset = 20;
             foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels) //(int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
+            {
                 foreach (Submodel submodel in model.submodels)//(int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames.Count; i++, offset  += 37)
                 {
+                    if (!Submenu.isOpen)
+                        if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
+                        {   //makes the clicked object highlighted and makes all the others not highlighted
+                            if (!submodel.highlighted)
+                                submodel.highlighted = true;
+                            else
+                                submodel.highlighted = false;
+                        }
+
                     //add changing selected submodel
-                    Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                    if (submodel.highlighted)
+                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                    else
+                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset);
 
                     GenericShaders.image2DShader.Use();
 
@@ -292,6 +256,7 @@ namespace CORERenderer.GUI
                     GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
                     offset += 37;
                 }
+            }  
         }
 
         public void RenderStatic() => Render();
