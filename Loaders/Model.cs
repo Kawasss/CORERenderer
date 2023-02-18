@@ -99,7 +99,9 @@ namespace CORERenderer.Loaders
 
         public void GenerateObj(string path)
         {
+            double startedReading = Glfw.Time;
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
+            double readOBJFile = Glfw.Time - startedReading;
 
             int error;
             if (!loaded)
@@ -111,10 +113,12 @@ namespace CORERenderer.Loaders
 
             name = path[(temp[^1] + 1)..path.IndexOf(".obj")];
 
+            startedReading = Glfw.Time;
             if (mtllib != "default")
                 loaded = LoadMTL($"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error);
             else
                 loaded = LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials, out error);
+            double readMTLFile = Glfw.Time - startedReading;
 
             if (!loaded)
                 ErrorLogic(error);
@@ -122,6 +126,11 @@ namespace CORERenderer.Loaders
             submodels = new();
             for (int i = 0; i < vertices.Count; i++)
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
+
+            COREMain.console.WriteLine(" ");
+            COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
+            COREMain.console.WriteLine($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
+            COREMain.console.WriteLine(" ");
         }
 
         private void ErrorLogic(int error)

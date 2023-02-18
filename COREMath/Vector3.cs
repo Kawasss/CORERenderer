@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace COREMath
 {
@@ -96,6 +97,16 @@ namespace COREMath
                 x = v1.x + v2.x,
                 y = v1.y + v2.y,
                 z = v1.z + v2.z
+            };
+        }
+
+        public static Vector3 operator * (float value, Vector3 v1)
+        {
+            return new()
+            {
+                x = value * v1.x,
+                y = value * v1.y,
+                z = value * v1.z
             };
         }
 

@@ -50,7 +50,7 @@ namespace CORERenderer.Loaders
 
             bool withTextures = true;
 
-            Console.WriteLine($"Reading {filename}:");
+            COREMain.console.WriteLine($"Reading {filename}:");
 
             int aa = 0;
             outVertices = new();
@@ -133,7 +133,7 @@ namespace CORERenderer.Loaders
                             mtlNames.Add(n[7..]); //"usemtl " is 7 chars long
                             break;
 
-                        case "f ": //v / vn / vt indicator
+                        case "f ": //v / vn / vt indicator, speed of reading the file dramatically slows down here
                             if (currentgroup == -1)
                             {
                                 outIndices.Add(new());
@@ -162,56 +162,65 @@ namespace CORERenderer.Loaders
                                 if (s.Contains('/'))
                                 {
                                     local2 = new();
-                                    //gets all of the index surrounding the ints, making them parsable
-                                    for (int k = s.IndexOf("/"); k > -1; k = s.IndexOf("/", k + 1))
-                                        local2.Add(k);
+                                        
+                                    //adds the indexes of the /'s that seperate the ints
+                                    local2.Add(s.IndexOf('/'));
+                                    local2.Add(s.IndexOf('/', local2[0] + 1));
 
+                                    //texture coords are between the vertex coords and normals ../TC/.., without textures it would like ..//.., making it possible to check whether it uses textures by checking if the / indexes are directly next to eachother
                                     if (local2[0] == local2[1] - 1)
                                         withTextures = false;
 
-                                    for (int l = 0; l < 3; l++)
-                                        outVertices[i].Add(vertices[int.Parse(s[..local2[0]], CultureInfo.InvariantCulture) - 1].xyz[l]);
-                                    if (withTextures)
+                                    //adds the vertex coordinates
+                                    int verCoord = int.Parse(s[..local2[0]]) - 1;
+                                    //for (int l = 0; l < 3; l++)
+                                    //    outVertices[i].Add(vertices[verCoord].xyz[l]);
+                                    outVertices[i].Add(vertices[verCoord].x);
+                                    outVertices[i].Add(vertices[verCoord].y);
+                                    outVertices[i].Add(vertices[verCoord].z);
+                                    if (withTextures) //adds the texture coordinates if they exist
                                     {
-                                        outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].x);
-                                        outVertices[i].Add(UVCoordinates[int.Parse(s[(local2[0] + 1)..local2[1]], CultureInfo.InvariantCulture) - 1].y);
+                                        int texCoords = int.Parse(s[(local2[0] + 1)..local2[1]]) - 1;
+                                        outVertices[i].Add(UVCoordinates[texCoords].x);
+                                        outVertices[i].Add(UVCoordinates[texCoords].y);
 
+                                        //adds normals 
+                                        int normal = int.Parse(s[(local2[1] + 1)..]) - 1;
                                         for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                            outVertices[i].Add(normals[normal].xyz[l]);
                                     }
-                                    else
+                                    else //adds empty texture coordinates if they arent given
                                     {
                                         outVertices[i].Add(0);
                                         outVertices[i].Add(0);
 
+                                        //adds normals
+                                        int normal = int.Parse(s[(local2[1] + 1)..]) - 1;
                                         for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(normals[int.Parse(s[(local2[1] + 1)..], CultureInfo.InvariantCulture) - 1].xyz[l]);
+                                            outVertices[i].Add(normals[normal].xyz[l]);
                                     }
                                 }
-                                else
+                                else //if a vertex doesnt contain texture coordinates and normals its info is written as only the coordinates without any /'s, instead of VC/TC/N or VC//N
                                 {
+                                    //adds the vertex coordinates and empty data for the texture coordinates and normals
                                     for (int l = 0; l < 3; l++)
-                                        outVertices[i].Add(vertices[int.Parse(s, CultureInfo.InvariantCulture) - 1].xyz[l]); ;
+                                        outVertices[i].Add(vertices[int.Parse(s) - 1].xyz[l]); ;
 
                                     for (int l = 0; l < 5; l++)
                                         outVertices[i].Add(0);
                                 }
-
+                                //updates the indices binder so that later on indices can easily be created, the vertex coords, texture coords and normals are always grouped together in strides of 8, one indice covering all 8 of them
                                 if (!indiceBinder.ContainsKey(s))
-                                {
-                                    if (i == 0)
-                                        indiceBinder.Add(s, aa);
-                                    else
-                                        indiceBinder.Add(s, aa);
-                                }
+                                    indiceBinder.Add(s, aa);
                                 aa++;
                             }
-                            if (local3.Count == 3)
+                            //a triangle, square and circles indices are all structured differently so it has to be checked what kind of shape it is
+                            if (local3.Count == 3) //triangle
                             {
                                 for (int k = 0; k < local3.Count; k++)
                                     outIndices[i].Add((uint)indiceBinder[local3[k]]);
                             }
-                            else if (local3.Count == 4)
+                            else if (local3.Count == 4) //square
                             {   //adds the faces in the correct for face culling
                                 outIndices[i].Add((uint)indiceBinder[local3[0]]);
                                 outIndices[i].Add((uint)indiceBinder[local3[1]]);
@@ -221,7 +230,7 @@ namespace CORERenderer.Loaders
                                 outIndices[i].Add((uint)indiceBinder[local3[2]]);
                                 outIndices[i].Add((uint)indiceBinder[local3[3]]);
                             }
-                            else if (local3.Count > 4)
+                            else if (local3.Count > 4) //circle
                             {
                                 for (int k = 0; k < local3.Count - 3; k++)
                                 {
