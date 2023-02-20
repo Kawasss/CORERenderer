@@ -41,6 +41,15 @@ namespace CORERenderer.Loaders
         public int ID;
 
         public int debug = 0;
+        private int totalAmountOfVertices = 0;
+
+        public string amountOfVertices { get 
+            {
+                if (totalAmountOfVertices / 1000 >= 1) 
+                    return $"{MathF.Round(totalAmountOfVertices / 1000):N0}k"; 
+                else 
+                    return $"{totalAmountOfVertices}"; 
+            } }
 
         public int selectedSubmodel = 0;
 
@@ -53,13 +62,13 @@ namespace CORERenderer.Loaders
             type = COREMain.SetRenderMode(path);
 
             if (type == RenderMode.ObjFile)
+            {
                 GenerateObj(path);
+                return;
+            }
 
-            else if (type == RenderMode.JPGImage)
-                GivenImage = Image3D.LoadImageIn3D(false, path);
-
-            else if (type == RenderMode.PNGImage)
-                GivenImage = Image3D.LoadImageIn3D(true, path);
+            else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage || type == RenderMode.RPIFile)
+                GivenImage = Image3D.LoadImageIn3D(type, path);
 
             else if (type == RenderMode.HDRFile && hdr == null)
                 hdr = HDRTexture.ReadFromFile(path);
@@ -125,12 +134,14 @@ namespace CORERenderer.Loaders
 
             submodels = new();
             for (int i = 0; i < vertices.Count; i++)
+            {
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
+                totalAmountOfVertices += submodels[^1].numberOfVertices;
+            }
 
-            COREMain.console.WriteLine(" ");
             COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
             COREMain.console.WriteLine($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
-            COREMain.console.WriteLine(" ");
+            COREMain.console.WriteLine($"Amount of vertices: {amountOfVertices}");
         }
 
         private void ErrorLogic(int error)

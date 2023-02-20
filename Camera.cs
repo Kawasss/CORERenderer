@@ -4,6 +4,7 @@ using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW;
 using CORERenderer.Main;
 using SharpFont;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer
 {
@@ -15,7 +16,7 @@ namespace CORERenderer
         private float yaw = -(MathC.PiF / 2);
         private float fov = MathC.PiF / 2;
 
-        private const float CAMERA_SPEED = 2f;
+        private static float cameraSpeed = 3f;
         private const float SENSITIVITY = 0.1f;
 
         private bool firstMove = true;
@@ -75,7 +76,12 @@ namespace CORERenderer
 
         public Matrix GetProjectionMatrix()
         {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.01f, 100000f);
+            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.1f, 5000f);
+        }
+
+        public Matrix GetOrthographicProjectionMatrix()
+        {
+            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 3, COREMain.Width / 3, -COREMain.Height / 3, COREMain.Height / 3, -10000, 10000);
         }
 
         public Matrix GetViewMatrix()
@@ -118,23 +124,28 @@ namespace CORERenderer
         {
             Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
 
+            if (Glfw.GetKey(COREMain.window, Keys.LeftControl) == InputState.Press)
+                cameraSpeed = 60;
+            else
+                cameraSpeed = 3;
+
             if (Glfw.GetKey(COREMain.window, Keys.W) == InputState.Press)
-                position += front * (CAMERA_SPEED * delta);
+                position += front * (cameraSpeed * delta);
 
             if (Glfw.GetKey(COREMain.window, Keys.S) == InputState.Press)
-                position -= front * (CAMERA_SPEED * delta);
+                position -= front * (cameraSpeed * delta);
 
             if (Glfw.GetKey(COREMain.window, Keys.A) == InputState.Press)
-                position -= right * (CAMERA_SPEED * delta);
+                position -= right * (cameraSpeed * delta);
 
             if (Glfw.GetKey(COREMain.window, Keys.D) == InputState.Press)
-                position += right * (CAMERA_SPEED * delta);
+                position += right * (cameraSpeed * delta);
 
             if (Glfw.GetKey(COREMain.window, Keys.Space) == InputState.Press)
-                position += up * (CAMERA_SPEED * delta);
+                position += up * (cameraSpeed * delta);
 
             if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press)
-                position -= up * (CAMERA_SPEED * delta);
+                position -= up * (cameraSpeed * delta);
             
             //rotating the camera with mouse movement
             if (firstMove)

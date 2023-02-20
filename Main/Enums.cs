@@ -18,6 +18,7 @@ namespace CORERenderer.Main
         PNGImage,
         JPGImage,
         HDRFile,
-        ObjFile
+        ObjFile,
+        RPIFile
     }
 }

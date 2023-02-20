@@ -4,6 +4,7 @@ using CORERenderer.shaders;
 using COREMath;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
+using CORERenderer.Main;
 
 namespace CORERenderer.textures
 {
@@ -23,18 +24,20 @@ namespace CORERenderer.textures
         public float rotationY;
         public float rotationZ;
 
-        public unsafe static Image3D LoadImageIn3D(bool isPNG, string imagePath)
+        public unsafe static Image3D LoadImageIn3D(RenderMode mode, string imagePath)
         {
             Texture texture;
-            if (isPNG)
+            if (mode == RenderMode.PNGImage || mode == RenderMode.RPIFile)
                 texture = Texture.ReadFromFile(imagePath);
-            else
+            else if (mode == RenderMode.JPGImage)
                 texture = Texture.ReadFromRGBFile(imagePath); //jpg doesnt use transparancy so should be using another color format
+            else
+                texture = Texture.ReadFromRGBFile(imagePath);
 
             Image3D i = new()
             {
                 texture = texture,
-                shader = new($"{Main.COREMain.pathRenderer}\\shaders\\Plane.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Plane.frag"),
+                shader = new($"{COREMain.pathRenderer}\\shaders\\Plane.vert", $"{COREMain.pathRenderer}\\shaders\\Plane.frag"),
                 translation = new(0, 0.01f, 0),
                 scale = 1,
                 rotationX = 180,

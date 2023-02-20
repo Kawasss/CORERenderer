@@ -14,6 +14,22 @@ namespace CORERenderer.OpenGL
 
         public static int drawCalls = 0;
 
+        public static byte[] SaveAsFile(Framebuffer fb, int width, int height)
+        {
+            glBindTexture(GL_TEXTURE_2D, fb.Texture);
+
+            byte[] pixels = new byte[width * height * 4];
+            unsafe
+            {
+                fixed (byte* p = pixels)
+                {
+                    IntPtr intptr = new(p);
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, p);
+                }
+            }
+            return pixels;
+        }
+
         /// <summary>
         ///     Render primitives from array data.
         /// </summary>
@@ -167,7 +183,7 @@ namespace CORERenderer.OpenGL
         }
 
         //try referring to offcenter version with 0, width, height, 0.01, 100
-        public static Matrix GetOrthograpicProjectionMatrix() => Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
+        public static Matrix GetOrthograpicProjectionMatrix() => Matrix.Createorthographic(COREMain.Width, COREMain.Height, -1000f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
 
         public static void RenderBackground(HDRTexture h)
         {

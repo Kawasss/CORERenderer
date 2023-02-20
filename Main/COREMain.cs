@@ -47,7 +47,7 @@ namespace CORERenderer.Main
         private static float currentFrameTime = 0;
 
         //strings
-        public static string LoadFilePath;
+        public static string LoadFilePath = null;
         public static string GPU;
         public const string VERSION = "v0.1.P";
 
@@ -61,6 +61,8 @@ namespace CORERenderer.Main
         public static bool destroyWindow = false;
         public static bool addCube = false;
         public static bool addCylinder = false;
+        public static bool renderEntireDir = false;
+        public static bool renderOrthographic = false;
 
         private static bool keyIsPressed = false;
         private static bool mouseIsPressed = false;
@@ -187,21 +189,26 @@ namespace CORERenderer.Main
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder" });
+                Button test = new("Save as image", 100, monitorHeight - 25);
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
                 graphManager.AttachTo(graph);
                 graphManager.AttachTo(frametimeGraph);
                 menu.AttachTo(ref button);
+                button.OnClick(menu.Render);
+                test.OnClick(SaveSceneAsImage);
                 menu.SetBool("Render Grid", renderGrid);
                 menu.SetBool("Render Background", renderBackground);
                 menu.SetBool("Render GUI", renderGUI);
                 menu.SetBool("Render IDFramebuffer", renderIDFramebuffer);
+                menu.SetBool("Render orthographic", renderOrthographic);
                 menu.SetBool("Cull Faces", cullFaces);
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
-                
+                menu.SetBool("Load entire directory", renderEntireDir);
+
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
                 //-------------------------------------------------------------------------------------------
@@ -267,9 +274,8 @@ namespace CORERenderer.Main
 
                                 modelInformation.Render();
 
-                                //modelList.Render();
-
                                 button.Render();
+                                test.Render();
 
                                 console.RenderEvenIfNotChanged();
                             }
@@ -311,17 +317,16 @@ namespace CORERenderer.Main
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
                             IDFramebuffer.Bind();
-                            glEnable(GL_DEPTH_TEST);
+                            
                             glClearColor(1f, 1f, 1f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
                             renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
-
+                            glEnable(GL_BLEND);
+                            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                             glEnable(GL_DEPTH_TEST);
                             glClearColor(0.3f, 0.3f, 0.3f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                            
 
                             if (addCube)
                             {
@@ -348,6 +353,86 @@ namespace CORERenderer.Main
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
 
                         scenes[selectedScene].EveryFrame(window, currentFrameTime);
+
+                        if (renderEntireDir)
+                        {
+                            if (LoadFilePath == null || args.Length == 0)
+                                console.WriteError("Can't load directory since one isn't given");
+                            else
+                            {
+                                string dir = Path.GetDirectoryName(LoadFilePath);
+                                Console.WriteLine(dir);
+                                string[] allFiles = Directory.GetFiles(dir);
+                                foreach (string file in allFiles)
+                                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read{
+                                    {
+                                        scenes[selectedScene].allModels.Add(new(file));
+
+                                        Submenu.isOpen = false;
+
+                                        gui.Bind();
+                                        glClearColor(0.085f, 0.085f, 0.085f, 1);
+                                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                                        tb.CheckForUpdate(mousePosX, mousePosY);
+                                        tb.Render();
+
+                                        tab.Render();
+
+                                        modelInformation.Render();
+
+                                        console.RenderEvenIfNotChanged();
+
+                                        graph.Update(fps); //update even without any input because the data always changes
+                                        frametimeGraph.Update(currentFrameTime * 1000);
+                                        graphManager.Render();
+
+                                        sceneManager.Render();
+
+                                        console.Render();
+
+                                        GPUInfo.Render();
+
+                                        GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
+                                        GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
+                                        GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
+                                        GPUInfo.Write($"CORE Renderer {VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 7), 0.8f);
+                                        GPUInfo.Write($"COREMath {MathC.VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 8), 0.8f);
+                                        GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
+                                        GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
+                                        gui.RenderFramebuffer();
+
+                                        glEnable(GL_DEPTH);
+
+                                        renderFramebuffer.Bind();
+
+                                        scenes[selectedScene].allModels[^1].Render();
+
+                                        glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+                                        
+                                        //check for mouse picking
+                                        IDFramebuffer.RenderFramebuffer();
+                                        UpdateSelectedID();
+
+                                        arrows.UpdateArrowsMovement();
+
+                                        renderFramebuffer.RenderFramebuffer();
+
+                                        if (renderIDFramebuffer)
+                                        {
+                                            glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                                            IDFramebuffer.RenderFramebuffer();
+                                        }
+
+                                        glViewport(0, 0, monitorWidth, monitorHeight);
+
+                                        Glfw.SwapBuffers(window);
+                                        Glfw.PollEvents();
+                                    }
+                            }
+                            renderEntireDir = false;
+                            menu.SetBool("Load entire directory", false);
+                        }
                     }
 
                     glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
@@ -367,8 +452,6 @@ namespace CORERenderer.Main
                     }
 
                     glViewport(0, 0, monitorWidth, monitorHeight);
-
-                    //wrapperFBO.Bind();
 
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
@@ -390,6 +473,15 @@ namespace CORERenderer.Main
                 return -1;
             }
             return 1;
+        }
+
+        public static void SaveSceneAsImage()
+        {
+            byte[] pixels = SaveAsFile(renderFramebuffer, monitorWidth, monitorHeight);
+            FileStream fs = File.Create($"{pathRenderer}\\Renders\\TEST.rpi");
+            foreach (byte b in pixels)
+                fs.WriteByte(b);
+            fs.Close();
         }
 
         public static Vector3 GenerateIDColor(int ID)
@@ -460,7 +552,7 @@ namespace CORERenderer.Main
         /// <param name="delta"></param>
         private static void UpdateCamera(float delta)
         {
-            if (Glfw.GetMouseButton(window, MouseButton.Middle) != InputState.Press)
+            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Press)
                 return;
 
             scenes[selectedScene].camera.UpdatePosition(mousePosX, mousePosY, delta);
@@ -497,25 +589,6 @@ namespace CORERenderer.Main
 
         private static void DeleteAllBuffers()
         {
-            /*foreach(Scene scene in scenes)
-                if (LoadFile == RenderMode.CRSFile)
-                {
-                    if (scene.allModels.Count > 0)
-                        Console.Write("\nDeleting buffers");
-
-                    for (int i = 0; i < scene.allModels.Count; i++)
-                    {
-                        if (scene.allModels[i].type == RenderMode.ObjFile)
-                        {
-                            glDeleteBuffers(scene.allModels[i].GeneratedBuffers.ToArray());
-                            glDeleteBuffers(scene.allModels[i].elementBufferObject.ToArray());
-                            glDeleteVertexArrays(scene.allModels[i].GeneratedVAOs.ToArray());
-                            glDeleteShader(scene.allModels[i].shader.Handle);
-                            Console.Write($"..{i}");
-                        }
-                    }
-            }
-            Console.WriteLine();*/
         }
 
         private static void SetRenderMode(string[] arg)
@@ -541,6 +614,10 @@ namespace CORERenderer.Main
             else if (arg[0][^4..].ToLower() == ".hdr")
             {
                 LoadFile = RenderMode.HDRFile; LoadFilePath = arg[0];
+            }
+            else if (arg[0][^4..].ToLower() == ".rpi")
+            {
+                LoadFile = RenderMode.RPIFile; LoadFilePath = arg[0];
             }
             else
                 LoadFile = RenderMode.CRSFile;
@@ -591,8 +668,10 @@ namespace CORERenderer.Main
 
             //assigns values to the freed up gpu memory for global uniforms
             glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            MatrixToUniformBuffer(scenes[selectedScene].camera.GetProjectionMatrix(), 0);
-            //MatrixToUniformBuffer(Rendering.GetOrthograpicProjectionMatrix(), 0);
+            if (!renderOrthographic)
+                MatrixToUniformBuffer(scenes[selectedScene].camera.GetProjectionMatrix(), 0);
+            else
+                MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }
 
@@ -602,6 +681,10 @@ namespace CORERenderer.Main
             glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
             MatrixToUniformBuffer(scenes[selectedScene].camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
             MatrixToUniformBuffer(scenes[selectedScene].camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
+            if (!renderOrthographic)
+                MatrixToUniformBuffer(scenes[selectedScene].camera.GetProjectionMatrix(), 0);
+            else
+                MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
         }
     }
 }

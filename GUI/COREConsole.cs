@@ -42,9 +42,9 @@ namespace CORERenderer.GUI
             for (int i = 0; i < linesPrinted; i++, lineOffset += (int)(COREMain.debugText.characterHeight + 2))
             {
                 if (lines[i].Length < 5 || lines[i][..5] != "ERROR")
-                    quad.Write(lines[i], 0, Height - lineOffset);
+                    quad.Write(lines[i], 0, Height - lineOffset, 0.8f);
                 else
-                    quad.WriteError(lines[i], 0, Height - lineOffset);
+                    quad.WriteError(lines[i], 0, Height - lineOffset, 0.8f);
             }
         }
 

@@ -61,6 +61,9 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
+            if (!isOpen)
+                return;
+
             if (COREMain.secondPassed && !isAttached)
             {
                 COREMain.console.WriteError("Submenu not attached");
@@ -100,10 +103,12 @@ namespace CORERenderer.GUI
                 }
                 COREMain.renderGUI = isOptionTrue[list[4]];
                 COREMain.renderIDFramebuffer = isOptionTrue[list[5]];
-                cullFaces = isOptionTrue[list[7]];
-                isOptionTrue[list[9]] = false;
-                COREMain.addCube = isOptionTrue[list[10]];
-                COREMain.addCylinder = isOptionTrue[list[11]];
+                COREMain.renderOrthographic = isOptionTrue[list[6]];
+                cullFaces = isOptionTrue[list[8]];
+                isOptionTrue[list[10]] = false;
+                COREMain.addCube = isOptionTrue[list[11]];
+                COREMain.addCylinder = isOptionTrue[list[12]];
+                COREMain.renderEntireDir = isOptionTrue[list[13]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.8f);

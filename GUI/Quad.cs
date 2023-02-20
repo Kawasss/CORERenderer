@@ -129,6 +129,13 @@ namespace CORERenderer.GUI
             int offset = 20;
             foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels)
             {
+                if (offset >= Height)
+                {
+                    if (COREMain.secondPassed)
+                        COREMain.console.WriteError("Too many objects, can't render to list");
+                    return;
+                }
+
                 if (!Submenu.isOpen)
                     if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
                     {   //makes the clicked object highlighted and makes all the others not highlighted
@@ -189,6 +196,7 @@ namespace CORERenderer.GUI
                 glDrawArrays(PrimitiveType.Lines, 0, 2);
 
                 GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+                offset += 37;
             }
         }
 
@@ -320,6 +328,8 @@ namespace CORERenderer.GUI
         public void Write(string text, int x, int y, float scale) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0));
 
         public void WriteError(string text, int x, int y) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
+
+        public void WriteError(string text, int x, int y, float scale) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0), new Vector3(1, 0, 0));
 
         public void WriteError(Exception err, int x, int y) => COREMain.debugText.RenderText($"{err}", bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
     }

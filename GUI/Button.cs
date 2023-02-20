@@ -15,6 +15,8 @@ namespace CORERenderer.GUI
 
         private bool pressed = false;
 
+        private Action onClick = null;
+
         public Button(string Name, int X, int Y)
         {
             name = Name;
@@ -24,6 +26,11 @@ namespace CORERenderer.GUI
 
             width = Name.Length * (int)(COREMain.debugText.characterHeight);
             height = (int)(COREMain.debugText.characterHeight);
+        }
+
+        public void OnClick(Action action)
+        {
+            onClick = action;
         }
 
         public void Render() //better to make render once for a bitmap and then be reused till updated
@@ -40,7 +47,7 @@ namespace CORERenderer.GUI
             {
                 COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
                 Submenu.isOpen = true;
-                attachedSubmenu?.Render();
+                onClick?.Invoke();
             }
         }
 

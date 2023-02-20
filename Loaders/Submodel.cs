@@ -22,6 +22,8 @@ namespace CORERenderer.Loaders
         private List<float> vertices;
         private List<uint> indices;
 
+        public int numberOfVertices = 0;
+
         private Material material;
 
         private Shader shader = GenericShaders.GenericLightingShader;
@@ -45,6 +47,8 @@ namespace CORERenderer.Loaders
             this.vertices = vertices;
             this.indices = indices;
             this.material = material;
+
+            numberOfVertices = vertices.Count / 8;
 
             GenerateBuffers();
 
