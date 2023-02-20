@@ -63,7 +63,7 @@ namespace CORERenderer
             
             lastPos = new(mousePosX, monitorHeight - mousePosY);
 
-            InputState state = Glfw.GetMouseButton(window, MouseButton.Middle);
+            InputState state = Glfw.GetMouseButton(window, MouseButton.Right);
 
             InputState state2 = Glfw.GetMouseButton(window, MouseButton.Left);
 
@@ -140,11 +140,11 @@ namespace CORERenderer
         {
             if (((mouseX >= viewportX) && (mouseX <= monitorWidth - viewportX) && (monitorHeight - mouseY >= viewportY) && (monitorHeight - mouseY <= monitorHeight - 25)))
             {
-                if (Glfw.GetMouseButton(window, MouseButton.Middle) == InputState.Press)
+                if (Glfw.GetMouseButton(window, MouseButton.Right) == InputState.Press)
                     enteredFrame = true;
                 return true;
             }
-            if (Glfw.GetMouseButton(window, MouseButton.Middle) != InputState.Press)
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
             {
                 enteredFrame = false;
                 return false;

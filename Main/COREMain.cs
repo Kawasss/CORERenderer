@@ -349,7 +349,7 @@ namespace CORERenderer.Main
                             glClear(GL_DEPTH_BUFFER_BIT);
                             arrows.Render();
                         }
-                        else
+                        else if (!mouseIsPressed)
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
 
                         scenes[selectedScene].EveryFrame(window, currentFrameTime);
@@ -552,7 +552,7 @@ namespace CORERenderer.Main
         /// <param name="delta"></param>
         private static void UpdateCamera(float delta)
         {
-            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Press)
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
                 return;
 
             scenes[selectedScene].camera.UpdatePosition(mousePosX, mousePosY, delta);
