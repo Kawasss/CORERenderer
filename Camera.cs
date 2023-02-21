@@ -81,7 +81,7 @@ namespace CORERenderer
 
         public Matrix GetOrthographicProjectionMatrix()
         {
-            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 3, COREMain.Width / 3, -COREMain.Height / 3, COREMain.Height / 3, -10000, 10000);
+            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 9, COREMain.Width / 9, -COREMain.Height / 9, COREMain.Height / 9, -10000, 10000);
         }
 
         public Matrix GetViewMatrix()

@@ -51,6 +51,8 @@ uniform Material material;
 
 uniform vec3 viewPos;
 uniform float distanceObject;
+uniform float transparency;
+uniform int allowAlpha;
 
 in vec2 TexCoords;
 
@@ -183,7 +185,11 @@ void main()
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
     FragColor = vec4(ambient + diffuse + specular, 1.0);*/
 	vec4 color = texture(material.diffuse, TexCoords);
+	if (allowAlpha == 1)
+		color.a = transparency;
+
 	if (color.a < 0.1)
 		discard;
+
 	FragColor = color;
 }

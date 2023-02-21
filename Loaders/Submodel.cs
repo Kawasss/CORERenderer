@@ -65,6 +65,8 @@ namespace CORERenderer.Loaders
             glStencilMask(0xFF);
 
             shader.SetVector3("viewPos", COREMain.scenes[COREMain.selectedScene].camera.position);
+            shader.SetFloat("transparency", material.Transparency);
+            shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
 
             shader.Use();
 

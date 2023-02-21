@@ -1,0 +1,8 @@
+Error occured at 11:37:37 : 
+    System.NullReferenceException: Object reference not set to an instance of an object.
+   at CORERenderer.Main.Framebuffer.RenderFramebuffer() in C:\Users\wveen\source\repos\CORERenderer\Main\Structs.cs:line 55
+   at CORERenderer.Loaders.Submodel..ctor(String name, List`1 vertices, List`1 indices, Material material) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Submodel.cs:line 62
+   at CORERenderer.Loaders.Model.GenerateObj(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 138
+   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 66
+   at CORERenderer.Scene.OnLoad() in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 40
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 217

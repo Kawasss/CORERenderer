@@ -109,6 +109,7 @@ namespace CORERenderer.GUI
                 COREMain.addCube = isOptionTrue[list[11]];
                 COREMain.addCylinder = isOptionTrue[list[12]];
                 COREMain.renderEntireDir = isOptionTrue[list[13]];
+                COREMain.allowAlphaOverride = isOptionTrue[list[14]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.8f);

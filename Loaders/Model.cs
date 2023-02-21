@@ -92,7 +92,7 @@ namespace CORERenderer.Loaders
 
         private unsafe void RenderObj() //better to make this extend to rendereveryframe() or new render override
         {
-            int i = 0;
+            /*int i = 0;
             foreach (Submodel submodel in submodels)
             {
                 submodel.renderLines = renderLines;
@@ -103,6 +103,16 @@ namespace CORERenderer.Loaders
 
                 submodel.Render();
                 i++;
+            }*/
+            for (int i = submodels.Count - 1; i >= 0; i--)
+            {
+                submodels[i].renderLines = renderLines;
+                submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+
+                if (submodels[i].highlighted)
+                    selectedSubmodel = i;
+
+                submodels[i].Render();
             }
         }
 
@@ -137,6 +147,22 @@ namespace CORERenderer.Loaders
             {
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
+
+
+                COREMain.renderFramebuffer.Bind();
+                Render(); //renders the submodel to make the app not crash
+
+                glViewport(COREMain.viewportX, COREMain.viewportY, COREMain.renderWidth, COREMain.renderHeight);
+
+                COREMain.renderFramebuffer.RenderFramebuffer();
+                if (COREMain.renderIDFramebuffer)
+                {
+                    glViewport((int)(COREMain.viewportX + COREMain.renderWidth * 0.75f), (int)(COREMain.viewportY + COREMain.renderHeight * 0.75f), (int)(COREMain.renderWidth * 0.25f), (int)(COREMain.renderHeight * 0.25f));
+                    COREMain.IDFramebuffer.RenderFramebuffer();
+                }
+                glViewport(0, 0, COREMain.monitorWidth, COREMain.monitorHeight);
+
+                Glfw.SwapBuffers(COREMain.window);
             }
 
             COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");

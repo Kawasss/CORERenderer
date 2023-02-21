@@ -63,6 +63,7 @@ namespace CORERenderer.Main
         public static bool addCylinder = false;
         public static bool renderEntireDir = false;
         public static bool renderOrthographic = false;
+        public static bool allowAlphaOverride = true;
 
         private static bool keyIsPressed = false;
         private static bool mouseIsPressed = false;
@@ -190,7 +191,7 @@ namespace CORERenderer.Main
 
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button test = new("Save as image", 100, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory" });
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory", "Allow alpha override" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -208,10 +209,16 @@ namespace CORERenderer.Main
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
                 menu.SetBool("Load entire directory", renderEntireDir);
+                menu.SetBool("Allow alpha override", allowAlphaOverride);
 
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
                 //-------------------------------------------------------------------------------------------
+
+                Framebuffer gui = GenerateFramebuffer();
+                renderFramebuffer = GenerateFramebuffer();
+                Framebuffer wrapperFBO = GenerateFramebuffer();
+                IDFramebuffer = GenerateFramebuffer();
 
                 scenes.Add(new());
                 scenes[0].OnLoad();
@@ -220,11 +227,6 @@ namespace CORERenderer.Main
                 arrows = new();
 
                 SetUniformBuffers();
-
-                Framebuffer gui = GenerateFramebuffer();
-                renderFramebuffer = GenerateFramebuffer();
-                Framebuffer wrapperFBO = GenerateFramebuffer();
-                IDFramebuffer = GenerateFramebuffer();
 
                 Glfw.SetScrollCallback(window, ScrollCallback);
                 Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
@@ -406,7 +408,7 @@ namespace CORERenderer.Main
 
                                         renderFramebuffer.Bind();
 
-                                        scenes[selectedScene].allModels[^1].Render();
+                                        //scenes[selectedScene].allModels[^1].Render();
 
                                         glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
                                         
