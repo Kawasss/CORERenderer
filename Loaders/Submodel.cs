@@ -87,21 +87,24 @@ namespace CORERenderer.Loaders
                 else
                     glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
 
-                COREMain.IDFramebuffer.Bind();
+                if (COREMain.renderToIDFramebuffer)
+                {
+                    COREMain.IDFramebuffer.Bind();
 
-                IDShader.Use();
+                    IDShader.Use();
 
-                IDShader.SetVector3("color", IDColor);
-                IDShader.SetMatrix("model", model);
+                    IDShader.SetVector3("color", IDColor);
+                    IDShader.SetMatrix("model", model);
 
-                glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                    glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
 
-                if (!highlighted)
-                    highlighted = COREMain.selectedID == ID;
-                else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
-                    highlighted = false;
+                    if (!highlighted)
+                        highlighted = COREMain.selectedID == ID;
+                    else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
+                        highlighted = false;
 
-                COREMain.renderFramebuffer.Bind();
+                    COREMain.renderFramebuffer.Bind();
+                }
             }
         }
 

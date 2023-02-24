@@ -10,6 +10,8 @@ namespace COREMath
         public float z { get; set; }
         public float w { get; set; }
 
+        public float Length { get { return MathC.GetLengthOf(this); } }
+
         /// <summary>
         /// Creates a vector with 4 values
         /// </summary>

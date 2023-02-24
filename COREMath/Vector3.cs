@@ -69,6 +69,8 @@ namespace COREMath
         public static Vector3 UnitVectorY = new(0, 1, 0);
         public static Vector3 UnitVectorZ = new(0, 0, 1);
 
+        public float Length { get { return MathC.GetLengthOf(this); } }
+
         public static Vector3 operator -(Vector3 v1)
         {
             return new()

@@ -31,7 +31,7 @@ namespace CORERenderer.Main
 
         public static int selectedID = 0x00FFFF; //white (background)
         private static int nextAvaibleID = 3; //first 3 IDs are used by Arrows
-        public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } set {  } } //automatically generates a new ID whenever its asked for one
+        public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
 
         //uints
         public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
@@ -57,6 +57,9 @@ namespace CORERenderer.Main
         public static bool secondPassed = true;
         public static bool renderGUI = false;
         public static bool renderIDFramebuffer = false;
+        public static bool renderToIDFramebuffer = true;
+        public static bool useChromAber = false;
+        public static bool useVignette = false;
 
         public static bool destroyWindow = false;
         public static bool addCube = false;
@@ -191,7 +194,7 @@ namespace CORERenderer.Main
 
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button test = new("Save as image", 100, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory", "Allow alpha override" });
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -204,12 +207,15 @@ namespace CORERenderer.Main
                 menu.SetBool("Render Background", renderBackground);
                 menu.SetBool("Render GUI", renderGUI);
                 menu.SetBool("Render IDFramebuffer", renderIDFramebuffer);
+                menu.SetBool("Render to ID framebuffer", renderToIDFramebuffer);
                 menu.SetBool("Render orthographic", renderOrthographic);
                 menu.SetBool("Cull Faces", cullFaces);
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
                 menu.SetBool("Load entire directory", renderEntireDir);
                 menu.SetBool("Allow alpha override", allowAlphaOverride);
+                menu.SetBool("Use chrom. aber.", useChromAber);
+                menu.SetBool("Use vignette", useVignette);
 
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
@@ -219,6 +225,14 @@ namespace CORERenderer.Main
                 renderFramebuffer = GenerateFramebuffer();
                 Framebuffer wrapperFBO = GenerateFramebuffer();
                 IDFramebuffer = GenerateFramebuffer();
+
+
+                //test
+                renderFramebuffer.shader.SetBool("useVignette", useVignette);
+                renderFramebuffer.shader.SetFloat("vignetteStrength", 0.1f);
+                renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
+                renderFramebuffer.shader.SetVector3("chromAberIntensities", 0.014f, 0.009f, 0.006f);
+
 
                 scenes.Add(new());
                 scenes[0].OnLoad();
@@ -411,12 +425,6 @@ namespace CORERenderer.Main
                                         //scenes[selectedScene].allModels[^1].Render();
 
                                         glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
-                                        
-                                        //check for mouse picking
-                                        IDFramebuffer.RenderFramebuffer();
-                                        UpdateSelectedID();
-
-                                        arrows.UpdateArrowsMovement();
 
                                         renderFramebuffer.RenderFramebuffer();
 
@@ -444,6 +452,9 @@ namespace CORERenderer.Main
                     UpdateSelectedID();
 
                     arrows.UpdateArrowsMovement();
+
+                    renderFramebuffer.shader.SetBool("useVignette", useVignette);
+                    renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
 
                     renderFramebuffer.RenderFramebuffer();
 

@@ -6,7 +6,7 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static bool LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out string mtllib)
+        public static bool LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out string mtllib)
         {
             if (path == null)
             {
@@ -14,6 +14,7 @@ namespace CORERenderer.Loaders
                 outIndices = new();
                 mtllib = null;
                 mtlNames = new();
+                offsets = new();
                 return true;
             }
 
@@ -29,6 +30,7 @@ namespace CORERenderer.Loaders
                 outIndices = new();
                 mtllib = null;
                 mtlNames = new();
+                offsets = new();
                 return false;
             }
 
@@ -41,6 +43,8 @@ namespace CORERenderer.Loaders
             List<Vector2> UVCoordinates = new();
 
             List<string> sValues = new();
+
+            offsets = new();
 
             mtlNames = new();
 
@@ -95,6 +99,9 @@ namespace CORERenderer.Loaders
                                  n[localV[1]..localV[2]],
                                  n[localV[2]..]
                                 ));
+                            if (currentgroup == offsets.Count)
+                                offsets.Add(vertices[^1]);
+                            vertices[^1] -= offsets[^1];
                             break;
 
                         case "vn": //vector normal

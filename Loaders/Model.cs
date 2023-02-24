@@ -119,7 +119,7 @@ namespace CORERenderer.Loaders
         public void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out mtllib);
+            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out List<Vector3> offsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             int error;
@@ -146,6 +146,7 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < vertices.Count; i++)
             {
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
+                submodels[i].translation = offsets[i];
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
 
 
