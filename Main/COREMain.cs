@@ -73,6 +73,7 @@ namespace CORERenderer.Main
 
         public static bool keyIsPressed = false;
         public static bool mouseIsPressed = false;
+        public static bool clearedGUI = false;
 
         private static bool subMenuOpenLastFrame = false;
 
@@ -88,6 +89,7 @@ namespace CORERenderer.Main
         public static Font debugText;
         public static COREConsole console;
         public static Arrows arrows;
+        public static Div modelList;
 
         //structs
         public static Window window;
@@ -141,7 +143,7 @@ namespace CORERenderer.Main
                 //seperate into own method for easier reading------------------------------------------------
                 TitleBar tb = new();
 
-                Div modelList = new
+                modelList = new
                 (
                     (int)(monitorWidth * 0.117f), 
                     (int)(monitorHeight * 0.725f), 
@@ -294,7 +296,7 @@ namespace CORERenderer.Main
                             {
                                 glClearColor(0.085f, 0.085f, 0.085f, 1);
                                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                                
+                                clearedGUI = true;
                                 tb.CheckForUpdate(mousePosX, mousePosY);
                                 tb.Render();
 
@@ -330,7 +332,6 @@ namespace CORERenderer.Main
                             frametimeGraph.Update(currentFrameTime * 1000);
 
                             console.Render();
-                            
                         }
                        
                         if (renderGPUInfo)
@@ -355,6 +356,7 @@ namespace CORERenderer.Main
                         tb.CheckForUpdate(mousePosX, mousePosY);
                         
                         gui.RenderFramebuffer();
+                        clearedGUI = false;
                     }
 
                     UpdateCursorLocation();
@@ -410,7 +412,7 @@ namespace CORERenderer.Main
                             else
                             {
                                 string dir = Path.GetDirectoryName(LoadFilePath);
-                                Console.WriteLine(dir);
+                                
                                 string[] allFiles = Directory.GetFiles(dir);
                                 foreach (string file in allFiles)
                                     if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read{
@@ -426,14 +428,8 @@ namespace CORERenderer.Main
                                         tb.CheckForUpdate(mousePosX, mousePosY);
                                         tb.Render();
 
-                                        tab.Render();
-
-                                        modelInformation.Render();
-
                                         console.RenderEvenIfNotChanged();
 
-                                        graph.Update(fps); //update even without any input because the data always changes
-                                        frametimeGraph.Update(currentFrameTime * 1000);
                                         graphManager.Render();
 
                                         sceneManager.Render();
@@ -446,7 +442,7 @@ namespace CORERenderer.Main
 
                                         renderFramebuffer.Bind();
 
-                                        //scenes[selectedScene].allModels[^1].Render();
+                                        scenes[selectedScene].allModels[^1].Render();
 
                                         glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
 

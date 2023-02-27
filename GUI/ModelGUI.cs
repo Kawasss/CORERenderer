@@ -10,14 +10,13 @@ namespace CORERenderer.GUI
 {
     public partial class Div
     {
-        private int lastModelCount = 0;
-
         private void renderModelList()
         {
-            if (lastModelCount == COREMain.scenes[COREMain.selectedScene].allModels.Count && !Submenu.isOpen)
+            if (Submenu.isOpen && !COREMain.clearedGUI)
                 return;
 
             int offset = 20;
+            int aa = 0;
             foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels)
             {
                 if (offset >= Height)
@@ -31,15 +30,30 @@ namespace CORERenderer.GUI
                     if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
                     {   //makes the clicked object highlighted and makes all the others not highlighted
                         if (!model.highlighted)
+                        {
                             model.highlighted = true;
+                            if (COREMain.scenes[COREMain.selectedScene].currentObj != -1)
+                            COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].highlighted = false;
+                            COREMain.scenes[COREMain.selectedScene].currentObj = aa;
+                        }
                         else
+                        {
                             model.highlighted = false;
+                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+                        }  
                     }
 
-                if (!model.highlighted)
-                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset);
+                string name;
+                if (model.name.Length > 16)
+                    name = $"{model.name[..16]}...";
                 else
-                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                    name = model.name;
+
+                //add changing selected submodel
+                if (model.highlighted)
+                    Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f, new Vector3(1, 0, 1));
+                else
+                    Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f);
 
                 GenericShaders.image2DShader.Use();
 
@@ -88,7 +102,7 @@ namespace CORERenderer.GUI
 
                 GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
                 offset += 37;
-                lastModelCount = COREMain.scenes[COREMain.selectedScene].allModels.Count;
+                aa++;
             }
         }
 
@@ -108,11 +122,17 @@ namespace CORERenderer.GUI
                                 submodel.highlighted = false;
                         }
 
+                    string name;
+                    if (submodel.Name.Length > 16)
+                        name = $"{submodel.Name[..16]}...";
+                    else
+                        name = submodel.Name;
+
                     //add changing selected submodel
                     if (submodel.highlighted)
-                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
+                        Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f, new Vector3(1, 0, 1));
                     else
-                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset);
+                        Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f);
 
                     GenericShaders.image2DShader.Use();
 

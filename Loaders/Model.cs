@@ -122,6 +122,9 @@ namespace CORERenderer.Loaders
             bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out List<Vector3> offsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
+            this.highlighted = true;
+            COREMain.scenes[COREMain.selectedScene].currentObj = COREMain.scenes[COREMain.selectedScene].allModels.Count - 1;
+
             int error;
             if (!loaded)
                 throw new GLFW.Exception($"Invalid file format for {name} (!.obj && !.OBJ)");

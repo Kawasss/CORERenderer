@@ -118,6 +118,8 @@ namespace CORERenderer.GUI
             Glfw.MakeContextCurrent(COREMain.window);
         }
 
+        public void Refresh() => Glfw.SwapBuffers(window);;
+
         public void Dispose()
         {
             //deletes the window and the vram it used

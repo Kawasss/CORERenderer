@@ -19,6 +19,7 @@ namespace CORERenderer.GUI
         private string[] names;
 
         private int selectedDivIndex = -1;
+        private int previousSelected = -1;
 
         private float bottomX = 0;
         private float bottomY = 0;
@@ -191,6 +192,8 @@ namespace CORERenderer.GUI
             if (!Submenu.isOpen)
                 CheckCollision();
 
+            previousSelected = selectedDivIndex;
+
             if (type != attachedToType.RenderWindow)
             {
                 Div selectedDiv = tabDivBinding[names[selectedDivIndex]];
@@ -202,9 +205,9 @@ namespace CORERenderer.GUI
                     return;
                 }
 
-                selectedDiv.Render();
+                selectedDiv.Render(); //renders the chosen tab
 
-                for (int i = 0; i < names.Length; i++)
+                for (int i = 0; i < names.Length; i++) //renders the little tabs on top with the divs names
                 {
                     shader.Use();
 
