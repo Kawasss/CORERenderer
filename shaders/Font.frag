@@ -9,6 +9,6 @@ uniform vec3 textColor;
 void main()
 {
 	vec4 text = vec4(1, 1, 1, texture(Texture, TexCoords).r);
-	
-	FragColor = vec4(textColor.rgb, 1) * text;
+
+	FragColor = vec4(textColor, 1) * text;
 }

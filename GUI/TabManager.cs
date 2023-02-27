@@ -308,7 +308,7 @@ namespace CORERenderer.GUI
                     if (type == attachedToType.RenderWindow && selectedDivIndex == tabDivBinding.Count - 1)
                     {
                         COREMain.scenes.Add(new());
-                        COREMain.scenes[^1].OnLoad();
+                        COREMain.scenes[^1].OnLoad(Array.Empty<string>());
                     }
                     return;
                 }

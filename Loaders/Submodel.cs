@@ -18,6 +18,7 @@ namespace CORERenderer.Loaders
         public Vector3 rotation = new(0, 0, 0);
 
         public Matrix parentModel;
+        public Model parent;
 
         private List<float> vertices;
         private List<uint> indices;
@@ -149,6 +150,13 @@ namespace CORERenderer.Loaders
                 rotation.y = 0;
             if (rotation.z >= 360)
                 rotation.z = 0;
+        }
+
+        ~Submodel()
+        {
+            glDeleteBuffer(VBO);
+            glDeleteVertexArray(VAO);
+            glDeleteBuffer(EBO);
         }
     }
 }

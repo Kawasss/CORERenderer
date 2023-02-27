@@ -38,11 +38,7 @@ namespace CORERenderer.textures
                 stream.CopyTo(memoryStream);
 
                 image = Stbi.LoadFromMemory(memoryStream, 4);
-                fixed (byte* temp = &image.Data[0])
-                {
-                    IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
-                }
+                glTexImage2D(GL_TEXTURE_2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -183,7 +179,7 @@ namespace CORERenderer.textures
 
                 h.testShader.Use();
                 h.testShader.SetInt("Texture", GL_TEXTURE0);
-                h.testShader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix());
+                h.testShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
 
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
@@ -194,12 +190,7 @@ namespace CORERenderer.textures
                 for (int i = 0; i < data.Length; i++)
                     data[i] = image.Data[i];
 
-                
-                fixed (byte* temp = &image.Data[0])
-                {
-                    IntPtr ptr = new(temp);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);//GL_FLOAT
-                }
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -214,7 +205,7 @@ namespace CORERenderer.textures
             h.envCubeMap = glGenTexture();
             glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
             for (int i = 0; i < 6; i++)
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, NULL);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, null);
 
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

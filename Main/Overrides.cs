@@ -55,7 +55,7 @@ namespace CORERenderer
         /// Load in everything for RenderEveryFrame to work, called when the renderer is initializing
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        public virtual void OnLoad()
+        public virtual void OnLoad(string[] args)
         {
             throw new NotImplementedException("OnLoad() has not been implemented");
         }

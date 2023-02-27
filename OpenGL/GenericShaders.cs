@@ -1,7 +1,7 @@
-﻿using CORERenderer.shaders;
-using System.Net.Http.Headers;
+﻿using CORERenderer.Main;
+using CORERenderer.shaders;
 
-namespace CORERenderer.Main
+namespace CORERenderer.OpenGL
 {
     public class GenericShaders
     {
@@ -14,7 +14,7 @@ namespace CORERenderer.Main
         public static Shader arrowShader;
         public static Shader pickShader;
 
-        public static void SetShaders()
+        internal static void SetShaders()
         {
             image2DShader = new($"{COREMain.pathRenderer}\\shaders\\2DImage.vert", $"{COREMain.pathRenderer}\\shaders\\plane.frag");
             lightingShader = new($"{COREMain.pathRenderer}\\shaders\\lightSource.vert", $"{COREMain.pathRenderer}\\shaders\\lightSource.frag");

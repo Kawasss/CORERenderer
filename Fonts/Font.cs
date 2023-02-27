@@ -107,6 +107,12 @@ namespace CORERenderer.Fonts
                 byte c = (byte)text[i];
                 Character ch = characters[c];
 
+                if (text[i] == ' ')
+                {
+                    x += (ch.advance >> 6) * scale;
+                    continue;
+                }
+
                 float xpos = x + ch.bearing.x * scale;
                 float ypos = y - (ch.size.y - ch.bearing.y) * scale;
 
@@ -136,6 +142,14 @@ namespace CORERenderer.Fonts
             }
             glBindVertexArray(0);
             glBindTexture(GL_TEXTURE0, 0);
+        }
+
+        ~Font()
+        {
+            for (byte i = 0; i < 128; i++)
+                glDeleteTexture(characters[i].textureID);
+            glDeleteBuffer(VBO);
+            glDeleteVertexArray(VAO);
         }
     }
 }

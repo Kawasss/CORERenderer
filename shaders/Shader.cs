@@ -6,6 +6,8 @@ using System.Text;
 using GLFW;
 using static CORERenderer.OpenGL.GL;
 using COREMath;
+using CORERenderer.Main;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer.shaders
 {
@@ -16,6 +18,8 @@ namespace CORERenderer.shaders
         public string fragmentShaderSource;
         public string gridShaderSource;
         public string geometryShaderSource = null;
+
+        public int byteSize = 0;
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -90,8 +94,8 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
-                Console.WriteLine(glGetShaderInfoLog(shader));
+                COREMain.console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
+                COREMain.console.WriteLine(glGetShaderInfoLog(shader));
             }
         }
 
@@ -103,9 +107,11 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
-                Console.WriteLine(glGetProgramInfoLog(program));
+                COREMain.console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
+                COREMain.console.WriteLine(glGetProgramInfoLog(program));
             }
+            glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, pname);
+            Rendering.shaderByteSize += pname[0];
         }
 
         public void SetInt(string name, int value)

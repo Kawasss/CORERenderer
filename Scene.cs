@@ -16,36 +16,35 @@ namespace CORERenderer
         public Camera camera;
 
         public List<Model> allModels;
+        public List<Light> allLights;
 
         public bool loaded = false;
 
         public int currentObj = -1;
 
 
-        Vector2 lastPos = null;
+        private Vector2 lastPos = null;
 
 
-        public override void OnLoad()
+        public override void OnLoad(string[] args)
         {
             allModels = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
 
-            if (LoadFile == RenderMode.CRSFile) //CRS disabled cause it needs to be reworked
+            if (args.Length != 0)
             {
-
+                if (LoadFile != RenderMode.CRSFile)
+                {
+                    loaded = true;
+                    allModels.Add(new(args[0]));
+                    currentObj = 0;
+                }
             }
-            else
-            {
-                loaded = true;
-                allModels.Add(new(LoadFilePath));
-                currentObj = 0;
-            }
-            //allModels.Add(new($"{pathRenderer}\\textures\\hdr\\newport_loft.hdr"));
         }
 
         public override void RenderEveryFrame(float delta)
         {
-            RenderAllModels();
+            RenderAllModels(allModels);
         }
 
         public override void EveryFrame(Window window, float delta)
@@ -137,7 +136,7 @@ namespace CORERenderer
         private static bool enteredFrame = false;
 
         public static bool IsCursorInFrame(float mouseX, float mouseY)
-        {
+        { //awfully written
             if (((mouseX >= viewportX) && (mouseX <= monitorWidth - viewportX) && (monitorHeight - mouseY >= viewportY) && (monitorHeight - mouseY <= monitorHeight - 25)))
             {
                 if (Glfw.GetMouseButton(window, MouseButton.Right) == InputState.Press)

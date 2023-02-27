@@ -2,6 +2,7 @@
 using CORERenderer.shaders;
 using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
+using static CORERenderer.OpenGL.Rendering;
 using StbiSharp;
 
 namespace CORERenderer.Main
@@ -252,11 +253,7 @@ namespace CORERenderer.Main
                 using (MemoryStream memoryStream = new())
                 {
                     StbiImage image = Stbi.LoadFromMemory(memoryStream, 4);
-                    fixed (byte* temp = &image.Data[0])
-                    {
-                        IntPtr ptr = new(temp);
-                        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, image.Width, image.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, ptr);
-                    }
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, image.Width, image.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.Data);
                 }
                 glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

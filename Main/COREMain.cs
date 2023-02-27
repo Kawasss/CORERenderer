@@ -5,8 +5,10 @@ using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GUI;
 using CORERenderer.Loaders;
+using CORERenderer.OpenGL;
 using System;
 using System.Diagnostics.SymbolStore;
+using System.Transactions;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
@@ -55,11 +57,12 @@ namespace CORERenderer.Main
         public static bool renderGrid = true;
         public static bool renderBackground = true;
         public static bool secondPassed = true;
-        public static bool renderGUI = false;
+        public static bool renderGUI = true;
         public static bool renderIDFramebuffer = false;
         public static bool renderToIDFramebuffer = true;
         public static bool useChromAber = false;
         public static bool useVignette = false;
+        public static bool renderGPUInfo = false;
 
         public static bool destroyWindow = false;
         public static bool addCube = false;
@@ -68,8 +71,10 @@ namespace CORERenderer.Main
         public static bool renderOrthographic = false;
         public static bool allowAlphaOverride = true;
 
-        private static bool keyIsPressed = false;
-        private static bool mouseIsPressed = false;
+        public static bool keyIsPressed = false;
+        public static bool mouseIsPressed = false;
+
+        private static bool subMenuOpenLastFrame = false;
 
         //enums
         public static RenderMode LoadFile = RenderMode.CRSFile;
@@ -124,7 +129,7 @@ namespace CORERenderer.Main
                 vertexArrayObjectGrid = GenerateBufferlessVAO();
 
                 Overrides.AlwaysLoad();
-                GenericShaders.SetShaders();
+                Rendering.Init();
 
                 if (glGetString(GL_RENDERER).IndexOf('/') != -1)
                     GPU = glGetString(GL_RENDERER)[..glGetString(GL_RENDERER).IndexOf('/')];
@@ -194,7 +199,7 @@ namespace CORERenderer.Main
 
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button test = new("Save as image", 100, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette", "Render GPU info" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -216,6 +221,7 @@ namespace CORERenderer.Main
                 menu.SetBool("Allow alpha override", allowAlphaOverride);
                 menu.SetBool("Use chrom. aber.", useChromAber);
                 menu.SetBool("Use vignette", useVignette);
+                menu.SetBool("Render GPU info", renderGPUInfo);
 
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
@@ -235,7 +241,7 @@ namespace CORERenderer.Main
 
 
                 scenes.Add(new());
-                scenes[0].OnLoad();
+                scenes[0].OnLoad(args);
                 selectedScene = 0;
 
                 arrows = new();
@@ -264,6 +270,7 @@ namespace CORERenderer.Main
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
 
+                bool submenuOpen = false;
                 //render loop
                 while (!Glfw.WindowShouldClose(window))
                 {
@@ -274,53 +281,79 @@ namespace CORERenderer.Main
 
                     wrapperFBO.Bind();
 
+                    submenuOpen = Submenu.isOpen;
                     {
                         gui.Bind();
+                        tb.Render();
                         if (renderGUI)
                         {
-                            if (!destroyWindow || keyIsPressed || mouseIsPressed || Submenu.isOpen)
+                            tb.Render();
+                            button.Render();
+                            subMenuOpenLastFrame = submenuOpen && !Submenu.isOpen;
+                            if (!destroyWindow || subMenuOpenLastFrame)
                             {
                                 glClearColor(0.085f, 0.085f, 0.085f, 1);
                                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+                                
                                 tb.CheckForUpdate(mousePosX, mousePosY);
                                 tb.Render();
 
                                 tab.Render();
 
                                 modelInformation.Render();
+                                if (scenes[selectedScene].currentObj != -1)
+                                    Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
 
-                                button.Render();
-                                test.Render();
+                                button.changed = true; //cheap trick to make it think that its allowed to render
+                                button.RenderStatic();
 
                                 console.RenderEvenIfNotChanged();
+
+                                secondPassed = true; //cheap trick to make it think that its allowed to render
+                                graphManager.Render();
+                                secondPassed = false;
+
+                                sceneManager.Render();
                             }
 
+                            if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen)
+                            {
+                                tab.Render();
+
+                                modelInformation.Render();
+                                if (scenes[selectedScene].currentObj != -1)
+                                    Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
+
+                                sceneManager.Render();
+                            }
                             graph.Update(fps); //update even without any input because the data always changes
                             frametimeGraph.Update(currentFrameTime * 1000);
-                            graphManager.Render();
-
-                            sceneManager.Render();
 
                             console.Render();
-
-                            GPUInfo.Render();
-
-                            GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
-                            GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
-                            GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
-                            GPUInfo.Write($"CORE Renderer {VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 7), 0.8f);
-                            GPUInfo.Write($"COREMath {MathC.VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 8), 0.8f);
+                            
                         }
-                        else
+                       
+                        if (renderGPUInfo)
                         {
-                            glClearColor(0.085f, 0.085f, 0.085f, 1);
-                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                            GPUInfo.Render();
+                            GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
+                            GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
+
+                            GPUInfo.Write($"Total GPU Data: {TotalAmountOfTransferredBytesString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
+                            GPUInfo.Write($"Last GPU Data: {LastAmountOfTransferredBytesString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
+                            GPUInfo.Write($"Unresolved Instances: {unresolvedInstances}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
+                            GPUInfo.Write($"Estimated Data Loss: {EstimatedDataLossString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 7), 0.8f);
+                            GPUInfo.Write($"Total Shader Sizes: {TotalShaderByteSizeString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 8), 0.8f);
+
+                            GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 10), 0.8f);
+                            GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 11), 0.8f);
+                            GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 12), 0.8f);
+                            GPUInfo.Write($"CORE Renderer {VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 13), 0.8f);
+                            GPUInfo.Write($"COREMath {MathC.VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 14), 0.8f);
                         }
-                        if (!renderGUI)
-                            button.Render();
-                        GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
-                        GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
+                        graphManager.Render();
+                        tb.CheckForUpdate(mousePosX, mousePosY);
+                        
                         gui.RenderFramebuffer();
                     }
 
@@ -407,15 +440,6 @@ namespace CORERenderer.Main
 
                                         console.Render();
 
-                                        GPUInfo.Render();
-
-                                        GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
-                                        GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
-                                        GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
-                                        GPUInfo.Write($"CORE Renderer {VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 7), 0.8f);
-                                        GPUInfo.Write($"COREMath {MathC.VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 8), 0.8f);
-                                        GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
-                                        GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
                                         gui.RenderFramebuffer();
 
                                         glEnable(GL_DEPTH);
@@ -512,7 +536,8 @@ namespace CORERenderer.Main
             byte[] data = new byte[4];
             glReadPixels((int)mousePosX, (int)(monitorHeight - mousePosY), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
             //convert color id to single int for uses
-            selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
+                selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
         }
 
         //zoom in or out

@@ -122,6 +122,7 @@ namespace CORERenderer.GUI
         {
             //deletes the window and the vram it used
             glDeleteTexture(splashScreenTexture.Handle);
+            glDeleteVertexArray(vao);
             Glfw.DestroyWindow(window);
             Glfw.RestoreWindow(COREMain.window);
             Glfw.SetWindowMonitor(COREMain.window, Glfw.PrimaryMonitor, 0, 0, COREMain.monitorWidth, COREMain.monitorHeight, refreshRate);

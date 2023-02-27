@@ -5,11 +5,10 @@ using CORERenderer.Loaders;
 using COREMath;
 using CORERenderer.textures;
 using CORERenderer.OpenGL;
-using System.Transactions;
 
 namespace CORERenderer.GUI
 {
-    public class Div
+    public partial class Div
     {
         private uint VBO;
         private uint VAO;
@@ -38,6 +37,8 @@ namespace CORERenderer.GUI
         Action renderCallBackMethod = null;
 
         public List<Model> modelList;
+
+        public bool onlyUpdateEverySecond = false;
 
         public Div(int width, int height, int x, int y)
         {
@@ -112,6 +113,9 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
+            if (onlyUpdateEverySecond && !COREMain.secondPassed)
+                return;
+
             GenericShaders.solidColorQuadShader.Use();
 
             glBindVertexArray(VAO);
@@ -123,149 +127,6 @@ namespace CORERenderer.GUI
         public void RenderModelList() => SetRenderCallBack(renderModelList);
 
         public void RenderSubmodelList() => SetRenderCallBack(renderSubmodelList);
-
-        private void renderModelList()
-        {
-            int offset = 20;
-            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels)
-            {
-                if (offset >= Height)
-                {
-                    if (COREMain.secondPassed)
-                        COREMain.console.WriteError("Too many objects, can't render to list");
-                    return;
-                }
-
-                if (!Submenu.isOpen)
-                    if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
-                    {   //makes the clicked object highlighted and makes all the others not highlighted
-                        if (!model.highlighted)
-                            model.highlighted = true;
-                        else
-                            model.highlighted = false;
-                    }
-                
-                if (!model.highlighted)
-                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset);
-                else
-                    Write($"{model.name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
-                
-                GenericShaders.image2DShader.Use();
-
-                //sets up the buffer with the coordinates for the icon
-                float[] vertices = new float[]
-                {
-                    bottomX + Width * 0.1f,      bottomY + Height - offset + 18f,      0, 0,
-                    bottomX + Width * 0.1f,      bottomY + Height - offset + 18f - 25, 0, 1,
-                    bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f - 25, 1, 1,
-
-                    bottomX + Width * 0.1f,      bottomY + Height - offset + 18f,      0, 0,
-                    bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f - 25, 1, 1,
-                    bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f,      1, 0
-                };
-                glBindBuffer(GL_ARRAY_BUFFER, iconVBO);
-                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                //determines what icon to use
-                if (model.type == RenderMode.ObjFile)
-                    objIcon.Use(GL_TEXTURE0);
-                else if (model.type == RenderMode.JPGImage || model.type == RenderMode.PNGImage)
-                    imageIcon.Use(GL_TEXTURE0);
-                else if (model.type == RenderMode.HDRFile)
-                    hdrIcon.Use(GL_TEXTURE0);
-
-                glBindVertexArray(iconVAO);
-                glDrawArrays(PrimitiveType.Triangles, 0, 6);
-
-                //line between the model names
-                vertices = new float[]
-                {
-                    bottomX + Width * 0.1f, bottomY + Height - offset - 9,
-                    bottomX + Width * 0.9f, bottomY + Height - offset - 9
-                };
-
-                glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                GenericShaders.solidColorQuadShader.Use();
-                GenericShaders.solidColorQuadShader.SetVector3("color", 0.3f, 0.3f, 0.3f);
-
-                glBindVertexArray(lineVAO);
-                glDrawArrays(PrimitiveType.Lines, 0, 2);
-
-                GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
-                offset += 37;
-            }
-        }
-
-        private void renderSubmodelList()
-        {
-            int offset = 20;
-            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels) //(int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
-            {
-                foreach (Submodel submodel in model.submodels)//(int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames.Count; i++, offset  += 37)
-                {
-                    if (!Submenu.isOpen)
-                        if (COREMain.CheckAABBCollisionWithClick((int)(COREMain.monitorWidth / 2 + bottomX), (int)(COREMain.monitorHeight / 2 + Height - offset + bottomY), Width, 37))
-                        {   //makes the clicked object highlighted and makes all the others not highlighted
-                            if (!submodel.highlighted)
-                                submodel.highlighted = true;
-                            else
-                                submodel.highlighted = false;
-                        }
-
-                    //add changing selected submodel
-                    if (submodel.highlighted)
-                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset, new Vector3(1, 0, 1));
-                    else
-                        Write($"{submodel.Name}", (int)(Width * 0.1f + 30), Height - offset);
-
-                    GenericShaders.image2DShader.Use();
-
-                    //sets up the buffer with the coordinates for the icon
-                    float[] vertices = new float[]
-                    {
-                            bottomX + Width * 0.1f,      bottomY + Height - offset + 18f,      0, 0,
-                            bottomX + Width * 0.1f,      bottomY + Height - offset + 18f - 25, 0, 1,
-                            bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f - 25, 1, 1,
-
-                            bottomX + Width * 0.1f,      bottomY + Height - offset + 18f,      0, 0,
-                            bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f - 25, 1, 1,
-                            bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f,      1, 0
-                    };
-                    glBindBuffer(GL_ARRAY_BUFFER, iconVBO);
-                    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                    objIcon.Use(GL_TEXTURE0);
-
-                    glBindVertexArray(iconVAO);
-                    glDrawArrays(PrimitiveType.Triangles, 0, 6);
-
-                    //line between the model names
-                    vertices = new float[]
-                    {
-                            bottomX + Width * 0.1f, bottomY + Height - offset - 9,
-                            bottomX + Width * 0.9f, bottomY + Height - offset - 9
-                    };
-
-                    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-                    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                    GenericShaders.solidColorQuadShader.Use();
-                    GenericShaders.solidColorQuadShader.SetVector3("color", 0.3f, 0.3f, 0.3f);
-
-                    glBindVertexArray(lineVAO);
-                    glDrawArrays(PrimitiveType.Lines, 0, 2);
-
-                    GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
-                    offset += 37;
-                }
-            }  
-        }
 
         public void RenderStatic() => Render();
 

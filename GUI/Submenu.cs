@@ -1,4 +1,5 @@
 ﻿using CORERenderer.Main;
+using CORERenderer.OpenGL;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 
@@ -88,7 +89,7 @@ namespace CORERenderer.GUI
                     {
                         isOptionTrue[list[i]] = false;
                         changedValue[i] = true;
-                    } 
+                    }
                 }
                 else
                     changedValue[i] = false;
@@ -109,10 +110,11 @@ namespace CORERenderer.GUI
                 isOptionTrue[list[11]] = false;
                 COREMain.addCube = isOptionTrue[list[12]];
                 COREMain.addCylinder = isOptionTrue[list[13]];
-                COREMain.renderEntireDir = isOptionTrue[list[14]];
-                COREMain.allowAlphaOverride = isOptionTrue[list[15]];
-                COREMain.useChromAber = isOptionTrue[list[16]];
-                COREMain.useVignette = isOptionTrue[list[17]];
+                COREMain.renderEntireDir = isOptionTrue[list[15]];
+                COREMain.allowAlphaOverride = isOptionTrue[list[16]];
+                COREMain.useChromAber = isOptionTrue[list[17]];
+                COREMain.useVignette = isOptionTrue[list[18]];
+                COREMain.renderGPUInfo = isOptionTrue[list[19]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.7f);

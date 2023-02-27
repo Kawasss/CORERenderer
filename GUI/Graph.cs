@@ -1,4 +1,5 @@
 ﻿using CORERenderer.Main;
+using CORERenderer.OpenGL;
 using System.Data;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
@@ -36,6 +37,7 @@ namespace CORERenderer.GUI
 
             div = new(width, height, x, y);
             div.SetRenderCallBack(Render); //causes the graph to be rendered when the div is rendered
+            div.onlyUpdateEverySecond = true;
 
             //more points = more data / accuracy but requires more raw power, right now 5 per row
             List<float> temp = new();
@@ -66,7 +68,7 @@ namespace CORERenderer.GUI
                         float oldValue = (pointValues[i] - bottomY) / Height * MaxValue; //reverse the calculations done at float position = ...
                         pointValues[i] = oldValue / value * Height + bottomY;
                     }
-                    MaxValue = (int)(value + 10);
+                    MaxValue = (int)(value + 15);
                 }
 
                 float position = value / MaxValue * Height + bottomY; //normalizes the given value to get a percentage of where the point is
@@ -97,19 +99,24 @@ namespace CORERenderer.GUI
                 glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Count * sizeof(float), vertices.ToArray());
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+                glBindVertexArray(lineVAO);
+
+                RenderLine(new COREMath.Vector2(pointLocations[^1], pointValues[^1]), new COREMath.Vector2(pointLocations[0], pointValues[^1]), new COREMath.Vector3(0.7f, 0.7f, 0.7f));
+
+                GenericShaders.solidColorQuadShader.SetVector3("color", 1f, 0f, 1f);
+                glDrawArrays(OpenGL.PrimitiveType.Lines, 0, 148);
+                GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+
+                COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+
+                COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.9f, new COREMath.Vector2(1, 0));
+
+                glBindVertexArray(0);
             }
-            glBindVertexArray(lineVAO);
-
-            GenericShaders.solidColorQuadShader.SetVector3("color", 1f, 0f, 1f);
-            glDrawArrays(OpenGL.PrimitiveType.Lines, 0, 148);
-            GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
-
-            COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-            COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-            COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-            COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-
-            glBindVertexArray(0);
         }
 
         public void RenderStatic() => div.Render();

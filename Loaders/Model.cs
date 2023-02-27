@@ -145,12 +145,14 @@ namespace CORERenderer.Loaders
             submodels = new();
             for (int i = 0; i < vertices.Count; i++)
             {
+
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
                 submodels[i].translation = offsets[i];
+                submodels[i].parent = this;
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
 
 
-                COREMain.renderFramebuffer.Bind();
+                /*COREMain.renderFramebuffer.Bind();
                 Render(); //renders the submodel to make the app not crash
 
                 glViewport(COREMain.viewportX, COREMain.viewportY, COREMain.renderWidth, COREMain.renderHeight);
@@ -163,8 +165,10 @@ namespace CORERenderer.Loaders
                 }
                 glViewport(0, 0, COREMain.monitorWidth, COREMain.monitorHeight);
 
-                Glfw.SwapBuffers(COREMain.window);
+                Glfw.SwapBuffers(COREMain.window);*/
             }
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
 
             COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
             COREMain.console.WriteLine($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");

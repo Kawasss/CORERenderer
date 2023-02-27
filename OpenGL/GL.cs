@@ -746,7 +746,7 @@ namespace CORERenderer.OpenGL
         ///     Specifies the data type of the pixel data.
         /// </param>
         /// <param name="pixels">Specifies a pointer to the image data in memory.</param>
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels) => _glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels.ToPointer());
+        internal static void GlTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels) => _glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels.ToPointer());
 
         /// <summary>
         ///     Specify a two-dimensional texture image.
@@ -776,7 +776,7 @@ namespace CORERenderer.OpenGL
         ///     Specifies the data type of the pixel data.
         /// </param>
         /// <param name="pixels">Specifies a pointer to the image data in memory.</param>
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, /*const*/ void* pixels) => _glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+        internal static void GlTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, /*const*/ void* pixels) => _glTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
 
         /// <summary>
         ///     Specify a three-dimensional texture image.
@@ -7396,6 +7396,7 @@ namespace CORERenderer.OpenGL
 
         public const int GL_DEBUG_OUTPUT = 0x92e0;
         public const int GL_MAT4_FLOAT_SIZE = 64;
+        public const int GL_PROGRAM_BINARY_LENGTH = 0x8741;
 
         //----------------------------------------------------------------
 

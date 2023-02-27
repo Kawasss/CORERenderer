@@ -2,17 +2,77 @@
 using static CORERenderer.OpenGL.GL;
 using CORERenderer.textures;
 using CORERenderer.Main;
+using System;
+using System.Runtime.InteropServices;
+using CORERenderer.Loaders;
 
 namespace CORERenderer.OpenGL
 {
     public class Rendering
     {
+        private static int totalAmountOfTransferredBytes = 0;
+        private static int lastAmountOfTransferredBytes = 0;
+
+        public static int unresolvedInstances = 0;
+        private static int estimatedDataLoss = 0;
+        public static int shaderByteSize = 0;
+
+        public static int TotalAmountOfTransferredBytes { get { return totalAmountOfTransferredBytes; } set { totalAmountOfTransferredBytes += value; lastAmountOfTransferredBytes = value; } }
+        public static string TotalAmountOfTransferredBytesString { get { if (totalAmountOfTransferredBytes >= 1000000) return $"{MathF.Round(totalAmountOfTransferredBytes * 0.000001f):N0} MB"; else if (totalAmountOfTransferredBytes >= 1000) return $"{MathF.Round(totalAmountOfTransferredBytes * 0.001f):N0} KB"; else return $"{totalAmountOfTransferredBytes}"; } }
+        public static string LastAmountOfTransferredBytesString { get { if (lastAmountOfTransferredBytes >= 1000000) return $"{MathF.Round(lastAmountOfTransferredBytes * 0.000001f):N0} MB"; else if (lastAmountOfTransferredBytes >= 1000) return $"{MathF.Round(lastAmountOfTransferredBytes * 0.001f):N0} KB"; else return $"{lastAmountOfTransferredBytes}"; } }
+        public static string EstimatedDataLossString { get { if (estimatedDataLoss >= 1000000) return $"{MathF.Round(estimatedDataLoss * 0.000001f):N0} MB"; else if (estimatedDataLoss >= 1000) return $"{MathF.Round(estimatedDataLoss * 0.001f):N0} KB"; else return $"{estimatedDataLoss}"; } }
+        public static string TotalShaderByteSizeString { get { if (shaderByteSize >= 1000000) return $"{MathF.Round(shaderByteSize * 0.000001f):N0} MB"; else if (shaderByteSize >= 1000) return $"{MathF.Round(shaderByteSize * 0.001f):N0} KB"; else return $"{shaderByteSize}"; } }
+
         private static uint lineVBO;
         private static uint lineVAO;
 
         public static bool cullFaces = true;
 
         public static int drawCalls = 0;
+
+        public static void Init()
+        {
+            GenericShaders.SetShaders();
+        }
+
+        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)
+        {
+            unsafe
+            {
+                fixed (byte* temp = &pixels[0])
+                {
+                    IntPtr intptr = new(temp);
+                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, intptr);
+                }
+            }
+            TotalAmountOfTransferredBytes = pixels.Length * sizeof(byte); //bytes are 1 byte of size but still
+        }
+
+        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels)
+        {
+            unsafe
+            {
+                GlTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+            }
+            unresolvedInstances++;
+            estimatedDataLoss += width * height * 4;
+        }
+
+        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, byte[] pixels)
+        {
+            unsafe
+            {
+                if (pixels != null)
+                    fixed (byte* temp = &pixels[0])
+                    {
+                        IntPtr intptr = new(temp);
+                        GlTexImage2D(target, level, internalFormat, width, height, border, format, type, intptr);
+                        TotalAmountOfTransferredBytes = pixels.Length;
+                    }
+                else
+                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+            }
+        }
 
         public static byte[] SaveAsFile(Framebuffer fb, int width, int height)
         {
@@ -93,6 +153,7 @@ namespace CORERenderer.OpenGL
         /// <param name="start"></param>
         /// <param name="end"></param>
         public static void RenderLine(Vector2 start, Vector2 end) => RenderLine(new Vector3(start.x, start.y, 0), new Vector3(end.x, end.y, 0), new Vector3(1, 1, 1));
+        public static void RenderLine(Vector2 start, Vector2 end, Vector3 color) => RenderLine(new Vector3(start.x, start.y, 0), new Vector3(end.x, end.y, 0), color);
 
         public static uint GenerateBufferlessVAO()
         {
@@ -117,6 +178,8 @@ namespace CORERenderer.OpenGL
             glBindVertexArray(VAO);
 
             glBufferData(GL_ARRAY_BUFFER, sizeInBytes, (IntPtr)null, GL_DYNAMIC_DRAW);
+
+            TotalAmountOfTransferredBytes = sizeInBytes;
         }
 
         /// <summary>
@@ -134,6 +197,8 @@ namespace CORERenderer.OpenGL
             glBindVertexArray(VAO);
 
             glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), vertices, GL_STATIC_DRAW);
+
+            TotalAmountOfTransferredBytes = vertices.Length * sizeof(float);
         }
 
         public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Matrix[] matrices)
@@ -152,6 +217,8 @@ namespace CORERenderer.OpenGL
                     glBufferData(GL_ARRAY_BUFFER, matrices.Length * GL_MAT4_FLOAT_SIZE, temp, GL_STATIC_DRAW);
                 }
             }
+
+            TotalAmountOfTransferredBytes += 16 * matrices.Length * sizeof(float);
         }
 
         public static void GenerateFilledBuffer(out uint VBO, Matrix[] matrices)
@@ -167,6 +234,8 @@ namespace CORERenderer.OpenGL
                     glBufferData(GL_ARRAY_BUFFER, matrices.Length * GL_MAT4_FLOAT_SIZE, temp, GL_STATIC_DRAW);
                 }
             }
+
+            TotalAmountOfTransferredBytes = 16 * matrices.Length * sizeof(float);
         }
 
         /// <summary>
@@ -180,6 +249,8 @@ namespace CORERenderer.OpenGL
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Length * sizeof(uint), indices, GL_STATIC_DRAW);
+
+            TotalAmountOfTransferredBytes = indices.Length * sizeof(uint);
         }
 
         //try referring to offcenter version with 0, width, height, 0.01, 100
@@ -199,7 +270,7 @@ namespace CORERenderer.OpenGL
         private static int backgroundIndex = -1;
         private static bool containsBackground = false;
 
-        public static void RenderAllModels()
+        public static void RenderAllModels(List<Model> models)
         {
             if (cullFaces)
                 glEnable(GL_CULL_FACE);
@@ -208,16 +279,13 @@ namespace CORERenderer.OpenGL
 
             for (int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels.Count; i++)
             {
-                if (COREMain.scenes[COREMain.selectedScene].allModels[i].type != RenderMode.HDRFile)
-                    COREMain.scenes[COREMain.selectedScene].allModels[i].Render();
+                if (models[i].type != RenderMode.HDRFile)
+                    models[i].Render();
                 else
                 {
                     backgroundIndex = i;
                     containsBackground = true;
                 }
-
-                //if (CORERenderContent.allModels[i].highlighted && CORERenderContent.allModels[i].type == RenderMode.ObjFile)
-                //    CORERenderContent.allModels[i].RenderOutlines();
             }
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -225,8 +293,8 @@ namespace CORERenderer.OpenGL
 
             RenderLights(COREMain.lights);
 
-            if (containsBackground && COREMain.renderBackground)
-                COREMain.scenes[COREMain.selectedScene].allModels[backgroundIndex].RenderBackground();
+            if (containsBackground)
+                models[backgroundIndex].RenderBackground();
         }
 
         public static void RenderLights(List<Light> locations)
