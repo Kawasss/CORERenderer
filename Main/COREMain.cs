@@ -79,6 +79,7 @@ namespace CORERenderer.Main
 
         //enums
         public static RenderMode LoadFile = RenderMode.CRSFile;
+        public static Keys pressedKey;
 
         //classes
         public static List<Light> lights = new();
@@ -90,6 +91,7 @@ namespace CORERenderer.Main
         public static COREConsole console;
         public static Arrows arrows;
         public static Div modelList;
+        public static Submenu menu;
 
         //structs
         public static Window window;
@@ -194,7 +196,7 @@ namespace CORERenderer.Main
 
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button test = new("Save as image", 100, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
+                menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -309,6 +311,9 @@ namespace CORERenderer.Main
 
                                 sceneManager.Render();
                             }
+
+                            if (destroyWindow)
+                                console.Update();
 
                             if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen)
                             {
@@ -458,35 +463,7 @@ namespace CORERenderer.Main
                         destroyWindow = true;
                         splashScreen.Dispose();
 
-                        int i = 0;
-                        console.Wipe();
-                        using (FileStream fs = File.Open($"{pathRenderer}\\logos\\logo.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        using (BufferedStream bs = new(fs))
-                        using (StreamReader sr = new(bs))
-                            for (string n = sr.ReadLine(); n != null; n = sr.ReadLine(), i++)
-                            {
-                                if (i == 3)
-                                    console.WriteLine($"{n}         CORE Renderer {VERSION}");
-                                else if (i == 4)
-                                    console.WriteLine($"{n}         CORE Math {MathC.VERSION}");
-                                else if (i == 6)
-                                    console.WriteLine($"{n}         GPU: {GPU}");
-                                else if (i == 7)
-                                    console.WriteLine($"{n}         OpenGL {glGetString(GL_VERSION)}");
-                                else if (i == 8)
-                                    console.WriteLine($"{n}         GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}");
-                                else if (i == 10)
-                                    console.WriteLine($"{n}         Initialized in {Math.Round(Glfw.Time, 2)} seconds");
-                                else if (i == 11)
-                                    console.WriteLine($"{n}         Initialized with {LoadFile}");
-                                else if (i == 13)
-                                    console.WriteLine($"{n}         Rendering with default shaders");
-                                else if (i == 14)
-                                    console.WriteLine($"{n}         Rendering with {splashScreen.refreshRate} Hz");
-                                else
-                                    console.WriteLine(n);
-                            }
-                                
+                        console.ShowInfo();
                     }
                 }
                 DeleteAllBuffers();
@@ -595,6 +572,7 @@ namespace CORERenderer.Main
         private static void KeyCallback(Window window, Keys key, int scancode, InputState action, ModifierKeys mods)
         {   //saves a lot of energy by only updating if input is detected
                 keyIsPressed = action == InputState.Press;
+            pressedKey = key;
         }
 
         private static void MouseCallback(Window window, MouseButton button, InputState state, ModifierKeys modifiers)

@@ -16,7 +16,7 @@ namespace CORERenderer
         private float yaw = -(MathC.PiF / 2);
         private float fov = MathC.PiF / 2;
 
-        private static float cameraSpeed = 3f;
+        public static float cameraSpeed = 3f;
         private const float SENSITIVITY = 0.1f;
 
         private bool firstMove = true;
@@ -123,11 +123,6 @@ namespace CORERenderer
         public void UpdatePosition(float mousePosX, float mousePosY, float delta)
         {
             Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
-
-            if (Glfw.GetKey(COREMain.window, Keys.LeftControl) == InputState.Press)
-                cameraSpeed = 60;
-            else
-                cameraSpeed = 3;
 
             if (Glfw.GetKey(COREMain.window, Keys.W) == InputState.Press)
                 position += front * (cameraSpeed * delta);
