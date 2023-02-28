@@ -152,11 +152,12 @@ namespace CORERenderer.Loaders
                 rotation.z = 0;
         }
 
-        ~Submodel()
+        public void Dispose()
         {
             glDeleteBuffer(VBO);
             glDeleteVertexArray(VAO);
             glDeleteBuffer(EBO);
+            GC.Collect();
         }
     }
 }

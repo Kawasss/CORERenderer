@@ -61,14 +61,14 @@ namespace CORERenderer.GUI
         {
             if (COREMain.secondPassed) //makes the graph update only once every second to make it readable
             {
-                if (value > MaxValue - 1)
+                if (value >= MaxValue - 1)
                 {
                     for (int i = 0; i < pointValues.Length; i++)
                     {
                         float oldValue = (pointValues[i] - bottomY) / Height * MaxValue; //reverse the calculations done at float position = ...
                         pointValues[i] = oldValue / value * Height + bottomY;
                     }
-                    MaxValue = (int)(value + 15);
+                    MaxValue = (int)(value + 20);
                 }
 
                 float position = value / MaxValue * Height + bottomY; //normalizes the given value to get a percentage of where the point is

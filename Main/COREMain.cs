@@ -8,6 +8,7 @@ using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
 using System;
 using System.Diagnostics.SymbolStore;
+using System.IO;
 using System.Transactions;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
@@ -62,7 +63,6 @@ namespace CORERenderer.Main
         public static bool renderToIDFramebuffer = true;
         public static bool useChromAber = false;
         public static bool useVignette = false;
-        public static bool renderGPUInfo = false;
 
         public static bool destroyWindow = false;
         public static bool addCube = false;
@@ -146,28 +146,21 @@ namespace CORERenderer.Main
                 modelList = new
                 (
                     (int)(monitorWidth * 0.117f), 
-                    (int)(monitorHeight * 0.725f), 
-                    (int)(monitorWidth * 0.004f), 
-                    (int)(monitorHeight * 0.25f - 25 + 2.5f)
+                    (int)(monitorHeight * 0.974f - 25), 
+                    (int)(monitorWidth * 0.004f),
+                    (int)(monitorHeight * 0.004f)
                 );
                 Div submodelList = new
                 (
                     (int)(monitorWidth * 0.117f),
-                    (int)(monitorHeight * 0.725f),
+                    (int)(monitorHeight * 0.974f - 25),
                     (int)(monitorWidth * 0.004f),
-                    (int)(monitorHeight * 0.25f - 25 + 2.5f)
+                    (int)(monitorHeight * 0.004f)
                 );
                 Div modelInformation = new
                 (
                     (int)(monitorWidth * 0.117f), 
-                    (int)(monitorHeight * 0.725f), 
-                    (int)(monitorWidth * 0.879f),
-                    (int)(monitorHeight * 0.25f - 25 + 2.5f)
-                );
-                Div GPUInfo = new
-                (
-                    (int)(monitorWidth * 0.117f),
-                    (int)(monitorHeight * 0.242f - 25),
+                    (int)(monitorHeight * 0.974f - 25), 
                     (int)(monitorWidth * 0.879f),
                     (int)(monitorHeight * 0.004f)
                 );
@@ -201,7 +194,7 @@ namespace CORERenderer.Main
 
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button test = new("Save as image", 100, monitorHeight - 25);
-                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette", "Render GPU info" });
+                Submenu menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -223,7 +216,6 @@ namespace CORERenderer.Main
                 menu.SetBool("Allow alpha override", allowAlphaOverride);
                 menu.SetBool("Use chrom. aber.", useChromAber);
                 menu.SetBool("Use vignette", useVignette);
-                menu.SetBool("Render GPU info", renderGPUInfo);
 
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
@@ -333,25 +325,7 @@ namespace CORERenderer.Main
 
                             console.Render();
                         }
-                       
-                        if (renderGPUInfo)
-                        {
-                            GPUInfo.Render();
-                            GPUInfo.Write($"DCPS: {drawCallsPerSecond}", 5, (int)(GPUInfo.Height - debugText.characterHeight * 0.75f - 5), 0.8f);
-                            GPUInfo.Write($"DCPF: {drawCallsPerFrame}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 2), 0.8f);
-
-                            GPUInfo.Write($"Total GPU Data: {TotalAmountOfTransferredBytesString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 4), 0.8f);
-                            GPUInfo.Write($"Last GPU Data: {LastAmountOfTransferredBytesString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 5), 0.8f);
-                            GPUInfo.Write($"Unresolved Instances: {unresolvedInstances}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 6), 0.8f);
-                            GPUInfo.Write($"Estimated Data Loss: {EstimatedDataLossString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 7), 0.8f);
-                            GPUInfo.Write($"Total Shader Sizes: {TotalShaderByteSizeString}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 8), 0.8f);
-
-                            GPUInfo.Write($"GPU: {GPU}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 10), 0.8f);
-                            GPUInfo.Write($"OpenGL {glGetString(GL_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 11), 0.8f);
-                            GPUInfo.Write($"GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 12), 0.8f);
-                            GPUInfo.Write($"CORE Renderer {VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 13), 0.8f);
-                            GPUInfo.Write($"COREMath {MathC.VERSION}", 5, (int)(GPUInfo.Height - (debugText.characterHeight * 0.75f + 5) * 14), 0.8f);
-                        }
+                        
                         graphManager.Render();
                         tb.CheckForUpdate(mousePosX, mousePosY);
                         
@@ -422,19 +396,8 @@ namespace CORERenderer.Main
                                         Submenu.isOpen = false;
 
                                         gui.Bind();
-                                        glClearColor(0.085f, 0.085f, 0.085f, 1);
-                                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                                        tb.CheckForUpdate(mousePosX, mousePosY);
-                                        tb.Render();
 
                                         console.RenderEvenIfNotChanged();
-
-                                        graphManager.Render();
-
-                                        sceneManager.Render();
-
-                                        console.Render();
 
                                         gui.RenderFramebuffer();
 
@@ -494,6 +457,36 @@ namespace CORERenderer.Main
                     {
                         destroyWindow = true;
                         splashScreen.Dispose();
+
+                        int i = 0;
+                        console.Wipe();
+                        using (FileStream fs = File.Open($"{pathRenderer}\\logos\\logo.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (BufferedStream bs = new(fs))
+                        using (StreamReader sr = new(bs))
+                            for (string n = sr.ReadLine(); n != null; n = sr.ReadLine(), i++)
+                            {
+                                if (i == 3)
+                                    console.WriteLine($"{n}         CORE Renderer {VERSION}");
+                                else if (i == 4)
+                                    console.WriteLine($"{n}         CORE Math {MathC.VERSION}");
+                                else if (i == 6)
+                                    console.WriteLine($"{n}         GPU: {GPU}");
+                                else if (i == 7)
+                                    console.WriteLine($"{n}         OpenGL {glGetString(GL_VERSION)}");
+                                else if (i == 8)
+                                    console.WriteLine($"{n}         GLSL {glGetString(GL_SHADING_LANGUAGE_VERSION)}");
+                                else if (i == 10)
+                                    console.WriteLine($"{n}         Initialized in {Math.Round(Glfw.Time, 2)} seconds");
+                                else if (i == 11)
+                                    console.WriteLine($"{n}         Initialized with {LoadFile}");
+                                else if (i == 13)
+                                    console.WriteLine($"{n}         Rendering with default shaders");
+                                else if (i == 14)
+                                    console.WriteLine($"{n}         Rendering with {splashScreen.refreshRate} Hz");
+                                else
+                                    console.WriteLine(n);
+                            }
+                                
                     }
                 }
                 DeleteAllBuffers();

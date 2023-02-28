@@ -18,7 +18,7 @@ namespace CORERenderer.GUI
     {
         public readonly int width, height;
 
-        private readonly int refreshRate = 0;
+        public readonly int refreshRate = 0;
 
         public readonly Window window;
 
@@ -118,7 +118,7 @@ namespace CORERenderer.GUI
             Glfw.MakeContextCurrent(COREMain.window);
         }
 
-        public void Refresh() => Glfw.SwapBuffers(window);;
+        public void Refresh() => Glfw.SwapBuffers(window);
 
         public void Dispose()
         {

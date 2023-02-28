@@ -114,7 +114,6 @@ namespace CORERenderer.GUI
                 COREMain.allowAlphaOverride = isOptionTrue[list[16]];
                 COREMain.useChromAber = isOptionTrue[list[17]];
                 COREMain.useVignette = isOptionTrue[list[18]];
-                COREMain.renderGPUInfo = isOptionTrue[list[19]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.7f);

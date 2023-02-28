@@ -193,5 +193,19 @@ namespace CORERenderer.Loaders
                     throw new GLFW.Exception($"Undefined error: {error}");
             }
         }
+
+        public void Dispose()
+        {
+            if (COREMain.scenes[COREMain.selectedScene].currentObj == COREMain.scenes[COREMain.selectedScene].allModels.IndexOf(this))
+                COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+            COREMain.scenes[COREMain.selectedScene].allModels.Remove(this);
+        }
+
+        ~Model()
+        {
+            foreach (Submodel sub in submodels)
+                sub.Dispose();
+            DeleteUnusedTextures(this);
+        }
     }
 }

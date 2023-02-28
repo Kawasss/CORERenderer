@@ -24,9 +24,16 @@ namespace CORERenderer.GUI
             Width = width;
             Height = height;
 
-            maxLines = height / (int)(COREMain.debugText.characterHeight + 2);
+            maxLines = height / (int)(COREMain.debugText.characterHeight * 0.7f + 2);
 
             lines = new string[maxLines];
+        }
+
+        public void Wipe()
+        {
+            lines = new string[maxLines];
+            linesPrinted = 0;
+            changed = true;
         }
 
         public void Render()
@@ -38,13 +45,13 @@ namespace CORERenderer.GUI
 
             quad.Render();
             
-            int lineOffset = (int)(COREMain.debugText.characterHeight + 2); //scale = 1
-            for (int i = 0; i < linesPrinted; i++, lineOffset += (int)(COREMain.debugText.characterHeight + 2))
+            int lineOffset = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //scale = 1
+            for (int i = 0; i < linesPrinted; i++, lineOffset += (int)(COREMain.debugText.characterHeight * 0.7f + 2))
             {
                 if (lines[i].Length < 5 || lines[i][..5] != "ERROR")
-                    quad.Write(lines[i], 0, Height - lineOffset, 0.8f);
+                    quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
                 else
-                    quad.WriteError(lines[i], 0, Height - lineOffset, 0.8f);
+                    quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
             }
         }
 
@@ -66,7 +73,7 @@ namespace CORERenderer.GUI
             }
             for (int i = 0; i < text.Length; i += (int)(Height / (COREMain.debugText.characterHeight / 4)))
             {
-                if (text[i..^1].Length > Height / (COREMain.debugText.characterHeight / 4))
+                if (text[i..].Length > 10000)//Height / (COREMain.debugText.characterHeight * 100))
                 {
                     lines[linesPrinted - 1] = $"{text[i..(i + Height / (int)(COREMain.debugText.characterHeight / 4))]}";
                     linesPrinted++;
