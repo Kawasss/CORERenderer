@@ -199,13 +199,13 @@ namespace CORERenderer.Loaders
             if (COREMain.scenes[COREMain.selectedScene].currentObj == COREMain.scenes[COREMain.selectedScene].allModels.IndexOf(this))
                 COREMain.scenes[COREMain.selectedScene].currentObj = -1;
             COREMain.scenes[COREMain.selectedScene].allModels.Remove(this);
+            foreach (Submodel sub in submodels)
+                sub.Dispose();
         }
 
         ~Model()
         {
-            foreach (Submodel sub in submodels)
-                sub.Dispose();
-            DeleteUnusedTextures(this);
+            //DeleteUnusedTextures(this);
         }
     }
 }

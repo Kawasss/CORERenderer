@@ -221,30 +221,21 @@ namespace CORERenderer.Main
                     if (Object.Materials[i].Texture == COREMain.scenes[COREMain.selectedScene].allModels[i].Materials[i].Texture)
                         delete = false;
                 if (delete)
-                {
-                    File.Delete(usedTextures[Object.Materials[i].Texture].path);
                     glDeleteTexture(usedTextures[Object.Materials[i].Texture].Handle);
-                }
 
                 delete = true;
                 for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
                     if (Object.Materials[i].DiffuseMap == COREMain.scenes[COREMain.selectedScene].allModels[j].Materials[i].DiffuseMap)
                         delete = false;
                 if (delete)
-                {
-                    File.Delete(usedTextures[Object.Materials[i].DiffuseMap].path);
                     glDeleteTexture(usedTextures[Object.Materials[i].DiffuseMap].Handle);
-                }
 
                 delete = true;
                 for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
                     if (Object.Materials[i].SpecularMap == COREMain.scenes[COREMain.selectedScene].allModels[j].Materials[i].SpecularMap)
                         delete = false;
                 if (delete)
-                {
-                    File.Delete(usedTextures[Object.Materials[i].SpecularMap].path);
                     glDeleteTexture(usedTextures[Object.Materials[i].SpecularMap].Handle);
-                }
             }
         }
 

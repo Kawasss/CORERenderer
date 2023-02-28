@@ -2,6 +2,7 @@
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.Main;
+using System;
 
 namespace CORERenderer.GUI
 {
@@ -79,6 +80,8 @@ namespace CORERenderer.GUI
                     try
                     {
                         letter = Globals.keyCharBinding[(int)COREMain.pressedKey];
+                        if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press)
+                            letter = letter.ToString().ToUpper()[0];
                         if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15) && Glfw.Time - previousTime2 > 0.003)
                         {
                             Write($"{letter}");
@@ -262,7 +265,9 @@ namespace CORERenderer.GUI
 
         private void ParseInput(string input)
         {
-            if (input == "goto console")
+            if (input == "exit")
+                Glfw.SetWindowShouldClose(COREMain.window, true);
+            else if (input == "goto console")
             {
                 currentContext = Context.Console;
                 WriteLine($"COREConsole/{currentContext} > ");
@@ -306,6 +311,12 @@ namespace CORERenderer.GUI
                     case "pitch":
                         WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.Pitch}");
                         break;
+                    case "farplane":
+                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.FarPlane}");
+                        break;
+                    case "nearplane":
+                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.NearPlane}");
+                        break;
                     case "position":
                         Vector3 location = COREMain.scenes[COREMain.selectedScene].camera.position;
                         WriteLine($"{location.x}, {location.y}, {location.z}");
@@ -342,6 +353,16 @@ namespace CORERenderer.GUI
                         ChangeValue(ref result3, input[9..]);
                         COREMain.scenes[COREMain.selectedScene].camera.Pitch = result3;
                         break;
+                    case "farplane":
+                        float result4 = 0; //hold value here because property cant be used as ref
+                        ChangeValue(ref result4, input[12..]);
+                        COREMain.scenes[COREMain.selectedScene].camera.FarPlane = result4;
+                        break;
+                    case "nearplane":
+                        float result5 = 0; //hold value here because property cant be used as ref
+                        ChangeValue(ref result5, input[13..]);
+                        COREMain.scenes[COREMain.selectedScene].camera.NearPlane = result5;
+                        break;
                     default:
                         WriteError($"Unknown variable: \"{input[4..input.IndexOf(' ', input.IndexOf(' ') + 1)]}\"");
                         break;
@@ -352,24 +373,57 @@ namespace CORERenderer.GUI
         }
         private void HandleSceneCommands(string input)
         {
-            if (input.Length > 12 && input[..12] == "delete model")
+            if (input.Length > 7 && input[..7] == "delete ")
             {
-                int index;
-                bool succeeded = int.TryParse(input[13..input.IndexOf(']')], out index);
-                if (succeeded && index < COREMain.scenes[COREMain.selectedScene].allModels.Count)
+                if (input.Length > 13 && input[..13] == "delete model[")
                 {
-                    try
+                    int index;
+                    bool succeeded = int.TryParse(input[13..input.IndexOf(']')], out index);
+                    if (succeeded && index < COREMain.scenes[COREMain.selectedScene].allModels.Count)
                     {
-                        COREMain.scenes[COREMain.selectedScene].allModels[index].Dispose();
-                        WriteLine($"Deleted model {index}");
+                        try
+                        {
+                            COREMain.scenes[COREMain.selectedScene].allModels[index].Dispose();
+                            WriteLine($"Deleted model {index}");
+                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
+                        }
                     }
-                    catch (IndexOutOfRangeException)
-                    {
+                    else
                         WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
-                    }
                 }
-                else
-                    WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
+                else if (input.Length > 13 && input[..13] == "delete models")
+                {
+                    int index1;
+                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out index1);
+                    int index2;
+                    bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2);
+                    WriteLine(input[(input.IndexOf("..") + 2)].ToString());
+                    if (succeeded && succeeded2)
+                    {
+                        for (int i = index1; i <= index2; i++)
+                        {
+                            try
+                            {
+                                if (i == 0)
+                                    WriteLine($"Deleted model {i}");
+                                else
+                                    Write($"..{i}");
+                                COREMain.scenes[COREMain.selectedScene].allModels[i].Dispose();
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                WriteLine($"Couldn't delete model {i}");
+                            }
+                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+                        }
+                    }
+                    else
+                        WriteLine($"Couldn't delete models {index1} through {index2}");
+                }
             }
             else if (input.Length > 5 && input == "load ")
             {
@@ -379,6 +433,15 @@ namespace CORERenderer.GUI
                     COREMain.scenes[COREMain.selectedScene].allModels.Add(new(input[5..]));
                 else
                     WriteLine($"Couldn't find the file at {input[5..]}");
+            }
+            else if (input.Length > 5 && input[..5] == "show ")
+            {
+                switch (input[5..])
+                {
+                    case "model count":
+                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].allModels.Count}");
+                        break;
+                }
             }
             else
                 WriteError($"Couldn't parse scene command \"{input}\"");

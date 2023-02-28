@@ -16,6 +16,8 @@ namespace CORERenderer
         private float yaw = -(MathC.PiF / 2);
         private float fov = MathC.PiF / 2;
 
+        private float nearPlane = 0.1f, farPlane = 5000;
+
         public static float cameraSpeed = 3f;
         private const float SENSITIVITY = 0.1f;
 
@@ -36,6 +38,28 @@ namespace CORERenderer
         {
             position = Position;
             AspectRatio = aspectRatio;
+        }
+
+        public float NearPlane
+        {
+            get => nearPlane;
+            set
+            {
+                if (value <= 0)
+                    value = 1;
+                nearPlane = value;
+            }
+        }
+
+        public float FarPlane
+        {
+            get => farPlane;
+            set
+            {
+                if (value <= 0)
+                    value = 1;
+                farPlane = value;
+            }
         }
 
         public float Pitch
@@ -76,12 +100,12 @@ namespace CORERenderer
 
         public Matrix GetProjectionMatrix()
         {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, 0.1f, 5000f);
+            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, nearPlane, farPlane);
         }
 
         public Matrix GetOrthographicProjectionMatrix()
         {
-            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 9, COREMain.Width / 9, -COREMain.Height / 9, COREMain.Height / 9, -10000, 10000);
+            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 9, COREMain.Width / 9, -COREMain.Height / 9, COREMain.Height / 9, -farPlane, farPlane);
         }
 
         public Matrix GetViewMatrix()
