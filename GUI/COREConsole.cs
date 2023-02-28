@@ -126,8 +126,11 @@ namespace CORERenderer.GUI
             linesPrinted++;
             if (linesPrinted > maxLines)
             {
-                linesPrinted = 1;
+                linesPrinted--;
+                string[] oldLines = lines;
                 lines = new string[maxLines];
+                for (int i = 0; i < maxLines - 1; i++)
+                    lines[i] = oldLines[i + 1];
             }
             //seperates the text if its longer than the quad
             if (text.Length < Height / (COREMain.debugText.characterHeight / 4))
@@ -137,7 +140,7 @@ namespace CORERenderer.GUI
             }
             for (int i = 0; i < text.Length; i += (int)(Height / (COREMain.debugText.characterHeight / 4)))
             {
-                if (text[i..].Length > 10000)//Height / (COREMain.debugText.characterHeight * 100))
+                if (text[i..].Length > Height / (COREMain.debugText.characterHeight * 0.7f))
                 {
                     lines[linesPrinted - 1] = $"{text[i..(i + Height / (int)(COREMain.debugText.characterHeight / 4))]}";
                     linesPrinted++;
@@ -146,8 +149,11 @@ namespace CORERenderer.GUI
                 {
                     if (linesPrinted > maxLines)
                     {
-                        linesPrinted = 1;
+                        linesPrinted--;
+                        string[] oldLines = lines;
                         lines = new string[maxLines];
+                        for (int j = 0; j < maxLines - 1; j++)
+                            lines[j] = oldLines[j + 1];
                     }
                     lines[linesPrinted - 1] = text[i..^1];
                     return;
@@ -171,8 +177,11 @@ namespace CORERenderer.GUI
             string text = "ERROR " + err;
             if (linesPrinted > maxLines)
             {
-                linesPrinted = 1;
+                linesPrinted--;
+                string[] oldLines = lines;
                 lines = new string[maxLines];
+                for (int i = 0; i < maxLines - 1; i++)
+                    lines[i] = oldLines[i + 1];
             }
             //seperates the text if its longer than the quad
             if (text.Length < Height / (COREMain.debugText.characterHeight / 4))
@@ -191,8 +200,11 @@ namespace CORERenderer.GUI
                 {
                     if (linesPrinted > maxLines)
                     {
-                        linesPrinted = 1;
+                        linesPrinted--;
+                        string[] oldLines = lines;
                         lines = new string[maxLines];
+                        for (int j = 0; j < maxLines - 1; j++)
+                            lines[j] = oldLines[j + 1];
                     }
                     lines[linesPrinted - 1] = "ERROR " + text[i..^1];
                     return;
@@ -252,7 +264,7 @@ namespace CORERenderer.GUI
         {
             if (input == "goto console")
             {
-                currentContext = Context.Camera;
+                currentContext = Context.Console;
                 WriteLine($"COREConsole/{currentContext} > ");
             }
             else if (input == "goto camera")
@@ -319,6 +331,16 @@ namespace CORERenderer.GUI
                         float result = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result, input[7..]);
                         COREMain.scenes[COREMain.selectedScene].camera.Fov = result;
+                        break;
+                    case "yaw":
+                        float result2 = 0; //hold value here because property cant be used as ref
+                        ChangeValue(ref result2, input[7..]);
+                        COREMain.scenes[COREMain.selectedScene].camera.Yaw = result2;
+                        break;
+                    case "pitch":
+                        float result3 = 0; //hold value here because property cant be used as ref
+                        ChangeValue(ref result3, input[9..]);
+                        COREMain.scenes[COREMain.selectedScene].camera.Pitch = result3;
                         break;
                     default:
                         WriteError($"Unknown variable: \"{input[4..input.IndexOf(' ', input.IndexOf(' ') + 1)]}\"");
