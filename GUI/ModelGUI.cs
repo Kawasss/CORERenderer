@@ -21,8 +21,6 @@ namespace CORERenderer.GUI
             {
                 if (offset >= Height)
                 {
-                    if (COREMain.secondPassed)
-                        COREMain.console.WriteError("Too many objects, can't render to list");
                     return;
                 }
 
