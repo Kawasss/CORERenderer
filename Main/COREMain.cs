@@ -75,7 +75,8 @@ namespace CORERenderer.Main
         public static bool mouseIsPressed = false;
         public static bool clearedGUI = false;
 
-        private static bool subMenuOpenLastFrame = false;
+        public static bool subMenuOpenLastFrame = false;
+        public static bool submenuOpen = false;
 
         //enums
         public static RenderMode LoadFile = RenderMode.CRSFile;
@@ -266,7 +267,6 @@ namespace CORERenderer.Main
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
 
-                bool submenuOpen = false;
                 //render loop
                 while (!Glfw.WindowShouldClose(window))
                 {
@@ -391,42 +391,7 @@ namespace CORERenderer.Main
                             else
                             {
                                 string dir = Path.GetDirectoryName(LoadFilePath);
-                                
-                                string[] allFiles = Directory.GetFiles(dir);
-                                foreach (string file in allFiles)
-                                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read{
-                                    {
-                                        scenes[selectedScene].allModels.Add(new(file));
-
-                                        Submenu.isOpen = false;
-
-                                        gui.Bind();
-
-                                        console.RenderEvenIfNotChanged();
-
-                                        gui.RenderFramebuffer();
-
-                                        glEnable(GL_DEPTH);
-
-                                        renderFramebuffer.Bind();
-
-                                        scenes[selectedScene].allModels[^1].Render();
-
-                                        glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
-
-                                        renderFramebuffer.RenderFramebuffer();
-
-                                        if (renderIDFramebuffer)
-                                        {
-                                            glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
-                                            IDFramebuffer.RenderFramebuffer();
-                                        }
-
-                                        glViewport(0, 0, monitorWidth, monitorHeight);
-
-                                        Glfw.SwapBuffers(window);
-                                        Glfw.PollEvents();
-                                    }
+                                LoadDir(dir);
                             }
                             renderEntireDir = false;
                             menu.SetBool("Load entire directory", false);
@@ -476,6 +441,41 @@ namespace CORERenderer.Main
                 return -1;
             }
             return 1;
+        }
+
+        public static void LoadDir(string dir)
+        {
+            string[] allFiles = Directory.GetFiles(dir);
+            foreach (string file in allFiles)
+                if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read{
+                {
+                    scenes[selectedScene].allModels.Add(new(file));
+
+                    Submenu.isOpen = false;
+
+                    console.RenderEvenIfNotChanged();
+
+                    glEnable(GL_DEPTH);
+
+                    renderFramebuffer.Bind();
+
+                    scenes[selectedScene].allModels[^1].Render();
+
+                    glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+
+                    renderFramebuffer.RenderFramebuffer();
+
+                    if (renderIDFramebuffer)
+                    {
+                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                        IDFramebuffer.RenderFramebuffer();
+                    }
+
+                    glViewport(0, 0, monitorWidth, monitorHeight);
+
+                    Glfw.SwapBuffers(window);
+                    Glfw.PollEvents();
+                }
         }
 
         public static void SaveSceneAsImage()

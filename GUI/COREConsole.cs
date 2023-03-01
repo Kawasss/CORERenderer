@@ -1,7 +1,9 @@
 ﻿using COREMath;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
+using CORERenderer.Loaders;
 using CORERenderer.Main;
+using CORERenderer.OpenGL;
 using System;
 
 namespace CORERenderer.GUI
@@ -81,8 +83,13 @@ namespace CORERenderer.GUI
                     {
                         letter = Globals.keyCharBinding[(int)COREMain.pressedKey];
                         if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press)
-                            letter = letter.ToString().ToUpper()[0];
-                        if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15) && Glfw.Time - previousTime2 > 0.003)
+                        {
+                            if (!(Glfw.GetKey(COREMain.window, Keys.Alpha4) == InputState.Press))
+                                letter = letter.ToString().ToUpper()[0];
+                            else
+                                letter = '$';
+                        }  
+                        if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15))// && Glfw.Time - previousTime2 > 0.003
                         {
                             Write($"{letter}");
                             previousTime2 = Glfw.Time;
@@ -135,17 +142,19 @@ namespace CORERenderer.GUI
                 for (int i = 0; i < maxLines - 1; i++)
                     lines[i] = oldLines[i + 1];
             }
+            float dividend = Height / (COREMain.debugText.characterHeight * 0.15f); //better performance
             //seperates the text if its longer than the quad
-            if (text.Length < Height / (COREMain.debugText.characterHeight / 4))
+            if (text.Length < dividend)
             {
                 lines[linesPrinted - 1] = text;
                 return;
             }
-            for (int i = 0; i < text.Length; i += (int)(Height / (COREMain.debugText.characterHeight / 4)))
+            
+            for (int i = 0; i < text.Length; i += (int)dividend)
             {
-                if (text[i..].Length > Height / (COREMain.debugText.characterHeight * 0.7f))
+                if (text[i..].Length > dividend)
                 {
-                    lines[linesPrinted - 1] = $"{text[i..(i + Height / (int)(COREMain.debugText.characterHeight / 4))]}";
+                    lines[linesPrinted - 1] = $"{text[i..(i + (int)dividend)]}";
                     linesPrinted++;
                 }
                 else
@@ -186,17 +195,18 @@ namespace CORERenderer.GUI
                 for (int i = 0; i < maxLines - 1; i++)
                     lines[i] = oldLines[i + 1];
             }
+            float dividend = Height / (COREMain.debugText.characterHeight * 0.15f);
             //seperates the text if its longer than the quad
-            if (text.Length < Height / (COREMain.debugText.characterHeight / 4))
+            if (text.Length < dividend)
             {
                 lines[linesPrinted - 1] = text;
                 return;
             }
-            for (int i = 0; i < text.Length; i += (int)(Height / (COREMain.debugText.characterHeight / 3)))
+            for (int i = 0; i < text.Length; i += (int)dividend)
             {
-                if (text[i..^1].Length > Height / (COREMain.debugText.characterHeight / 3))
+                if (text[i..^1].Length > dividend)
                 {
-                    lines[linesPrinted - 1] = $"ERROR {text[i..(i + Height / (int)(COREMain.debugText.characterHeight / 3))]}";
+                    lines[linesPrinted - 1] = $"ERROR {text[i..(i + Height / (int)dividend)]}";
                     linesPrinted++;
                 }
                 else
@@ -295,9 +305,9 @@ namespace CORERenderer.GUI
 
         private void HandleCameraCommands(string input)
         {
-            if (input.Length > 5 && input[..5] == "show ")
+            if (input.Length > 4 && input[..4] == "get ")
             {
-                switch (input[5..]) 
+                switch (input[4..]) 
                 {
                     case "speed":
                         WriteLine($"{Camera.cameraSpeed}");
@@ -401,14 +411,13 @@ namespace CORERenderer.GUI
                     bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out index1);
                     int index2;
                     bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2);
-                    WriteLine(input[(input.IndexOf("..") + 2)].ToString());
                     if (succeeded && succeeded2)
                     {
                         for (int i = index1; i <= index2; i++)
                         {
                             try
                             {
-                                if (i == 0)
+                                if (i == index1)
                                     WriteLine($"Deleted model {i}");
                                 else
                                     Write($"..{i}");
@@ -425,21 +434,49 @@ namespace CORERenderer.GUI
                         WriteLine($"Couldn't delete models {index1} through {index2}");
                 }
             }
-            else if (input.Length > 5 && input == "load ")
+            else if (input.Length > 5 && input[..5] == "load ")
             {
-                if (input[5..] == "dir")
-                    COREMain.renderEntireDir = true;//COREMain.menu.SetBool("Load entire directory", true);
+                if (input.Length > 9 && input[5..9] == "dir ")
+                {
+                    string dir = input[9..];
+                    if (dir[..4] == "this" && COREMain.LoadFilePath != null)
+                        dir = Path.GetDirectoryName(COREMain.LoadFilePath);
+                    else if (dir[..4] == "this" && COREMain.LoadFilePath == null)
+                    {
+                        WriteError($"\"{dir}\" isn't valid here");
+                        return;
+                    }
+                    else if (dir[..5] == "$PATH")
+                        dir = COREMain.pathRenderer + dir[5..];
+                    
+                    if (Directory.Exists(dir))
+                    {
+                        COREMain.LoadDir(dir);
+                        WriteLine($"Loaded directory {dir}");
+                    }
+                    else
+                        WriteError($"Couldn't find the directory at {dir}");
+                }  
                 else if (File.Exists(input[5..]))
                     COREMain.scenes[COREMain.selectedScene].allModels.Add(new(input[5..]));
                 else
-                    WriteLine($"Couldn't find the file at {input[5..]}");
+                    WriteError($"Couldn't find the file at {input[5..]}");
             }
-            else if (input.Length > 5 && input[..5] == "show ")
+            else if (input.Length > 4 && input[..4] == "get ")
             {
-                switch (input[5..])
+                switch (input[4..])
                 {
                     case "model count":
                         WriteLine($"{COREMain.scenes[COREMain.selectedScene].allModels.Count}");
+                        break;
+                    case "submodel count":
+                        int count = 0;
+                        foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels)
+                            count += model.submodels.Count;
+                        WriteLine($"{count}");
+                        break;
+                    case "draw calls":
+                        WriteLine($"{COREMain.drawCallsPerFrame}");
                         break;
                 }
             }
@@ -449,8 +486,15 @@ namespace CORERenderer.GUI
 
         private void HandleConsoleCommands(string input)
         {
-            if (input == "show info")
+            if (input == "get info")
                 ShowInfo();
+            else if (input == "clear framebuffer")
+            {
+                GL.glClearColor(0.085f, 0.085f, 0.085f, 1);
+                GL.glClear(GL.GL_COLOR_BUFFER_BIT); //cheap trick
+                WriteLine("Cleared framebuffer");
+            }
+                
             else if (input == "wipe")
             {
                 Wipe();
