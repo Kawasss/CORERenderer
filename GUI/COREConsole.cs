@@ -50,19 +50,19 @@ namespace CORERenderer.GUI
 
         public void Update()
         {
-            if (!isInFocus)
+            if (!isInFocus) //user can only type if they clicked on the console and the cursor remains in the console
                 isInFocus = COREMain.CheckAABBCollisionWithClick(x, y, Width, Height);
             if (isInFocus)
                 isInFocus = COREMain.CheckAABBCollision(x, y, Width, Height);
             if (isInFocus)
-            {
+            {   //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
                 if (Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press && lines[linesPrinted - 1][^2..] != "> " && !isPressedPrevious)
                 {
                     lines[linesPrinted - 1] = lines[linesPrinted - 1][..^1];
                     changed = true;
                 }
 
-                if (Glfw.Time - previousTime > 0.06)
+                if (Glfw.Time - previousTime > 0.06) //time limit to prevent unneeded amount of requests
                 {
                     previousTime = GLFW.Glfw.Time;
 
@@ -79,19 +79,19 @@ namespace CORERenderer.GUI
                 if (COREMain.keyIsPressed)
                 {
                     char letter;
-                    try
+                    try //catches exceptions in case the pressed key isnt the key to char dictionary
                     {
-                        letter = Globals.keyCharBinding[(int)COREMain.pressedKey];
-                        if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press)
+                        letter = Globals.keyCharBinding[(int)COREMain.pressedKey]; //gets the char related to the pressed key
+                        if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press) //if shift is pressed get the uppercase variant of the char
                         {
                             if (!(Glfw.GetKey(COREMain.window, Keys.Alpha4) == InputState.Press))
-                                letter = letter.ToString().ToUpper()[0];
+                                letter = letter.ToString().ToUpper()[0]; //first to string then to upper because chars dont have to upper, then back to char with [0]
                             else
-                                letter = '$';
+                                letter = '$'; //special key for aliases
                         }  
-                        if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15))// && Glfw.Time - previousTime2 > 0.003
+                        if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15))
                         {
-                            Write($"{letter}");
+                            Write($"{letter}"); //adds letter to the last line of text
                             previousTime2 = Glfw.Time;
                         }
                     }
@@ -112,119 +112,61 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
-            if (!changed)
+            if (!changed) //if no lines have been changed / added break, this improves performance a lot
                 return;
 
             changed = false;
 
-            quad.Render();
-            
-            int lineOffset = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //scale = 1
-            for (int i = 0; i < linesPrinted; i++, lineOffset += (int)(COREMain.debugText.characterHeight * 0.7f + 2))
+            quad.Render(); //renders background
+
+            int sum = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
+            int lineOffset = sum;
+            for (int i = 0; i < linesPrinted; i++, lineOffset += sum) //decides the space between the lines
             {
-                if (lines[i].Length < 5 || lines[i][..5] != "ERROR")
-                    quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
-                else
+                if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
                     quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
+                else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
+                    quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
+                else if (lines.Length > 0 && i == linesPrinted - 1)
+                    quad.Write(lines[i] + '|', 0, Height - lineOffset, 0.7f);
             }
         }
 
         public void WriteLine(string text)
         {
-            changed = true;
+            changed = true; //tells the console render everything again (could be optimised better by only rendering the newly added sentence / letters instead of every (already existing) sentence)
 
             linesPrinted++;
-            if (linesPrinted > maxLines)
+            if (linesPrinted > maxLines) //if statement the prevent the console lines from rendering outside if its height (or give more lines than the lines[] array can handle)
             {
-                linesPrinted--;
+                linesPrinted--; //change it to reflect that no new lines will be added, the first line will be removed and a new one will be added
                 string[] oldLines = lines;
                 lines = new string[maxLines];
-                for (int i = 0; i < maxLines - 1; i++)
+                for (int i = 0; i < maxLines - 1; i++) //move every line back by one to make room for the new line, making it look like the text is moving downwards everytime theres too much text
                     lines[i] = oldLines[i + 1];
             }
-            float dividend = Height / (COREMain.debugText.characterHeight * 0.15f); //better performance
-            //seperates the text if its longer than the quad
-            if (text.Length < dividend)
-            {
-                lines[linesPrinted - 1] = text;
-                return;
-            }
+            float textWidth = COREMain.debugText.GetStringWidth(text + '|', 0.7f);
             
-            for (int i = 0; i < text.Length; i += (int)dividend)
-            {
-                if (text[i..].Length > dividend)
-                {
-                    lines[linesPrinted - 1] = $"{text[i..(i + (int)dividend)]}";
-                    linesPrinted++;
-                }
-                else
-                {
-                    if (linesPrinted > maxLines)
-                    {
-                        linesPrinted--;
-                        string[] oldLines = lines;
-                        lines = new string[maxLines];
-                        for (int j = 0; j < maxLines - 1; j++)
-                            lines[j] = oldLines[j + 1];
-                    }
-                    lines[linesPrinted - 1] = text[i..^1];
-                    return;
-                }
-            }
+            //returns if the string isnt longer than the width if the console
+            if (textWidth < Width)
+                lines[linesPrinted - 1] = text;
+            else
+                WriteError("Message is too long, returning");
         }
 
         public void Write(string text)
         {
-            linesPrinted--;
-            WriteLine(lines[linesPrinted] + text);
+            linesPrinted--; //tricks WriteLine() into thinking thats its adding a new line instead of overriding an old one
+            WriteLine(lines[linesPrinted] + text); //add the new text to the to be overridden line
         }
 
-        public void WriteError(System.Exception err) => WriteError(err.ToString());
+        public void WriteError(System.Exception err) => WriteLine("ERROR " + err.ToString());
 
-        public void WriteError(string err)
-        {
-            changed = true;
+        public void WriteError(string err) => WriteLine("ERROR " + err);
 
-            linesPrinted++;
-            string text = "ERROR " + err;
-            if (linesPrinted > maxLines)
-            {
-                linesPrinted--;
-                string[] oldLines = lines;
-                lines = new string[maxLines];
-                for (int i = 0; i < maxLines - 1; i++)
-                    lines[i] = oldLines[i + 1];
-            }
-            float dividend = Height / (COREMain.debugText.characterHeight * 0.15f);
-            //seperates the text if its longer than the quad
-            if (text.Length < dividend)
-            {
-                lines[linesPrinted - 1] = text;
-                return;
-            }
-            for (int i = 0; i < text.Length; i += (int)dividend)
-            {
-                if (text[i..^1].Length > dividend)
-                {
-                    lines[linesPrinted - 1] = $"ERROR {text[i..(i + Height / (int)dividend)]}";
-                    linesPrinted++;
-                }
-                else
-                {
-                    if (linesPrinted > maxLines)
-                    {
-                        linesPrinted--;
-                        string[] oldLines = lines;
-                        lines = new string[maxLines];
-                        for (int j = 0; j < maxLines - 1; j++)
-                            lines[j] = oldLines[j + 1];
-                    }
-                    lines[linesPrinted - 1] = "ERROR " + text[i..^1];
-                    return;
-                }
-            }
-        }
-
+        /// <summary>
+        /// Renders the entire console even if nothing has changed, overriding the optimisation. This will make a draw call to the GPU for each letter, causing a severe performance drop
+        /// </summary>
         public void RenderEvenIfNotChanged()
         {
             changed = true;
@@ -233,6 +175,9 @@ namespace CORERenderer.GUI
 
         public void RenderStatic() => Render();
 
+        /// <summary>
+        /// Writes all information gathered from the initial start up to the console
+        /// </summary>
         public void ShowInfo()
         {
             int i = 0;
@@ -256,9 +201,13 @@ namespace CORERenderer.GUI
                         WriteLine($"{n}         Active for {Math.Round(Glfw.Time)} seconds");
                     else if (i == 11)
                         WriteLine($"{n}         Initialized with {COREMain.LoadFile}");
-                    else if (i == 13)
-                        WriteLine($"{n}         Rendering with default shaders");
+                    else if (i == 12 && COREMain.LoadFilePath != null)
+                        WriteLine($"{n}         Initialized from {COREMain.LoadFilePath}");
+                    else if (i == 12 && COREMain.LoadFilePath == null)
+                        WriteLine($"{n}         Initialized independently");
                     else if (i == 14)
+                        WriteLine($"{n}         Rendering with default shaders");
+                    else if (i == 15)
                         WriteLine($"{n}         Rendering with {COREMain.splashScreen.refreshRate} Hz");
                     else
                         WriteLine(n);
@@ -277,7 +226,7 @@ namespace CORERenderer.GUI
         {
             if (input == "exit")
                 Glfw.SetWindowShouldClose(COREMain.window, true);
-            else if (input == "goto console")
+            else if (input == "goto console") //introducing contexts allows for better grouping of commands and better readability / makes it more expandable
             {
                 currentContext = Context.Console;
                 WriteLine($"COREConsole/{currentContext} > ");
@@ -304,8 +253,8 @@ namespace CORERenderer.GUI
 
 
         private void HandleCameraCommands(string input)
-        {
-            if (input.Length > 4 && input[..4] == "get ")
+        { //every if statement checks the length of the input first, because if it tries the check the contents if the input like input[..4] == "get " it could throw an error if the input isnt 4 chars long (out of range). This is also prevented later on by using try { } catch (OutOfRangeException) { }
+            if (input.Length > 4 && input[..4] == "get ") //keyword for displaying variable values
             {
                 switch (input[4..]) 
                 {
@@ -336,9 +285,9 @@ namespace CORERenderer.GUI
                         break;
                 }
             }
-            else if (input.Length > 4 && input[..4] == "set ")
+            else if (input.Length > 4 && input[..4] == "set ") //keyword for changing the value of variables
             {
-                if (input.IndexOf(' ', input.IndexOf(' ') + 1) == -1)
+                if (input.IndexOf(' ', input.IndexOf(' ') + 1) == -1) //the syntax for setting a value is "set VARIALBE VALUE", so 2 spaces are needed, if those dont exist it should abort
                 {
                     WriteError($"Unknown variable: \"{input[4..]}\"");
                     return;
@@ -383,19 +332,19 @@ namespace CORERenderer.GUI
         }
         private void HandleSceneCommands(string input)
         {
-            if (input.Length > 7 && input[..7] == "delete ")
+            if (input.Length > 7 && input[..7] == "delete ") //keyword for deleting one or more models
             {
-                if (input.Length > 13 && input[..13] == "delete model[")
+                if (input.Length > 13 && input[..13] == "delete model[") //allows the removal of a single object
                 {
                     int index;
-                    bool succeeded = int.TryParse(input[13..input.IndexOf(']')], out index);
-                    if (succeeded && index < COREMain.scenes[COREMain.selectedScene].allModels.Count)
+                    bool succeeded = int.TryParse(input[13..input.IndexOf(']')], out index); //finds the index of the model
+                    if (succeeded && index < COREMain.scenes[COREMain.selectedScene].allModels.Count) //only continue if the index is found and its within range
                     {
                         try
                         {
                             COREMain.scenes[COREMain.selectedScene].allModels[index].Dispose();
                             WriteLine($"Deleted model {index}");
-                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+                            COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -405,20 +354,20 @@ namespace CORERenderer.GUI
                     else
                         WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
                 }
-                else if (input.Length > 13 && input[..13] == "delete models")
+                else if (input.Length > 13 && input[..13] == "delete models") //allows the removal of multiple objects at once with array-like indexing ([1..4] to delete the second model till the 4th for example)
                 {
                     int index1;
-                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out index1);
+                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out index1); //gets the value if the first index
                     int index2;
-                    bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2);
-                    if (succeeded && succeeded2)
+                    bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2); //gets the value if the second index by looking for a value between '..' and ']' in [VALUE..VALUE]
+                    if (succeeded && succeeded2) //only continue if both indexes are found
                     {
-                        for (int i = index1; i <= index2; i++)
+                        for (int i = index1; i <= index2; i++) //iterate through every index between the found indexes
                         {
                             try
                             {
                                 if (i == index1)
-                                    WriteLine($"Deleted model {i}");
+                                    WriteLine($"Deleted model {i}"); //simple way of showing which models are deleted
                                 else
                                     Write($"..{i}");
                                 COREMain.scenes[COREMain.selectedScene].allModels[i].Dispose();
@@ -427,29 +376,29 @@ namespace CORERenderer.GUI
                             {
                                 WriteLine($"Couldn't delete model {i}");
                             }
-                            COREMain.scenes[COREMain.selectedScene].currentObj = -1;
+                            COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                         }
                     }
                     else
                         WriteLine($"Couldn't delete models {index1} through {index2}");
                 }
             }
-            else if (input.Length > 5 && input[..5] == "load ")
+            else if (input.Length > 5 && input[..5] == "load ") //keyword for loading in a file with given path
             {
                 if (input.Length > 9 && input[5..9] == "dir ")
                 {
                     string dir = input[9..];
-                    if (dir[..4] == "this" && COREMain.LoadFilePath != null)
+                    if (dir[..4] == "this" && COREMain.LoadFilePath != null) //allows the use of 'this' as an alias for the directory it was opened in
                         dir = Path.GetDirectoryName(COREMain.LoadFilePath);
-                    else if (dir[..4] == "this" && COREMain.LoadFilePath == null)
+                    else if (dir[..4] == "this" && COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
                     {
                         WriteError($"\"{dir}\" isn't valid here");
                         return;
                     }
-                    else if (dir[..5] == "$PATH")
+                    else if (dir[..5] == "$PATH") //allows '$PATH' to be used as an alias for the base of the directory that the .exe is located
                         dir = COREMain.pathRenderer + dir[5..];
                     
-                    if (Directory.Exists(dir))
+                    if (Directory.Exists(dir)) //checks if the given directory is valid
                     {
                         COREMain.LoadDir(dir);
                         WriteLine($"Loaded directory {dir}");
@@ -457,12 +406,20 @@ namespace CORERenderer.GUI
                     else
                         WriteError($"Couldn't find the directory at {dir}");
                 }  
-                else if (File.Exists(input[5..]))
-                    COREMain.scenes[COREMain.selectedScene].allModels.Add(new(input[5..]));
+                else if (input[5..9] != "dir ") //checks if user wants to load in an directory or a single file
+                {
+                    string dir = input[5..];
+                    if (dir[..5] == "$PATH")
+                        dir = COREMain.pathRenderer + dir[5..];
+                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr") //only allows certain file types, in this case .obj and .hdr
+                        COREMain.scenes[COREMain.selectedScene].allModels.Add(new(dir));
+                    else
+                        WriteError($"Invalid file at {dir}");
+                }
                 else
                     WriteError($"Couldn't find the file at {input[5..]}");
             }
-            else if (input.Length > 4 && input[..4] == "get ")
+            else if (input.Length > 4 && input[..4] == "get ") //keyword for displaying variable values
             {
                 switch (input[4..])
                 {
@@ -488,14 +445,14 @@ namespace CORERenderer.GUI
         {
             if (input == "get info")
                 ShowInfo();
-            else if (input == "clear framebuffer")
+            else if (input == "clear GUI") //clears the GUI framebuffer, can leave artifacts behind
             {
                 GL.glClearColor(0.085f, 0.085f, 0.085f, 1);
-                GL.glClear(GL.GL_COLOR_BUFFER_BIT); //cheap trick
+                GL.glClear(GL.GL_COLOR_BUFFER_BIT); 
                 WriteLine("Cleared framebuffer");
             }
                 
-            else if (input == "wipe")
+            else if (input == "wipe") //wipes the console clean
             {
                 Wipe();
                 WriteLine($"COREConsole/{currentContext} > ");

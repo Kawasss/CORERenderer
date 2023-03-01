@@ -144,6 +144,27 @@ namespace CORERenderer.Fonts
             glBindTexture(GL_TEXTURE0, 0);
         }
 
+        /// <summary>
+        /// returns a float resembling the length of a given string, can be used to detect if a string is longer than something else
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="scale"></param>
+        /// <returns>Width of a given string and scale</returns>
+        public float GetStringWidth(string text, float scale)
+        {
+            float x = 0;
+
+            for (int i = 0; i < text.Length; i++) //reuse RenderText() to return the width of a string by practically doing everything the same except for the GPU side of things
+            {
+                byte c = (byte)text[i];
+                Character ch = characters[c];
+
+                x += (ch.advance >> 6) * scale;
+            }
+
+            return x;
+        }
+
         ~Font()
         {
             for (byte i = 0; i < 128; i++)
