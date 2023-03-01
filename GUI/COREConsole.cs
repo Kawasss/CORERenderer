@@ -445,37 +445,64 @@ namespace CORERenderer.GUI
             }
 
             //move
-            else if (input.Length > 4 && input[..4] == "move")
+            else if (input.Length > 13 && input[..4] == "move")
             {
                 try
                 {
-                    int indexOfSymbol = input.IndexOf(']'); //better performance
-                    bool succeeded = int.TryParse(input[(input.IndexOf('[') + 1)..indexOfSymbol], out int modelIndex);
-                    if (!succeeded)
+                    if (input.Contains("model["))
                     {
-                        WriteError($"Couldn't find model index in {input}");
-                        return;
-                    }
-                    Model model = COREMain.GetCurrentScene.allModels[modelIndex];
+                        int indexOfSymbol = input.IndexOf(']'); //better performance
+                        bool succeeded = int.TryParse(input[(input.IndexOf('[') + 1)..indexOfSymbol], out int modelIndex);
+                        if (!succeeded)
+                        {
+                            WriteError($"Couldn't find model index in {input}");
+                            return;
+                        }
+                        Model model = COREMain.GetCurrentScene.allModels[modelIndex];
 
-                    int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
-                    int aa = 0;
-                    for (int i = input[indexOfSymbol..].IndexOf(' '); i > -1; i = input[indexOfSymbol..].IndexOf(' ', i + 1), aa++)
-                        indexes[aa] = i;
-                    Vector3 output = new(input[indexOfSymbol..][indexes[0]..indexes[1]], input[indexOfSymbol..][indexes[1]..indexes[2]], input[indexOfSymbol..][indexes[2]..]);
-                    if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
-                    {
-                        Vector3 distance = output - model.submodels[0].translation;
-                        foreach (Submodel submodel in model.submodels)
-                            submodel.translation += distance;
-                        WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                        int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
+                        int aa = 0;
+                        for (int i = input[indexOfSymbol..].IndexOf(' '); i > -1; i = input[indexOfSymbol..].IndexOf(' ', i + 1), aa++)
+                            indexes[aa] = i;
+                        Vector3 output = new(input[indexOfSymbol..][indexes[0]..indexes[1]], input[indexOfSymbol..][indexes[1]..indexes[2]], input[indexOfSymbol..][indexes[2]..]);
+                        if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
+                        {
+                            Vector3 distance = output - model.submodels[0].translation;
+                            foreach (Submodel submodel in model.submodels)
+                                submodel.translation += distance;
+                            WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                        }
+                        else //sorts for move, this value is applied relatively
+                        {
+                            foreach (Submodel submodel in model.submodels)
+                                submodel.translation += output;
+                            WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                        }
                     }
-                    else //sorts for move, this value is applied relatively
+                    else if (input.Contains("models"))
                     {
-                        foreach (Submodel submodel in model.submodels)
-                            submodel.translation += output;
-                        WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                        int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
+                        int aa = 0;
+                        for (int i = input[(input.IndexOf("models") + 1)..].IndexOf(' '); i > -1; i = input[(input.IndexOf("models") + 1)..].IndexOf(' ', i + 1), aa++)
+                            indexes[aa] = i;
+                        Vector3 output = new(input[(input.IndexOf("models") + 1)..][indexes[0]..indexes[1]], input[(input.IndexOf("models") + 1)..][indexes[1]..indexes[2]], input[(input.IndexOf("models") + 1)..][indexes[2]..]);
+                        if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
+                        {
+                            Vector3 distance = output - COREMain.GetCurrentScene.allModels[0].submodels[0].translation;
+                            foreach (Model model in COREMain.GetCurrentScene.allModels)
+                                foreach (Submodel submodel in model.submodels)
+                                    submodel.translation += distance;
+                            WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                        }
+                        else //sorts for move, this value is applied relatively
+                        {
+                            foreach (Model model in COREMain.GetCurrentScene.allModels)
+                                foreach (Submodel submodel in model.submodels)
+                                    submodel.translation += output;
+                            WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                        }
                     }
+                    
                 }
                 catch (IndexOutOfRangeException)
                 {

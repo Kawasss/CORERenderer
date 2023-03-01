@@ -1,0 +1,28 @@
+Error occured at 10:10:05 : 
+    System.ArgumentOutOfRangeException: Length cannot be less than zero. (Parameter 'length')
+   at System.String.Substring(Int32 startIndex, Int32 length)
+   at CORERenderer.GUI.COREConsole.HandleSceneCommands(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 453
+   at CORERenderer.GUI.COREConsole.ParseInput(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 250
+   at CORERenderer.GUI.COREConsole.Update() in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 77
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 320
+Error occured at 10:16:49 : 
+    System.ArgumentOutOfRangeException: StartIndex cannot be less than zero. (Parameter 'startIndex')
+   at System.String.Substring(Int32 startIndex, Int32 length)
+   at CORERenderer.GUI.COREConsole.HandleSceneCommands(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 468
+   at CORERenderer.GUI.COREConsole.ParseInput(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 250
+   at CORERenderer.GUI.COREConsole.Update() in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 77
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 320
+Error occured at 10:18:25 : 
+    System.ArgumentOutOfRangeException: StartIndex cannot be less than zero. (Parameter 'startIndex')
+   at System.String.Substring(Int32 startIndex, Int32 length)
+   at CORERenderer.GUI.COREConsole.HandleSceneCommands(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 469
+   at CORERenderer.GUI.COREConsole.ParseInput(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 250
+   at CORERenderer.GUI.COREConsole.Update() in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 77
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 320
+Error occured at 10:33:31 : 
+    System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+   at System.Collections.Generic.List`1.get_Item(Int32 index)
+   at CORERenderer.GUI.COREConsole.HandleSceneCommands(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 375
+   at CORERenderer.GUI.COREConsole.ParseInput(String input) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 250
+   at CORERenderer.GUI.COREConsole.Update() in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 77
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 320
