@@ -202,7 +202,7 @@ namespace CORERenderer.GUI
                     else if (i == 11)
                         WriteLine($"{n}         Initialized with {COREMain.LoadFile}");
                     else if (i == 12 && COREMain.LoadFilePath != null)
-                        WriteLine($"{n}         Initialized from {COREMain.LoadFilePath}");
+                        WriteLine($"{n}         Initialized from {Path.GetFileName(COREMain.LoadFilePath)}");
                     else if (i == 12 && COREMain.LoadFilePath == null)
                         WriteLine($"{n}         Initialized independently");
                     else if (i == 14)
