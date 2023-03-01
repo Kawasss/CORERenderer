@@ -35,6 +35,7 @@ namespace CORERenderer.Main
         public static int selectedID = 0x00FFFF; //white (background)
         private static int nextAvaibleID = 3; //first 3 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
+        public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
 
         //uints
         public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
@@ -93,6 +94,9 @@ namespace CORERenderer.Main
         public static Arrows arrows;
         public static Div modelList;
         public static Submenu menu;
+
+        public static Model GetCurrentModelFromCurrentScene { get => scenes[selectedScene].allModels[GetCurrentObjFromScene]; }
+        public static Scene GetCurrentScene { get => scenes[selectedScene]; }
 
         //structs
         public static Window window;

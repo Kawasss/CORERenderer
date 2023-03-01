@@ -151,7 +151,7 @@ namespace CORERenderer.GUI
             if (textWidth < Width)
                 lines[linesPrinted - 1] = text;
             else
-                WriteError("Message is too long, returning");
+                lines[linesPrinted - 1] = "ERROR Message is too long, returning";
         }
 
         public void Write(string text)
@@ -212,6 +212,7 @@ namespace CORERenderer.GUI
                     else
                         WriteLine(n);
                 }
+            WriteLine($"COREConsole/{currentContext} > ");
         }
 
         private enum Context
@@ -332,6 +333,7 @@ namespace CORERenderer.GUI
         }
         private void HandleSceneCommands(string input)
         {
+            //delete
             if (input.Length > 7 && input[..7] == "delete ") //keyword for deleting one or more models
             {
                 if (input.Length > 13 && input[..13] == "delete model[") //allows the removal of a single object
@@ -383,9 +385,11 @@ namespace CORERenderer.GUI
                         WriteLine($"Couldn't delete models {index1} through {index2}");
                 }
             }
+
+            //load
             else if (input.Length > 5 && input[..5] == "load ") //keyword for loading in a file with given path
             {
-                if (input.Length > 9 && input[5..9] == "dir ")
+                if (input.Length > 12 && input[5..9] == "dir ")
                 {
                     string dir = input[9..];
                     if (dir[..4] == "this" && COREMain.LoadFilePath != null) //allows the use of 'this' as an alias for the directory it was opened in
@@ -419,6 +423,8 @@ namespace CORERenderer.GUI
                 else
                     WriteError($"Couldn't find the file at {input[5..]}");
             }
+
+            //get
             else if (input.Length > 4 && input[..4] == "get ") //keyword for displaying variable values
             {
                 switch (input[4..])
@@ -437,6 +443,47 @@ namespace CORERenderer.GUI
                         break;
                 }
             }
+
+            //move
+            else if (input.Length > 4 && input[..4] == "move")
+            {
+                try
+                {
+                    int indexOfSymbol = input.IndexOf(']'); //better performance
+                    bool succeeded = int.TryParse(input[(input.IndexOf('[') + 1)..indexOfSymbol], out int modelIndex);
+                    if (!succeeded)
+                    {
+                        WriteError($"Couldn't find model index in {input}");
+                        return;
+                    }
+                    Model model = COREMain.GetCurrentScene.allModels[modelIndex];
+
+                    int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
+                    int aa = 0;
+                    for (int i = input[indexOfSymbol..].IndexOf(' '); i > -1; i = input[indexOfSymbol..].IndexOf(' ', i + 1), aa++)
+                        indexes[aa] = i;
+                    Vector3 output = new(input[indexOfSymbol..][indexes[0]..indexes[1]], input[indexOfSymbol..][indexes[1]..indexes[2]], input[indexOfSymbol..][indexes[2]..]);
+                    if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
+                    {
+                        Vector3 distance = output - model.submodels[0].translation;
+                        foreach (Submodel submodel in model.submodels)
+                            submodel.translation += distance;
+                        WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                    }
+                    else //sorts for move, this value is applied relatively
+                    {
+                        foreach (Submodel submodel in model.submodels)
+                            submodel.translation += output;
+                        WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                    }
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    WriteError("Given index is out of range");
+                    return;
+                }
+            }
+
             else
                 WriteError($"Couldn't parse scene command \"{input}\"");
         }
