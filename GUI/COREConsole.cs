@@ -56,7 +56,7 @@ namespace CORERenderer.GUI
                 isInFocus = COREMain.CheckAABBCollision(x, y, Width, Height);
             if (isInFocus)
             {   //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
-                if (Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press && lines[linesPrinted - 1][^2..] != "> " && !isPressedPrevious)
+                if (Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press && lines[linesPrinted - 1][^3..] != " > " && !isPressedPrevious)
                 {
                     lines[linesPrinted - 1] = lines[linesPrinted - 1][..^1];
                     changed = true;
@@ -84,10 +84,13 @@ namespace CORERenderer.GUI
                         letter = Globals.keyCharBinding[(int)COREMain.pressedKey]; //gets the char related to the pressed key
                         if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press) //if shift is pressed get the uppercase variant of the char
                         {
-                            if (!(Glfw.GetKey(COREMain.window, Keys.Alpha4) == InputState.Press))
-                                letter = letter.ToString().ToUpper()[0]; //first to string then to upper because chars dont have to upper, then back to char with [0]
-                            else
+                            if (Glfw.GetKey(COREMain.window, Keys.Alpha4) == InputState.Press)
                                 letter = '$'; //special key for aliases
+                            else if (Glfw.GetKey(COREMain.window, Keys.Period) == InputState.Press)
+                                letter = '>';
+                            else
+                                letter = letter.ToString().ToUpper()[0]; //first to string then to upper because chars dont have to upper, then back to char with [0]
+                            
                         }  
                         if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15))
                         {
@@ -249,6 +252,18 @@ namespace CORERenderer.GUI
             {
                 currentContext = Context.Scene;
                 WriteLine($"COREConsole/{currentContext} > ");
+            }
+            else if (input.Length > 16 && input[..5] == "goto " && input.Contains("->"))
+            {
+                string arg = input[5..input.IndexOf(' ', input.IndexOf(' ') + 1)];
+                if (arg == "scene")
+                    HandleSceneCommands(input[(input.IndexOf("-> ") + 3)..]);
+                else if (arg == "camera")
+                    HandleCameraCommands(input[(input.IndexOf("-> ") + 3)..]);
+                else if (arg == "console")
+                    HandleConsoleCommands(input[(input.IndexOf("-> ") + 3)..]);
+                else
+                    WriteError($"Couldn't solve argument reference {arg}");
             }
             else if (currentContext == Context.Console)
                 HandleConsoleCommands(input);
