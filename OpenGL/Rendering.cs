@@ -274,6 +274,7 @@ namespace CORERenderer.OpenGL
             else 
                 glDisable(GL_CULL_FACE);
 
+            //depth sorting
             Model[] modelsInCorrectOrder = new Model[models.Count];
             List<float> distances = new();
             Dictionary<float, Model> distanceModelTable = new();

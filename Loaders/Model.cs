@@ -155,14 +155,36 @@ namespace CORERenderer.Loaders
                 ErrorLogic(error);
 
             submodels = new();
+            this.translation = offsets[0];
             for (int i = 0; i < vertices.Count; i++)
             {
 
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
-                submodels[i].translation = offsets[i];
+                submodels[i].translation = offsets[i] - this.translation;
                 submodels[i].parent = this;
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
             }
+
+            //depth sorting
+            Submodel[] submodelsInCorrectOrder = new Submodel[submodels.Count];
+            List<float> distances = new();
+            Dictionary<float, Submodel> distanceSubmodelTable = new();
+            foreach (Submodel submodel in submodels)
+            {
+                float distance = submodel.translation.Length;
+                distances.Add(distance);
+                if (!distanceSubmodelTable.ContainsKey(distance))
+                    distanceSubmodelTable.Add(distance, submodel);
+                else
+                    distanceSubmodelTable.Add(distance + 0.1f, submodel);
+            }
+
+            float[] distancesArray = distances.ToArray();
+            Array.Sort(distancesArray);
+            for (int i = 0; i < distancesArray.Length; i++)
+                submodelsInCorrectOrder[i] = distanceSubmodelTable[distancesArray[i]];
+            submodels = submodelsInCorrectOrder.ToList();
+
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
 

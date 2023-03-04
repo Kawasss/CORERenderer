@@ -121,8 +121,12 @@ namespace CORERenderer.GUI
 
             int sum = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
             int lineOffset = sum;
+            if (lines == null)
+                return;
             for (int i = 0; i < linesPrinted; i++, lineOffset += sum) //decides the space between the lines
             {
+                if (lines[i] == null)
+                    continue;
                 if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
                     quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
                 else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
@@ -513,6 +517,18 @@ namespace CORERenderer.GUI
                     WriteError("Given index is out of range");
                     return;
                 }
+            }
+
+            else if (input.Length > 13 && input == "disable arrows")
+            {
+                Arrows.disableArrows = true;
+                WriteLine("Disabled arrows");
+            }
+
+            else if (input.Length > 13 && input == "enable arrows")
+            {
+                Arrows.disableArrows = false;
+                WriteLine("Enabled arrows");
             }
 
             else

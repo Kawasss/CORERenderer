@@ -30,6 +30,8 @@ namespace CORERenderer.GUI
         public bool wantsToMoveYAxis = false;
         public bool wantsToMoveZAxis = false;
 
+        public static bool disableArrows = false;
+
         public Arrows()
         {
             Readers.LoadOBJ($"{COREMain.pathRenderer}\\Loaders\\testOBJ\\arrow.obj", out _, out vertices, out indices, out _, out _);
@@ -65,6 +67,9 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
+            if (disableArrows)
+                return;
+
             if (COREMain.scenes[COREMain.selectedScene].currentObj == -1)
                 return;
 
