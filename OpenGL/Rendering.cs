@@ -290,18 +290,26 @@ namespace CORERenderer.OpenGL
 
             float[] distancesArray = distances.ToArray();
             Array.Sort(distancesArray);
+            Array.Reverse(distancesArray);
             for (int i = 0; i < distancesArray.Length; i++)
                 modelsInCorrectOrder[i] = distanceModelTable[distancesArray[i]];
 
+            List<Model> translucentModels = new();
             foreach (Model model in modelsInCorrectOrder)
             {
                 if (model == null)
                     continue;
+                if (model.containsTranslucentModels)
+                {
+                    translucentModels.Add(model);
+                    continue;
+                }
                 if (model.type != RenderMode.HDRFile)
                     model.Render();
                 else
                     backgroundModel = model;
             }
+            
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             glStencilMask(0x00);
@@ -309,6 +317,9 @@ namespace CORERenderer.OpenGL
             RenderLights(COREMain.lights);
 
             backgroundModel?.Render();
+
+            foreach (Model model in translucentModels)
+                model.Render();
         }
 
         public static void RenderLights(List<Light> locations)
