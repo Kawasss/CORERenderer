@@ -1,0 +1,7 @@
+Error occured at 2:34:06 : 
+    System.ArgumentException: An item with the same key has already been added. Key: 306,73053
+   at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+   at System.Collections.Generic.Dictionary`2.Add(TKey key, TValue value)
+   at CORERenderer.OpenGL.Rendering.RenderAllModels(List`1 models) in C:\Users\wveen\source\repos\CORERenderer\OpenGL\Rendering.cs:line 284
+   at CORERenderer.Scene.RenderEveryFrame(Single delta) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 47
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 375

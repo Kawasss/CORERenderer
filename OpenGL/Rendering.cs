@@ -2,8 +2,6 @@
 using static CORERenderer.OpenGL.GL;
 using CORERenderer.textures;
 using CORERenderer.Main;
-using System;
-using System.Runtime.InteropServices;
 using CORERenderer.Loaders;
 
 namespace CORERenderer.OpenGL
@@ -277,25 +275,22 @@ namespace CORERenderer.OpenGL
                 glDisable(GL_CULL_FACE);
 
             Model[] modelsInCorrectOrder = new Model[models.Count];
-            float[] distances = new float[models.Count];
-            float longestDistance = 0;
-            int indexOfFurthestAwayModel = models.Count - 1;
+            List<float> distances = new();
+            Dictionary<float, Model> distanceModelTable = new();
             foreach (Model model in models) //unfinished
             {
                 float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation);
-                if (distance > longestDistance)
-                {
-                    longestDistance = distance;
-                    for (int i = 0; i < models.Count - 1; i++)
-                        modelsInCorrectOrder[i] = modelsInCorrectOrder[i + 1]; //move every model one ahead, is expensive
-                    modelsInCorrectOrder[^1] = model;
-                }
-                else if (indexOfFurthestAwayModel != 0)
-                    modelsInCorrectOrder[indexOfFurthestAwayModel - 1] = model;
+                distances.Add(distance);
+                if (!distanceModelTable.ContainsKey(distance))
+                    distanceModelTable.Add(distance, model);
                 else
-                    modelsInCorrectOrder[indexOfFurthestAwayModel] = model;
-                indexOfFurthestAwayModel--;
+                    distanceModelTable.Add(distance + 0.1f, model);
             }
+
+            float[] distancesArray = distances.ToArray();
+            Array.Sort(distancesArray);
+            for (int i = 0; i < distancesArray.Length; i++)
+                modelsInCorrectOrder[i] = distanceModelTable[distancesArray[i]];
 
             foreach (Model model in modelsInCorrectOrder)
             {
