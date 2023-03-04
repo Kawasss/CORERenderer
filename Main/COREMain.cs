@@ -53,7 +53,7 @@ namespace CORERenderer.Main
         //strings
         public static string LoadFilePath = null;
         public static string GPU;
-        public const string VERSION = "v0.1.P";
+        public const string VERSION = "v0.2.P";
 
         //bools
         public static bool renderGrid = true;
@@ -79,6 +79,8 @@ namespace CORERenderer.Main
         public static bool subMenuOpenLastFrame = false;
         public static bool submenuOpen = false;
 
+        private static bool dirLoaded = false;
+
         //enums
         public static RenderMode LoadFile = RenderMode.CRSFile;
         public static Keys pressedKey;
@@ -102,6 +104,8 @@ namespace CORERenderer.Main
         public static Window window;
         public static Framebuffer IDFramebuffer;
         public static Framebuffer renderFramebuffer;
+
+        private static List<ModelInfo> dirLoadedModels = null;
 
         //misc.
         //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
@@ -200,7 +204,6 @@ namespace CORERenderer.Main
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
-                Button test = new("Save as image", 100, monitorHeight - 25);
                 menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
 
                 tab.AttachTo(modelList);
@@ -209,7 +212,6 @@ namespace CORERenderer.Main
                 graphManager.AttachTo(frametimeGraph);
                 menu.AttachTo(ref button);
                 button.OnClick(menu.Render);
-                test.OnClick(SaveSceneAsImage);
                 menu.SetBool("Render Grid", renderGrid);
                 menu.SetBool("Render Background", renderBackground);
                 menu.SetBool("Render GUI", renderGUI);
@@ -350,11 +352,6 @@ namespace CORERenderer.Main
                     {
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
-                            IDFramebuffer.Bind();
-                            
-                            glClearColor(1f, 1f, 1f, 1);
-                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
                             renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
                             glEnable(GL_BLEND);
                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -400,9 +397,23 @@ namespace CORERenderer.Main
                             renderEntireDir = false;
                             menu.SetBool("Load entire directory", false);
                         }
+                        if (dirLoadedModels != null)
+                        {
+                            foreach (ModelInfo model in dirLoadedModels)
+                            {
+                                Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials, out int error); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
+                                GetCurrentScene.allModels.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
+                            }
+                            dirLoadedModels = null;
+                        }
                     }
 
                     glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+
+                    IDFramebuffer.Bind();
+
+                    glClearColor(1f, 1f, 1f, 1);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
                     //check for mouse picking
                     IDFramebuffer.RenderFramebuffer();
@@ -433,6 +444,7 @@ namespace CORERenderer.Main
                         splashScreen.Dispose();
 
                         console.ShowInfo();
+                        console.WriteDebug("maintenance in Rendering and Model");
                     }
                 }
                 DeleteAllBuffers();
@@ -449,46 +461,65 @@ namespace CORERenderer.Main
 
         public static void LoadDir(string dir)
         {
+            bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
-            foreach (string file in allFiles)
-                if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read{
+            List<string> readFiles = new();
+            List<List<List<float>>> allVertices = new();
+            List<List<List<uint>>> allIndices = new();
+            List<List<Vector3>> allOffsets = new();
+            List<string> mtllibs = new();
+            List<List<string>> mtlnames = new();
+            List<Model> models = scenes[selectedScene].allModels;
+            List<ModelInfo> localVersion = new();
+            Task.Run(() =>
+            {
+                Parallel.ForEach(allFiles, file =>
                 {
-                    scenes[selectedScene].allModels.Add(new(file));
-
-                    Submenu.isOpen = false;
-
-                    console.RenderEvenIfNotChanged();
-
-                    glEnable(GL_DEPTH);
-
-                    renderFramebuffer.Bind();
-
-                    scenes[selectedScene].allModels[^1].Render();
-
-                    glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
-
-                    renderFramebuffer.RenderFramebuffer();
-
-                    if (renderIDFramebuffer)
+                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath && !readFiles.Contains(file)) //loads every obj in given directory except for the one already read
                     {
-                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
-                        IDFramebuffer.RenderFramebuffer();
+                        readFiles.Add(file);
+                        Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out string mtllib);
+
+                        allVertices.Add(vertices);
+                        allIndices.Add(indices);
+                        allOffsets.Add(offsets);
+                        mtllibs.Add(dir + '\\' + mtllib);
+                        mtlnames.Add(mtlNames);
                     }
-
-                    glViewport(0, 0, monitorWidth, monitorHeight);
-
-                    Glfw.SwapBuffers(window);
-                    Glfw.PollEvents();
-                }
+                });
+                loaded = true;
+                if (loaded)
+                    for (int i = 0; i < readFiles.Count; i++)
+                    {
+                        //Readers.LoadMTL(mtllibs[i], mtlnames[i], out List<Material> materials, out int error); //mtl files are read outside of the parallel loop, because opengl cant handle creating textures in a new space, resulting in black textures
+                        //models.Add(new(readFiles[i], allVertices[i], allIndices[i], materials, allOffsets[i]));
+                        localVersion.Add(new(readFiles[i], mtllibs[i], mtlnames[i], allVertices[i], allIndices[i], allOffsets[i]));
+                    }
+                dirLoadedModels = localVersion;
+                //scenes[selectedScene].allModels = models;
+            });
         }
 
-        public static void SaveSceneAsImage()
+        private struct ModelInfo
         {
-            byte[] pixels = SaveAsFile(renderFramebuffer, monitorWidth, monitorHeight);
-            FileStream fs = File.Create($"{pathRenderer}\\Renders\\TEST.rpi");
-            foreach (byte b in pixels)
-                fs.WriteByte(b);
-            fs.Close();
+            public string path;
+            public string mtllib;
+            public List<string> mtlNames;
+            public List<List<float>> vertices;
+            public List<List<uint>> indices;
+            //public List<Material> materials;
+            public List<Vector3> offsets;
+
+            public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<float>> vertices, List<List<uint>> indices, List<Vector3> offsets)// List<Material> materials,
+            {
+                this.path = path;
+                this.mtllib = mtllib;
+                this.mtlNames = mtlNames;
+                this.vertices = vertices;
+                this.indices = indices;
+                //this.materials = materials;
+                this.offsets = offsets;
+            }
         }
 
         public static Vector3 GenerateIDColor(int ID)

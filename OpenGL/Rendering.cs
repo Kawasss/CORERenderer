@@ -266,9 +266,8 @@ namespace CORERenderer.OpenGL
 
             glDrawArrays(PrimitiveType.Triangles, 0, 36);
         }
-
-        private static int backgroundIndex = -1;
-        private static bool containsBackground = false;
+        
+        private static Model backgroundModel = null;
 
         public static void RenderAllModels(List<Model> models)
         {
@@ -277,15 +276,35 @@ namespace CORERenderer.OpenGL
             else 
                 glDisable(GL_CULL_FACE);
 
-            for (int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels.Count; i++)
+            Model[] modelsInCorrectOrder = new Model[models.Count];
+            float[] distances = new float[models.Count];
+            float longestDistance = 0;
+            int indexOfFurthestAwayModel = models.Count - 1;
+            foreach (Model model in models) //unfinished
             {
-                if (models[i].type != RenderMode.HDRFile)
-                    models[i].Render();
-                else
+                float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation);
+                if (distance > longestDistance)
                 {
-                    backgroundIndex = i;
-                    containsBackground = true;
+                    longestDistance = distance;
+                    for (int i = 0; i < models.Count - 1; i++)
+                        modelsInCorrectOrder[i] = modelsInCorrectOrder[i + 1]; //move every model one ahead, seems expensive
+                    modelsInCorrectOrder[^1] = model;
                 }
+                else if (indexOfFurthestAwayModel != 0)
+                    modelsInCorrectOrder[indexOfFurthestAwayModel - 1] = model;
+                else
+                    modelsInCorrectOrder[indexOfFurthestAwayModel] = model;
+                indexOfFurthestAwayModel--;
+            }
+
+            foreach (Model model in modelsInCorrectOrder)
+            {
+                if (model == null)
+                    continue;
+                if (model.type != RenderMode.HDRFile)
+                    model.Render();
+                else
+                    backgroundModel = model;
             }
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -293,8 +312,7 @@ namespace CORERenderer.OpenGL
 
             RenderLights(COREMain.lights);
 
-            if (containsBackground)
-                models[backgroundIndex].RenderBackground();
+            backgroundModel?.Render();
         }
 
         public static void RenderLights(List<Light> locations)

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using SharpFont;
+using System.Numerics;
 
 namespace COREMath
 {
@@ -389,6 +390,21 @@ namespace COREMath
 
             newMatrix[3, 3] = 1;
             return new(newMatrix);
+        }
+
+        public static Matrix operator + (Matrix m1, Matrix m2)
+        {
+            float[,] newM = new float[4, 4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    newM[i, j] = m1.matrix4x4[i, j] + m2.matrix4x4[i, j];
+                }
+            }
+
+            return new(newM);
         }
 
         /// <summary>

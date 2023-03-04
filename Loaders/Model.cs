@@ -4,10 +4,8 @@ using static CORERenderer.OpenGL.GL;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.GLFW;
-using CORERenderer.shaders;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
-using System.Drawing;
 
 namespace CORERenderer.Loaders
 {
@@ -19,6 +17,8 @@ namespace CORERenderer.Loaders
         public List<Material> Materials;
 
         public List<Submodel> submodels;
+
+        private List<Vector3> offsets;
 
         public Vector3 Scaling = new(1, 1, 1);
         public Vector3 translation = new(0, 0, 0);
@@ -62,16 +62,37 @@ namespace CORERenderer.Loaders
             type = COREMain.SetRenderMode(path);
 
             if (type == RenderMode.ObjFile)
-            {
                 GenerateObj(path);
-                return;
-            }
-
             else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage || type == RenderMode.RPIFile)
                 GivenImage = Image3D.LoadImageIn3D(type, path);
 
             else if (type == RenderMode.HDRFile && hdr == null)
                 hdr = HDRTexture.ReadFromFile(path);
+        }
+        
+        public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets)
+        {
+            type = COREMain.SetRenderMode(path);
+
+            this.vertices = vertices;
+            this.indices = indices;
+            this.Materials = materials;
+            this.offsets = offsets;
+
+            name = Path.GetFileName(path)[..^4];
+
+            submodels = new();
+            this.translation = offsets[0];
+            for (int i = 0; i < vertices.Count; i++)
+            {
+
+                submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
+                submodels[i].translation = offsets[i] - this.translation;
+                submodels[i].parent = this;
+                totalAmountOfVertices += submodels[^1].numberOfVertices;
+            }
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
         }
 
         public void Render()
@@ -90,20 +111,8 @@ namespace CORERenderer.Loaders
 
         public void RenderBackground() => Rendering.RenderBackground(hdr);
 
-        private unsafe void RenderObj() //better to make this extend to rendereveryframe() or new render override
+        private unsafe void RenderObj()
         {
-            /*int i = 0;
-            foreach (Submodel submodel in submodels)
-            {
-                submodel.renderLines = renderLines;
-                submodel.parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
-
-                if (submodel.highlighted)
-                    selectedSubmodel = i;
-
-                submodel.Render();
-                i++;
-            }*/
             for (int i = submodels.Count - 1; i >= 0; i--)
             {
                 submodels[i].renderLines = renderLines;
@@ -116,10 +125,10 @@ namespace CORERenderer.Loaders
             }
         }
 
-        public void GenerateObj(string path)
+        private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out List<Vector3> offsets, out mtllib);
+            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out offsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             this.highlighted = true;
@@ -153,22 +162,6 @@ namespace CORERenderer.Loaders
                 submodels[i].translation = offsets[i];
                 submodels[i].parent = this;
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
-
-
-                /*COREMain.renderFramebuffer.Bind();
-                Render(); //renders the submodel to make the app not crash
-
-                glViewport(COREMain.viewportX, COREMain.viewportY, COREMain.renderWidth, COREMain.renderHeight);
-
-                COREMain.renderFramebuffer.RenderFramebuffer();
-                if (COREMain.renderIDFramebuffer)
-                {
-                    glViewport((int)(COREMain.viewportX + COREMain.renderWidth * 0.75f), (int)(COREMain.viewportY + COREMain.renderHeight * 0.75f), (int)(COREMain.renderWidth * 0.25f), (int)(COREMain.renderHeight * 0.25f));
-                    COREMain.IDFramebuffer.RenderFramebuffer();
-                }
-                glViewport(0, 0, COREMain.monitorWidth, COREMain.monitorHeight);
-
-                Glfw.SwapBuffers(COREMain.window);*/
             }
             submodels[0].highlighted = true;
             selectedSubmodel = 0;

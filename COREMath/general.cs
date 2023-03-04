@@ -42,6 +42,8 @@ namespace COREMath
             return matrix;
         }
 
+        public static float Distance(Vector3 v1, Vector3 v2) => GetLengthOf(v1 - v2);
+
         public static float Clamp(float n, float min, float max)
         {
             return MathF.Max(MathF.Min(n, max), min);

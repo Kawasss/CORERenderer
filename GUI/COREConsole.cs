@@ -125,6 +125,8 @@ namespace CORERenderer.GUI
             {
                 if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
                     quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
+                else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
+                    quad.Write(lines[i], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
                 else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
                 else if (lines.Length > 0 && i == linesPrinted - 1)
@@ -163,6 +165,8 @@ namespace CORERenderer.GUI
         public void WriteError(System.Exception err) => WriteLine("ERROR " + err.ToString());
 
         public void WriteError(string err) => WriteLine("ERROR " + err);
+
+        public void WriteDebug(string debug) => WriteLine("DEBUG " + debug);
 
         /// <summary>
         /// Renders the entire console even if nothing has changed, overriding the optimisation. This will make a draw call to the GPU for each letter, causing a severe performance drop

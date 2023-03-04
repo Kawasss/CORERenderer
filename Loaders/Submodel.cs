@@ -18,7 +18,7 @@ namespace CORERenderer.Loaders
         public Vector3 rotation = new(0, 0, 0);
 
         public Matrix parentModel;
-        public Model parent;
+        public Model parent = null;
 
         private List<float> vertices;
         private List<uint> indices;
@@ -73,7 +73,7 @@ namespace CORERenderer.Loaders
 
             ClampValues();
 
-            Matrix model = Matrix.IdentityMatrix * new Matrix(scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+            Matrix model = Matrix.IdentityMatrix * new Matrix(scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
 
             shader.SetMatrix("model", model);
 
