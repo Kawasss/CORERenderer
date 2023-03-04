@@ -444,7 +444,6 @@ namespace CORERenderer.Main
                         splashScreen.Dispose();
 
                         console.ShowInfo();
-                        console.WriteDebug("maintenance in Rendering and Model");
                     }
                 }
                 DeleteAllBuffers();
@@ -475,7 +474,7 @@ namespace CORERenderer.Main
             {
                 Parallel.ForEach(allFiles, file =>
                 {
-                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath && !readFiles.Contains(file)) //loads every obj in given directory except for the one already read
+                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read// && !readFiles.Contains(file)
                     {
                         readFiles.Add(file);
                         Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out string mtllib);
