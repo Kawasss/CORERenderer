@@ -287,7 +287,7 @@ namespace CORERenderer.OpenGL
                 {
                     longestDistance = distance;
                     for (int i = 0; i < models.Count - 1; i++)
-                        modelsInCorrectOrder[i] = modelsInCorrectOrder[i + 1]; //move every model one ahead, seems expensive
+                        modelsInCorrectOrder[i] = modelsInCorrectOrder[i + 1]; //move every model one ahead, is expensive
                     modelsInCorrectOrder[^1] = model;
                 }
                 else if (indexOfFurthestAwayModel != 0)
