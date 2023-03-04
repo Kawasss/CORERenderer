@@ -312,7 +312,7 @@ namespace CORERenderer.OpenGL
             
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            glStencilMask(0x00);
+            //glStencilMask(0x00);
 
             RenderLights(COREMain.lights);
 
