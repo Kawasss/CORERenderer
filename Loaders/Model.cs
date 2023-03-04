@@ -36,8 +36,6 @@ namespace CORERenderer.Loaders
 
         public bool renderLines = false;
 
-        public bool containsTranslucentModels = false;
-
         public string mtllib;
 
         public int ID;
@@ -92,8 +90,6 @@ namespace CORERenderer.Loaders
                 submodels[i].translation = offsets[i] - this.translation;
                 submodels[i].parent = this;
                 totalAmountOfVertices += submodels[^1].numberOfVertices;
-                if (materials[i].Transparency != 1)
-                    containsTranslucentModels = true;
             }
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
@@ -125,7 +121,10 @@ namespace CORERenderer.Loaders
                 if (submodels[i].highlighted)
                     selectedSubmodel = i;
 
-                submodels[i].Render();
+                if (!submodels[i].isTranslucent)
+                    submodels[i].Render();
+                else
+                    translucentSubmodels.Add(submodels[i]);
             }
         }
 

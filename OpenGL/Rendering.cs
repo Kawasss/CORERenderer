@@ -267,6 +267,8 @@ namespace CORERenderer.OpenGL
         
         private static Model backgroundModel = null;
 
+        public static List<Submodel> translucentSubmodels = new();
+
         public static void RenderAllModels(List<Model> models)
         {
             if (cullFaces)
@@ -274,36 +276,13 @@ namespace CORERenderer.OpenGL
             else 
                 glDisable(GL_CULL_FACE);
 
-            //depth sorting
-            Model[] modelsInCorrectOrder = new Model[models.Count];
-            List<float> distances = new();
-            Dictionary<float, Model> distanceModelTable = new();
-            foreach (Model model in models) //unfinished
-            {
-                float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation);
-                distances.Add(distance);
-                if (!distanceModelTable.ContainsKey(distance))
-                    distanceModelTable.Add(distance, model);
-                else
-                    distanceModelTable.Add(distance + 0.1f, model);
-            }
-
-            float[] distancesArray = distances.ToArray();
-            Array.Sort(distancesArray);
-            Array.Reverse(distancesArray);
-            for (int i = 0; i < distancesArray.Length; i++)
-                modelsInCorrectOrder[i] = distanceModelTable[distancesArray[i]];
+            
 
             List<Model> translucentModels = new();
-            foreach (Model model in modelsInCorrectOrder)
+            foreach (Model model in models)
             {
                 if (model == null)
                     continue;
-                if (model.containsTranslucentModels)
-                {
-                    translucentModels.Add(model);
-                    continue;
-                }
                 if (model.type != RenderMode.HDRFile)
                     model.Render();
                 else
@@ -318,8 +297,29 @@ namespace CORERenderer.OpenGL
 
             backgroundModel?.Render();
 
-            foreach (Model model in translucentModels)
+            //depth sorting
+            List<float> distances = new();
+            Dictionary<float, Submodel> distanceModelTable = new();
+            foreach (Submodel model in translucentSubmodels) //unfinished
+            {
+                float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation + model.parent.translation);
+                distances.Add(distance);
+                if (!distanceModelTable.ContainsKey(distance))
+                    distanceModelTable.Add(distance, model);
+                else
+                    distanceModelTable.Add(distance + 0.1f, model);
+            }
+
+            float[] distancesArray = distances.ToArray();
+            Array.Sort(distancesArray);
+            Array.Reverse(distancesArray);
+            for (int i = 0; i < distancesArray.Length; i++)
+                translucentSubmodels[i] = distanceModelTable[distancesArray[i]];
+
+            foreach (Submodel model in translucentSubmodels)
                 model.Render();
+
+            translucentSubmodels = new();
         }
 
         public static void RenderLights(List<Light> locations)

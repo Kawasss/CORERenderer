@@ -6,7 +6,6 @@ using static CORERenderer.OpenGL.GL;
 using static CORERenderer.Main.Globals;
 using CORERenderer.OpenGL;
 using CORERenderer.GLFW.Enums;
-using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW;
 
 namespace CORERenderer.Loaders
@@ -42,12 +41,16 @@ namespace CORERenderer.Loaders
 
         public bool highlighted = false;
 
+        public bool isTranslucent = false;
+
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
             this.name = name;
             this.vertices = vertices;
             this.indices = indices;
             this.material = material;
+
+            isTranslucent = material.Transparency != 1;
 
             numberOfVertices = vertices.Count / 8;
 
