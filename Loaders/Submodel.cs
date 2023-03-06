@@ -12,6 +12,9 @@ namespace CORERenderer.Loaders
 {
     public class Submodel
     {
+        public static bool useRenderDistance = false;
+        public static float renderDistance = 100;
+
         public Vector3 scaling = new(1, 1, 1);
         public Vector3 translation = new(0, 0, 0);
         public Vector3 rotation = new(0, 0, 0);
@@ -61,53 +64,52 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
-            highlighted = COREMain.selectedID == ID;
-
-            shader.Use();
-
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilMask(0xFF);
-
-            shader.SetVector3("viewPos", COREMain.scenes[COREMain.selectedScene].camera.position);
-            shader.SetFloat("transparency", material.Transparency);
-            shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
-
-            shader.Use();
-
-            ClampValues();
-
-            Matrix model = Matrix.IdentityMatrix * new Matrix(scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
-
-            shader.SetMatrix("model", model);
-
-            usedTextures[material.Texture].Use(GL_TEXTURE0);
-            usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
-
-            glBindVertexArray(VAO);
-            unsafe
+            if (MathC.Distance(COREMain.GetCurrentScene.camera.position, translation + parent.translation) < renderDistance || !useRenderDistance)
             {
-                if (renderLines)
-                    glDrawElements(PrimitiveType.Lines, indices.Count, GLType.UnsingedInt, (void*)0);
-                else
-                    glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                highlighted = COREMain.selectedID == ID;
 
-                if (COREMain.renderToIDFramebuffer)
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+
+                shader.SetVector3("viewPos", COREMain.scenes[COREMain.selectedScene].camera.position);
+                shader.SetFloat("transparency", material.Transparency);
+                shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
+
+                ClampValues();
+
+                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+
+                shader.SetMatrix("model", model);
+
+                usedTextures[material.Texture].Use(GL_TEXTURE0);
+                usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
+
+                glBindVertexArray(VAO);
+                unsafe
                 {
-                    COREMain.IDFramebuffer.Bind();
+                    if (renderLines)
+                        glDrawElements(PrimitiveType.Lines, indices.Count, GLType.UnsingedInt, (void*)0);
+                    else
+                        glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
 
-                    IDShader.Use();
+                    if (COREMain.renderToIDFramebuffer)
+                    {
+                        COREMain.IDFramebuffer.Bind();
 
-                    IDShader.SetVector3("color", IDColor);
-                    IDShader.SetMatrix("model", model);
+                        IDShader.Use();
 
-                    glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                        IDShader.SetVector3("color", IDColor);
+                        IDShader.SetMatrix("model", model);
 
-                    if (!highlighted)
-                        highlighted = COREMain.selectedID == ID;
-                    else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
-                        highlighted = false;
+                        glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
 
-                    COREMain.renderFramebuffer.Bind();
+                        if (!highlighted)
+                            highlighted = COREMain.selectedID == ID;
+                        else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
+                            highlighted = false;
+
+                        COREMain.renderFramebuffer.Bind();
+                    }
                 }
             }
         }

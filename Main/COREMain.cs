@@ -272,7 +272,7 @@ namespace CORERenderer.Main
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
-
+                
                 //render loop
                 while (!Glfw.WindowShouldClose(window))
                 {
@@ -444,6 +444,7 @@ namespace CORERenderer.Main
                         splashScreen.Dispose();
 
                         console.ShowInfo();
+                        console.WriteDebug("Make it so that all text gets drawn at once, instead of over the duration of a frame");
                     }
                 }
                 DeleteAllBuffers();

@@ -276,9 +276,12 @@ namespace CORERenderer.OpenGL
             else 
                 glDisable(GL_CULL_FACE);
 
-            
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            List<Model> translucentModels = new();
+            RenderLights(COREMain.lights);
+
+            GenericShaders.GenericLightingShader.Use();
+
             foreach (Model model in models)
             {
                 if (model == null)
@@ -288,19 +291,11 @@ namespace CORERenderer.OpenGL
                 else
                     backgroundModel = model;
             }
-            
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-            //glStencilMask(0x00);
-
-            RenderLights(COREMain.lights);
-
-            backgroundModel?.Render();
 
             //depth sorting
             List<float> distances = new();
             Dictionary<float, Submodel> distanceModelTable = new();
-            foreach (Submodel model in translucentSubmodels) //unfinished
+            foreach (Submodel model in translucentSubmodels)
             {
                 float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation + model.parent.translation);
                 distances.Add(distance);
@@ -318,6 +313,8 @@ namespace CORERenderer.OpenGL
 
             foreach (Submodel model in translucentSubmodels)
                 model.Render();
+
+            backgroundModel?.Render();
 
             translucentSubmodels = new();
         }

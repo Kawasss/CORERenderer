@@ -467,6 +467,38 @@ namespace CORERenderer.GUI
                 }
             }
 
+            //set
+            else if (input.Length > 4 && input[..4] == "set ") //keyword for displaying variable values
+            {
+                if (input[5..].IndexOf(' ') + 5 == -1)
+                    return;
+                switch (input[4..(input[5..].IndexOf(' ') + 5)])
+                {
+                    case "useRenderDistance":
+                        if (input.Contains("true"))
+                        {
+                            Submodel.useRenderDistance = true;
+                            WriteLine($"Set variable to true");
+                        }
+                            
+                        else if (input.Contains("false"))
+                        {
+                            Submodel.useRenderDistance = false;
+                            WriteLine($"Set variable to false");
+                        }
+                        else
+                            WriteLine("Couldn't find a bool value");
+                        break;
+                    case "renderDistance":
+                        ChangeValue(ref Submodel.renderDistance, input[18..]);
+                        WriteLine($"Set variable to {Submodel.renderDistance}");
+                        break;
+                    default:
+                        WriteError($"Couldn't parse input {input[4..input[5..].IndexOf(' ')]}");
+                        break;
+                }
+            }
+
             //move
             else if (input.Length > 13 && input[..4] == "move")
             {
