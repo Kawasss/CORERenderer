@@ -139,6 +139,7 @@ namespace CORERenderer.GUI
                 return;
             }
             tabDivBinding.Add(names[amountAttached], div);
+            amountAttached++;
         }
 
         /// <summary>
@@ -185,6 +186,7 @@ namespace CORERenderer.GUI
                 return;
             }
             tabDivBinding.Add(names[amountAttached], div);
+            amountAttached++;
         }
 
         public void Render()

@@ -34,7 +34,7 @@ namespace CORERenderer.GUI
 
         public Arrows()
         {
-            Readers.LoadOBJ($"{COREMain.pathRenderer}\\Loaders\\testOBJ\\arrow.obj", out _, out vertices, out indices, out _, out _);
+            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out vertices, out indices, out _, out _);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
 

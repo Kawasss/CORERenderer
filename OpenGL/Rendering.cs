@@ -3,6 +3,8 @@ using static CORERenderer.OpenGL.GL;
 using CORERenderer.textures;
 using CORERenderer.Main;
 using CORERenderer.Loaders;
+using CORERenderer.GLFW;
+using System.Diagnostics;
 
 namespace CORERenderer.OpenGL
 {
@@ -31,6 +33,21 @@ namespace CORERenderer.OpenGL
         public static void Init()
         {
             GenericShaders.SetShaders();
+        }
+
+        public static async Task<double> GetCPUUsage()
+        {
+            double start = Glfw.Time;
+            TimeSpan startCPU = Process.GetCurrentProcess().TotalProcessorTime;
+
+            await Task.Delay(500);
+
+            double end = Glfw.Time;
+            TimeSpan endCPU = Process.GetCurrentProcess().TotalProcessorTime;
+
+            double CPUMs = (endCPU - startCPU).TotalMilliseconds;
+            double msPassed = end - start;
+            return CPUMs / (Environment.ProcessorCount * msPassed) * 100;
         }
 
         public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)

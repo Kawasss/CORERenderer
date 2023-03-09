@@ -19,7 +19,7 @@ namespace CORERenderer.GUI
         private int Width;
         private int Height;
 
-        private int MaxValue;
+        public int MaxValue;
 
         private float[] pointLocations;
         private float[] pointValues;
@@ -68,7 +68,7 @@ namespace CORERenderer.GUI
                         float oldValue = (pointValues[i] - bottomY) / Height * MaxValue; //reverse the calculations done at float position = ...
                         pointValues[i] = oldValue / value * Height + bottomY;
                     }
-                    MaxValue = (int)(value + 20);
+                    MaxValue = (int)(value + 10);
                 }
 
                 float position = value / MaxValue * Height + bottomY; //normalizes the given value to get a percentage of where the point is
@@ -113,7 +113,7 @@ namespace CORERenderer.GUI
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
 
-                COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.9f, new COREMath.Vector2(1, 0));
+                COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.8f, new COREMath.Vector2(1, 0));
 
                 glBindVertexArray(0);
             }

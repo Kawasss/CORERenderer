@@ -6,10 +6,8 @@ using CORERenderer.GLFW.Structs;
 using CORERenderer.GUI;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
-using System;
-using System.Diagnostics.SymbolStore;
-using System.IO;
-using System.Transactions;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
@@ -44,6 +42,12 @@ namespace CORERenderer.Main
 
         //doubles
         private static double previousTime = 0;
+        public static double CPUUsage = 0;
+        private static TimeSpan previousCPU;
+        private static double memoryUsed = 0;
+
+        //longs
+        public static long totalMemory = 0;
 
         //floats
         public static float mousePosX, mousePosY;
@@ -123,6 +127,9 @@ namespace CORERenderer.Main
                 //-------------------------------------------------------------------------------------------
                 Glfw.Init();
 
+                GetPhysicallyInstalledSystemMemory(out totalMemory);
+                totalMemory *= 1000;
+
                 splashScreen = new();
 
                 //sets the width for the window that shows the 3D space
@@ -191,6 +198,14 @@ namespace CORERenderer.Main
                     viewportX, 
                     (int)(monitorHeight * 0.004f)
                 );
+                Graph drawCallsPerFrameGraph = new
+                (
+                    0,
+                    (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),
+                    (int)(monitorHeight * 0.224f - 25),
+                    viewportX,
+                    (int)(monitorHeight * 0.004f)
+                );
 
                 console = new
                 (
@@ -200,7 +215,7 @@ namespace CORERenderer.Main
                     (int)(monitorHeight * 0.004f)
                 );
                 TabManager tab = new(new string[] { "Models", "Submodels" });
-                TabManager graphManager = new(new string[] { "FPS", "FS" });
+                TabManager graphManager = new(new string[] { "FS", "CPU %", "DCPF" });
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
@@ -208,8 +223,9 @@ namespace CORERenderer.Main
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
-                graphManager.AttachTo(graph);
                 graphManager.AttachTo(frametimeGraph);
+                graphManager.AttachTo(graph);
+                graphManager.AttachTo(drawCallsPerFrameGraph);
                 menu.AttachTo(ref button);
                 button.OnClick(menu.Render);
                 menu.SetBool("Render Grid", renderGrid);
@@ -269,6 +285,8 @@ namespace CORERenderer.Main
                 console.WriteLine("Beginning render loop");
 
                 previousTime = Glfw.Time;
+                using (Process process =Process.GetCurrentProcess())
+                    previousCPU = process.TotalProcessorTime;
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
@@ -331,7 +349,11 @@ namespace CORERenderer.Main
 
                                 sceneManager.Render();
                             }
-                            graph.Update(fps); //update even without any input because the data always changes
+                            graph.Update((float)CPUUsage); //update even without any input because the data always changes
+                            if (graph.MaxValue != 100)
+                                graph.MaxValue = 100;
+                            drawCallsPerFrameGraph.Update(drawCallsPerFrame);
+
                             frametimeGraph.Update(currentFrameTime * 1000);
 
                             console.Render();
@@ -361,13 +383,13 @@ namespace CORERenderer.Main
 
                             if (addCube)
                             {
-                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\Loaders\\testOBJ\\cube.obj"));
+                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
                                 addCube = false;
                                 menu.SetBool("  Cube", addCube);
                             }
                             if (addCylinder)
                             {
-                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\Loaders\\testOBJ\\cylinder.obj"));
+                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cylinder.obj"));
                                 addCylinder = false;
                                 menu.SetBool("  Cylinder", addCylinder);
                             }
@@ -444,7 +466,6 @@ namespace CORERenderer.Main
                         splashScreen.Dispose();
 
                         console.ShowInfo();
-                        console.WriteDebug("Make it so that all text gets drawn at once, instead of over the duration of a frame");
                     }
                 }
                 DeleteAllBuffers();
@@ -569,13 +590,23 @@ namespace CORERenderer.Main
             // If a second has passed.
             if (currentTime - previousTime >= 1.0)
             {
-                // Display the frame count here any way you want.
+                //calculates the fps
                 fps = frameCount;
                 currentFrameTime = 1.0f / frameCount;
 
                 drawCallsPerSecond = drawCalls;
                 drawCallsPerFrame = drawCallsPerSecond / frameCount;
                 drawCalls = 0;
+
+                Process proc = Process.GetCurrentProcess();
+                TimeSpan currentCPU = proc.TotalProcessorTime;
+                memoryUsed = proc.WorkingSet64;
+                double timeDifference = currentTime - previousTime;
+                double currentCPUUsage = (currentCPU - previousCPU).TotalSeconds;
+
+                CPUUsage = Math.Round(currentCPUUsage / (Environment.ProcessorCount * timeDifference) * 100, 1);
+                previousCPU = currentCPU;
+                proc.Dispose();
 
                 frameCount = 0;
                 previousTime = currentTime;
@@ -726,5 +757,9 @@ namespace CORERenderer.Main
             else
                 MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
         }
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
     }
 }
