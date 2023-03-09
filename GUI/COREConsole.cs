@@ -438,8 +438,11 @@ namespace CORERenderer.GUI
                     string dir = input[5..];
                     if (dir[..5] == "$PATH")
                         dir = COREMain.pathRenderer + dir[5..];
-                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr") //only allows certain file types, in this case .obj and .hdr
+                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl") //only allows certain file types, in this case .obj and .hdr
+                    {
                         COREMain.scenes[COREMain.selectedScene].allModels.Add(new(dir));
+                        WriteLine("Loaded file");
+                    }
                     else
                         WriteError($"Invalid file at {dir}");
                 }

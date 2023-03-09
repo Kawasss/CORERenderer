@@ -249,6 +249,15 @@ namespace CORERenderer.Loaders
 
             glBindVertexArray(VAO);
             glDrawArrays(PrimitiveType.Triangles, 0, vertices[0].Count / 8);
+            if (renderLines)
+            {
+                GL.glLineWidth(1.5f);
+                //glEnable(GL_CULL_FACE);
+                shader.SetVector3("overrideColor", new(1, 0, 1));
+                //glClear(GL_DEPTH_BUFFER_BIT);
+                glDrawArrays(PrimitiveType.Lines, 0, vertices[0].Count / 8);
+                shader.SetVector3("overrideColor", new(0, 0, 0));
+            }
         }
 
         private void ErrorLogic(int error)

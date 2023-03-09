@@ -53,6 +53,7 @@ uniform vec3 viewPos;
 uniform float distanceObject;
 uniform float transparency;
 uniform int allowAlpha;
+uniform vec3 overrideColor;
 
 in vec2 TexCoords;
 
@@ -190,6 +191,9 @@ void main()
 
 	if (color.a < 0.1)
 		discard;
+
+	if (overrideColor != vec3(0, 0, 0))
+		color = vec4(overrideColor, color.a);
 
 	FragColor = color;
 }
