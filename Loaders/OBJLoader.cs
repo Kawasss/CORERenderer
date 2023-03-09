@@ -140,12 +140,8 @@ namespace CORERenderer.Loaders
 
                                     Vector3 values = GetThreeFloatsWithRegEx(s);
 
-                                    //adds the indexes of the /'s that seperate the ints
-                                    local2.Add(s.IndexOf('/'));
-                                    local2.Add(s.IndexOf('/', local2[0] + 1));
-
                                     //texture coords are between the vertex coords and normals ../TC/.., without textures it would like ..//.., making it possible to check whether it uses textures by checking if the / indexes are directly next to eachother
-                                    if (local2[0] == local2[1] - 1)
+                                    if (s.Contains("//"))
                                         withTextures = false;
 
                                     //adds the vertex coordinates
@@ -163,8 +159,9 @@ namespace CORERenderer.Loaders
 
                                         //adds normals 
                                         int normal = (int)values.z - 1;
-                                        for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(normals[normal].xyz[l]);
+                                        outVertices[i].Add(normals[normal].x);
+                                        outVertices[i].Add(normals[normal].y);
+                                        outVertices[i].Add(normals[normal].z);
                                     }
                                     else //adds empty texture coordinates if they arent given
                                     {
@@ -172,16 +169,17 @@ namespace CORERenderer.Loaders
                                         outVertices[i].Add(0);
 
                                         //adds normals
-                                        int normal = int.Parse(s[(local2[1] + 1)..]) - 1;
-                                        for (int l = 0; l < 3; l++)
-                                            outVertices[i].Add(normals[normal].xyz[l]);
+                                        int normal = (int)values.z - 1;
+                                        outVertices[i].Add(normals[normal].x);
+                                        outVertices[i].Add(normals[normal].y);
+                                        outVertices[i].Add(normals[normal].z);
                                     }
                                 }
                                 else //if a vertex doesnt contain texture coordinates and normals its info is written as only the coordinates without any /'s, instead of VC/TC/N or VC//N
                                 {
                                     //adds the vertex coordinates and empty data for the texture coordinates and normals
                                     for (int l = 0; l < 3; l++)
-                                        outVertices[i].Add(vertices[int.Parse(s) - 1].xyz[l]); ;
+                                        outVertices[i].Add(vertices[int.Parse(s) - 1].xyz[l]);
 
                                     for (int l = 0; l < 5; l++)
                                         outVertices[i].Add(0);

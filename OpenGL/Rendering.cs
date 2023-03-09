@@ -315,11 +315,10 @@ namespace CORERenderer.OpenGL
             foreach (Submodel model in translucentSubmodels)
             {
                 float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation + model.parent.translation);
+                while (distanceModelTable.ContainsKey(distance))
+                    distance += 0.01f;
                 distances.Add(distance);
-                if (!distanceModelTable.ContainsKey(distance))
-                    distanceModelTable.Add(distance, model);
-                else
-                    distanceModelTable.Add(distance + 0.1f, model);
+                distanceModelTable.Add(distance, model);
             }
 
             float[] distancesArray = distances.ToArray();

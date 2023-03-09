@@ -140,12 +140,13 @@ namespace CORERenderer.Loaders
         private void generateStl(string path)
         {
             double startedReading = Glfw.Time;
-            bool loaded = LoadSTL(path, out name, out List<float> localVertices);
+            bool loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
 
             GenerateFilledBuffer(out VBO, out VAO, localVertices.ToArray());
             vertices = new();
             vertices.Add(localVertices);
+            translation = offset;
 
             submodels = new();
 
@@ -241,7 +242,7 @@ namespace CORERenderer.Loaders
         private void RenderSTL()
         {
             shader.SetFloat("transparency", 1);
-            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation);
+            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z);
             shader.SetMatrix("model", model);
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             usedTextures[2].Use(GL_TEXTURE0);

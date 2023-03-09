@@ -514,47 +514,35 @@ namespace CORERenderer.GUI
                             return;
                         }
                         Model model = COREMain.GetCurrentScene.allModels[modelIndex];
-
-                        int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
-                        int aa = 0;
-                        for (int i = input[indexOfSymbol..].IndexOf(' '); i > -1; i = input[indexOfSymbol..].IndexOf(' ', i + 1), aa++)
-                            indexes[aa] = i;
-                        Vector3 output = new(input[indexOfSymbol..][indexes[0]..indexes[1]], input[indexOfSymbol..][indexes[1]..indexes[2]], input[indexOfSymbol..][indexes[2]..]);
+                        
+                        Vector3 location = Readers.GetThreeFloatsWithRegEx(input[(indexOfSymbol + 1)..]);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = output - model.submodels[0].translation;
-                            foreach (Submodel submodel in model.submodels)
-                                submodel.translation += distance;
-                            WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                            Vector3 distance = location - model.translation;
+                            model.translation += distance;
+                            WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
-                            foreach (Submodel submodel in model.submodels)
-                                submodel.translation += output;
-                            WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                            model.translation += location;
+                            WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
                         }
                     }
                     else if (input.Contains("models"))
                     {
-                        int[] indexes = new int[3]; //gets all the indexes for the spaces in between the value
-                        int aa = 0;
-                        for (int i = input[(input.IndexOf("models") + 1)..].IndexOf(' '); i > -1; i = input[(input.IndexOf("models") + 1)..].IndexOf(' ', i + 1), aa++)
-                            indexes[aa] = i;
-                        Vector3 output = new(input[(input.IndexOf("models") + 1)..][indexes[0]..indexes[1]], input[(input.IndexOf("models") + 1)..][indexes[1]..indexes[2]], input[(input.IndexOf("models") + 1)..][indexes[2]..]);
+                        Vector3 location = Readers.GetThreeFloatsWithRegEx(input);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = output - COREMain.GetCurrentScene.allModels[0].submodels[0].translation;
+                            Vector3 distance = location - COREMain.GetCurrentScene.allModels[0].translation;
                             foreach (Model model in COREMain.GetCurrentScene.allModels)
-                                foreach (Submodel submodel in model.submodels)
-                                    submodel.translation += distance;
-                            WriteLine($"Moved model to {output.x}, {output.y}, {output.z}");
+                                model.translation += distance;
+                            WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
                             foreach (Model model in COREMain.GetCurrentScene.allModels)
-                                foreach (Submodel submodel in model.submodels)
-                                    submodel.translation += output;
-                            WriteLine($"Moved model with {output.x}, {output.y}, {output.z}");
+                                    model.translation += location;
+                            WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
                         }
                     }
                     

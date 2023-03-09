@@ -1,26 +1,18 @@
 ﻿using COREMath;
-using CORERenderer.GLFW;
-using CORERenderer.Main;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Linq;
-using System.Runtime.Intrinsics.Arm;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static bool LoadSTL(string path, out string name, out List<float> vertices)
+        public static bool LoadSTL(string path, out string name, out List<float> vertices, out Vector3 offset)
         {
             if (!File.Exists(path))
             {
                 name = "ERROR";
                 vertices = new();
+                offset = Vector3.Zero;
                 return false;
             }
 
@@ -34,22 +26,24 @@ namespace CORERenderer.Loaders
                 {
                     name = "ERROR";
                     vertices = new();
+                    offset = Vector3.Zero;
                     return false;
                 }
 
                 bool succes = false;
                 if (binaryOrASCII[..5] == "solid")
-                    succes = LoadSTLInASCII(path, out name, out vertices);
+                    succes = LoadSTLInASCII(path, out name, out vertices, out offset);
                 else
-                    succes = LoadSTLInBinary(path, out name, out vertices);
+                    succes = LoadSTLInBinary(path, out name, out vertices, out offset);
             }
-            return false;
+            return true;
         }
 
-        private static bool LoadSTLInASCII(string path, out string name, out List<float> vertices)
+        private static bool LoadSTLInASCII(string path, out string name, out List<float> vertices, out Vector3 offset)
         {
             vertices = new();
-
+            offset = Vector3.Zero;
+            bool firstLine = true;
             using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new(fs))
             using (StreamReader sr = new(bs))
@@ -79,6 +73,9 @@ namespace CORERenderer.Loaders
                         if (line == null)
                             break;
                         Vector3 vertex = GetThreeFloatsWithRegEx(line);
+                        if (firstLine)
+                            offset = vertex;
+                        vertex -= offset;
 
                         vertices.Add(vertex.x);
                         vertices.Add(vertex.y);
@@ -99,11 +96,12 @@ namespace CORERenderer.Loaders
             return false;
         }
 
-        private static bool LoadSTLInBinary(string path, out string name, out List<float> vertices)
+        private static bool LoadSTLInBinary(string path, out string name, out List<float> vertices, out Vector3 offset)
         {
             vertices = new();
             name = Path.GetFileName(path)[..^4];
-
+            List<float> holder = new();
+            float dividend = 1;
             using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 for (int i = 0; i < 80; i++) //ignore the header, which is 80 bytes long
@@ -131,7 +129,15 @@ namespace CORERenderer.Loaders
                             byte[] vertexBytes = new byte[4];
                             for (int j = 0; j < 4; j++) //get one float
                                 vertexBytes[j] = (byte)fs.ReadByte();
-                            vertices.Add(BitConverter.ToSingle(vertexBytes)); //add that one float to the list
+                            if (vertices.Count < 3)
+                            {
+                                holder.Add(BitConverter.ToSingle(vertexBytes));
+                                vertices.Add(0);
+                                if (holder[0] > 20)
+                                    dividend = 1 / holder[0];
+                                continue;
+                            }
+                            vertices.Add((BitConverter.ToSingle(vertexBytes) - holder[i]) * dividend); //add that one float to the list
                         }
                         vertices.Add(1);
                         vertices.Add(0);
@@ -141,17 +147,19 @@ namespace CORERenderer.Loaders
                         vertices.Add(normal[2]);
                     }
                     //ignore the attribute bytes
-                    _ = fs.ReadByte();
-                    _ = fs.ReadByte();
+                    fs.ReadByte();
+                    fs.ReadByte();
                 }
             }
+            //offset = new(holder[0], holder[1], holder[2]);
+            offset = Vector3.Zero;
             return true;
         }
 
-        private static Vector3 GetThreeFloatsWithRegEx(string line)
+        public static Vector3 GetThreeFloatsWithRegEx(string line)
         {
             Vector3 returnValue = new();
-            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)"); //fuck regex
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)"); //fuck regex, im not gonna explain this
             if (matches.Count == 3)
             {
                 returnValue.x = float.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
@@ -164,7 +172,7 @@ namespace CORERenderer.Loaders
         private static Vector2 GetTwoFloatsWithRegEx(string line)
         {
             Vector2 returnValue = new();
-            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)"); //fuck regex
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");
             if (matches.Count == 2)
             {
                 returnValue.x = float.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);

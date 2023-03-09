@@ -73,23 +73,23 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.x += 15f * delta;
+                        GetCurrentModelFromCurrentScene.rotation.x += 15f * delta;
                     if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.y += 15f * delta;
+                        GetCurrentModelFromCurrentScene.rotation.y += 15f * delta;
                     if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].rotation.z += 15f * delta;
+                        GetCurrentModelFromCurrentScene.rotation.z += 15f * delta;
 
                     if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
                     {
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.x -= 2f * delta;
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.y -= 2f * delta;
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.z -= 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.x -= 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.y -= 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.z -= 2f * delta;
                     }
                     if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
                     {
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.x += 2f * delta;
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.y += 2f * delta;
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].scaling.z += 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.x += 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.y += 2f * delta;
+                        GetCurrentModelFromCurrentScene.Scaling.z += 2f * delta;
                     }
 
 
