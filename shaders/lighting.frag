@@ -184,7 +184,7 @@ void main()
         spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
     FragColor = vec4(ambient + diffuse + specular, 1.0);*/
-	vec4 color = texture(material.diffuse, TexCoords);
+	vec4 color = vec4(Normal, texture(material.diffuse, TexCoords).a);//texture(material.diffuse, TexCoords);
 	if (allowAlpha == 1 && transparency != 0)
 		color.a = transparency;
 
