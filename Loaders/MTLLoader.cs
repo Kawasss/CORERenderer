@@ -99,31 +99,19 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "Kd":
-                            List<int> local0 = new(); //isolates all 3 values with the spaces inbetween them
-                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                local0.Add(i);
-                            material.Diffuse = GetVector3(n[local0[0]..local0[1]], n[local0[1]..local0[2]], n[local0[^1]..Length(n)]);
+                            material.Diffuse = GetThreeFloatsWithRegEx(n);
                             break;
 
                         case "Ka": //ambient
-                            List<int> local1 = new(); //isolates all 3 values with the spaces inbetween them
-                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                local1.Add(i);
-                            material.Ambient = GetVector3(n[local1[0]..local1[1]], n[local1[1]..local1[2]], n[local1[^1]..Length(n)]);
+                            material.Ambient = GetThreeFloatsWithRegEx(n);
                             break;
 
                         case "Ks": //specular
-                            List<int> local2 = new(); //isolates all 3 values with the spaces inbetween them
-                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                local2.Add(i);
-                            material.Specular = GetVector3(n[local2[0]..local2[1]], n[local2[1]..local2[2]], n[local2[^1]..Length(n)]);
+                            material.Specular = GetThreeFloatsWithRegEx(n);
                             break;
 
                         case "Ke": //emissive coefficient //currently unused
-                            List<int> local3 = new(); //isolates all 3 values with the spaces inbetween them
-                            for (int i = n.IndexOf(" "); i > -1; i = n.IndexOf(" ", i + 1))
-                                local3.Add(i);
-                            material.EmissiveCoefficient = GetVector3(n[local3[0]..local3[1]], n[local3[1]..local3[2]], n[local3[^1]..Length(n)]);
+                            material.EmissiveCoefficient = GetThreeFloatsWithRegEx(n);
                             break;
 
                         case "Ni":

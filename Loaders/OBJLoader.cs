@@ -1,6 +1,5 @@
 ﻿using COREMath;
 using CORERenderer.Main;
-using System.Globalization;
 
 namespace CORERenderer.Loaders
 {
@@ -87,18 +86,6 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "v ": //vector
-                            /*if (n.Contains("v  "))
-                                n = "vv " + n[3..];
-                            int[] localV = new int[4];
-                            int z = 0;
-                            for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), z++)
-                                localV[z] = k;
-                            vertices.Add(
-                             new(
-                                 n[localV[0]..localV[1]],
-                                 n[localV[1]..localV[2]],
-                                 n[localV[2]..]
-                                ));*/
                             vertices.Add(GetThreeFloatsWithRegEx(n));
                             if (currentgroup == offsets.Count)
                                 offsets.Add(vertices[^1]);
@@ -106,32 +93,10 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "vn": //vector normal
-                            /*if (n.Contains("vn  "))
-                                n = "vvn " + n[4..];
-                            int[] localVn = new int[4];
-                            int y = 0;
-                            for (int k = n.IndexOf(" "); k > -1; k = n.IndexOf(" ", k + 1), y++)
-                                localVn[y] = k;
-                            normals.Add(
-                                new(
-                                        n[localVn[0]..localVn[1]],
-                                        n[localVn[1]..localVn[2]],
-                                        n[localVn[2]..]
-                                   ));*/
                             normals.Add(GetThreeFloatsWithRegEx(n));
                             break;
 
                         case "vt": //UV coordinates
-                            /*if (n.Contains("vt  "))
-                                n = "vvt " + n[4..];
-                            int[] localVt = new int[3];
-                            int holder = n.IndexOf(" ");
-                            //finds and adds the 2 texture coordinates by the 2 spaces surrounding it
-                            UVCoordinates.Add(
-                             new(
-                                    n[holder..n.IndexOf(" ", holder + 1)],
-                                    n[n.IndexOf(" ", holder + 1)..]
-                                ));*/
                             UVCoordinates.Add(GetTwoFloatsWithRegEx(n));
                             break;
 
