@@ -160,5 +160,17 @@ namespace CORERenderer.Loaders
             }
             return returnValue;
         }
+
+        private static Vector2 GetTwoFloatsWithRegEx(string line)
+        {
+            Vector2 returnValue = new();
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)"); //fuck regex
+            if (matches.Count == 2)
+            {
+                returnValue.x = float.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
+                returnValue.y = float.Parse(matches[1].Groups[1].Value, CultureInfo.InvariantCulture);
+            }
+            return returnValue;
+        }
     }
 }
