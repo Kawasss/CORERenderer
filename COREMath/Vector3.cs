@@ -71,6 +71,11 @@ namespace COREMath
 
         public float Length { get { return MathC.GetLengthOf(this); } }
 
+        public override string ToString()
+        {
+            return $"{x} {y} {z}";
+        }
+
         public static Vector3 operator -(Vector3 v1)
         {
             return new()

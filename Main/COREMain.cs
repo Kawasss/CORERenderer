@@ -263,7 +263,7 @@ namespace CORERenderer.Main
                 scenes[0].OnLoad(args);
                 selectedScene = 0;
 
-                arrows = new();
+                //arrows = new();
 
                 SetUniformBuffers();
 
@@ -322,7 +322,7 @@ namespace CORERenderer.Main
 
                                 modelInformation.Render();
                                 if (scenes[selectedScene].currentObj != -1)
-                                    Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
+                                    //Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
 
                                 button.changed = true; //cheap trick to make it think that its allowed to render
                                 button.RenderStatic();
@@ -345,7 +345,7 @@ namespace CORERenderer.Main
 
                                 modelInformation.Render();
                                 if (scenes[selectedScene].currentObj != -1)
-                                    Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
+                                    //Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
 
                                 sceneManager.Render();
                             }
@@ -400,7 +400,7 @@ namespace CORERenderer.Main
                                 RenderGrid();
 
                             glClear(GL_DEPTH_BUFFER_BIT);
-                            arrows.Render();
+                            //arrows.Render();
                         }
                         else if (!mouseIsPressed)
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
@@ -441,7 +441,7 @@ namespace CORERenderer.Main
                     IDFramebuffer.RenderFramebuffer();
                     UpdateSelectedID();
 
-                    arrows.UpdateArrowsMovement();
+                    //arrows.UpdateArrowsMovement();
 
                     renderFramebuffer.shader.SetBool("useVignette", useVignette);
                     renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
@@ -690,6 +690,10 @@ namespace CORERenderer.Main
             {
                 LoadFile = RenderMode.RPIFile; LoadFilePath = arg[0];
             }
+            else if (arg[0][^4..].ToLower() == ".stl")
+            {
+                LoadFile = RenderMode.STLFile; LoadFilePath = arg[0];
+            }
             else
                 LoadFile = RenderMode.CRSFile;
         }
@@ -710,6 +714,9 @@ namespace CORERenderer.Main
 
             else if (arg[^4..].ToLower() == ".hdr")
                 return RenderMode.HDRFile;
+
+            else if (arg[^4..].ToLower() == ".stl")
+                return RenderMode.STLFile;
 
             return RenderMode.CRSFile;
         }

@@ -347,6 +347,12 @@ namespace COREMath
             return matrix;
         }
 
+        public static Matrix GetScalingMatrix(Vector3 v)
+        {
+            Matrix matrix = new(true, v);
+            return matrix;
+        }
+
         /// <summary>
         /// Gives the number to the power of 2
         /// </summary>

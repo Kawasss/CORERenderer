@@ -6,6 +6,7 @@ using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.GLFW;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
+using CORERenderer.shaders;
 
 namespace CORERenderer.Loaders
 {
@@ -23,6 +24,8 @@ namespace CORERenderer.Loaders
         public Vector3 Scaling = new(1, 1, 1);
         public Vector3 translation = new(0, 0, 0);
         public Vector3 rotation = new(0, 0, 0);
+
+        private Shader shader = GenericShaders.GenericLightingShader;
 
         public RenderMode type;
 
@@ -42,6 +45,8 @@ namespace CORERenderer.Loaders
 
         public int debug = 0;
         private int totalAmountOfVertices = 0;
+
+        private uint VBO, VAO;
 
         public string amountOfVertices { get 
             {
@@ -68,6 +73,8 @@ namespace CORERenderer.Loaders
 
             else if (type == RenderMode.HDRFile && hdr == null)
                 hdr = HDRTexture.ReadFromFile(path);
+            else if (type == RenderMode.STLFile)
+                generateStl(path);
         }
         
         public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets)
@@ -107,6 +114,8 @@ namespace CORERenderer.Loaders
                 GivenImage.Render();
             else if (type == RenderMode.HDRFile)
                 return;
+            else if (type == RenderMode.STLFile)
+                RenderSTL();
         }
 
         public void RenderBackground() => Rendering.RenderBackground(hdr);
@@ -128,6 +137,39 @@ namespace CORERenderer.Loaders
             }
         }
 
+        private void generateStl(string path)
+        {
+            double startedReading = Glfw.Time;
+            bool loaded = LoadSTL(path, out name, out List<float> localVertices);
+            double readSTLFile = Glfw.Time - startedReading;
+
+            GenerateFilledBuffer(out VBO, out VAO, localVertices.ToArray());
+            vertices = new();
+            vertices.Add(localVertices);
+
+            submodels = new();
+
+            shader.Use();
+
+            //3D coordinates
+            int vertexLocation = shader.GetAttribLocation("aPos");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //UV texture coordinates
+            vertexLocation = shader.GetAttribLocation("aTexCoords");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //normal coordinates
+            vertexLocation = shader.GetAttribLocation("aNormal");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+        }
+        
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
@@ -194,6 +236,18 @@ namespace CORERenderer.Loaders
             COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
             COREMain.console.WriteLine($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
             COREMain.console.WriteLine($"Amount of vertices: {amountOfVertices}");
+        }
+
+        private void RenderSTL()
+        {
+            shader.SetFloat("transparency", 1);
+            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation);
+            shader.SetMatrix("model", model);
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            usedTextures[2].Use(GL_TEXTURE0);
+
+            glBindVertexArray(VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, vertices[0].Count / 8);
         }
 
         private void ErrorLogic(int error)

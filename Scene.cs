@@ -93,14 +93,14 @@ namespace CORERenderer
                     }
 
 
-                    if (arrows.wantsToMoveYAxis && loaded)
+                    /*if (arrows.wantsToMoveYAxis && loaded)
                         allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, deltaY / 150, 0);
 
                     if (arrows.wantsToMoveXAxis && loaded)
                         allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation -= new Vector3(deltaX / 150, 0, 0);
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, 0, -deltaX / 150);
+                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, 0, -deltaX / 150);*/
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)
