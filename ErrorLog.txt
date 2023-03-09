@@ -17,3 +17,11 @@ Error occured at 8:26:02 :
    at System.Collections.Generic.List`1.get_Item(Int32 index)
    at CORERenderer.Scene.EveryFrame(Window window, Single delta) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 84
    at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 408
+Error occured at 9:28:36 : 
+    System.TypeInitializationException: The type initializer for 'CORERenderer.GLFW.Glfw' threw an exception.
+ ---> System.DllNotFoundException: Unable to load DLL 'glfw3' or one of its dependencies: Kan opgegeven module niet vinden. (0x8007007E)
+   at CORERenderer.GLFW.Glfw.Init()
+   at CORERenderer.GLFW.Glfw..cctor() in C:\Users\wveen\source\repos\CORERenderer\GLFW\Glfw.cs:line 41
+   --- End of inner exception stack trace ---
+   at CORERenderer.GLFW.Glfw.Init()
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 128
