@@ -172,7 +172,9 @@ namespace CORERenderer.Loaders
                                 if (s.Contains('/'))
                                 {
                                     local2 = new();
-                                        
+
+                                    Vector3 values = GetThreeFloatsWithRegEx(s);
+
                                     //adds the indexes of the /'s that seperate the ints
                                     local2.Add(s.IndexOf('/'));
                                     local2.Add(s.IndexOf('/', local2[0] + 1));
@@ -182,7 +184,7 @@ namespace CORERenderer.Loaders
                                         withTextures = false;
 
                                     //adds the vertex coordinates
-                                    int verCoord = int.Parse(s[..local2[0]]) - 1;
+                                    int verCoord = (int)values.x - 1;
                                     //for (int l = 0; l < 3; l++)
                                     //    outVertices[i].Add(vertices[verCoord].xyz[l]);
                                     outVertices[i].Add(vertices[verCoord].x);
@@ -190,12 +192,12 @@ namespace CORERenderer.Loaders
                                     outVertices[i].Add(vertices[verCoord].z);
                                     if (withTextures) //adds the texture coordinates if they exist
                                     {
-                                        int texCoords = int.Parse(s[(local2[0] + 1)..local2[1]]) - 1;
+                                        int texCoords = (int)values.y - 1;
                                         outVertices[i].Add(UVCoordinates[texCoords].x);
                                         outVertices[i].Add(UVCoordinates[texCoords].y);
 
                                         //adds normals 
-                                        int normal = int.Parse(s[(local2[1] + 1)..]) - 1;
+                                        int normal = (int)values.z - 1;
                                         for (int l = 0; l < 3; l++)
                                             outVertices[i].Add(normals[normal].xyz[l]);
                                     }
