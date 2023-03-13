@@ -8,6 +8,7 @@ using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.Loaders;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer
 {
@@ -25,10 +26,13 @@ namespace CORERenderer
 
         private Vector2 lastPos = null;
 
+        public Ray ray = new(new(0, 0, 0), new(0, 1, 0));
+
 
         public override void OnLoad(string[] args)
         {
             allModels = new();
+            allLights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
 
             if (args.Length != 0)
@@ -40,6 +44,8 @@ namespace CORERenderer
                     currentObj = 0;
                 }
             }
+            //allModels.Add(new($"{pathRenderer}\\OBJs\\misc\\horse.stl"));
+            //allModels[0].translation = new(2, 10, 0);
         }
 
         public override void RenderEveryFrame(float delta)
@@ -49,7 +55,14 @@ namespace CORERenderer
 
         public override void EveryFrame(Window window, float delta)
         {
-            if (Glfw.GetKey(window, Keys.Escape) == InputState.Press)
+            //Task.Run(() =>
+            //{
+            //    if (ray.Intersects(allModels[0], out Vector3 intersection))
+            //        console.WriteDebug($"intersection at {intersection}");
+            //});
+            
+
+            if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
             {
                 Glfw.SetWindowShouldClose(window, true);
                 Console.WriteLine("Window closed");

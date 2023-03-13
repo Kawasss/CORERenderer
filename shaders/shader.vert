@@ -23,5 +23,5 @@ void main()
 	TexCoords = aTexCoords;
 	Model = model;
 	
-	gl_Position = vec4(aPos, 1) * model * view * projection;
+	gl_Position = vec4(FragPos, 1) * view * projection;
 }

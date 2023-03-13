@@ -60,6 +60,11 @@ namespace CORERenderer.Loaders
             GenerateBuffers();
 
             IDColor = COREMain.GenerateIDColor(ID);
+
+            shader.SetInt("material.Texture", GL_TEXTURE0);
+            shader.SetInt("material.diffuse", GL_TEXTURE1);
+            shader.SetInt("material.specular", GL_TEXTURE2);
+            shader.SetInt("material.normalMap", GL_TEXTURE3);
         }
 
         public void Render()
@@ -70,7 +75,7 @@ namespace CORERenderer.Loaders
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
-
+                
                 shader.SetVector3("viewPos", COREMain.scenes[COREMain.selectedScene].camera.position);
                 shader.SetFloat("transparency", material.Transparency);
                 shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
@@ -82,7 +87,9 @@ namespace CORERenderer.Loaders
                 shader.SetMatrix("model", model);
 
                 usedTextures[material.Texture].Use(GL_TEXTURE0);
-                usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
+                usedTextures[material.DiffuseMap].Use(GL_TEXTURE1);
+                usedTextures[material.SpecularMap].Use(GL_TEXTURE2);
+                usedTextures[material.NormalMap].Use(GL_TEXTURE3);
 
                 glBindVertexArray(VAO);
                 unsafe

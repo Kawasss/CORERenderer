@@ -105,13 +105,15 @@ namespace CORERenderer.Main
         public int Texture;
         public int DiffuseMap;
         public int SpecularMap;
+        public int NormalMap;
 
         public Material()
         {
             Name = "placeholder";
-            Texture = 2;
-            DiffuseMap = 2;
+            Texture = 0;
+            DiffuseMap = 0;
             SpecularMap = 1;
+            NormalMap = 3;
 
             OpticalDensity = 1;
             Transparency = 1;

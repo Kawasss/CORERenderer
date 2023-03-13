@@ -1,5 +1,4 @@
 ﻿using COREMath;
-using static CORERenderer.OpenGL.GL;
 using CORERenderer.textures;
 using CORERenderer.Main;
 using CORERenderer.Loaders;
@@ -8,7 +7,7 @@ using System.Diagnostics;
 
 namespace CORERenderer.OpenGL
 {
-    public class Rendering
+    public class Rendering : GL
     {
         private static int totalAmountOfTransferredBytes = 0;
         private static int lastAmountOfTransferredBytes = 0;
@@ -298,6 +297,8 @@ namespace CORERenderer.OpenGL
             RenderLights(COREMain.lights);
 
             GenericShaders.GenericLightingShader.Use();
+            GenericShaders.GenericLightingShader.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
+            GenericShaders.GenericLightingShader.SetVector3("pointLights[0].position", 17, 8, -22);
 
             foreach (Model model in models)
             {

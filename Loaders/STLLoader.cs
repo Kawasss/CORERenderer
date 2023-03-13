@@ -107,37 +107,35 @@ namespace CORERenderer.Loaders
                 for (int i = 0; i < 80; i++) //ignore the header, which is 80 bytes long
                     fs.ReadByte();
 
-                byte[] amountByte = new byte[4];
+                byte[] bytes = new byte[4];
                 for (int i = 0; i < 4; i++)
-                    amountByte[i] = (byte)fs.ReadByte();
-                int amountOfTriangles = BitConverter.ToInt32(amountByte); //the amount of triangles is stored in 4 bytes directly after the header
+                    bytes[i] = (byte)fs.ReadByte();
+                int amountOfTriangles = BitConverter.ToInt32(bytes); //the amount of triangles is stored in 4 bytes directly after the header
                 
                 for (int k = 0; k < amountOfTriangles; k++)
                 {
                     float[] normal = new float[3];
                     for (int j = 0; j < 3; j++)
                     {
-                        byte[] normalBytes = new byte[4];
                         for (int i = 0; i < 4; i++)
-                            normalBytes[i] = (byte)fs.ReadByte();
-                        normal[j] = BitConverter.ToSingle(normalBytes);
+                            bytes[i] = (byte)fs.ReadByte();
+                        normal[j] = BitConverter.ToSingle(bytes);
                     }
                     for (int l = 0; l < 3; l++)
                     {
                         for (int i = 0; i < 3; i++) //each vertex has 3 values, where each float is 4 bytes
                         {
-                            byte[] vertexBytes = new byte[4];
                             for (int j = 0; j < 4; j++) //get one float
-                                vertexBytes[j] = (byte)fs.ReadByte();
+                                bytes[j] = (byte)fs.ReadByte();
                             if (vertices.Count < 3)
                             {
-                                holder.Add(BitConverter.ToSingle(vertexBytes));
+                                holder.Add(BitConverter.ToSingle(bytes));
                                 vertices.Add(0);
                                 if (holder[0] > 20)
                                     dividend = 1 / holder[0];
                                 continue;
                             }
-                            vertices.Add((BitConverter.ToSingle(vertexBytes) - holder[i]) * dividend); //add that one float to the list
+                            vertices.Add((BitConverter.ToSingle(bytes) - holder[i]) * dividend); //add that one float to the list
                         }
                         vertices.Add(1);
                         vertices.Add(0);

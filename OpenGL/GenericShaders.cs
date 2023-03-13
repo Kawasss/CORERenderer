@@ -20,7 +20,7 @@ namespace CORERenderer.OpenGL
             lightingShader = new($"{COREMain.pathRenderer}\\shaders\\lightSource.vert", $"{COREMain.pathRenderer}\\shaders\\lightSource.frag");
             backgroundShader = new($"{COREMain.pathRenderer}\\shaders\\skybox.vert", $"{COREMain.pathRenderer}\\shaders\\Background.frag");
             gridShader = new($"{COREMain.pathRenderer}\\shaders\\grid.vert", $"{COREMain.pathRenderer}\\shaders\\grid.frag");
-            GenericLightingShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\lighting.frag");
+            GenericLightingShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\lighting.frag", $"{COREMain.pathRenderer}\\shaders\\pathTracing.geom");
             solidColorQuadShader = new($"{COREMain.pathRenderer}\\shaders\\Basic.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
             arrowShader = new($"{COREMain.pathRenderer}\\shaders\\Arrow.vert", $"{COREMain.pathRenderer}\\shaders\\Arrow.frag");
             pickShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");

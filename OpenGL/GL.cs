@@ -21,7 +21,7 @@ namespace CORERenderer.OpenGL
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "IdentifierTypo")]
     [SuppressUnmanagedCodeSecurity]
-    public static unsafe partial class GL
+    public unsafe partial class GL
     {
         private static string PtrToStringUtf8(IntPtr ptr)
         {

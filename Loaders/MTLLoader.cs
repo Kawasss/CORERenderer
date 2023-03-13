@@ -137,10 +137,7 @@ namespace CORERenderer.Loaders
                                     break;
                                 case "map_d ":
                                     if (!n.Contains("  "))
-                                    {
-
                                         material.DiffuseMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
-                                    }
                                     else
                                         material.DiffuseMap = 0;
                                     break;
@@ -149,6 +146,12 @@ namespace CORERenderer.Loaders
                                         material.SpecularMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
                                         material.SpecularMap = 1;
+                                    break;
+                                case "map_Bu":
+                                    if (!n.Contains("  "))
+                                        material.NormalMap = Globals.FindSRGBTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                    else
+                                        material.NormalMap = 3;
                                     break;
                                 default:
                                     unreadableLines.Add(n);

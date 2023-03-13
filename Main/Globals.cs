@@ -27,7 +27,7 @@ namespace CORERenderer.Main
         };
 
         /// <summary>
-        /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. The third is used for solid white
+        /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. The third is used for solid white and the fourth for the normal map
         /// </summary>
         public static List<Texture> usedTextures = new();
 
@@ -43,6 +43,16 @@ namespace CORERenderer.Main
                     return i;
             
             usedTextures.Add(Texture.ReadFromFile(path));
+            return usedTextures.Count - 1;
+        }
+
+        public static int FindSRGBTexture(string path)
+        {
+            for (int i = 0; i < usedTextures.Count; i++)
+                if (usedTextures[i].path == path)
+                    return i;
+
+            usedTextures.Add(Texture.ReadFromSRGBFile(path));
             return usedTextures.Count - 1;
         }
 

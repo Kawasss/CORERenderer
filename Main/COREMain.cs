@@ -60,7 +60,7 @@ namespace CORERenderer.Main
         public const string VERSION = "v0.2.P";
 
         //bools
-        public static bool renderGrid = true;
+        public static bool renderGrid = false;
         public static bool renderBackground = true;
         public static bool secondPassed = true;
         public static bool renderGUI = true;
@@ -68,6 +68,7 @@ namespace CORERenderer.Main
         public static bool renderToIDFramebuffer = true;
         public static bool useChromAber = false;
         public static bool useVignette = false;
+        public static bool fullscreen = false;
 
         public static bool destroyWindow = false;
         public static bool addCube = false;
@@ -219,7 +220,7 @@ namespace CORERenderer.Main
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
-                menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette" });
+                menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette", "fullscreen" });
 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
@@ -241,6 +242,7 @@ namespace CORERenderer.Main
                 menu.SetBool("Allow alpha override", allowAlphaOverride);
                 menu.SetBool("Use chrom. aber.", useChromAber);
                 menu.SetBool("Use vignette", useVignette);
+                menu.SetBool("fullscreen", fullscreen);
 
                 modelList.RenderModelList();
                 submodelList.RenderSubmodelList();
@@ -380,7 +382,13 @@ namespace CORERenderer.Main
                             glEnable(GL_DEPTH_TEST);
                             glClearColor(0.3f, 0.3f, 0.3f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+                            
+                            if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && fullscreen)
+                            {
+                                fullscreen = false;
+                                menu.SetBool("fullscreen", false);
+                            }
+                                
                             if (addCube)
                             {
                                 scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
@@ -429,8 +437,8 @@ namespace CORERenderer.Main
                             dirLoadedModels = null;
                         }
                     }
-
-                    glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+                    if (!fullscreen)
+                        glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
 
                     IDFramebuffer.Bind();
 
@@ -511,13 +519,8 @@ namespace CORERenderer.Main
                 loaded = true;
                 if (loaded)
                     for (int i = 0; i < readFiles.Count; i++)
-                    {
-                        //Readers.LoadMTL(mtllibs[i], mtlnames[i], out List<Material> materials, out int error); //mtl files are read outside of the parallel loop, because opengl cant handle creating textures in a new space, resulting in black textures
-                        //models.Add(new(readFiles[i], allVertices[i], allIndices[i], materials, allOffsets[i]));
                         localVersion.Add(new(readFiles[i], mtllibs[i], mtlnames[i], allVertices[i], allIndices[i], allOffsets[i]));
-                    }
                 dirLoadedModels = localVersion;
-                //scenes[selectedScene].allModels = models;
             });
         }
 
@@ -528,7 +531,6 @@ namespace CORERenderer.Main
             public List<string> mtlNames;
             public List<List<float>> vertices;
             public List<List<uint>> indices;
-            //public List<Material> materials;
             public List<Vector3> offsets;
 
             public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<float>> vertices, List<List<uint>> indices, List<Vector3> offsets)// List<Material> materials,
@@ -538,7 +540,6 @@ namespace CORERenderer.Main
                 this.mtlNames = mtlNames;
                 this.vertices = vertices;
                 this.indices = indices;
-                //this.materials = materials;
                 this.offsets = offsets;
             }
         }
