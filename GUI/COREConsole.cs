@@ -5,6 +5,7 @@ using CORERenderer.Loaders;
 using CORERenderer.Main;
 using CORERenderer.OpenGL;
 using System;
+using System.Diagnostics;
 
 namespace CORERenderer.GUI
 {
@@ -267,6 +268,14 @@ namespace CORERenderer.GUI
                     HandleConsoleCommands(input[(input.IndexOf("-> ") + 3)..]);
                 else
                     WriteError($"Couldn't solve argument reference {arg}");
+            }
+            else if (input == "reload config")
+            {
+                if (COREMain.LoadFilePath == null)
+                    Process.Start("CORERenderer.exe");
+                else
+                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                Environment.Exit(1);
             }
             else if (currentContext == Context.Console)
                 HandleConsoleCommands(input);
