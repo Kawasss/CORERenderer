@@ -1,0 +1,6 @@
+version=v0.2.P
+shaders=PathTracing
+cameraSpeed=5
+writeDebug=True
+writeError=True
+loadInfo=True

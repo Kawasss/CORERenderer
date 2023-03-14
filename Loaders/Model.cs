@@ -147,7 +147,7 @@ namespace CORERenderer.Loaders
             vertices = new();
             vertices.Add(localVertices);
             translation = offset;
-
+            totalAmountOfVertices += vertices[0].Count;
             submodels = new();
 
             shader.Use();
@@ -169,6 +169,9 @@ namespace CORERenderer.Loaders
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
+
+            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readSTLFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
         }
         
         private void GenerateObj(string path)
@@ -234,9 +237,9 @@ namespace CORERenderer.Loaders
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
 
-            COREMain.console.WriteLine($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
-            COREMain.console.WriteLine($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
-            COREMain.console.WriteLine($"Amount of vertices: {amountOfVertices}");
+            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
         }
 
         private void RenderSTL()

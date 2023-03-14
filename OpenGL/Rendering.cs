@@ -29,6 +29,8 @@ namespace CORERenderer.OpenGL
 
         public static int drawCalls = 0;
 
+        public static ShaderType shaderConfig = ShaderType.Lighting;
+
         public static void Init()
         {
             GenericShaders.SetShaders();
@@ -297,8 +299,20 @@ namespace CORERenderer.OpenGL
             RenderLights(COREMain.lights);
 
             GenericShaders.GenericLightingShader.Use();
-            GenericShaders.GenericLightingShader.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
-            GenericShaders.GenericLightingShader.SetVector3("pointLights[0].position", 17, 8, -22);
+            if (shaderConfig == ShaderType.PathTracing)
+            {
+                GenericShaders.GenericLightingShader.SetVector3("ray.origin", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLightingShader.SetVector3("ray.direction", COREMain.GetCurrentScene.camera.front);
+                GenericShaders.GenericLightingShader.SetInt("isReflective", 0);
+                GenericShaders.GenericLightingShader.SetVector3("emission", new(1, 1, 1));
+                GenericShaders.GenericLightingShader.SetVector3("lights.color", new(1, 1, 1));
+                GenericShaders.GenericLightingShader.SetVector3("lights.position", new(0, 1, 1));
+            }
+            else if (shaderConfig == ShaderType.Lighting)
+            {
+                GenericShaders.GenericLightingShader.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLightingShader.SetVector3("pointLights[0].position", COREMain.GetCurrentScene.camera.position);
+            }
 
             foreach (Model model in models)
             {

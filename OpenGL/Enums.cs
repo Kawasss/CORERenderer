@@ -30,4 +30,10 @@ namespace CORERenderer.OpenGL
         Short = GL_SHORT,
         UnsignedShort = GL_UNSIGNED_SHORT
     }
+
+    public enum ShaderType
+    {
+        Lighting,
+        PathTracing
+    }
 }

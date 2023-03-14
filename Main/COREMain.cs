@@ -7,6 +7,7 @@ using CORERenderer.GUI;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
@@ -58,6 +59,7 @@ namespace CORERenderer.Main
         public static string LoadFilePath = null;
         public static string GPU;
         public const string VERSION = "v0.2.P";
+        private static List<string> consoleCache = new();
 
         //bools
         public static bool renderGrid = false;
@@ -84,7 +86,7 @@ namespace CORERenderer.Main
         public static bool subMenuOpenLastFrame = false;
         public static bool submenuOpen = false;
 
-        private static bool dirLoaded = false;
+        private static bool loadInfoOnstartup = true;
 
         //enums
         public static RenderMode LoadFile = RenderMode.CRSFile;
@@ -150,6 +152,7 @@ namespace CORERenderer.Main
                 vertexArrayObjectGrid = GenerateBufferlessVAO();
 
                 Overrides.AlwaysLoad();
+                LoadConfig();
                 Rendering.Init();
 
                 if (glGetString(GL_RENDERER).IndexOf('/') != -1)
@@ -264,6 +267,9 @@ namespace CORERenderer.Main
                 scenes.Add(new());
                 scenes[0].OnLoad(args);
                 selectedScene = 0;
+
+                foreach (string s in consoleCache)
+                    console.WriteLine(s);
 
                 //arrows = new();
 
@@ -473,7 +479,8 @@ namespace CORERenderer.Main
                         destroyWindow = true;
                         splashScreen.Dispose();
 
-                        console.ShowInfo();
+                        if (loadInfoOnstartup)
+                            console.ShowInfo();
                     }
                 }
                 DeleteAllBuffers();
@@ -486,6 +493,66 @@ namespace CORERenderer.Main
                 return -1;
             }
             return 1;
+        }
+
+        private static void LoadConfig()
+        {
+            if (!File.Exists($"{pathRenderer}\\config"))
+            {
+                consoleCache.Add($"ERROR Couldn't locate config, generating new config");
+                GenerateConfig();
+                return;
+            }
+
+            using (FileStream fs = File.Open($"{pathRenderer}\\config", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (BufferedStream bs = new(fs))
+            using (StreamReader sr = new(bs))
+            {
+                string text = sr.ReadLine();
+
+                if (VERSION != text[(text.IndexOf('=') + 1)..])
+                {
+                    consoleCache.Add($"ERROR Config is outdated, generating new config");
+                    GenerateConfig();
+                    return;
+                }
+
+                text = sr.ReadLine();
+
+                if (text.Contains("Lighting"))
+                    shaderConfig = ShaderType.Lighting;
+                else if (text.Contains("PathTracing"))
+                    shaderConfig = ShaderType.PathTracing;
+
+                text = sr.ReadLine();
+
+                Camera.cameraSpeed = float.Parse(text[(text.IndexOf('=') + 1)..]);
+
+                text = sr.ReadLine();
+                COREConsole.writeDebug = text.Contains("True");
+
+                text = sr.ReadLine();
+                COREConsole.writeError = text.Contains("True");
+
+                text = sr.ReadLine();
+                loadInfoOnstartup = text.Contains("True");
+
+                consoleCache.Add("DEBUG Loaded config file");
+            }
+        }
+
+        private static void GenerateConfig()
+        {
+            using (StreamWriter sw = File.CreateText($"{pathRenderer}\\config"))
+            {
+                sw.WriteLine($"version={VERSION}");
+                sw.WriteLine($"shaders={shaderConfig}");
+                sw.WriteLine($"cameraSpeed={Camera.cameraSpeed}");
+                sw.WriteLine($"writedebug={COREConsole.writeDebug}");
+                sw.WriteLine($"writeerror={COREConsole.writeError}");
+                sw.WriteLine($"loadinfo={loadInfoOnstartup}");
+            }
+            consoleCache.Add("DEBUG Generated new config");
         }
 
         public static void LoadDir(string dir)

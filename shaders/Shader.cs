@@ -94,8 +94,8 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                COREMain.console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
-                COREMain.console.WriteLine(glGetShaderInfoLog(shader));
+                Console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
+                Console.WriteLine(glGetShaderInfoLog(shader));
             }
         }
 
@@ -107,8 +107,8 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                COREMain.console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
-                COREMain.console.WriteLine(glGetProgramInfoLog(program));
+                Console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
+                Console.WriteLine(glGetProgramInfoLog(program));
             }
             glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, pname);
             Rendering.shaderByteSize += pname[0];

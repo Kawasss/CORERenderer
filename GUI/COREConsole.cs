@@ -10,6 +10,9 @@ namespace CORERenderer.GUI
 {
     public class COREConsole
     {
+        public static bool writeDebug = false;
+        public static bool writeError = true;
+
         private Div quad;
 
         private int linesPrinted = 0;
@@ -130,9 +133,9 @@ namespace CORERenderer.GUI
             {
                 if (lines[i] == null)
                     continue;
-                if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
+                if (lines[i].Length > 5 && lines[i][..5] == "ERROR" && writeError)
                     quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
-                else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
+                else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG" && writeDebug)
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
                 else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
@@ -217,7 +220,7 @@ namespace CORERenderer.GUI
                     else if (i == 12 && COREMain.LoadFilePath == null)
                         WriteLine($"{n}         Initialized independently");
                     else if (i == 14)
-                        WriteLine($"{n}         Rendering with default shaders");
+                        WriteLine($"{n}         Rendering with {Rendering.shaderConfig} shaders");
                     else if (i == 15)
                         WriteLine($"{n}         Rendering with {COREMain.splashScreen.refreshRate} Hz");
                     else

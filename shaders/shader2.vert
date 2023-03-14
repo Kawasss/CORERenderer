@@ -9,12 +9,6 @@ layout (std140, binding = 0) uniform Matrices
 	mat4 view;
 };
 
-out VS_OUT
-{
-	vec3 position;
-	vec3 normal;
-} vs_out;
-
 out mat4 Model;
 
 uniform mat4 model;
@@ -26,10 +20,8 @@ void main()
 {
 	FragPos = (vec4(aPos, 1.0) * model).xyz;
 	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
-	vs_out.normal = Normal;
 	TexCoords = aTexCoords;
 	Model = model;
-	vs_out.position = FragPos;
 	
 	gl_Position = vec4(FragPos, 1) * view * projection;
 }

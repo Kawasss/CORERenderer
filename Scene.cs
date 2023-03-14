@@ -26,9 +26,6 @@ namespace CORERenderer
 
         private Vector2 lastPos = null;
 
-        public Ray ray = new(new(0, 0, 0), new(0, 1, 0));
-
-
         public override void OnLoad(string[] args)
         {
             allModels = new();
@@ -44,8 +41,6 @@ namespace CORERenderer
                     currentObj = 0;
                 }
             }
-            //allModels.Add(new($"{pathRenderer}\\OBJs\\misc\\horse.stl"));
-            //allModels[0].translation = new(2, 10, 0);
         }
 
         public override void RenderEveryFrame(float delta)
