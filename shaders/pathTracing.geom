@@ -49,7 +49,9 @@ uint randomSeed;
 
 void main()
 {
-	int samples = 4;
+	float samples = sampleAmount;
+	if (samples > 7)
+	samples = 7;
 
 	randomSeed = 10546 * 1973 + 543543 * 9277 + 2699 | 1;
 	
@@ -57,27 +59,37 @@ void main()
 	
 	int amount = 0;
 	vec3 localColor = vec3(0);
-	for (float j = -3; j < 3; j += 1 / sampleAmount, amount++)
-		for (float i = -3; i < 3; i += 1 / sampleAmount, amount++)
-		{
-			vec3 intersection = vec3(0, 0, 0);
-			vec3 newIntersection = vec3(0, 0, 0);
-			Ray local;
-			local.origin = vec3(RAY.origin.x + i, RAY.origin.y + j, RAY.origin.z);
-			local.direction = RAY.direction;
-			bool success = RayIntersects(local, intersection);
-			if (!success) continue;
+	for (int i = 0; i < 7; i++, amount++)
+	{
+		vec3 intersection = vec3(0, 0, 0);
+		vec3 newIntersection = vec3(0, 0, 0);
+		Ray local;
+		local.origin = RAY.origin;
+		if (i < 3)
+			local.direction = gs_in[i].position - RAY.origin;
+		else if (i == 3)
+			local.direction = normalize((gs_in[1].position - gs_in[0].position) / 2);
+		else if (i == 4)
+			local.direction = normalize((gs_in[2].position - gs_in[1].position) / 2);
+		else if (i == 5)
+			local.direction = normalize((gs_in[0].position - gs_in[2].position) / 2);
+		else if (i == 6)
+			local.direction = normalize((gs_in[1].position - gs_in[0].position) / 2 + gs_in[2].position - gs_in[0].position);
+		bool success = RayIntersects(local, intersection);
+		if (!success) continue;
 		
-			Ray newRay;
-			newRay.origin = intersection;
-			newRay.direction = -RAY.direction + 2 * Normal * dot(RAY.direction, Normal); //standard reflection formula
+		Ray newRay;
+		newRay.origin = intersection;
+		newRay.direction = -RAY.direction + 2 * Normal * dot(RAY.direction, Normal); //standard reflection formula
 		
-			if (IntersectsSphere(newRay, newIntersection))
-				localColor += vec3(1, 1, 1);
-			else
-				localColor += vec3(0, 0, 0);
-		}
-	overrideColor = localColor / amount * 10;
+		if (IntersectsSphere(newRay, newIntersection))
+			localColor += vec3(1, 1, 1);
+		else
+			localColor += vec3(0, 0, 0);
+
+		amount++;
+	}
+	overrideColor = localColor / amount;
 
 	gl_Position = gl_in[0].gl_Position;
 	EmitVertex();
