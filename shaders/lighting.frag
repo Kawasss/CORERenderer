@@ -32,6 +32,7 @@ uniform Material material;
 //uniform vec3 overrideColor;
 //uniform int hasNormalMap;
 in vec3 overrideColor;
+in vec3 Normal;
 //in vec2 TexCoords;
 
 //in vec3 Normal;
@@ -56,38 +57,8 @@ in vec3 overrideColor;
 
 void main()
 {
-	/*vec4 fullColor = texture(material.Texture, TexCoords);
-	if (fullColor.a < 0.1)
-		discard;
-
-	vec3 color = fullColor.rgb;
-    // ambient
-    vec3 ambient = .1 * color;
-    // diffuse
-    vec3 lightDir = normalize(pointLights[0].position - FragPos);
-    vec3 normal = normalize(Normal);//getNormalFromMap();
-    float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = vec3(0.4) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
-    // specular
-    vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-	float spec = pow(max(dot(normal, halfwayDir), 0), 32);
-    vec3 specular = vec3(.7) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
-	if (allowAlpha == 1 && transparency != 0)
-		FragColor = vec4(ambient + diffuse + specular, transparency);
-	else
-		FragColor = vec4(ambient + diffuse + specular, 1.0);
-	if (overrideColor != vec3(0, 0, 0))*/
+	//if (overrideColor != vec3(0))
 		FragColor = vec4(overrideColor, 1);
-	/*if (allowAlpha == 1 && transparency != 0)
-		color.a = transparency;
-
-	if (color.a < 0.1)
-		discard;
-
-	if (overrideColor != vec3(0, 0, 0))
-		color = vec4(overrideColor, color.a);
-
-	FragColor = color;*/
+	//else
+	//	FragColor = vec4(Normal, 1);
 }

@@ -301,8 +301,8 @@ namespace CORERenderer.OpenGL
             GenericShaders.GenericLightingShader.Use();
             if (shaderConfig == ShaderType.PathTracing)
             {
-                GenericShaders.GenericLightingShader.SetVector3("ray.origin", COREMain.GetCurrentScene.camera.position);
-                GenericShaders.GenericLightingShader.SetVector3("ray.direction", COREMain.GetCurrentScene.camera.front);
+                GenericShaders.GenericLightingShader.SetVector3("RAY.origin", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLightingShader.SetVector3("RAY.direction", COREMain.GetCurrentScene.camera.front);
                 GenericShaders.GenericLightingShader.SetInt("isReflective", 0);
                 GenericShaders.GenericLightingShader.SetVector3("emission", new(1, 1, 1));
                 GenericShaders.GenericLightingShader.SetVector3("lights.color", new(1, 1, 1));

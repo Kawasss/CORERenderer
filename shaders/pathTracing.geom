@@ -2,10 +2,17 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
+layout (std140, binding = 0) uniform Matrices
+{
+	mat4 projection;
+	mat4 view;
+};
+
 #define PI 3.14159265
 
 const float EPSILON = 0.0000001;
 out vec3 overrideColor;
+out vec3 Normal;
 struct Ray
 {
 	vec3 origin;
@@ -26,13 +33,15 @@ in VS_OUT
 	vec3 normal;
 } gs_in[];
 
-uniform Ray ray;
+uniform Ray RAY;
 uniform int isReflective;
 uniform vec3 emission;
+uniform float sampleAmount;
 
 bool RayIntersects(Ray ray, out vec3 intersection);
 vec3 Radiance(Ray ray, int depth, int includeEmissiveColor);
 float GetTFromIntersection(Ray ray, vec3 intersection);
+bool IntersectsSphere(Ray ray, out vec3 intersection);
 uint GetPCGHash(inout uint seed);
 float GetRandomFloat01();
 
@@ -43,10 +52,32 @@ void main()
 	int samples = 4;
 
 	randomSeed = 10546 * 1973 + 543543 * 9277 + 2699 | 1;
-
-	RayIntersects(ray, overrideColor);
-
-	//overrideColor = Radiance(ray, 0, 1);
+	
+	Normal = gs_in[0].normal;
+	
+	int amount = 0;
+	vec3 localColor = vec3(0);
+	for (float j = -3; j < 3; j += 1 / sampleAmount, amount++)
+		for (float i = -3; i < 3; i += 1 / sampleAmount, amount++)
+		{
+			vec3 intersection = vec3(0, 0, 0);
+			vec3 newIntersection = vec3(0, 0, 0);
+			Ray local;
+			local.origin = vec3(RAY.origin.x + i, RAY.origin.y + j, RAY.origin.z);
+			local.direction = RAY.direction;
+			bool success = RayIntersects(local, intersection);
+			if (!success) continue;
+		
+			Ray newRay;
+			newRay.origin = intersection;
+			newRay.direction = -RAY.direction + 2 * Normal * dot(RAY.direction, Normal); //standard reflection formula
+		
+			if (IntersectsSphere(newRay, newIntersection))
+				localColor += vec3(1, 1, 1);
+			else
+				localColor += vec3(0, 0, 0);
+		}
+	overrideColor = localColor / amount * 10;
 
 	gl_Position = gl_in[0].gl_Position;
 	EmitVertex();
@@ -55,6 +86,98 @@ void main()
 	gl_Position = gl_in[2].gl_Position;
 	EmitVertex();
 	EndPrimitive();
+}
+
+bool IntersectsSphere(Ray ray, out vec3 intersection)
+{
+	float rad = 3;
+	vec3 sphereCentre = RAY.origin; //set camera pos to ray origin out of laziness, making the camera a light
+	vec3 op = sphereCentre - ray.origin;
+	float t = 1e-4;
+	float eps = 1e-4;
+	float b = dot(op, ray.direction);
+	float det = b * b - dot(op, op) + rad * rad;
+	if (det < 0)
+	{
+		intersection = vec3(0);
+		return false;
+	}
+	else
+		det = sqrt(det);
+	
+	float option1 = b - det;
+	float option2 = b + det;
+	float result = option1 > eps ? t : option2 > eps ? t : 0;
+
+	intersection = ray.origin + result * ray.direction;
+	return true;
+}
+
+bool RayIntersects(Ray ray, out vec3 intersection)
+{
+	vec3 vertex0 = gs_in[0].position.xyz;
+	vec3 vertex1 = gs_in[1].position.xyz;
+	vec3 vertex2 = gs_in[2].position.xyz;
+
+	vec3 edge0 = vertex1 - vertex0;
+	vec3 edge1 = vertex2 - vertex0;
+
+	vec3 h = cross(ray.direction, edge1);
+	float a = dot(edge0, h);
+
+	if (a > -EPSILON && a < EPSILON)
+	{
+		intersection = vec3(0);
+		return false;
+	}
+	float f = 1 / a;
+	vec3 s = ray.origin - vertex0;
+	float u = f * dot(s, h);
+
+	if (u < 0 || u > 1)
+	{
+		intersection = vec3(0);
+		return false;
+	}
+
+	vec3 q = cross(s, edge0);
+	float v = f * dot(ray.direction, q);
+
+	if (v < 0 || v > 1)
+	{
+		//intersection = vec3(0);
+		return false;
+	}
+
+	float t = f * dot(edge1, q);
+	if (t > EPSILON)
+	{
+		intersection = ray.origin + ray.direction * t;
+		return true;
+	}
+	else
+	{
+		intersection = vec3(0);
+		return false;
+	}
+}
+
+float GetTFromIntersection(Ray ray, vec3 intersection)
+{
+	return ((intersection - ray.origin) / ray.direction).x; 
+}
+
+//from https://github.com/BoyBaykiller/OpenTK-PathTracer/blob/master/OpenTK-PathTracer/res/shaders/PathTracing/compute.glsl
+uint GetPCGHash(inout uint seed)
+{
+    seed = seed * 747796405u + 2891336453u;
+    uint word = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float GetRandomFloat01()
+{
+    return float(GetPCGHash(randomSeed)) / 4294967296.0;
 }
 
 vec3 Radiance(Ray ray, int depth, int includeEmissiveColor)
@@ -132,71 +255,4 @@ while (depth < 10)
 	return emission * includeEmissiveColor + Color;
 
 	return vec3(0);
-}
-
-bool RayIntersects(Ray ray, out vec3 intersection)
-{
-	vec3 vertex0 = gs_in[0].position.xyz;
-	vec3 vertex1 = gs_in[1].position.xyz;
-	vec3 vertex2 = gs_in[2].position.xyz;
-
-	vec3 edge0 = vertex1 - vertex0;
-	vec3 edge1 = vertex2 - vertex0;
-
-	vec3 h = cross(ray.direction, edge1);
-	float a = dot(edge0, h);
-
-	if (a > -EPSILON && a < EPSILON)
-	{
-		intersection = vec3(0);
-		return false;
-	}
-	float f = 1 / a;
-	vec3 s = ray.origin - vertex0;
-	float u = f * dot(s, h);
-
-	if (u < 0 || u > 1)
-	{
-		intersection = vec3(0);
-		return false;
-	}
-
-	vec3 q = cross(s, edge0);
-	float v = f * dot(ray.direction, q);
-
-	if (v < 0 || v > 1)
-	{
-		intersection = vec3(0);
-		return false;
-	}
-
-	float t = f * dot(edge1, q);
-	if (t > EPSILON)
-	{
-		intersection = ray.origin + ray.direction * t;
-		return true;
-	}
-	else
-	{
-		intersection = vec3(0);
-		return false;
-	}
-}
-
-float GetTFromIntersection(Ray ray, vec3 intersection)
-{
-	return ((intersection - ray.origin) / ray.direction).x; 
-}
-
-//from https://github.com/BoyBaykiller/OpenTK-PathTracer/blob/master/OpenTK-PathTracer/res/shaders/PathTracing/compute.glsl
-uint GetPCGHash(inout uint seed)
-{
-    seed = seed * 747796405u + 2891336453u;
-    uint word = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
-    return (word >> 22u) ^ word;
-}
-
-float GetRandomFloat01()
-{
-    return float(GetPCGHash(randomSeed)) / 4294967296.0;
 }

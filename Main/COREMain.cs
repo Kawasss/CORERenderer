@@ -54,6 +54,7 @@ namespace CORERenderer.Main
         public static float mousePosX, mousePosY;
 
         private static float currentFrameTime = 0;
+        private static float previousSamples = 0;
 
         //strings
         public static string LoadFilePath = null;
@@ -382,6 +383,8 @@ namespace CORERenderer.Main
                     {
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
+                            previousSamples = 0.2f;
+                            GenericShaders.GenericLightingShader.SetFloat("sampleAmount", previousSamples);
                             renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
                             glEnable(GL_BLEND);
                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -418,6 +421,7 @@ namespace CORERenderer.Main
                         }
                         else if (!mouseIsPressed)
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
+                        
 
                         scenes[selectedScene].EveryFrame(window, currentFrameTime);
 
@@ -443,6 +447,24 @@ namespace CORERenderer.Main
                             dirLoadedModels = null;
                         }
                     }
+                    if (!keyIsPressed && !mouseIsPressed)
+                    {
+                        renderFramebuffer.Bind();
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        glEnable(GL_DEPTH_TEST);
+                        glClearColor(0.3f, 0.3f, 0.3f, 1);
+                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                        previousSamples++;
+                        GenericShaders.GenericLightingShader.SetFloat("sampleAmount", previousSamples);
+
+                        scenes[selectedScene].RenderEveryFrame(currentFrameTime);
+
+                        if (renderGrid)
+                            RenderGrid();
+                    }
+
                     if (!fullscreen)
                         glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
 
