@@ -142,6 +142,16 @@ namespace COREMath
             };
         }
 
+        public static Vector3 operator / (Vector3 v, int i)
+        {
+            return new()
+            {
+                x = v.x / i,
+                y = v.y / i,
+                z = v.z / i
+            };
+        }
+
         /// <summary>
         /// Prints the current vector to the console
         /// </summary>

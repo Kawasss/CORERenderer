@@ -69,7 +69,7 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
-            if (MathC.Distance(COREMain.GetCurrentScene.camera.position, translation + parent.translation) < renderDistance || !useRenderDistance)
+            if (!useRenderDistance || MathC.Distance(COREMain.GetCurrentScene.camera.position, translation + parent.translation) < renderDistance)
             {
                 highlighted = COREMain.selectedID == ID;
 

@@ -1,6 +1,6 @@
-version=v0.2.P
-shaders=PathTracing
-cameraSpeed=5
-writedebug=True
+version=v0.3.P
+shaders=Lighting
+cameraSpeed=3
+writedebug=False
 writeerror=True
 loadinfo=True

@@ -53,7 +53,7 @@ namespace CORERenderer.Loaders
 
             bool withTextures = true;
 
-            COREMain.console.WriteLine($"Reading {filename}:");
+            COREMain.console.WriteDebug($"Reading {filename}:");
 
             int aa = 0;
             outVertices = new();
@@ -132,8 +132,10 @@ namespace CORERenderer.Loaders
                             local3.Add(n[(local[^1] + 1)..]);
 
                             //isolates each int from local ( ../../.. ) and parses it
+                            List<Vertex> polygons = new();
                             foreach (string s in local3)
                             {
+                                Vertex localPoly = new();
                                 if (s.Contains('/'))
                                 {
                                     local2 = new();
@@ -146,48 +148,55 @@ namespace CORERenderer.Loaders
 
                                     //adds the vertex coordinates
                                     int verCoord = (int)values.x - 1;
-                                    //for (int l = 0; l < 3; l++)
-                                    //    outVertices[i].Add(vertices[verCoord].xyz[l]);
-                                    outVertices[i].Add(vertices[verCoord].x);
-                                    outVertices[i].Add(vertices[verCoord].y);
-                                    outVertices[i].Add(vertices[verCoord].z);
+                                    localPoly.x = vertices[verCoord].x;
+                                    localPoly.y = vertices[verCoord].y;
+                                    localPoly.z = vertices[verCoord].z;
                                     if (withTextures) //adds the texture coordinates if they exist
                                     {
                                         int texCoords = (int)values.y - 1;
-                                        outVertices[i].Add(UVCoordinates[texCoords].x);
-                                        outVertices[i].Add(UVCoordinates[texCoords].y);
-
-                                        //adds normals 
-                                        int normal = (int)values.z - 1;
-                                        outVertices[i].Add(normals[normal].x);
-                                        outVertices[i].Add(normals[normal].y);
-                                        outVertices[i].Add(normals[normal].z);
+                                        localPoly.uvX = UVCoordinates[texCoords].x;
+                                        localPoly.uvY = UVCoordinates[texCoords].y;
                                     }
-                                    else //adds empty texture coordinates if they arent given
-                                    {
-                                        outVertices[i].Add(0);
-                                        outVertices[i].Add(0);
-
-                                        //adds normals
-                                        int normal = (int)values.z - 1;
-                                        outVertices[i].Add(normals[normal].x);
-                                        outVertices[i].Add(normals[normal].y);
-                                        outVertices[i].Add(normals[normal].z);
-                                    }
+                                    //adds normals
+                                    int normal = (int)values.z - 1;
+                                    localPoly.normalX = normals[normal].x;
+                                    localPoly.normalY = normals[normal].y;
+                                    localPoly.normalZ = normals[normal].z;
                                 }
                                 else //if a vertex doesnt contain texture coordinates and normals its info is written as only the coordinates without any /'s, instead of VC/TC/N or VC//N
                                 {
                                     //adds the vertex coordinates and empty data for the texture coordinates and normals
-                                    for (int l = 0; l < 3; l++)
-                                        outVertices[i].Add(vertices[int.Parse(s) - 1].xyz[l]);
-
-                                    for (int l = 0; l < 5; l++)
-                                        outVertices[i].Add(0);
+                                    int verCoord = int.Parse(s) - 1;
+                                    localPoly.x = vertices[verCoord].x;
+                                    localPoly.y = vertices[verCoord].y;
+                                    localPoly.z = vertices[verCoord].z;
                                 }
                                 //updates the indices binder so that later on indices can easily be created, the vertex coords, texture coords and normals are always grouped together in strides of 8, one indice covering all 8 of them
                                 if (!indiceBinder.ContainsKey(s))
                                     indiceBinder.Add(s, aa);
                                 aa++;
+                                polygons.Add(localPoly);
+                            }
+                            Vector3 totalSumOfNormals = Vector3.Zero;
+                            for (int j = 0; j < polygons.Count; j++)
+                            {
+                                Vertex polygon = polygons[j];
+                                Vector3 newNormal = new(polygon.normalX, polygon.normalY, polygon.normalZ);
+                                totalSumOfNormals += newNormal;
+                            }
+                            Vector3 averageNormal = totalSumOfNormals / polygons.Count;
+                            foreach (Vertex polygon in polygons)
+                            {
+                                outVertices[i].Add(polygon.x);
+                                outVertices[i].Add(polygon.y);
+                                outVertices[i].Add(polygon.z);
+
+                                outVertices[i].Add(polygon.uvX);
+                                outVertices[i].Add(polygon.uvY);
+
+                                outVertices[i].Add(averageNormal.x);
+                                outVertices[i].Add(averageNormal.y);
+                                outVertices[i].Add(averageNormal.z);
                             }
                             //a triangle, square and circles indices are all structured differently so it has to be checked what kind of shape it is
                             if (local3.Count == 3) //triangle
@@ -195,17 +204,7 @@ namespace CORERenderer.Loaders
                                 for (int k = 0; k < local3.Count; k++)
                                     outIndices[i].Add((uint)indiceBinder[local3[k]]);
                             }
-                            else if (local3.Count == 4) //square
-                            {   //adds the faces in the correct for face culling
-                                outIndices[i].Add((uint)indiceBinder[local3[0]]);
-                                outIndices[i].Add((uint)indiceBinder[local3[1]]);
-                                outIndices[i].Add((uint)indiceBinder[local3[2]]);
-
-                                outIndices[i].Add((uint)indiceBinder[local3[0]]);
-                                outIndices[i].Add((uint)indiceBinder[local3[2]]);
-                                outIndices[i].Add((uint)indiceBinder[local3[3]]);
-                            }
-                            else if (local3.Count > 4) //circle
+                            else if (local3.Count > 3) //plane & circle
                             {
                                 for (int k = 0; k < local3.Count - 3; k++)
                                 {
@@ -231,9 +230,32 @@ namespace CORERenderer.Loaders
             if (unreadableLines.Count > 0)
                 COREMain.console.WriteError($" Couldn't read {unreadableLines.Count} lines in {filename}");
 
-            COREMain.console.WriteLine($"finished reading {filename}");
+            COREMain.console.WriteDebug($"finished reading {filename}");
 
             return true;
+        }
+
+        private struct Vertex
+        {
+            public float x;
+            public float y;
+            public float z;
+            public float uvX;
+            public float uvY;
+            public float normalX;
+            public float normalY;
+            public float normalZ;
+            public Vertex()
+            {
+                x = 0;
+                y = 0;
+                z = 0;
+                uvX = 0;
+                uvY = 0;
+                normalX = 0;
+                normalY = 0;
+                normalZ = 0;
+            }
         }
     }
 }

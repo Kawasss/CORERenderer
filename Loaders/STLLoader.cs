@@ -39,29 +39,18 @@ namespace CORERenderer.Loaders
             return true;
         }
 
-        private static bool LoadSTLInASCII(string path, out string name, out List<float> vertices, out Vector3 offset)
-        {
-            vertices = new();
-            offset = Vector3.Zero;
-            bool firstLine = true;
-            using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (BufferedStream bs = new(fs))
-            using (StreamReader sr = new(bs))
-            {
+        private static bool LoadSTLInASCII(string path, out string name, out List<float> vertices, out Vector3 offset) //ASCII STI files are made of this sequence:
+        {                                                                                                              //facet normal VALUE VALUE  VALUE
+            vertices = new();                                                                                          // outer loop
+            offset = Vector3.Zero;                                                                                     //  vertex VALUE VALUE VALUE
+            bool firstLine = true;                                                                                     //  vertex VALUE VALUE VALUE
+            using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))               //  vertex VALUE VALUE VALUE
+            using (BufferedStream bs = new(fs))                                                                        // endloop
+            using (StreamReader sr = new(bs))                                                                          //endfacet
+            {                                                                                                          //all the lines without values are skipped, the values are extracted with regex
                 name = sr.ReadLine()[6..]; //first 6 chars are "solid " so those can be skipped
                 for (string line = sr.ReadLine(); line != null; line = sr.ReadLine())
                 {
-                    /*
-                    ASCII STI files are made of this sequence:
-                    facet normal VALUE VALUE  VALUE
-                     outer loop
-                      vertex VALUE VALUE VALUE
-                      vertex VALUE VALUE VALUE
-                      vertex VALUE VALUE VALUE
-                     endloop
-                    endfacet
-                    all the lines without values are skipped, the values are extracted with regex
-                    */
                     if (line.Length < 2)
                         continue;
 

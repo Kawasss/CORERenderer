@@ -45,10 +45,6 @@ namespace CORERenderer.Main
         private static double previousTime = 0;
         public static double CPUUsage = 0;
         private static TimeSpan previousCPU;
-        private static double memoryUsed = 0;
-
-        //longs
-        public static long totalMemory = 0;
 
         //floats
         public static float mousePosX, mousePosY;
@@ -59,11 +55,11 @@ namespace CORERenderer.Main
         //strings
         public static string LoadFilePath = null;
         public static string GPU;
-        public const string VERSION = "v0.2.P";
+        public const string VERSION = "v0.3.P";
         private static List<string> consoleCache = new();
 
         //bools
-        public static bool renderGrid = false;
+        public static bool renderGrid = true;
         public static bool renderBackground = true;
         public static bool secondPassed = true;
         public static bool renderGUI = true;
@@ -117,25 +113,22 @@ namespace CORERenderer.Main
 
         //misc.
         //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
-        private static string root = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        private static string directory = Path.GetDirectoryName(root);
-
-        private static int MathCIndex = directory.IndexOf("CORERenderer");
-
-        public static string pathRenderer = directory.Substring(0, MathCIndex) + "CORERenderer";
+        public static string pathRenderer;
 
         public static int Main(string[] args)
         {
             try //primitive error handling, could be better
             {
+                string root = AppDomain.CurrentDomain.BaseDirectory;
+                string directory = Path.GetDirectoryName(root);
+                int MathCIndex = directory.IndexOf("CORERenderer");
+                
+                pathRenderer = directory.Substring(0, MathCIndex) + "CORERenderer";
                 //-------------------------------------------------------------------------------------------
                 Glfw.Init();
 
-                GetPhysicallyInstalledSystemMemory(out totalMemory);
-                totalMemory *= 1000;
-
                 splashScreen = new();
-
+                
                 //sets the width for the window that shows the 3D space
                 Width = monitorWidth;
                 Height = monitorHeight;
@@ -220,7 +213,7 @@ namespace CORERenderer.Main
                     (int)(monitorHeight * 0.004f)
                 );
                 TabManager tab = new(new string[] { "Models", "Submodels" });
-                TabManager graphManager = new(new string[] { "FS", "CPU %", "DCPF" });
+                TabManager graphManager = new(new string[] { "FT", "CPU %", "DCPF" });
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
@@ -248,8 +241,8 @@ namespace CORERenderer.Main
                 menu.SetBool("Use vignette", useVignette);
                 menu.SetBool("fullscreen", fullscreen);
 
-                modelList.RenderModelList();
-                submodelList.RenderSubmodelList();
+                //modelList.RenderModelList();
+                //submodelList.RenderSubmodelList();
                 //-------------------------------------------------------------------------------------------
 
                 Framebuffer gui = GenerateFramebuffer();
@@ -330,8 +323,6 @@ namespace CORERenderer.Main
                                 tab.Render();
 
                                 modelInformation.Render();
-                                if (scenes[selectedScene].currentObj != -1)
-                                    //Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
 
                                 button.changed = true; //cheap trick to make it think that its allowed to render
                                 button.RenderStatic();
@@ -353,8 +344,6 @@ namespace CORERenderer.Main
                                 tab.Render();
 
                                 modelInformation.Render();
-                                if (scenes[selectedScene].currentObj != -1)
-                                    //Div.renderModelInformation(modelInformation, scenes[selectedScene].allModels[scenes[selectedScene].currentObj]);
 
                                 sceneManager.Render();
                             }
@@ -517,6 +506,20 @@ namespace CORERenderer.Main
             return 1;
         }
 
+        public static void MergeAllModels(out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets)
+        {
+            vertices = new();
+            indices = new();
+            offsets = new();
+            foreach (Model model in GetCurrentScene.allModels)
+                for (int i = 0; i < model.vertices.Count; i++)
+                {
+                    vertices.Add(model.vertices[i]);
+                    indices.Add(model.indices[i]);
+                    offsets.Add(model.offsets[i]);
+                }
+        }
+
         private static void LoadConfig()
         {
             if (!File.Exists($"{pathRenderer}\\config"))
@@ -563,7 +566,7 @@ namespace CORERenderer.Main
             }
         }
 
-        private static void GenerateConfig()
+        public static void GenerateConfig()
         {
             using (StreamWriter sw = File.CreateText($"{pathRenderer}\\config"))
             {
@@ -690,7 +693,6 @@ namespace CORERenderer.Main
 
                 Process proc = Process.GetCurrentProcess();
                 TimeSpan currentCPU = proc.TotalProcessorTime;
-                memoryUsed = proc.WorkingSet64;
                 double timeDifference = currentTime - previousTime;
                 double currentCPUUsage = (currentCPU - previousCPU).TotalSeconds;
 
@@ -854,9 +856,5 @@ namespace CORERenderer.Main
             else
                 MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
         }
-
-        [DllImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
     }
 }

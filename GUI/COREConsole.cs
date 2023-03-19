@@ -21,6 +21,7 @@ namespace CORERenderer.GUI
         
         //if this needs to be optimised make it reuse the previous frames as a texture so the previous lines dont have to reprinted, saving draw calls
         private string[] lines;
+        private List<string> allCommands = new();
 
         private int Width;
         private int Height;
@@ -238,10 +239,30 @@ namespace CORERenderer.GUI
         }
 
 
-        private void ParseInput(string input)
+        public void ParseInput(string input)
         {
+            allCommands.Add(input);
+
             if (input == "exit")
                 Glfw.SetWindowShouldClose(COREMain.window, true);
+
+            else if (input == "save as stl") //debug
+            {
+                COREMain.GetCurrentScene.currentObj = 0;
+                if (COREMain.GetCurrentScene.allModels.Count > 0 && COREMain.GetCurrentObjFromScene != -1)
+                {
+                    Writers.GenerateSTL(COREMain.pathRenderer, $"Written by CORE-Renderer {COREMain.VERSION}", COREMain.GetCurrentModelFromCurrentScene);
+                    WriteDebug($"Generated {COREMain.GetCurrentModelFromCurrentScene.name}.stl");
+                }
+                else
+                    WriteError("There is no model to get data from");
+            }
+            else if (input == "save all as stl")
+            {
+                COREMain.MergeAllModels(out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets);
+                Writers.GenerateSTL(COREMain.pathRenderer, "test", "test.stl written by CORE-Renderer V0.2.P", vertices, indices, offsets);
+            }
+
             else if (input == "goto console") //introducing contexts allows for better grouping of commands and better readability / makes it more expandable
             {
                 currentContext = Context.Console;
@@ -276,6 +297,31 @@ namespace CORERenderer.GUI
                 else
                     Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
                 Environment.Exit(1);
+            }
+            else if (input.Contains("set shaders"))
+            {
+                if (input.ToLower().Contains("pathtracing"))
+                {
+                    Rendering.shaderConfig = ShaderType.PathTracing;
+                    COREMain.GenerateConfig();
+                    if (COREMain.LoadFilePath == null)
+                        Process.Start("CORERenderer.exe");
+                    else
+                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                    Environment.Exit(1);
+                } 
+                else if (input.ToLower().Contains("lighting"))
+                {
+                    Rendering.shaderConfig = ShaderType.Lighting;
+                    COREMain.GenerateConfig();
+                    if (COREMain.LoadFilePath == null)
+                        Process.Start("CORERenderer.exe");
+                    else
+                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                    Environment.Exit(1);
+                }  
+                else
+                    WriteError("Couldn't find shader type");
             }
             else if (currentContext == Context.Console)
                 HandleConsoleCommands(input);

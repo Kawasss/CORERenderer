@@ -19,7 +19,7 @@ namespace CORERenderer.Loaders
 
         public List<Submodel> submodels;
 
-        private List<Vector3> offsets;
+        public List<Vector3> offsets;
 
         public Vector3 Scaling = new(1, 1, 1);
         public Vector3 translation = new(0, 0, 0);
@@ -113,7 +113,7 @@ namespace CORERenderer.Loaders
             else if (type == RenderMode.PNGImage)
                 GivenImage.Render();
             else if (type == RenderMode.HDRFile)
-                return;
+                Rendering.RenderBackground(hdr);
             else if (type == RenderMode.STLFile)
                 RenderSTL();
         }
@@ -290,7 +290,11 @@ namespace CORERenderer.Loaders
 
         ~Model()
         {
-            //DeleteUnusedTextures(this);
+            if (VBO != 0 && VAO != 0)
+            {
+                glDeleteBuffer(VBO);
+                glDeleteVertexArray(VAO);
+            }
         }
     }
 }

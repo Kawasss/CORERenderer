@@ -132,13 +132,6 @@ namespace CORERenderer.Main
         {
             float[] FrameBufferVertices = new float[]
             {
-                /*-.5f, .5f, 0,  1,
-                -.5f,-.5f, 0,  0,
-                 .5f,-.5f, 1,  0,
-
-                -.5f, .5f, 0,  1,
-                 .5f,-.5f, 1,  0,
-                 .5f, .5f, 1,  1*/
                 (-COREMain.monitorWidth / 2f + x) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y + height) / COREMain.monitorHeight, 0, 1,
                 (-COREMain.monitorWidth / 2f + x) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y) / COREMain.monitorHeight,           0, 0,
                 (-COREMain.monitorWidth / 2f + x + width) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y) / COREMain.monitorHeight,           1, 0,
