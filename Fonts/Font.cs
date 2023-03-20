@@ -85,7 +85,7 @@ namespace CORERenderer.Fonts
 
             shader.Use();
             shader.SetInt("Texture", GL_TEXTURE0);
-            shader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix());
+            shader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
         }
 
         public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction) => RenderText(text, x, y, scale, direction, new Vector3(1, 1, 1));

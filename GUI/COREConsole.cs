@@ -18,7 +18,7 @@ namespace CORERenderer.GUI
 
         private int linesPrinted = 0;
         private int maxLines = 0;
-        
+
         //if this needs to be optimised make it reuse the previous frames as a texture so the previous lines dont have to reprinted, saving draw calls
         private string[] lines;
         private List<string> allCommands = new();
@@ -95,8 +95,8 @@ namespace CORERenderer.GUI
                                 letter = '>';
                             else
                                 letter = letter.ToString().ToUpper()[0]; //first to string then to upper because chars dont have to upper, then back to char with [0]
-                            
-                        }  
+
+                        }
                         if ((letter != lines[linesPrinted - 1][^1] || Glfw.Time - previousTime2 > 0.15))
                         {
                             Write($"{letter}"); //adds letter to the last line of text
@@ -135,12 +135,15 @@ namespace CORERenderer.GUI
             {
                 if (lines[i] == null)
                     continue;
-                if (lines[i].Length > 5 && lines[i][..5] == "ERROR" && writeError)
+                if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
                     quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
-                else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG" && writeDebug)
+
+                else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
+
                 else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
+
                 else if (lines.Length > 0 && i == linesPrinted - 1)
                     quad.Write(lines[i] + '|', 0, Height - lineOffset, 0.7f);
             }
@@ -160,7 +163,7 @@ namespace CORERenderer.GUI
                     lines[i] = oldLines[i + 1];
             }
             float textWidth = COREMain.debugText.GetStringWidth(text + '|', 0.7f);
-            
+
             //returns if the string isnt longer than the width if the console
             if (textWidth < Width)
                 lines[linesPrinted - 1] = text;
@@ -168,17 +171,27 @@ namespace CORERenderer.GUI
                 lines[linesPrinted - 1] = "ERROR Message is too long, returning";
         }
 
+        public void WriteLine() => WriteLine("");
+
         public void Write(string text)
         {
             linesPrinted--; //tricks WriteLine() into thinking thats its adding a new line instead of overriding an old one
             WriteLine(lines[linesPrinted] + text); //add the new text to the to be overridden line
         }
 
-        public void WriteError(System.Exception err) => WriteLine("ERROR " + err.ToString());
+        public void WriteError(System.Exception err) => WriteError(err.ToString());
 
-        public void WriteError(string err) => WriteLine("ERROR " + err);
+        public void WriteError(string err)
+        {
+            if (writeError)
+                WriteLine("ERROR " + err);
+        }
 
-        public void WriteDebug(string debug) => WriteLine("DEBUG " + debug);
+        public void WriteDebug(string debug)
+        {
+            if (writeDebug)
+                WriteLine("DEBUG " + debug);
+        }
 
         /// <summary>
         /// Renders the entire console even if nothing has changed, overriding the optimisation. This will make a draw call to the GPU for each letter, causing a severe performance drop
@@ -296,6 +309,7 @@ namespace CORERenderer.GUI
                     Process.Start("CORERenderer.exe");
                 else
                     Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                GenerateCacheFile(COREMain.pathRenderer);
                 Environment.Exit(1);
             }
             else if (input.Contains("set shaders"))
@@ -308,6 +322,7 @@ namespace CORERenderer.GUI
                         Process.Start("CORERenderer.exe");
                     else
                         Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                    GenerateCacheFile(COREMain.pathRenderer);
                     Environment.Exit(1);
                 } 
                 else if (input.ToLower().Contains("lighting"))
@@ -318,6 +333,7 @@ namespace CORERenderer.GUI
                         Process.Start("CORERenderer.exe");
                     else
                         Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                    GenerateCacheFile(COREMain.pathRenderer);
                     Environment.Exit(1);
                 }  
                 else
@@ -331,6 +347,8 @@ namespace CORERenderer.GUI
                 HandleSceneCommands(input);
             else
                 WriteError($"Couldn't parse command \"{input}\"");
+
+            WriteLine($"COREConsole/{currentContext} > ");
         }
 
 
@@ -661,6 +679,36 @@ namespace CORERenderer.GUI
             }
             else
                 WriteError($"Couldn't parse float {input[4..]}");
+        }
+
+        public void LoadCacheFile(string dirPath)
+        {
+            if (!File.Exists($"{dirPath}\\consoleCache"))
+            {
+                WriteError("Failed to retrieve cache");
+                return;
+            }
+
+            string[] commands = File.ReadAllLines($"{dirPath}\\consoleCache");
+            foreach (string command in commands)
+                ParseInput(command);
+
+            File.Delete($"{dirPath}\\consoleCache");
+            WriteDebug("Succeeded retrieved and loaded cache");
+        }
+
+        private void GenerateCacheFile(string dirPath)
+        {
+            if (!Directory.Exists(dirPath))
+            {
+                WriteError($"Failed to create a cache");
+                return;
+            }
+
+            using StreamWriter sw = File.CreateText($"{dirPath}\\consoleCache");
+            foreach (string command in allCommands)
+                if (command != "exit" && !command.Contains("reload") && !command.Contains("set shaders"))
+                    sw.WriteLine(command);
         }
     }
 }

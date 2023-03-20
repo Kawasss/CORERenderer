@@ -179,7 +179,7 @@ namespace CORERenderer.textures
 
                 h.testShader.Use();
                 h.testShader.SetInt("Texture", GL_TEXTURE0);
-                h.testShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+                h.testShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);

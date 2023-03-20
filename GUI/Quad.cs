@@ -86,7 +86,7 @@ namespace CORERenderer.GUI
 
                 GenericShaders.image2DShader.Use();
                 GenericShaders.image2DShader.SetInt("Texture", GL_TEXTURE0);
-                GenericShaders.image2DShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+                GenericShaders.image2DShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             }
 
             lineVBO = glGenBuffer();

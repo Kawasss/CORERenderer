@@ -50,12 +50,21 @@ namespace CORERenderer
 
         public override void EveryFrame(Window window, float delta)
         {
-            //Task.Run(() =>
-            //{
-            //    if (ray.Intersects(allModels[0], out Vector3 intersection))
-            //        console.WriteDebug($"intersection at {intersection}");
-            //});
-            
+            if (shaderConfig == ShaderType.PathTracing)
+            {
+                GenericShaders.GenericLightingShader.SetVector3("RAY.origin", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLightingShader.SetVector3("RAY.direction", COREMain.GetCurrentScene.camera.front);
+                GenericShaders.GenericLightingShader.SetInt("isReflective", 0);
+                GenericShaders.GenericLightingShader.SetVector3("emission", new(1, 1, 1));
+                GenericShaders.GenericLightingShader.SetVector3("lights.color", new(1, 1, 1));
+                GenericShaders.GenericLightingShader.SetVector3("lights.position", new(0, 1, 1));
+            }
+            else if (shaderConfig == ShaderType.Lighting)
+            {
+                GenericShaders.GenericLightingShader.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLightingShader.SetVector3("pointLights[0].position", COREMain.GetCurrentScene.camera.position);
+            }
+
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
             {

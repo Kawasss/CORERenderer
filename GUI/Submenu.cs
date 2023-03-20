@@ -105,7 +105,7 @@ namespace CORERenderer.GUI
                 COREMain.renderGUI = isOptionTrue[list[4]];
                 COREMain.renderIDFramebuffer = isOptionTrue[list[5]];
                 COREMain.renderToIDFramebuffer = isOptionTrue[list[6]];
-                COREMain.renderOrthographic = isOptionTrue[list[7]];
+                Rendering.renderOrthographic = isOptionTrue[list[7]];
                 cullFaces = isOptionTrue[list[9]];
                 isOptionTrue[list[11]] = false;
                 COREMain.addCube = isOptionTrue[list[12]];

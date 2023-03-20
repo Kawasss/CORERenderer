@@ -44,7 +44,7 @@ namespace CORERenderer.GUI
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
             
-            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
             GenerateFilledBuffer(out VBOC, out VAOC, crossVertices);
@@ -54,11 +54,11 @@ namespace CORERenderer.GUI
             glEnableVertexAttribArray((uint)vertexLocation);
 
             GenericShaders.solidColorQuadShader.Use();
-            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             
             shaderC.Use();
 
-            shaderC.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+            shaderC.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             shaderC.SetInt("Texture", GL_TEXTURE0);
             shaderC.SetBool("isSelected", isSelected);
 

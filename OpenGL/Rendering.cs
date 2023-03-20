@@ -4,6 +4,7 @@ using CORERenderer.Main;
 using CORERenderer.Loaders;
 using CORERenderer.GLFW;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace CORERenderer.OpenGL
 {
@@ -26,29 +27,22 @@ namespace CORERenderer.OpenGL
         private static uint lineVAO;
 
         public static bool cullFaces = true;
+        public static bool renderOrthographic = false;
 
         public static int drawCalls = 0;
 
         public static ShaderType shaderConfig = ShaderType.Lighting;
+
+        private static Camera camera = null;
 
         public static void Init()
         {
             GenericShaders.SetShaders();
         }
 
-        public static async Task<double> GetCPUUsage()
+        public static void SetCamera(Camera currentCamera)
         {
-            double start = Glfw.Time;
-            TimeSpan startCPU = Process.GetCurrentProcess().TotalProcessorTime;
-
-            await Task.Delay(500);
-
-            double end = Glfw.Time;
-            TimeSpan endCPU = Process.GetCurrentProcess().TotalProcessorTime;
-
-            double CPUMs = (endCPU - startCPU).TotalMilliseconds;
-            double msPassed = end - start;
-            return CPUMs / (Environment.ProcessorCount * msPassed) * 100;
+            camera = currentCamera;
         }
 
         public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)
@@ -270,7 +264,7 @@ namespace CORERenderer.OpenGL
         }
 
         //try referring to offcenter version with 0, width, height, 0.01, 100
-        public static Matrix GetOrthograpicProjectionMatrix() => Matrix.Createorthographic(COREMain.Width, COREMain.Height, -1000f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
+        public static Matrix GetOrthograpicProjectionMatrix(int width, int height) => Matrix.Createorthographic(width, height, -1000f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
 
         public static void RenderBackground(HDRTexture h)
         {
@@ -296,23 +290,7 @@ namespace CORERenderer.OpenGL
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            RenderLights(COREMain.lights);
-
             GenericShaders.GenericLightingShader.Use();
-            if (shaderConfig == ShaderType.PathTracing)
-            {
-                GenericShaders.GenericLightingShader.SetVector3("RAY.origin", COREMain.GetCurrentScene.camera.position);
-                GenericShaders.GenericLightingShader.SetVector3("RAY.direction", COREMain.GetCurrentScene.camera.front);
-                GenericShaders.GenericLightingShader.SetInt("isReflective", 0);
-                GenericShaders.GenericLightingShader.SetVector3("emission", new(1, 1, 1));
-                GenericShaders.GenericLightingShader.SetVector3("lights.color", new(1, 1, 1));
-                GenericShaders.GenericLightingShader.SetVector3("lights.position", new(0, 1, 1));
-            }
-            else if (shaderConfig == ShaderType.Lighting)
-            {
-                GenericShaders.GenericLightingShader.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
-                GenericShaders.GenericLightingShader.SetVector3("pointLights[0].position", COREMain.GetCurrentScene.camera.position);
-            }
 
             foreach (Model model in models)
             {
@@ -391,6 +369,38 @@ namespace CORERenderer.OpenGL
 
             glBindVertexArray(0);
             glDepthFunc(GL_LESS);
+        }
+
+        private static uint uboMatrices;
+
+        public static void UpdateUniformBuffers()//can be made private if render loop is put here
+        {
+            //assigns values to the freed up gpu memory for global uniforms
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            MatrixToUniformBuffer(camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
+            MatrixToUniformBuffer(camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
+            if (!renderOrthographic)
+                MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+            else
+                MatrixToUniformBuffer(camera.GetOrthographicProjectionMatrix(), 0);
+        }
+
+        public unsafe static void SetUniformBuffers()//can be made private if render loop is put here
+        {
+            uboMatrices = glGenBuffer();
+
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
+
+            //assigns values to the freed up gpu memory for global uniforms
+            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            if (!renderOrthographic)
+                MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+            else
+                MatrixToUniformBuffer(camera.GetOrthographicProjectionMatrix(), 0);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }
 
         static uint cubeVAO;

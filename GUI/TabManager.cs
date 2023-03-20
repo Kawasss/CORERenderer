@@ -88,10 +88,10 @@ namespace CORERenderer.GUI
             glEnableVertexAttribArray((uint)vertexLocation);
 
             shader.Use();
-            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
             plusShader.Use();
-            plusShader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+            plusShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
             isAttached = true;
         }
@@ -133,7 +133,7 @@ namespace CORERenderer.GUI
                 glEnableVertexAttribArray((uint)vertexLocation);
 
                 shader.Use();
-                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
                 isAttached = true;
                 return;
@@ -180,7 +180,7 @@ namespace CORERenderer.GUI
                 glEnableVertexAttribArray((uint)vertexLocation);
 
                 shader.Use();
-                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix());
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
                 isAttached = true;
                 return;

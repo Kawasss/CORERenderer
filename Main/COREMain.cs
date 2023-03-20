@@ -39,8 +39,6 @@ namespace CORERenderer.Main
         //uints
         public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
 
-        private static uint uboMatrices;
-
         //doubles
         private static double previousTime = 0;
         public static double CPUUsage = 0;
@@ -50,12 +48,11 @@ namespace CORERenderer.Main
         public static float mousePosX, mousePosY;
 
         private static float currentFrameTime = 0;
-        private static float previousSamples = 0;
 
         //strings
         public static string LoadFilePath = null;
         public static string GPU;
-        public const string VERSION = "v0.3.P";
+        public const string VERSION = "v0.4.P";
         private static List<string> consoleCache = new();
 
         //bools
@@ -73,7 +70,6 @@ namespace CORERenderer.Main
         public static bool addCube = false;
         public static bool addCylinder = false;
         public static bool renderEntireDir = false;
-        public static bool renderOrthographic = false;
         public static bool allowAlphaOverride = true;
 
         public static bool keyIsPressed = false;
@@ -152,8 +148,8 @@ namespace CORERenderer.Main
                 if (glGetString(GL_RENDERER).IndexOf('/') != -1)
                     GPU = glGetString(GL_RENDERER)[..glGetString(GL_RENDERER).IndexOf('/')];
                 else
-                    GPU = "Not Recognized";//glGetString(GL_RENDERER);
-                
+                    GPU = "Not Recognized";
+
                 debugText = new((uint)(monitorHeight * 0.01333f), $"{pathRenderer}\\Fonts\\baseFont.ttf");
 
                 //seperate into own method for easier reading------------------------------------------------
@@ -231,7 +227,7 @@ namespace CORERenderer.Main
                 menu.SetBool("Render GUI", renderGUI);
                 menu.SetBool("Render IDFramebuffer", renderIDFramebuffer);
                 menu.SetBool("Render to ID framebuffer", renderToIDFramebuffer);
-                menu.SetBool("Render orthographic", renderOrthographic);
+                menu.SetBool("Render orthographic", Rendering.renderOrthographic);
                 menu.SetBool("Cull Faces", cullFaces);
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
@@ -262,12 +258,21 @@ namespace CORERenderer.Main
                 scenes[0].OnLoad(args);
                 selectedScene = 0;
 
+                if (File.Exists($"{pathRenderer}\\consoleCache"))
+                    console.LoadCacheFile(pathRenderer);
+
                 foreach (string s in consoleCache)
-                    console.WriteLine(s);
+                {
+                    if (s.Length > 5 && s[..5] == "ERROR")
+                        console.WriteError(s);
+                    else if (s.Length > 5 && s[..5] == "DEBUG")
+                        console.WriteDebug(s);
+                    else
+                        console.WriteLine(s);
+                }
+                    
 
                 //arrows = new();
-
-                SetUniformBuffers();
 
                 Glfw.SetScrollCallback(window, ScrollCallback);
                 Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
@@ -287,32 +292,39 @@ namespace CORERenderer.Main
                 console.WriteLine("Beginning render loop");
 
                 previousTime = Glfw.Time;
-                using (Process process =Process.GetCurrentProcess())
+                using (Process process = Process.GetCurrentProcess())
                     previousCPU = process.TotalProcessorTime;
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
-                
-                //render loop
-                while (!Glfw.WindowShouldClose(window))
-                {
-                    UpdateRenderStatistics();
 
-                    UpdateUniformBuffers();
+                Rendering.SetCamera(GetCurrentScene.camera);
+                Rendering.SetUniformBuffers();
+
+                //render loop
+                while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
+                {
+                    Rendering.UpdateUniformBuffers();
+                    UpdateRenderStatistics();
+                    UpdateCursorLocation();
+
                     glViewport(0, 0, monitorWidth, monitorHeight);
 
-                    wrapperFBO.Bind();
-
-                    submenuOpen = Submenu.isOpen;
                     {
                         gui.Bind();
                         tb.Render();
                         if (renderGUI)
                         {
-                            tb.Render();
                             button.Render();
-                            subMenuOpenLastFrame = submenuOpen && !Submenu.isOpen;
-                            if (!destroyWindow || subMenuOpenLastFrame)
+
+                            graph.Update((float)CPUUsage); //update even without any input because the data always changes
+                            graph.MaxValue = 100;
+
+                            drawCallsPerFrameGraph.Update(drawCallsPerFrame);
+
+                            frametimeGraph.Update(currentFrameTime * 1000);
+                            console.Update();
+                            if (!destroyWindow) //draw everything on the first render cycle
                             {
                                 glClearColor(0.085f, 0.085f, 0.085f, 1);
                                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -335,11 +347,7 @@ namespace CORERenderer.Main
 
                                 sceneManager.Render();
                             }
-
-                            if (destroyWindow)
-                                console.Update();
-
-                            if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen)
+                            if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
                             {
                                 tab.Render();
 
@@ -347,13 +355,6 @@ namespace CORERenderer.Main
 
                                 sceneManager.Render();
                             }
-                            graph.Update((float)CPUUsage); //update even without any input because the data always changes
-                            if (graph.MaxValue != 100)
-                                graph.MaxValue = 100;
-                            drawCallsPerFrameGraph.Update(drawCallsPerFrame);
-
-                            frametimeGraph.Update(currentFrameTime * 1000);
-
                             console.Render();
                         }
                         
@@ -364,17 +365,14 @@ namespace CORERenderer.Main
                         clearedGUI = false;
                     }
 
-                    UpdateCursorLocation();
-
-                    if (Scene.IsCursorInFrame(mousePosX, mousePosY))
-                        UpdateCamera(currentFrameTime);
-
                     {
+                        if (Scene.IsCursorInFrame(mousePosX, mousePosY))
+                            UpdateCamera(currentFrameTime);
+
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
-                            previousSamples = 0.2f;
-                            GenericShaders.GenericLightingShader.SetFloat("sampleAmount", previousSamples);
                             renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
+
                             glEnable(GL_BLEND);
                             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                             glEnable(GL_DEPTH_TEST);
@@ -405,7 +403,7 @@ namespace CORERenderer.Main
                             if (renderGrid)
                                 RenderGrid();
 
-                            glClear(GL_DEPTH_BUFFER_BIT);
+                            //glClear(GL_DEPTH_BUFFER_BIT);
                             //arrows.Render();
                         }
                         else if (!mouseIsPressed)
@@ -444,9 +442,6 @@ namespace CORERenderer.Main
                         glEnable(GL_DEPTH_TEST);
                         glClearColor(0.3f, 0.3f, 0.3f, 1);
                         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                        previousSamples++;
-                        GenericShaders.GenericLightingShader.SetFloat("sampleAmount", previousSamples);
 
                         scenes[selectedScene].RenderEveryFrame(currentFrameTime);
 
@@ -503,7 +498,7 @@ namespace CORERenderer.Main
                 Thread.Sleep(1000);
                 return -1;
             }
-            return 1;
+            return 0;
         }
 
         public static void MergeAllModels(out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets)
@@ -826,35 +821,5 @@ namespace CORERenderer.Main
         }
 
         public static void LogError(System.Exception msg) => LogError(msg.ToString());
-
-        private unsafe static void SetUniformBuffers()
-        {
-            uboMatrices = glGenBuffer();
-
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
-            glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
-
-            //assigns values to the freed up gpu memory for global uniforms
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            if (!renderOrthographic)
-                MatrixToUniformBuffer(scenes[selectedScene].camera.GetProjectionMatrix(), 0);
-            else
-                MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        }
-
-        private static void UpdateUniformBuffers()
-        {
-            //assigns values to the freed up gpu memory for global uniforms
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-            MatrixToUniformBuffer(scenes[selectedScene].camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
-            MatrixToUniformBuffer(scenes[selectedScene].camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
-            if (!renderOrthographic)
-                MatrixToUniformBuffer(scenes[selectedScene].camera.GetProjectionMatrix(), 0);
-            else
-                MatrixToUniformBuffer(scenes[selectedScene].camera.GetOrthographicProjectionMatrix(), 0);
-        }
     }
 }
