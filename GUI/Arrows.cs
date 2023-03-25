@@ -22,7 +22,8 @@ namespace CORERenderer.GUI
 
         public int pickedID;
 
-        public Shader pickShader = GenericShaders.pickShader;
+        private Shader pickShader = GenericShaders.IDPicking;
+        private Shader shader = GenericShaders.Arrow;
 
         private Vector3[] rgbs = new Vector3[3];
 
@@ -38,19 +39,19 @@ namespace CORERenderer.GUI
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
 
-            GenericShaders.arrowShader.Use();
+            shader.Use();
 
-            int vertexLocation = GenericShaders.arrowShader.GetAttribLocation("aPos");
+            int vertexLocation = shader.GetAttribLocation("aPos");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
             //UV texture coordinates
-            vertexLocation = GenericShaders.arrowShader.GetAttribLocation("aTexCoords");
+            vertexLocation = shader.GetAttribLocation("aTexCoords");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
             //normal coordinates
-            vertexLocation = GenericShaders.arrowShader.GetAttribLocation("aNormal");
+            vertexLocation = shader.GetAttribLocation("aNormal");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
@@ -76,14 +77,14 @@ namespace CORERenderer.GUI
             if (maxScale == 0)
                 maxScale = MathC.GetLengthOf((COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation));
 
-            GenericShaders.arrowShader.Use();
+            shader.Use();
 
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
             model *= Matrix.IdentityMatrix  * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].translation) / maxScale) * 0.1f);
 
-            GenericShaders.arrowShader.SetVector3("color", 0, 1, 0);
+            shader.SetVector3("color", 0, 1, 0);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
@@ -93,16 +94,16 @@ namespace CORERenderer.GUI
                     local *= MathC.GetRotationXMatrix(90);
                 if (i == 1)
                 {
-                    GenericShaders.arrowShader.SetVector3("color", 1, 0, 0);
+                    shader.SetVector3("color", 1, 0, 0);
                     local *= MathC.GetRotationYMatrix(-90);
                 }
                 else if (i == 2)
                 {
-                    GenericShaders.arrowShader.SetVector3("color", 0, 0, 1);
+                    shader.SetVector3("color", 0, 0, 1);
                     local *= MathC.GetRotationYMatrix(180);
                 }
 
-                GenericShaders.arrowShader.SetMatrix("model", local);
+                shader.SetMatrix("model", local);
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
             RenderIDVersion();        

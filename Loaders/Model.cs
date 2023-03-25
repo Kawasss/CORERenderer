@@ -25,7 +25,7 @@ namespace CORERenderer.Loaders
         public Vector3 translation = new(0, 0, 0);
         public Vector3 rotation = new(0, 0, 0);
 
-        private Shader shader = GenericShaders.GenericLightingShader;
+        private Shader shader = GenericShaders.GenericLighting;
 
         public RenderMode type;
 

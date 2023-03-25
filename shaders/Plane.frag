@@ -7,6 +7,5 @@ uniform sampler2D Texture;
 
 void main()
 {
-	//vec3 tex = texture(Texture, TexCoords).rgb;
 	FragColor = texture(Texture, TexCoords);
 }

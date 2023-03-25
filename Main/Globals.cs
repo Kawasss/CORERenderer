@@ -4,6 +4,7 @@ using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 using StbiSharp;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer.Main
 {
@@ -157,7 +158,7 @@ namespace CORERenderer.Main
             Framebuffer fb = new();
             unsafe
             {
-                fb.shader = new($"{COREMain.pathRenderer}\\shaders\\FrameBuffer.vert", $"{COREMain.pathRenderer}\\shaders\\FrameBuffer.frag");
+                fb.shader = GenericShaders.Framebuffer;//new($"{COREMain.pathRenderer}\\shaders\\FrameBuffer.vert", $"{COREMain.pathRenderer}\\shaders\\FrameBuffer.frag");
             
                 fb.FBO = glGenFramebuffer();
                 glBindFramebuffer(GL_FRAMEBUFFER, fb.FBO);

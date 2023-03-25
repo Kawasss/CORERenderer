@@ -5,11 +5,14 @@ using CORERenderer.Loaders;
 using COREMath;
 using CORERenderer.textures;
 using CORERenderer.OpenGL;
+using CORERenderer.shaders;
 
 namespace CORERenderer.GUI
 {
     public partial class Div
     {
+        private Shader shader = GenericShaders.Image2D;
+
         private void renderModelList()
         {
             if (Submenu.isOpen && !COREMain.clearedGUI)
@@ -53,7 +56,7 @@ namespace CORERenderer.GUI
                 else
                     Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f);
 
-                GenericShaders.image2DShader.Use();
+                shader.Use();
 
                 //sets up the buffer with the coordinates for the icon
                 float[] vertices = new float[]
@@ -92,13 +95,13 @@ namespace CORERenderer.GUI
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-                GenericShaders.solidColorQuadShader.Use();
-                GenericShaders.solidColorQuadShader.SetVector3("color", 0.3f, 0.3f, 0.3f);
+                shader.Use();
+                shader.SetVector3("color", 0.3f, 0.3f, 0.3f);
 
                 glBindVertexArray(lineVAO);
                 glDrawArrays(PrimitiveType.Lines, 0, 2);
 
-                GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+                shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
                 offset += 37;
                 aa++;
             }
@@ -132,7 +135,7 @@ namespace CORERenderer.GUI
                     else
                         Write($"{name}", (int)(Width * 0.1f + 30), Height - offset, 0.9f);
 
-                    GenericShaders.image2DShader.Use();
+                    shader.Use();
 
                     //sets up the buffer with the coordinates for the icon
                     float[] vertices = new float[]
@@ -165,13 +168,13 @@ namespace CORERenderer.GUI
                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
                     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-                    GenericShaders.solidColorQuadShader.Use();
-                    GenericShaders.solidColorQuadShader.SetVector3("color", 0.3f, 0.3f, 0.3f);
+                    shader.Use();
+                    shader.SetVector3("color", 0.3f, 0.3f, 0.3f);
 
                     glBindVertexArray(lineVAO);
                     glDrawArrays(PrimitiveType.Lines, 0, 2);
 
-                    GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+                    shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
                     offset += 37;
                 }
             }

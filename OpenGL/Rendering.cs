@@ -139,14 +139,14 @@ namespace CORERenderer.OpenGL
             {
                 GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 4);
 
-                int vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+                int vertexLocation = GenericShaders.Quad.GetAttribLocation("aPos");
                 unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
                 glEnableVertexAttribArray((uint)vertexLocation);
             }
 
-            GenericShaders.solidColorQuadShader.Use();
+            GenericShaders.Quad.Use();
 
-            GenericShaders.solidColorQuadShader.SetVector3("color", color);
+            GenericShaders.Quad.SetVector3("color", color);
             glDrawArrays(PrimitiveType.Lines, 0, 2);
         }
 
@@ -268,8 +268,8 @@ namespace CORERenderer.OpenGL
 
         public static void RenderBackground(HDRTexture h)
         {
-            GenericShaders.backgroundShader.Use();
-            GenericShaders.backgroundShader.SetInt("environmentMap", GL_TEXTURE0);
+            GenericShaders.Background.Use();
+            GenericShaders.Background.SetInt("environmentMap", GL_TEXTURE0);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
@@ -290,7 +290,7 @@ namespace CORERenderer.OpenGL
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            GenericShaders.GenericLightingShader.Use();
+            GenericShaders.GenericLighting.Use();
 
             foreach (Model model in models)
             {
@@ -330,24 +330,24 @@ namespace CORERenderer.OpenGL
 
         public static void RenderLights(List<Light> locations)
         {
-            GenericShaders.lightingShader.Use();
+            GenericShaders.Light.Use();
 
             glBindVertexArray(COREMain.vertexArrayObjectLightSource);
 
             for (int i = 0; i < locations.Count; i++)
             {
-                GenericShaders.lightingShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
+                GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
                 glDrawArrays(PrimitiveType.Triangles, 0, 36);
             }
         }
 
         public static void RenderGrid()
         {
-            GenericShaders.gridShader.Use();
+            GenericShaders.Grid.Use();
 
-            GenericShaders.gridShader.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 500));
+            GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 500));
 
-            GenericShaders.gridShader.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
+            GenericShaders.Grid.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
 
             glDisable(GL_CULL_FACE);
             glBindVertexArray(COREMain.vertexArrayObjectGrid);

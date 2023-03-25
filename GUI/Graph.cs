@@ -3,6 +3,7 @@ using CORERenderer.OpenGL;
 using System.Data;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
+using CORERenderer.shaders;
 
 namespace CORERenderer.GUI
 {
@@ -25,6 +26,8 @@ namespace CORERenderer.GUI
         private float[] pointValues;
 
         public Div div;
+
+        private Shader shader = GenericShaders.Quad;
 
         public Graph(int maxYValue, int width, int height, int x, int y)
         {
@@ -52,7 +55,7 @@ namespace CORERenderer.GUI
 
             GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 2 * 2 * pointLocations.Length);
 
-            int vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+            int vertexLocation = shader.GetAttribLocation("aPos");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
         }
@@ -104,9 +107,9 @@ namespace CORERenderer.GUI
 
                 RenderLine(new COREMath.Vector2(pointLocations[^1], pointValues[^1]), new COREMath.Vector2(pointLocations[0], pointValues[^1]), new COREMath.Vector3(0.7f, 0.7f, 0.7f));
 
-                GenericShaders.solidColorQuadShader.SetVector3("color", 1f, 0f, 1f);
+                shader.SetVector3("color", 1f, 0f, 1f);
                 glDrawArrays(OpenGL.PrimitiveType.Lines, 0, 148);
-                GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+                shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
                 COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));

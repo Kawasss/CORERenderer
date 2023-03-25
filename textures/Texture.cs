@@ -255,7 +255,7 @@ namespace CORERenderer.textures
             
             glViewport(COREMain.Width - 350, 0, 350, (int)(350f * ((float)height2D / (float)width2D)));
 
-            GenericShaders.image2DShader.Use();
+            GenericShaders.Image2D.Use();
             this.Use(GL_TEXTURE0);
 
             glBindVertexArray(VAO2D);

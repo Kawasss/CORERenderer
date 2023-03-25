@@ -5,6 +5,7 @@ using CORERenderer.Loaders;
 using COREMath;
 using CORERenderer.textures;
 using CORERenderer.OpenGL;
+using CORERenderer.shaders;
 
 namespace CORERenderer.GUI
 {
@@ -40,6 +41,8 @@ namespace CORERenderer.GUI
 
         public bool onlyUpdateEverySecond = false;
 
+        private Shader shaderQ = GenericShaders.Quad;
+
         public Div(int width, int height, int x, int y)
         {
             Width = width;
@@ -61,7 +64,7 @@ namespace CORERenderer.GUI
 
             GenerateFilledBuffer(out VBO, out VAO, vertices);
 
-            int vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+            int vertexLocation = shaderQ.GetAttribLocation("aPos");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
@@ -80,13 +83,13 @@ namespace CORERenderer.GUI
                 //tell the gpu how large the buffer has to be
                 glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length * 2, (IntPtr)null, GL_DYNAMIC_DRAW);//4 * 6
 
-                vertexLocation = GenericShaders.image2DShader.GetAttribLocation("vertex");
+                vertexLocation = shader.GetAttribLocation("vertex");
                 unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
                 glEnableVertexAttribArray((uint)vertexLocation);
 
-                GenericShaders.image2DShader.Use();
-                GenericShaders.image2DShader.SetInt("Texture", GL_TEXTURE0);
-                GenericShaders.image2DShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+                shader.Use();
+                shader.SetInt("Texture", GL_TEXTURE0);
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             }
 
             lineVBO = glGenBuffer();
@@ -97,7 +100,7 @@ namespace CORERenderer.GUI
 
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * 2, (IntPtr)null, GL_DYNAMIC_DRAW);
 
-            vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+            vertexLocation = shaderQ.GetAttribLocation("aPos");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
         }
@@ -116,7 +119,7 @@ namespace CORERenderer.GUI
             if (onlyUpdateEverySecond && !COREMain.secondPassed)
                 return;
 
-            GenericShaders.solidColorQuadShader.Use();
+            shaderQ.Use();
 
             glBindVertexArray(VAO);
             glDrawArrays(PrimitiveType.Triangles, 0, 6);

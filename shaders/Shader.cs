@@ -1,9 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
-using GLFW;
+﻿using GLFW;
 using static CORERenderer.OpenGL.GL;
 using COREMath;
 using CORERenderer.Main;
@@ -20,6 +15,38 @@ namespace CORERenderer.shaders
         public string geometryShaderSource = null;
 
         public int byteSize = 0;
+
+        public Shader(bool isSourceCode, string vertexShaderSourceCode, string fragmentShaderSourceCode)
+        {
+            if (!isSourceCode)
+                throw new Exception("bool must be true");
+
+            vertexShaderSource = vertexShaderSourceCode;
+            fragmentShaderSource = fragmentShaderSourceCode;
+
+            //links the shaders
+            uint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vertexShader, vertexShaderSource);
+
+            uint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fragmentShader, fragmentShaderSource);
+
+            compileShader(vertexShader);
+            compileShader(fragmentShader);
+
+            Handle = glCreateProgram();
+
+            glAttachShader(Handle, vertexShader);
+            glAttachShader(Handle, fragmentShader);
+
+            linkProgram(Handle);
+
+            //removes the shaders
+            glDetachShader(Handle, vertexShader);
+            glDetachShader(Handle, fragmentShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+        }
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -49,6 +76,44 @@ namespace CORERenderer.shaders
             glDetachShader(Handle, fragmentShader);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
+        }
+
+        public Shader(bool isSourceCode, string vertexShaderSourceCode, string fragmentShaderSourceCode, string geometryShaderSourceCode)
+        {
+            if (!isSourceCode)
+                throw new Exception("bool must be true");
+
+            vertexShaderSource = vertexShaderSourceCode;
+            fragmentShaderSource = fragmentShaderSourceCode;
+            geometryShaderSource = geometryShaderSourceCode;
+
+            uint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vertexShader, vertexShaderSource);
+
+            uint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fragmentShader, fragmentShaderSource);
+
+            uint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+            glShaderSource(geometryShader, geometryShaderSource);
+
+            compileShader(vertexShader);
+            compileShader(fragmentShader);
+            compileShader(geometryShader);
+
+            Handle = glCreateProgram();
+
+            glAttachShader(Handle, vertexShader);
+            glAttachShader(Handle, fragmentShader);
+            glAttachShader(Handle, geometryShader);
+
+            linkProgram(Handle);
+
+            glDetachShader(Handle, vertexShader);
+            glDetachShader(Handle, fragmentShader);
+            glDetachShader(Handle, geometryShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            glDeleteShader(geometryShader);
         }
 
         public Shader(string vertexPath, string fragmentPath, string geometryPath)

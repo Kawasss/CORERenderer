@@ -18,6 +18,7 @@ namespace CORERenderer.Main
     public class COREMain
     {
         [NotNull]
+
         //ints
         public static int Width, Height;
         public static int monitorWidth, monitorHeight;
@@ -71,6 +72,7 @@ namespace CORERenderer.Main
         public static bool addCylinder = false;
         public static bool renderEntireDir = false;
         public static bool allowAlphaOverride = true;
+        public static bool isCompiledForWindows = false;
 
         public static bool keyIsPressed = false;
         public static bool mouseIsPressed = false;
@@ -113,6 +115,9 @@ namespace CORERenderer.Main
 
         public static int Main(string[] args)
         {
+            #if OS_WINDOWS
+                isCompiledForWindows = true;
+            #endif
             try //primitive error handling, could be better
             {
                 string root = AppDomain.CurrentDomain.BaseDirectory;
@@ -360,7 +365,7 @@ namespace CORERenderer.Main
                         
                         graphManager.Render();
                         tb.CheckForUpdate(mousePosX, mousePosY);
-                        
+
                         gui.RenderFramebuffer();
                         clearedGUI = false;
                     }

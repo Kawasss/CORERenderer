@@ -2,6 +2,7 @@
 using CORERenderer.OpenGL;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
+using CORERenderer.shaders;
 
 namespace CORERenderer.GUI
 {
@@ -22,6 +23,8 @@ namespace CORERenderer.GUI
         public bool isAttached = false;
 
         public static bool isOpen = false;
+
+        private Shader shader = GenericShaders.Quad;
 
         public Submenu(string[] options)
         {
@@ -71,9 +74,9 @@ namespace CORERenderer.GUI
                 return;
             }
 
-            GenericShaders.solidColorQuadShader.SetVector3("color", 0.13f, 0.13f, 0.13f);
+            shader.SetVector3("color", 0.13f, 0.13f, 0.13f);
             div.Render();
-            GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+            shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
             int offset = height - (int)(COREMain.debugText.characterHeight * 0.7f) - 3;
             for (int i = 0; i < list.Length; i++, offset -= (int)(COREMain.debugText.characterHeight * 0.7f) + 3)

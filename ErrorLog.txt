@@ -1,0 +1,14 @@
+Error occured at 8:02:21 : 
+    System.Reflection.AmbiguousMatchException: Ambiguous match found.
+   at System.RuntimeType.GetMethodImplCommon(String name, Int32 genericParameterCount, BindingFlags bindingAttr, Binder binder, CallingConventions callConv, Type[] types, ParameterModifier[] modifiers)
+   at System.Type.GetMethod(String name, BindingFlags bindingAttr)
+   at System.Type.GetMethod(String name)
+   at CORERenderer.GUI.COREConsole.WriteLine(Object value) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 177
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 370
+Error occured at 8:02:44 : 
+    System.Reflection.AmbiguousMatchException: Ambiguous match found.
+   at System.RuntimeType.GetMethodImplCommon(String name, Int32 genericParameterCount, BindingFlags bindingAttr, Binder binder, CallingConventions callConv, Type[] types, ParameterModifier[] modifiers)
+   at System.Type.GetMethod(String name, BindingFlags bindingAttr)
+   at System.Type.GetMethod(String name)
+   at CORERenderer.GUI.COREConsole.WriteLine(Object value) in C:\Users\wveen\source\repos\CORERenderer\GUI\COREConsole.cs:line 177
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 370

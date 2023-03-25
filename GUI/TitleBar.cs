@@ -21,6 +21,8 @@ namespace CORERenderer.GUI
 
         public Div div;
 
+        private Shader shader = GenericShaders.Quad;
+
         public TitleBar()
         {
             float width = COREMain.Width / 2;
@@ -40,12 +42,12 @@ namespace CORERenderer.GUI
                 width, height, 1, 0
             };
 
-            int vertexLocation = GenericShaders.solidColorQuadShader.GetAttribLocation("aPos");
+            int vertexLocation = shader.GetAttribLocation("aPos");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
-            
-            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
-            GenericShaders.solidColorQuadShader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
             GenerateFilledBuffer(out VBOC, out VAOC, crossVertices);
 
@@ -53,8 +55,8 @@ namespace CORERenderer.GUI
             unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            GenericShaders.solidColorQuadShader.Use();
-            GenericShaders.solidColorQuadShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.Use();
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             
             shaderC.Use();
 

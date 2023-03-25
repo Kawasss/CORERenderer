@@ -9,6 +9,14 @@
 	  <ApplicationIcon>logos\logo4.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="logos\logo4.ico" />
   </ItemGroup>
@@ -22,5 +30,9 @@
     <Folder Include="COREMath\" />
     <Folder Include="Renders\" />
   </ItemGroup>
+
+	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+		<DefineConstants>OS_WINDOWS</DefineConstants>
+	</PropertyGroup>
 
 </Project>

@@ -6,6 +6,7 @@ using CORERenderer.Main;
 using CORERenderer.OpenGL;
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace CORERenderer.GUI
 {
@@ -169,6 +170,25 @@ namespace CORERenderer.GUI
                 lines[linesPrinted - 1] = text;
             else
                 lines[linesPrinted - 1] = "ERROR Message is too long, returning";
+        }
+
+        public void WriteLine(object value)
+        {
+            Type type = value.GetType();
+            MethodInfo[] mInfos = type.GetMethods();
+
+            bool containsToString = false;
+            for (int i = 0; i < mInfos.Length; i++)
+                if (mInfos[i].Name == "ToString")
+                {
+                    containsToString = true;
+                    break;
+                }
+
+            if (containsToString)
+                this.WriteLine(value.ToString());
+            else
+                this.WriteError($"Couldn't get value of variable {nameof(value)}");
         }
 
         public void WriteLine() => WriteLine("");
@@ -457,8 +477,7 @@ namespace CORERenderer.GUI
                 }
                 else if (input.Length > 13 && input[..13] == "delete models") //allows the removal of multiple objects at once with array-like indexing ([1..4] to delete the second model till the 4th for example)
                 {
-                    int index1;
-                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out index1); //gets the value if the first index
+                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out int index1); //gets the value if the first index
                     int index2;
                     bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2); //gets the value if the second index by looking for a value between '..' and ']' in [VALUE..VALUE]
                     if (succeeded && succeeded2) //only continue if both indexes are found

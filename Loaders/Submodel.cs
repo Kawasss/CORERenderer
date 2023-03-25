@@ -29,8 +29,8 @@ namespace CORERenderer.Loaders
 
         private Material material;
 
-        private Shader shader = GenericShaders.GenericLightingShader;
-        private Shader IDShader = GenericShaders.pickShader;
+        private Shader shader = GenericShaders.GenericLighting;
+        private Shader IDShader = GenericShaders.IDPicking;
 
         private uint VBO, VAO, EBO;
 
