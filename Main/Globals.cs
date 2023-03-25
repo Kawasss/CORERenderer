@@ -5,6 +5,7 @@ using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 using StbiSharp;
 using CORERenderer.OpenGL;
+using System.Runtime.CompilerServices;
 
 namespace CORERenderer.Main
 {
@@ -61,7 +62,7 @@ namespace CORERenderer.Main
         /// Creates a basic framebuffer with the default resolution
         /// </summary>
         /// <returns></returns>
-        public unsafe static Framebuffer GenerateFramebuffer()
+        /*public unsafe static Framebuffer GenerateFramebuffer()
         {
             float[] FrameBufferVertices = new float[]
             {
@@ -127,7 +128,8 @@ namespace CORERenderer.Main
             }
 
             return fb;
-        }
+        }*/
+        public static Framebuffer GenerateFramebuffer(int width, int height) => GenerateFramebuffer(0, 0, width, height);
 
         public static Framebuffer GenerateFramebuffer(int x, int y, int width, int height)
         {
@@ -158,6 +160,9 @@ namespace CORERenderer.Main
             Framebuffer fb = new();
             unsafe
             {
+                fb.width = width;
+                fb.height = height;
+
                 fb.shader = GenericShaders.Framebuffer;//new($"{COREMain.pathRenderer}\\shaders\\FrameBuffer.vert", $"{COREMain.pathRenderer}\\shaders\\FrameBuffer.frag");
             
                 fb.FBO = glGenFramebuffer();

@@ -6,9 +6,8 @@ using CORERenderer.GLFW.Structs;
 using CORERenderer.GUI;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
+using CORERenderer.textures;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
@@ -218,6 +217,7 @@ namespace CORERenderer.Main
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
+                Button saveAsImage = new("Save as PNG", 10 + 5 * (int)debugText.GetStringWidth("Scene", 1), monitorHeight - 25);
                 menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette", "fullscreen" });
 
                 tab.AttachTo(modelList);
@@ -246,10 +246,10 @@ namespace CORERenderer.Main
                 //submodelList.RenderSubmodelList();
                 //-------------------------------------------------------------------------------------------
 
-                Framebuffer gui = GenerateFramebuffer();
-                renderFramebuffer = GenerateFramebuffer();
-                Framebuffer wrapperFBO = GenerateFramebuffer();
-                IDFramebuffer = GenerateFramebuffer();
+                Framebuffer gui = GenerateFramebuffer(monitorWidth, monitorHeight);
+                renderFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
+                Framebuffer wrapperFBO = GenerateFramebuffer(monitorWidth, monitorHeight);
+                IDFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
 
 
                 //test
@@ -321,6 +321,7 @@ namespace CORERenderer.Main
                         if (renderGUI)
                         {
                             button.Render();
+                            saveAsImage.Render();
 
                             graph.Update((float)CPUUsage); //update even without any input because the data always changes
                             graph.MaxValue = 100;
@@ -343,6 +344,7 @@ namespace CORERenderer.Main
 
                                 button.changed = true; //cheap trick to make it think that its allowed to render
                                 button.RenderStatic();
+                                saveAsImage.RenderStatic();
 
                                 console.RenderEvenIfNotChanged();
 
@@ -361,6 +363,9 @@ namespace CORERenderer.Main
                                 sceneManager.Render();
                             }
                             console.Render();
+
+                            if (saveAsImage.isPressed)
+                                Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", renderFramebuffer.Texture, renderFramebuffer.width, renderFramebuffer.height);
                         }
                         
                         graphManager.Render();

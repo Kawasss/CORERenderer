@@ -94,6 +94,28 @@ namespace CORERenderer.textures
             glActiveTexture(texture);
             glBindTexture(GL_TEXTURE_2D, Handle);
         }
+
+        public static unsafe void WriteAsPNG(string destination, uint textureHandle, int width, int height)
+        {
+            StbImageWriteSharp.StbImageWrite.stbi_flip_vertically_on_write(1);
+
+            byte[] pixels = new byte[width * height * 4];
+            fixed (byte* temp = &pixels[0])
+            {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, textureHandle);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+                using FileStream fs = File.Create(destination);
+                int amount;
+                byte* image = StbImageWriteSharp.StbImageWrite.stbi_write_png_to_mem(temp, width * 4, width, height, 4, &amount);
+                Span<byte> writeableBytes = new(image, amount);
+                fs.Write(writeableBytes);
+            }
+        }
+
+        public static void WriteAsPNG(string destination, Texture texture, int width, int height) => WriteAsPNG(destination, texture.Handle, width, height);
+
+        public void WriteAsPNG(string destination) => WriteAsPNG(destination, this.Handle, this.width, this.height);
     }
 
     public class HDRTexture

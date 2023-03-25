@@ -84,22 +84,6 @@ namespace CORERenderer.OpenGL
             }
         }
 
-        public static byte[] SaveAsFile(Framebuffer fb, int width, int height)
-        {
-            glBindTexture(GL_TEXTURE_2D, fb.Texture);
-
-            byte[] pixels = new byte[width * height * 4];
-            unsafe
-            {
-                fixed (byte* p = pixels)
-                {
-                    IntPtr intptr = new(p);
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, p);
-                }
-            }
-            return pixels;
-        }
-
         /// <summary>
         ///     Render primitives from array data.
         /// </summary>

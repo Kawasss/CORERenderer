@@ -36,6 +36,8 @@ namespace CORERenderer.OpenGL
         public uint RBO; //RenderBufferObject
         public Shader shader;
 
+        public int width, height;
+
         public uint VBO; //VBO isnt really needed, but just in case
 
         public void Bind() => glBindFramebuffer(this);

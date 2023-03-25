@@ -1,6 +1,4 @@
-﻿using CORERenderer.Main;
-using CORERenderer.shaders;
-using System.Runtime.CompilerServices;
+﻿using CORERenderer.shaders;
 
 namespace CORERenderer.OpenGL
 {
@@ -24,14 +22,283 @@ namespace CORERenderer.OpenGL
             lightingShader = new(true, lightVertText, lightFragText);
             backgroundShader = new(true, backgroundVertText, backgroundFragText);
             gridShader = new(true, gridVertText, gridFragText);
-            GenericLightingShader = shaderConfig == ShaderType.PathTracing ? new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\lighting.frag", $"{COREMain.pathRenderer}\\shaders\\pathTracing.geom") : new(true, defaultVertexShaderText, defaultLightingShaderText);
+            GenericLightingShader = shaderConfig == ShaderType.PathTracing ? new(true, defaultVertexShaderText, pathTracingFragText, pathTracingGeomText) : new(true, defaultVertexShaderText, defaultLightingShaderText);
             solidColorQuadShader = new(true, quadVertText, quadFragText);
-            arrowShader = new($"{COREMain.pathRenderer}\\shaders\\Arrow.vert", $"{COREMain.pathRenderer}\\shaders\\Arrow.frag");
-            pickShader = new($"{COREMain.pathRenderer}\\shaders\\shader.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
+            arrowShader = new(true, arrowVertText, arrowFragText);
+            pickShader = new(true, defaultVertexShaderText, quadFragText);
             framebufferShader = new(true, defaultFrameBufferVertText, defaultFrameBufferFragText);
         }
 
         //default shader source codes here
+        private static string pathTracingFragText =
+            """
+            #version 460 core
+            out vec4 FragColor;
+
+            struct PointLight
+            {
+            	vec3 position;
+            	vec3 ambient;
+            	vec3 diffuse;
+            	vec3 specular;
+
+            	float constant;
+            	float linear;
+            	float quadratic;
+            };
+            #define NR_POINTS_LIGHTS 1
+            uniform PointLight pointLights[NR_POINTS_LIGHTS];
+
+            struct Material 
+            {
+            	sampler2D Texture;
+            	sampler2D diffuse;
+            	sampler2D specular;
+            	sampler2D normalMap;
+            	float shininess;
+            };
+            uniform Material material;
+
+            in vec3 overrideColor;
+            in vec3 Normal;
+
+            void main()
+            {
+                FragColor = vec4(overrideColor, 1);
+            }
+            """;
+
+        private static string pathTracingGeomText =
+            """
+            #version 460 core
+            layout(triangles) in;
+            layout(triangle_strip, max_vertices = 3) out;
+
+            layout (std140, binding = 0) uniform Matrices
+            {
+            	mat4 projection;
+            	mat4 view;
+            };
+
+            #define PI 3.14159265
+
+            const float EPSILON = 0.0000001;
+            out vec3 overrideColor;
+            out vec3 Normal;
+            struct Ray
+            {
+            	vec3 origin;
+            	vec3 direction;
+            };
+
+            struct Light
+            {
+            	vec3 position;
+            	vec3 color;
+            };
+            #define NUMBER_OF_LIGHTS 1
+            uniform Light lights;
+
+            in VS_OUT
+            {
+            	vec3 position;
+            	vec3 normal;
+            } gs_in[];
+
+            uniform Ray RAY;
+            uniform int isReflective;
+            uniform vec3 emission;
+            uniform float sampleAmount;
+
+            bool RayIntersects(Ray ray, out vec3 intersection);
+            vec3 Radiance(Ray ray, int depth, int includeEmissiveColor);
+            float GetTFromIntersection(Ray ray, vec3 intersection);
+            bool IntersectsSphere(Ray ray, out vec3 intersection);
+            uint GetPCGHash(inout uint seed);
+            float GetRandomFloat01();
+
+            uint randomSeed;
+
+            void main()
+            {
+            	float samples = sampleAmount;
+            	if (samples > 7)
+            	samples = 7;
+
+            	randomSeed = 10546 * 1973 + 543543 * 9277 + 2699 | 1;
+
+            	Normal = gs_in[0].normal;
+
+            	int amount = 0;
+            	vec3 localColor = vec3(0);
+            	for (int i = 0; i < 7; i++, amount++)
+            	{
+            		vec3 intersection = vec3(0, 0, 0);
+            		vec3 newIntersection = vec3(0, 0, 0);
+            		Ray local;
+            		local.origin = RAY.origin;
+            		if (i < 3)
+            			local.direction = gs_in[i].position - RAY.origin;
+            		else if (i == 3)
+            			local.direction = normalize((gs_in[1].position - gs_in[0].position) / 2);
+            		else if (i == 4)
+            			local.direction = normalize((gs_in[2].position - gs_in[1].position) / 2);
+            		else if (i == 5)
+            			local.direction = normalize((gs_in[0].position - gs_in[2].position) / 2);
+            		else if (i == 6)
+            			local.direction = normalize((gs_in[1].position - gs_in[0].position) / 2 + gs_in[2].position - gs_in[0].position);
+            		bool success = RayIntersects(local, intersection);
+            		if (!success) continue;
+
+            		Ray newRay;
+            		newRay.origin = intersection;
+            		newRay.direction = -RAY.direction + 2 * Normal * dot(RAY.direction, Normal); //standard reflection formula
+
+            		if (IntersectsSphere(newRay, newIntersection))
+            			localColor += vec3(1, 1, 1);
+            		else
+            			localColor += vec3(0, 0, 0);
+
+            		amount++;
+            	}
+            	overrideColor = localColor / amount;
+
+            	gl_Position = gl_in[0].gl_Position;
+            	EmitVertex();
+            	gl_Position = gl_in[1].gl_Position;
+            	EmitVertex();
+            	gl_Position = gl_in[2].gl_Position;
+            	EmitVertex();
+            	EndPrimitive();
+            }
+
+            bool IntersectsSphere(Ray ray, out vec3 intersection)
+            {
+            	float rad = 3;
+            	vec3 sphereCentre = RAY.origin; //set camera pos to ray origin out of laziness, making the camera a light
+            	vec3 op = sphereCentre - ray.origin;
+            	float t = 1e-4;
+            	float eps = 1e-4;
+            	float b = dot(op, ray.direction);
+            	float det = b * b - dot(op, op) + rad * rad;
+            	if (det < 0)
+            	{
+            		intersection = vec3(0);
+            		return false;
+            	}
+            	else
+            		det = sqrt(det);
+
+            	float option1 = b - det;
+            	float option2 = b + det;
+            	float result = option1 > eps ? t : option2 > eps ? t : 0;
+
+            	intersection = ray.origin + result * ray.direction;
+            	return true;
+            }
+
+            bool RayIntersects(Ray ray, out vec3 intersection)
+            {
+            	vec3 vertex0 = gs_in[0].position.xyz;
+            	vec3 vertex1 = gs_in[1].position.xyz;
+            	vec3 vertex2 = gs_in[2].position.xyz;
+
+            	vec3 edge0 = vertex1 - vertex0;
+            	vec3 edge1 = vertex2 - vertex0;
+
+            	vec3 h = cross(ray.direction, edge1);
+            	float a = dot(edge0, h);
+
+            	if (a > -EPSILON && a < EPSILON)
+            	{
+            		intersection = vec3(0);
+            		return false;
+            	}
+            	float f = 1 / a;
+            	vec3 s = ray.origin - vertex0;
+            	float u = f * dot(s, h);
+
+            	if (u < 0 || u > 1)
+            	{
+            		intersection = vec3(0);
+            		return false;
+            	}
+
+            	vec3 q = cross(s, edge0);
+            	float v = f * dot(ray.direction, q);
+
+            	if (v < 0 || v > 1)
+            	{
+            		//intersection = vec3(0);
+            		return false;
+            	}
+
+            	float t = f * dot(edge1, q);
+            	if (t > EPSILON)
+            	{
+            		intersection = ray.origin + ray.direction * t;
+            		return true;
+            	}
+            	else
+            	{
+            		intersection = vec3(0);
+            		return false;
+            	}
+            }
+
+            float GetTFromIntersection(Ray ray, vec3 intersection)
+            {
+            	return ((intersection - ray.origin) / ray.direction).x; 
+            }
+
+            //from https://github.com/BoyBaykiller/OpenTK-PathTracer/blob/master/OpenTK-PathTracer/res/shaders/PathTracing/compute.glsl
+            uint GetPCGHash(inout uint seed)
+            {
+                seed = seed * 747796405u + 2891336453u;
+                uint word = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
+                return (word >> 22u) ^ word;
+            }
+
+            float GetRandomFloat01()
+            {
+                return float(GetPCGHash(randomSeed)) / 4294967296.0;
+            }
+            """;
+
+        private static string arrowVertText =
+            """
+            #version 460 core
+            layout (location = 0) in vec3 aPos;
+            layout (location = 1) in vec3 aNormal;
+            layout (location = 2) in vec2 aTexCoords;
+
+            layout (std140, binding = 0) uniform Matrices
+            {
+            	mat4 projection;
+            	mat4 view;
+            };
+
+            uniform mat4 model;
+
+            void main() 
+            {
+            	gl_Position = vec4(aPos, 1) * model * view * projection;
+            }
+            """;
+
+        private static string arrowFragText =
+            """
+            #version 460 core
+            out vec4 FragColor;
+
+            uniform vec3 color;
+
+            void main() 
+            {
+            	FragColor = vec4(color, 1);
+            }
+            """;
+
         private static string lightVertText =
             """
             #version 460 core
