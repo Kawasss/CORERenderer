@@ -22,7 +22,12 @@ namespace CORERenderer.OpenGL
             lightingShader = new(true, lightVertText, lightFragText);
             backgroundShader = new(true, backgroundVertText, backgroundFragText);
             gridShader = new(true, gridVertText, gridFragText);
-            GenericLightingShader = shaderConfig == ShaderType.PathTracing ? new(true, defaultVertexShaderText, pathTracingFragText, pathTracingGeomText) : new(true, defaultVertexShaderText, defaultLightingShaderText);
+            if (shaderConfig == ShaderType.PathTracing)
+                GenericLightingShader = new(true, defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
+            else if (shaderConfig == ShaderType.Lighting)
+                GenericLightingShader = new(true, defaultVertexShaderText, defaultLightingShaderText);
+            else if (shaderConfig == ShaderType.FullBright)
+                GenericLightingShader = new(true, defaultVertexShaderText, fullBrightFragText);
             solidColorQuadShader = new(true, quadVertText, quadFragText);
             arrowShader = new(true, arrowVertText, arrowFragText);
             pickShader = new(true, defaultVertexShaderText, quadFragText);
@@ -30,6 +35,27 @@ namespace CORERenderer.OpenGL
         }
 
         //default shader source codes here
+        private static string fullBrightFragText =
+            """
+            #version 460 core
+            out vec4 FragColor;
+
+            struct Material
+            {
+                sampler2D diffuse;
+            };
+            uniform Material material;
+
+            in vec2 TexCoords;
+
+            void main()
+            {
+                FragColor = texture(material.diffuse, TexCoords);
+                if (FragColor.a < 0.1)
+                    discard;
+            }
+            """;
+
         private static string pathTracingFragText =
             """
             #version 460 core

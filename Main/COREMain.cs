@@ -553,6 +553,8 @@ namespace CORERenderer.Main
                     shaderConfig = ShaderType.Lighting;
                 else if (text.Contains("PathTracing"))
                     shaderConfig = ShaderType.PathTracing;
+                else if (text.Contains("FullBright"))
+                    shaderConfig = ShaderType.FullBright;
 
                 text = sr.ReadLine();
 

@@ -344,7 +344,7 @@ namespace CORERenderer.GUI
                         Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
                     GenerateCacheFile(COREMain.pathRenderer);
                     Environment.Exit(1);
-                } 
+                }
                 else if (input.ToLower().Contains("lighting"))
                 {
                     Rendering.shaderConfig = ShaderType.Lighting;
@@ -355,7 +355,18 @@ namespace CORERenderer.GUI
                         Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
                     GenerateCacheFile(COREMain.pathRenderer);
                     Environment.Exit(1);
-                }  
+                }
+                else if (input.ToLower().Contains("fullbright"))
+                {
+                    Rendering.shaderConfig = ShaderType.FullBright;
+                    COREMain.GenerateConfig();
+                    if (COREMain.LoadFilePath == null)
+                        Process.Start("CORERenderer.exe");
+                    else
+                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                    GenerateCacheFile(COREMain.pathRenderer);
+                    Environment.Exit(1);
+                }
                 else
                     WriteError("Couldn't find shader type");
             }
@@ -533,7 +544,7 @@ namespace CORERenderer.GUI
                     string dir = input[5..];
                     if (dir[..5] == "$PATH")
                         dir = COREMain.pathRenderer + dir[5..];
-                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl") //only allows certain file types, in this case .obj and .hdr
+                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg") //only allows certain file types, in this case .obj and .hdr
                     {
                         COREMain.scenes[COREMain.selectedScene].allModels.Add(new(dir));
                         WriteLine("Loaded file");

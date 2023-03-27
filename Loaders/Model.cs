@@ -7,6 +7,7 @@ using CORERenderer.GLFW;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
 using CORERenderer.shaders;
+using System.Net.Http.Headers;
 
 namespace CORERenderer.Loaders
 {
@@ -69,7 +70,7 @@ namespace CORERenderer.Loaders
             if (type == RenderMode.ObjFile)
                 GenerateObj(path);
             else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage || type == RenderMode.RPIFile)
-                GivenImage = Image3D.LoadImageIn3D(type, path);
+                GenerateImage(path);
 
             else if (type == RenderMode.HDRFile && hdr == null)
                 hdr = HDRTexture.ReadFromFile(path);
@@ -102,39 +103,34 @@ namespace CORERenderer.Loaders
             selectedSubmodel = 0;
         }
 
-        public void Render()
+        private void GenerateImage(string path)
         {
-            if (type == RenderMode.ObjFile)
-                RenderObj();
+            Material material = new() { Texture = FindTexture(path) };
+            float width = usedTextures[material.Texture].width * 0.01f;
+            float height = usedTextures[material.Texture].height * 0.01f;
 
-            else if (type == RenderMode.JPGImage)
-                GivenImage.Render();
-
-            else if (type == RenderMode.PNGImage)
-                GivenImage.Render();
-            else if (type == RenderMode.HDRFile)
-                Rendering.RenderBackground(hdr);
-            else if (type == RenderMode.STLFile)
-                RenderSTL();
-        }
-
-        public void RenderBackground() => Rendering.RenderBackground(hdr);
-
-        private unsafe void RenderObj()
-        {
-            for (int i = submodels.Count - 1; i >= 0; i--)
+            float[] iVertices = new float[48]
             {
-                submodels[i].renderLines = renderLines;
-                submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+                -width / 2, 0.1f, -height / 2,    0, 1,   0, 1, 0,
+                -width / 2, 0.1f,  height / 2,    0, 0,   0, 1, 0,
+                width / 2,  0.1f,  height / 2,    1, 0,   0, 1, 0,
 
-                if (submodels[i].highlighted)
-                    selectedSubmodel = i;
+                -width / 2, 0.1f, -height / 2,    0, 1,   0, 1, 0,
+                width / 2,  0.1f,  height / 2,    1, 0,   0, 1, 0,
+                width / 2,  0.1f, -height / 2,    1, 1,   0, 1, 0
+            };
 
-                if (!submodels[i].isTranslucent)
-                    submodels[i].Render();
-                else
-                    translucentSubmodels.Add(submodels[i]);
-            }
+            GenerateFilledBuffer(out VBO, out VAO, iVertices);
+
+            SetUpShader();
+
+            vertices = new();
+            vertices.Add(new());
+            foreach (float value in iVertices)
+                vertices[0].Add(value);
+
+            Materials = new();
+            Materials.Add(material);
         }
 
         private void generateStl(string path)
@@ -152,23 +148,7 @@ namespace CORERenderer.Loaders
 
             shader.Use();
 
-            //3D coordinates
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //UV texture coordinates
-            vertexLocation = shader.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //normal coordinates
-            vertexLocation = shader.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
+            SetUpShader();
 
             COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readSTLFile, 2)} seconds");
             COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
@@ -242,6 +222,59 @@ namespace CORERenderer.Loaders
             COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
         }
 
+        public void Render()
+        {
+            if (type == RenderMode.ObjFile)
+                RenderObj();
+
+            else if (type == RenderMode.JPGImage)
+                RenderImage();
+
+            else if (type == RenderMode.PNGImage)
+                RenderImage();
+            else if (type == RenderMode.HDRFile)
+                Rendering.RenderBackground(hdr);
+            else if (type == RenderMode.STLFile)
+                RenderSTL();
+        }
+
+        public void RenderBackground() => Rendering.RenderBackground(hdr);
+
+        private unsafe void RenderObj()
+        {
+            for (int i = submodels.Count - 1; i >= 0; i--)
+            {
+                submodels[i].renderLines = renderLines;
+                submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+
+                if (submodels[i].highlighted)
+                    selectedSubmodel = i;
+
+                if (!submodels[i].isTranslucent)
+                    submodels[i].Render();
+                else
+                    translucentSubmodels.Add(submodels[i]);
+            }
+        }
+
+        private void RenderImage()
+        {
+            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z);
+            shader.SetMatrix("model", model);
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            usedTextures[Materials[0].Texture].Use(GL_TEXTURE0);
+
+            glBindVertexArray(VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, vertices[0].Count / 8);
+            if (renderLines)
+            {
+                GL.glLineWidth(1.5f);
+                shader.SetVector3("overrideColor", new(1, 0, 1));
+                glDrawArrays(PrimitiveType.Lines, 0, vertices[0].Count / 8);
+                shader.SetVector3("overrideColor", new(0, 0, 0));
+            }
+        }
+
         private void RenderSTL()
         {
             shader.SetFloat("transparency", 1);
@@ -286,6 +319,27 @@ namespace CORERenderer.Loaders
             COREMain.scenes[COREMain.selectedScene].allModels.Remove(this);
             foreach (Submodel sub in submodels)
                 sub.Dispose();
+        }
+
+        private void SetUpShader()
+        {
+            //3D coordinates
+            int vertexLocation = shader.GetAttribLocation("aPos");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //UV texture coordinates
+            vertexLocation = shader.GetAttribLocation("aTexCoords");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //normal coordinates
+            vertexLocation = shader.GetAttribLocation("aNormal");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
         }
 
         ~Model()

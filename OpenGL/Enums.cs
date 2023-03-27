@@ -34,6 +34,7 @@ namespace CORERenderer.OpenGL
     public enum ShaderType
     {
         Lighting,
-        PathTracing
+        PathTracing,
+        FullBright
     }
 }
