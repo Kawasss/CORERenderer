@@ -18,20 +18,20 @@ namespace CORERenderer.OpenGL
 
         internal static void SetShaders()
         {
-            image2DShader = new(true, image2DVertText, image2DFragText);
-            lightingShader = new(true, lightVertText, lightFragText);
-            backgroundShader = new(true, backgroundVertText, backgroundFragText);
-            gridShader = new(true, gridVertText, gridFragText);
+            image2DShader = new(image2DVertText, image2DFragText);
+            lightingShader = new(lightVertText, lightFragText);
+            backgroundShader = new(backgroundVertText, backgroundFragText);
+            gridShader = new(gridVertText, gridFragText);
             if (shaderConfig == ShaderType.PathTracing)
-                GenericLightingShader = new(true, defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
+                GenericLightingShader = new(defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
             else if (shaderConfig == ShaderType.Lighting)
-                GenericLightingShader = new(true, defaultVertexShaderText, defaultLightingShaderText);
+                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText);
             else if (shaderConfig == ShaderType.FullBright)
-                GenericLightingShader = new(true, defaultVertexShaderText, fullBrightFragText);
-            solidColorQuadShader = new(true, quadVertText, quadFragText);
-            arrowShader = new(true, arrowVertText, arrowFragText);
-            pickShader = new(true, defaultVertexShaderText, quadFragText);
-            framebufferShader = new(true, defaultFrameBufferVertText, defaultFrameBufferFragText);
+                GenericLightingShader = new(defaultVertexShaderText, fullBrightFragText);
+            solidColorQuadShader = new(quadVertText, quadFragText);
+            arrowShader = new(arrowVertText, arrowFragText);
+            pickShader = new(defaultVertexShaderText, quadFragText);
+            framebufferShader = new(defaultFrameBufferVertText, defaultFrameBufferFragText);
         }
 
         //default shader source codes here
@@ -693,7 +693,7 @@ namespace CORERenderer.OpenGL
             {
             	FragPos = (vec4(aPos, 1.0) * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
-            	vs_out.normal = Normal;
+            	vs_out.normal = mat3(transpose(inverse(model))) * aNormal;
             	TexCoords = aTexCoords;
             	Model = model;
             	vs_out.position = FragPos;
@@ -704,7 +704,7 @@ namespace CORERenderer.OpenGL
 
         private static string defaultLightingShaderText =
             """
-                        #version 460 core
+            #version 460 core
             out vec4 FragColor;
 
             struct PointLight
@@ -769,20 +769,20 @@ namespace CORERenderer.OpenGL
             	vec3 color = fullColor.rgb;
 
             	// ambient
-                	vec3 ambient = .1 * color;
+                	vec3 ambient = .2 * color;
 
             	// diffuse
                 	vec3 lightDir = normalize(pointLights[0].position - FragPos);
                 	vec3 normal = normalize(Normal);//getNormalFromMap();
                 	float diff = max(dot(lightDir, normal), 0.0);
-                	vec3 diffuse = vec3(0.4) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
+                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
 
             	// specular
                 	vec3 viewDir = normalize(viewPos - FragPos);
                 	vec3 reflectDir = reflect(-lightDir, normal);
                 	vec3 halfwayDir = normalize(lightDir + viewDir);
             	float spec = pow(max(dot(normal, halfwayDir), 0), 32);
-                	vec3 specular = vec3(0.7) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
+                	vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
             	if (allowAlpha == 1 && transparency != 0)
             		FragColor = vec4(ambient + diffuse + specular, transparency);
             	else

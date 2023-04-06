@@ -6,6 +6,7 @@ using System.Security;
 using System.Text;
 using COREMath;
 using System.Numerics;
+using System.Net.Security;
 
 namespace CORERenderer.OpenGL
 {
@@ -7338,6 +7339,21 @@ namespace CORERenderer.OpenGL
         public static void glTransformFeedbackVaryings(uint program, int count, /*const*/ byte** varyings, int bufferMode) => _glTransformFeedbackVaryings(program, count, varyings, bufferMode);
 
         //custom stuff here ---------------------------------------------- (some methods arent in here but those that arent overloads should be here)
+        public static void glDispatchCompute(uint amountGroupsX, uint amountGroupsY, uint AmountGroupsZ) => _glDispatchCompute(amountGroupsX, amountGroupsY, AmountGroupsZ);
+        public static void glMemoryBarrier(uint barriers) => _glMemoryBarrier(barriers);
+        public static void glBindImageTexture(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format) => _glBindImageTexture(unit, texture, level, layered, layer, access, format);
+
+        public static uint glGetProgramResourceIndex(uint program, uint programInterface, string name)
+        {
+            //byte[] bytes = Encoding.UTF8.GetBytes(name);
+            //char[] chars = name.ToCharArray();
+            //fixed (char* b = &chars[0])
+                return _glGetProgramResourceIndex(program, programInterface, name);
+        }
+
+        public static void glShaderStorageBlockBinding(uint program, uint storageBlockIndex, uint storageBlockBinding) => _glShaderStorageBlockBinding(program, storageBlockBinding, storageBlockBinding);
+
+
         /// <summary>
         /// requires uniform buffer to be bound beforehand
         /// </summary>
@@ -7397,6 +7413,10 @@ namespace CORERenderer.OpenGL
         public const int GL_DEBUG_OUTPUT = 0x92e0;
         public const int GL_MAT4_FLOAT_SIZE = 64;
         public const int GL_PROGRAM_BINARY_LENGTH = 0x8741;
+        public const int GL_COMPUTE_SHADER = 0x91B9;
+        public const int GL_SHADER_IMAGE_ACCESS_BARRIER_BIT = 0x20;
+        public const int GL_SHADER_STORAGE_BUFFER = 0x90d2;
+        public const int GL_SHADER_STORAGE_BLOCK = 0x92e6;
 
         //----------------------------------------------------------------
 
@@ -9341,6 +9361,28 @@ namespace CORERenderer.OpenGL
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void PFNGLSECONDARYCOLORP3UIVPROC(int type, /*const*/ uint* color);
 
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void PFNGLDISPATCHCOMPUTEPROC(uint num_group_x, uint num_group_y, uint num_group_z);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void PFNGLMEMORYBARRIERPROC(uint barriers);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void PFNGLBINDIMAGETEXTURE(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private delegate uint PFNGLGETPROGRAMRESOURCEINDEX(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)]string name);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void PFNGLSHADERSTORAGEBLOCKBINDING(uint program, uint storageBlockIndex, uint storageBlockBinding);
+
+        private static PFNGLDISPATCHCOMPUTEPROC _glDispatchCompute;
+        private static PFNGLMEMORYBARRIERPROC _glMemoryBarrier;
+        private static PFNGLBINDIMAGETEXTURE _glBindImageTexture;
+        private static PFNGLGETPROGRAMRESOURCEINDEX _glGetProgramResourceIndex;
+        private static PFNGLSHADERSTORAGEBLOCKBINDING _glShaderStorageBlockBinding;
+
         private static PFNGLCULLFACEPROC _glCullFace;
         private static PFNGLFRONTFACEPROC _glFrontFace;
         private static PFNGLHINTPROC _glHint;
@@ -10099,6 +10141,12 @@ namespace CORERenderer.OpenGL
             _glColorP4uiv = Marshal.GetDelegateForFunctionPointer<PFNGLCOLORP4UIVPROC>(loader.Invoke("glColorP4uiv"));
             _glSecondaryColorP3ui = Marshal.GetDelegateForFunctionPointer<PFNGLSECONDARYCOLORP3UIPROC>(loader.Invoke("glSecondaryColorP3ui"));
             _glSecondaryColorP3uiv = Marshal.GetDelegateForFunctionPointer<PFNGLSECONDARYCOLORP3UIVPROC>(loader.Invoke("glSecondaryColorP3uiv"));
+
+            _glDispatchCompute = Marshal.GetDelegateForFunctionPointer<PFNGLDISPATCHCOMPUTEPROC>(loader.Invoke("glDispatchCompute"));
+            _glMemoryBarrier = Marshal.GetDelegateForFunctionPointer<PFNGLMEMORYBARRIERPROC>(loader.Invoke("glMemoryBarrier"));
+            _glBindImageTexture = Marshal.GetDelegateForFunctionPointer<PFNGLBINDIMAGETEXTURE>(loader.Invoke("glBindImageTexture"));
+            _glGetProgramResourceIndex = Marshal.GetDelegateForFunctionPointer<PFNGLGETPROGRAMRESOURCEINDEX>(loader.Invoke("glGetProgramResourceIndex"));
+            _glShaderStorageBlockBinding = Marshal.GetDelegateForFunctionPointer<PFNGLSHADERSTORAGEBLOCKBINDING>(loader.Invoke("glShaderStorageBlockBinding"));
         }
     }
 }

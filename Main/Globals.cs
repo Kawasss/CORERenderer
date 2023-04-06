@@ -29,6 +29,19 @@ namespace CORERenderer.Main
         };
 
         /// <summary>
+        /// Look up table for all supported render modes, needs to . at the beginning to work
+        /// </summary>
+        public readonly static Dictionary<string, RenderMode> RenderModeLookUpTable = new()
+    {
+        {".crs", RenderMode.CRSFile },
+        {".png", RenderMode.PNGImage},
+        {".jpg", RenderMode.JPGImage},
+        {".hdr", RenderMode.HDRFile },
+        {".stl", RenderMode.STLFile },
+        {".obj", RenderMode.ObjFile }
+    };
+
+        /// <summary>
         /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. The third is used for solid white and the fourth for the normal map
         /// </summary>
         public static List<Texture> usedTextures = new();

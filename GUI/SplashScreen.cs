@@ -32,8 +32,8 @@ namespace CORERenderer.GUI
 
         public unsafe SplashScreen()
         {
-            Glfw.WindowHint(Hint.ContextVersionMajor, 3);
-            Glfw.WindowHint(Hint.ContextVersionMinor, 3);
+            Glfw.WindowHint(Hint.ContextVersionMajor, 4);
+            Glfw.WindowHint(Hint.ContextVersionMinor, 6);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
             Glfw.WindowHint(Hint.Decorated, false);
 
@@ -72,7 +72,6 @@ namespace CORERenderer.GUI
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
 
-            glEnable(GL_TEXTURE_2D);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

@@ -1,6 +1,5 @@
 ﻿using CORERenderer.Main;
 using CORERenderer.OpenGL;
-using System.Data;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.shaders;

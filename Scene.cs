@@ -136,12 +136,10 @@ namespace CORERenderer
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_TEXTURE_CUBE_MAP);
-
+            //glEnable(GL_TEXTURE_2D);//error 1280
+            //glEnable(GL_TEXTURE_CUBE_MAP);//error 1280
 
             glEnable(GL_DEBUG_OUTPUT);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);

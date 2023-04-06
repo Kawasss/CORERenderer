@@ -56,6 +56,20 @@ namespace CORERenderer.textures
             return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height };
         }
 
+        public static Texture GenerateEmptyTexture(int Width, int Height)
+        {
+            uint handle = glGenTexture();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, handle);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Width, Height, 0, GL_RGBA, GL_FLOAT, null);
+
+            return new(handle) { width = Width, height = Height };
+        }
+
         /// <summary>
         /// Reads the file in the RGBA color format
         /// </summary>

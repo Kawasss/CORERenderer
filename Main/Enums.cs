@@ -13,7 +13,6 @@
         JPGImage,
         HDRFile,
         ObjFile,
-        RPIFile,
         STLFile
     }
 }

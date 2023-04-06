@@ -8,9 +8,11 @@ using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
 using System.Diagnostics;
+using CORERenderer.shaders;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
+using System.Reflection.Metadata;
 
 namespace CORERenderer.Main
 {
@@ -19,20 +21,13 @@ namespace CORERenderer.Main
         [NotNull]
 
         //ints
-        public static int Width, Height;
-        public static int monitorWidth, monitorHeight;
-        public static int renderWidth, renderHeight;
-        public static int viewportX, viewportY;
+        public static int Width, Height, monitorWidth, monitorHeight, renderWidth, renderHeight, viewportX, viewportY;
 
-        public static int drawCallsPerSecond = 0;
-        public static int drawCallsPerFrame = 0;
-        public static int fps = 0;
+        public static int drawCallsPerSecond = 0, drawCallsPerFrame = 0;
+        public static int fps = 0, frameCount = 0;
         public static int selectedScene = 0;
-        
-        private static int frameCount = 0;
 
-        public static int selectedID = 0x00FFFF; //white (background)
-        private static int nextAvaibleID = 3; //first 3 IDs are used by Arrows
+        public static int selectedID = 0x00FFFF, nextAvaibleID = 3; //white (background) //first 3 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
 
@@ -51,34 +46,27 @@ namespace CORERenderer.Main
 
         //strings
         public static string LoadFilePath = null;
-        public static string GPU;
+        public static string GPU = "Not Recognized";
         public const string VERSION = "v0.4.P";
+        public static string pathRenderer;
         private static List<string> consoleCache = new();
 
         //bools
-        public static bool renderGrid = true;
-        public static bool renderBackground = true;
+        public static bool renderGrid = true, renderBackground = true, renderGUI = true, renderIDFramebuffer = false, renderToIDFramebuffer = true; //rendering related options
         public static bool secondPassed = true;
-        public static bool renderGUI = true;
-        public static bool renderIDFramebuffer = false;
-        public static bool renderToIDFramebuffer = true;
-        public static bool useChromAber = false;
-        public static bool useVignette = false;
+        public static bool useChromAber = false, useVignette = false; //post processing related options
         public static bool fullscreen = false;
 
         public static bool destroyWindow = false;
-        public static bool addCube = false;
-        public static bool addCylinder = false;
+        public static bool addCube = false, addCylinder = false; //add object related options
         public static bool renderEntireDir = false;
         public static bool allowAlphaOverride = true;
         public static bool isCompiledForWindows = false;
 
-        public static bool keyIsPressed = false;
-        public static bool mouseIsPressed = false;
+        public static bool keyIsPressed = false, mouseIsPressed = false;
         public static bool clearedGUI = false;
 
-        public static bool subMenuOpenLastFrame = false;
-        public static bool submenuOpen = false;
+        public static bool subMenuOpenLastFrame = false, submenuOpen = false;
 
         private static bool loadInfoOnstartup = true;
 
@@ -90,7 +78,6 @@ namespace CORERenderer.Main
         public static List<Light> lights = new();
         public static List<Scene> scenes = new();
 
-        //public static Camera camera;
         public static SplashScreen splashScreen;
         public static Font debugText;
         public static COREConsole console;
@@ -108,9 +95,9 @@ namespace CORERenderer.Main
 
         private static List<ModelInfo> dirLoadedModels = null;
 
-        //misc.
-        //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
-        public static string pathRenderer;
+
+        public static uint ssbo;
+        public static ComputeShader comp;
 
         public static int Main(string[] args)
         {
@@ -119,6 +106,7 @@ namespace CORERenderer.Main
             #endif
             try //primitive error handling, could be better
             {
+                //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
                 string root = AppDomain.CurrentDomain.BaseDirectory;
                 string directory = Path.GetDirectoryName(root);
                 int MathCIndex = directory.IndexOf("CORERenderer");
@@ -128,8 +116,9 @@ namespace CORERenderer.Main
                 Glfw.Init();
 
                 splashScreen = new();
-                
+
                 //sets the width for the window that shows the 3D space
+                #region Calculates all of the appropriate dimensions
                 Width = monitorWidth;
                 Height = monitorHeight;
 
@@ -139,6 +128,7 @@ namespace CORERenderer.Main
 
                 renderWidth = (int)(monitorWidth * 0.75f);
                 renderHeight = (int)(monitorHeight * 0.727f);
+                #endregion
 
                 SetRenderMode(args);
 
@@ -154,64 +144,20 @@ namespace CORERenderer.Main
                 else
                     GPU = "Not Recognized";
 
-                debugText = new((uint)(monitorHeight * 0.01333f), $"{pathRenderer}\\Fonts\\baseFont.ttf");
+                debugText = new((uint)(monitorHeight * 0.01333), $"{pathRenderer}\\Fonts\\baseFont.ttf");
 
-                //seperate into own method for easier reading------------------------------------------------
+                #region Initializing the GUI, and setting the appriopriate values
                 TitleBar tb = new();
 
-                modelList = new
-                (
-                    (int)(monitorWidth * 0.117f), 
-                    (int)(monitorHeight * 0.974f - 25), 
-                    (int)(monitorWidth * 0.004f),
-                    (int)(monitorHeight * 0.004f)
-                );
-                Div submodelList = new
-                (
-                    (int)(monitorWidth * 0.117f),
-                    (int)(monitorHeight * 0.974f - 25),
-                    (int)(monitorWidth * 0.004f),
-                    (int)(monitorHeight * 0.004f)
-                );
-                Div modelInformation = new
-                (
-                    (int)(monitorWidth * 0.117f), 
-                    (int)(monitorHeight * 0.974f - 25), 
-                    (int)(monitorWidth * 0.879f),
-                    (int)(monitorHeight * 0.004f)
-                );
-                Graph graph = new
-                (
-                    0, 
-                    (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), 
-                    (int)(monitorHeight * 0.224f - 25), 
-                    viewportX, 
-                    (int)(monitorHeight * 0.004f)
-                );
-                Graph frametimeGraph = new
-                (
-                    0, 
-                    (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), 
-                    (int)(monitorHeight * 0.224f - 25),
-                    viewportX, 
-                    (int)(monitorHeight * 0.004f)
-                );
-                Graph drawCallsPerFrameGraph = new
-                (
-                    0,
-                    (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),
-                    (int)(monitorHeight * 0.224f - 25),
-                    viewportX,
-                    (int)(monitorHeight * 0.004f)
-                );
+                modelList = new((int)(monitorWidth * 0.117f), (int)(monitorHeight * 0.974f - 25), (int)(monitorWidth * 0.004f),(int)(monitorHeight * 0.004f));
+                Div submodelList = new((int)(monitorWidth * 0.117f),(int)(monitorHeight * 0.974f - 25),(int)(monitorWidth * 0.004f),(int)(monitorHeight * 0.004f));
+                Div modelInformation = new((int)(monitorWidth * 0.117f), (int)(monitorHeight * 0.974f - 25), (int)(monitorWidth * 0.879f),(int)(monitorHeight * 0.004f));
+                Graph graph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25), viewportX, (int)(monitorHeight * 0.004f));
+                Graph frametimeGraph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25),viewportX, (int)(monitorHeight * 0.004f));
+                Graph drawCallsPerFrameGraph = new(0,(int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.224f - 25),viewportX,(int)(monitorHeight * 0.004f));
 
-                console = new
-                (
-                    (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), 
-                    (int)(monitorHeight * 0.242f - 25),
-                    monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),//viewportX + (int)(monitorWidth * 0.375f * 0.008f) + (int)(monitorWidth * 0.5 - monitorWidth * 0.125f), 
-                    (int)(monitorHeight * 0.004f)
-                );
+                console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
+
                 TabManager tab = new(new string[] { "Models", "Submodels" });
                 TabManager graphManager = new(new string[] { "FT", "CPU %", "DCPF" });
                 TabManager sceneManager = new("Scene");
@@ -219,7 +165,7 @@ namespace CORERenderer.Main
                 Button button = new("Scene", 5, monitorHeight - 25);
                 Button saveAsImage = new("Save as PNG", 10 + 5 * (int)debugText.GetStringWidth("Scene", 1), monitorHeight - 25);
                 menu = new(new string[] { "Render Grid", "Render Background", "Render Wireframe", "Render Normals", "Render GUI", "Render IDFramebuffer", "Render to ID framebuffer", "Render orthographic", "  ", "Cull Faces", " ", "Add Object:", "  Cube", "  Cylinder", "   ", "Load entire directory", "Allow alpha override", "Use chrom. aber.", "Use vignette", "fullscreen" });
-
+                
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
                 graphManager.AttachTo(frametimeGraph);
@@ -244,7 +190,7 @@ namespace CORERenderer.Main
 
                 //modelList.RenderModelList();
                 //submodelList.RenderSubmodelList();
-                //-------------------------------------------------------------------------------------------
+                #endregion
 
                 Framebuffer gui = GenerateFramebuffer(monitorWidth, monitorHeight);
                 renderFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
@@ -258,11 +204,12 @@ namespace CORERenderer.Main
                 renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
                 renderFramebuffer.shader.SetVector3("chromAberIntensities", 0.014f, 0.009f, 0.006f);
 
-
+                //sets the default scene
                 scenes.Add(new());
                 scenes[0].OnLoad(args);
                 selectedScene = 0;
 
+                #region Restoring any console commands from the previous session and start up
                 if (File.Exists($"{pathRenderer}\\consoleCache"))
                     console.LoadCacheFile(pathRenderer);
 
@@ -275,16 +222,43 @@ namespace CORERenderer.Main
                     else
                         console.WriteLine(s);
                 }
-                    
+                #endregion
 
-                //arrows = new();
+                previousTime = Glfw.Time;
+                using (Process process = Process.GetCurrentProcess())
+                    previousCPU = process.TotalProcessorTime;
 
                 Glfw.SetScrollCallback(window, ScrollCallback);
                 Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
                 Glfw.SetKeyCallback(window, KeyCallback);
                 Glfw.SetMouseButtonCallback(window, MouseCallback);
-
+                
                 Scene.EnableGLOptions();
+
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+
+                Rendering.SetCamera(GetCurrentScene.camera);
+                Rendering.SetUniformBuffers();
+
+                //GetError();
+                //compute shader test section
+                comp = new($"{pathRenderer}\\shaders\\test.comp");
+                Texture texture = Texture.GenerateEmptyTexture(Width, Height);
+
+                float[] data = { 1.0f, 2.0f, 3.0f, 4.0f };
+
+                /*GetError();
+                ssbo = glGenBuffer();
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, data.Length * sizeof(float), data, GL_STATIC_DRAW);
+                //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind the buffer to binding index 1
+                Console.WriteLine(glGetProgramResourceIndex(comp.Handle, GL_SHADER_STORAGE_BLOCK, "VertexData"));
+
+                Console.WriteLine(GetError());
+                comp.SetInt("imgOutput", GL_TEXTURE0);
+                renderFramebuffer.Texture = texture.Handle;*/
+
                 glViewport(0, 0, monitorWidth, monitorHeight);
                 //-------------------------------------------------------------------------------------------
                 if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -296,15 +270,36 @@ namespace CORERenderer.Main
                 console.WriteLine($"Initialised in {Glfw.Time} seconds");
                 console.WriteLine("Beginning render loop");
 
-                previousTime = Glfw.Time;
-                using (Process process = Process.GetCurrentProcess())
-                    previousCPU = process.TotalProcessorTime;
+                #region First time rendering
+                Rendering.UpdateUniformBuffers();
+                UpdateRenderStatistics();
+                UpdateCursorLocation();
 
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                glStencilMask(0xFF);
+                gui.Bind();
+                tb.Render();
 
-                Rendering.SetCamera(GetCurrentScene.camera);
-                Rendering.SetUniformBuffers();
+                glClearColor(0.085f, 0.085f, 0.085f, 1);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                clearedGUI = true;
+                tb.CheckForUpdate(mousePosX, mousePosY);
+                tb.Render();
+
+                tab.Render();
+
+                modelInformation.Render();
+
+                button.changed = true; //cheap trick to make it think that its allowed to render
+                button.RenderStatic();
+                saveAsImage.RenderStatic();
+
+                console.RenderEvenIfNotChanged();
+
+                secondPassed = true; //cheap trick to make it think that its allowed to render
+                graphManager.Render();
+                secondPassed = false;
+
+                sceneManager.Render();
+                #endregion
 
                 //render loop
                 while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
@@ -315,6 +310,7 @@ namespace CORERenderer.Main
 
                     glViewport(0, 0, monitorWidth, monitorHeight);
 
+                    #region GUI related events
                     {
                         gui.Bind();
                         tb.Render();
@@ -330,30 +326,7 @@ namespace CORERenderer.Main
 
                             frametimeGraph.Update(currentFrameTime * 1000);
                             console.Update();
-                            if (!destroyWindow) //draw everything on the first render cycle
-                            {
-                                glClearColor(0.085f, 0.085f, 0.085f, 1);
-                                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                                clearedGUI = true;
-                                tb.CheckForUpdate(mousePosX, mousePosY);
-                                tb.Render();
 
-                                tab.Render();
-
-                                modelInformation.Render();
-
-                                button.changed = true; //cheap trick to make it think that its allowed to render
-                                button.RenderStatic();
-                                saveAsImage.RenderStatic();
-
-                                console.RenderEvenIfNotChanged();
-
-                                secondPassed = true; //cheap trick to make it think that its allowed to render
-                                graphManager.Render();
-                                secondPassed = false;
-
-                                sceneManager.Render();
-                            }
                             if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
                             {
                                 tab.Render();
@@ -371,16 +344,24 @@ namespace CORERenderer.Main
                         graphManager.Render();
                         tb.CheckForUpdate(mousePosX, mousePosY);
 
-                        gui.RenderFramebuffer();
+                        
                         clearedGUI = false;
                     }
+                    #endregion
 
+                    #region Scene related events
                     {
                         if (Scene.IsCursorInFrame(mousePosX, mousePosY))
                             UpdateCamera(currentFrameTime);
 
+                        #region Rendering related stuff if the app is actively being used
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
+                            IDFramebuffer.Bind();
+
+                            glClearColor(1f, 1f, 1f, 1);
+                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
                             renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
 
                             glEnable(GL_BLEND);
@@ -394,7 +375,8 @@ namespace CORERenderer.Main
                                 fullscreen = false;
                                 menu.SetBool("fullscreen", false);
                             }
-                                
+
+                            #region Add certain shapes based on GUI input
                             if (addCube)
                             {
                                 scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
@@ -407,24 +389,27 @@ namespace CORERenderer.Main
                                 addCylinder = false;
                                 menu.SetBool("  Cylinder", addCylinder);
                             }
+                            #endregion
 
                             scenes[selectedScene].RenderEveryFrame(currentFrameTime);
 
                             if (renderGrid)
                                 RenderGrid();
 
-                            //glClear(GL_DEPTH_BUFFER_BIT);
+                            //glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
                             //arrows.Render();
                         }
                         else if (!mouseIsPressed)
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
-                        
+                        #endregion
+
 
                         scenes[selectedScene].EveryFrame(window, currentFrameTime);
 
+                        #region Checks if a directory wants to be loaded, last part checks whether it is done loading by checking for a null value
                         if (renderEntireDir)
                         {
-                            if (LoadFilePath == null || args.Length == 0)
+                            if (LoadFilePath == null || args.Length == 0) //if there isnt any directory given, dont load it
                                 console.WriteError("Can't load directory since one isn't given");
                             else
                             {
@@ -434,7 +419,7 @@ namespace CORERenderer.Main
                             renderEntireDir = false;
                             menu.SetBool("Load entire directory", false);
                         }
-                        if (dirLoadedModels != null)
+                        if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
                         {
                             foreach (ModelInfo model in dirLoadedModels)
                             {
@@ -443,38 +428,33 @@ namespace CORERenderer.Main
                             }
                             dirLoadedModels = null;
                         }
+                        #endregion
                     }
-                    if (!keyIsPressed && !mouseIsPressed)
+                    #endregion
+
+                    #region Compute shader related events
                     {
-                        renderFramebuffer.Bind();
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        glEnable(GL_DEPTH_TEST);
-                        glClearColor(0.3f, 0.3f, 0.3f, 1);
-                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                        /*int error = GetError();
+                        comp.Use();
+                        glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+                        texture.Use(GL_TEXTURE0);
+                        glDispatchCompute((uint)Width / 8, (uint)Height / 8, 1);
+                        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);*/
 
-                        scenes[selectedScene].RenderEveryFrame(currentFrameTime);
-
-                        if (renderGrid)
-                            RenderGrid();
+                        //error = GetError();
+                        //Console.Write(error + " ");
                     }
+                    #endregion
+
+                    #region Assembling the screen shown on the monitor
+                    gui.RenderFramebuffer();
 
                     if (!fullscreen)
                         glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
 
-                    IDFramebuffer.Bind();
-
-                    glClearColor(1f, 1f, 1f, 1);
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
                     //check for mouse picking
                     IDFramebuffer.RenderFramebuffer();
                     UpdateSelectedID();
-
-                    //arrows.UpdateArrowsMovement();
-
-                    renderFramebuffer.shader.SetBool("useVignette", useVignette);
-                    renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
 
                     renderFramebuffer.RenderFramebuffer();
 
@@ -485,6 +465,7 @@ namespace CORERenderer.Main
                     }
 
                     glViewport(0, 0, monitorWidth, monitorHeight);
+                    #endregion
 
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
@@ -591,11 +572,10 @@ namespace CORERenderer.Main
         {
             bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
-            List<string> readFiles = new();
+            List<string> readFiles = new(), mtllibs = new();
             List<List<List<float>>> allVertices = new();
             List<List<List<uint>>> allIndices = new();
             List<List<Vector3>> allOffsets = new();
-            List<string> mtllibs = new();
             List<List<string>> mtlnames = new();
             List<Model> models = scenes[selectedScene].allModels;
             List<ModelInfo> localVersion = new();
@@ -643,10 +623,7 @@ namespace CORERenderer.Main
             }
         }
 
-        public static Vector3 GenerateIDColor(int ID)
-        {
-            return new(((ID & 0x000000FF) >> 0) / 255f, ((ID & 0x0000FF00) >> 8) / 255f, ((ID & 0x00FF0000) >> 16) / 255f); //bit manipulation to convert an ID to color values
-        }
+        public static Vector3 GenerateIDColor(int ID) => new(((ID & 0x000000FF) >> 0) / 255f, ((ID & 0x0000FF00) >> 8) / 255f, ((ID & 0x00FF0000) >> 16) / 255f); //bit manipulation to convert an ID to color values
 
         public static void UpdateSelectedID()
         {
@@ -663,25 +640,17 @@ namespace CORERenderer.Main
         }
 
         //zoom in or out
-        public static void ScrollCallback(Window window, double x, double y)
-        {
+        public static void ScrollCallback(Window window, double x, double y) =>
             scenes[selectedScene].camera.Fov -= (float)y * 1.5f;
-        }
 
-        public static bool CheckAABBCollision(int x, int y, int width, int height)
-        {
-            return mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
-        }
+        public static bool CheckAABBCollision(int x, int y, int width, int height) =>
+            mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
 
-        public static bool CheckAABBCollisionWithClick(int x, int y, int width, int height)
-        {
-            return Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Press && mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
-        }
+        public static bool CheckAABBCollisionWithClick(int x, int y, int width, int height) =>
+            Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Press && mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
 
-        public static bool CheckAABBCollisionWithRelease(int x, int y, int width, int height)
-        {
-            return Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Release && mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
-        }
+        public static bool CheckAABBCollisionWithRelease(int x, int y, int width, int height) =>
+            Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Release && mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
 
         private static void UpdateRenderStatistics()
         {
@@ -736,14 +705,11 @@ namespace CORERenderer.Main
 
         private static void KeyCallback(Window window, Keys key, int scancode, InputState action, ModifierKeys mods)
         {   //saves a lot of energy by only updating if input is detected
-                keyIsPressed = action == InputState.Press;
+            keyIsPressed = action == InputState.Press;
             pressedKey = key;
         }
 
-        private static void MouseCallback(Window window, MouseButton button, InputState state, ModifierKeys modifiers)
-        {
-            mouseIsPressed = state == InputState.Press;
-        }
+        private static void MouseCallback(Window window, MouseButton button, InputState state, ModifierKeys modifiers) => mouseIsPressed = state == InputState.Press;
 
         private static void FramebufferSizeCallBack(Window window, int width, int height)
         {
@@ -765,59 +731,14 @@ namespace CORERenderer.Main
         {
             if (arg.Length <= 0)
                 return;
-            else if (arg[0][^4..].ToLower() == ".obj")
-            {
-                LoadFile = RenderMode.ObjFile; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".png")
-            {
-                LoadFile = RenderMode.PNGImage; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".jpg")
-            {
-                LoadFile = RenderMode.JPGImage; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".crs")
-            {
-                LoadFile = RenderMode.CRSFile; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".hdr")
-            {
-                LoadFile = RenderMode.HDRFile; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".rpi")
-            {
-                LoadFile = RenderMode.RPIFile; LoadFilePath = arg[0];
-            }
-            else if (arg[0][^4..].ToLower() == ".stl")
-            {
-                LoadFile = RenderMode.STLFile; LoadFilePath = arg[0];
-            }
-            else
-                LoadFile = RenderMode.CRSFile;
+
+            LoadFile = SetRenderMode(arg[0]);
+            LoadFilePath = arg[0];
         }
 
         public static RenderMode SetRenderMode(string arg)
         {
-            if (arg[^4..].ToLower() == ".obj")
-                return RenderMode.ObjFile;
-
-            else if (arg[^4..].ToLower() == ".png")
-                return RenderMode.PNGImage;
-
-            else if (arg[^4..].ToLower() == ".jpg")
-                return RenderMode.JPGImage;
-
-            else if (arg[^4..].ToLower() == ".crs")
-                return RenderMode.CRSFile;
-
-            else if (arg[^4..].ToLower() == ".hdr")
-                return RenderMode.HDRFile;
-
-            else if (arg[^4..].ToLower() == ".stl")
-                return RenderMode.STLFile;
-
-            return RenderMode.CRSFile;
+            return RenderModeLookUpTable[arg[^4..].ToLower()];
         }
 
         public static void LogError(string msg)

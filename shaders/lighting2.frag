@@ -63,7 +63,7 @@ void main()
 	vec3 color = fullColor.rgb;
     
 	// ambient
-    	vec3 ambient = .1 * color;
+    	vec3 ambient = .2 * color;
     
 	// diffuse
     	vec3 lightDir = normalize(pointLights[0].position - FragPos);

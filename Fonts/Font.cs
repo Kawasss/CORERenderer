@@ -67,7 +67,7 @@ namespace CORERenderer.Fonts
                     Console.WriteLine(ex);
                 }
             }
-
+            
             glBindTexture(GL_TEXTURE_2D, 0);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 

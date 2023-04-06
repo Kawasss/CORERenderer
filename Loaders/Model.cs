@@ -59,8 +59,6 @@ namespace CORERenderer.Loaders
 
         public int selectedSubmodel = 0;
 
-        private Image3D GivenImage;
-
         private HDRTexture hdr = null;
 
         public Model(string path)
@@ -69,7 +67,7 @@ namespace CORERenderer.Loaders
 
             if (type == RenderMode.ObjFile)
                 GenerateObj(path);
-            else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage || type == RenderMode.RPIFile)
+            else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 GenerateImage(path);
 
             else if (type == RenderMode.HDRFile && hdr == null)
