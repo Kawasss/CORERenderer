@@ -119,7 +119,8 @@ namespace CORERenderer.Fonts
                 float w = ch.size.x * scale;
                 float h = ch.size.y * scale;
 
-                float[] vertices = new float[] {
+                float[] vertices = new float[]
+                {
                      xpos,     ypos + h,     0.0f, 0.0f,
                      xpos,     ypos,         0.0f, 1.0f,
                      xpos + w, ypos,         1.0f, 1.0f,

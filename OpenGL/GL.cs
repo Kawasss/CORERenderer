@@ -7342,15 +7342,8 @@ namespace CORERenderer.OpenGL
         public static void glDispatchCompute(uint amountGroupsX, uint amountGroupsY, uint AmountGroupsZ) => _glDispatchCompute(amountGroupsX, amountGroupsY, AmountGroupsZ);
         public static void glMemoryBarrier(uint barriers) => _glMemoryBarrier(barriers);
         public static void glBindImageTexture(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format) => _glBindImageTexture(unit, texture, level, layered, layer, access, format);
-
-        public static uint glGetProgramResourceIndex(uint program, uint programInterface, string name)
-        {
-            //byte[] bytes = Encoding.UTF8.GetBytes(name);
-            //char[] chars = name.ToCharArray();
-            //fixed (char* b = &chars[0])
-                return _glGetProgramResourceIndex(program, programInterface, name);
-        }
-
+        public static int glGetProgramResourceIndex(uint program, uint programInterface, string name) => _glGetProgramResourceIndex(program, programInterface, name);
+        public static int glGetProgramResourceLocation(uint program, uint programInterface, string name) => _glGetProgramResourceLocation(program, programInterface, name);
         public static void glShaderStorageBlockBinding(uint program, uint storageBlockIndex, uint storageBlockBinding) => _glShaderStorageBlockBinding(program, storageBlockBinding, storageBlockBinding);
 
 
@@ -9371,8 +9364,11 @@ namespace CORERenderer.OpenGL
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void PFNGLBINDIMAGETEXTURE(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format);
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private delegate uint PFNGLGETPROGRAMRESOURCEINDEX(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)]string name);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate int PFNGLGETPROGRAMRESOURCEINDEX(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)]string name);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate int PFNGLGETPROGRAMRESOURCELOCATION(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)] string name);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void PFNGLSHADERSTORAGEBLOCKBINDING(uint program, uint storageBlockIndex, uint storageBlockBinding);
@@ -9381,6 +9377,7 @@ namespace CORERenderer.OpenGL
         private static PFNGLMEMORYBARRIERPROC _glMemoryBarrier;
         private static PFNGLBINDIMAGETEXTURE _glBindImageTexture;
         private static PFNGLGETPROGRAMRESOURCEINDEX _glGetProgramResourceIndex;
+        private static PFNGLGETPROGRAMRESOURCELOCATION _glGetProgramResourceLocation;
         private static PFNGLSHADERSTORAGEBLOCKBINDING _glShaderStorageBlockBinding;
 
         private static PFNGLCULLFACEPROC _glCullFace;
@@ -10147,6 +10144,7 @@ namespace CORERenderer.OpenGL
             _glBindImageTexture = Marshal.GetDelegateForFunctionPointer<PFNGLBINDIMAGETEXTURE>(loader.Invoke("glBindImageTexture"));
             _glGetProgramResourceIndex = Marshal.GetDelegateForFunctionPointer<PFNGLGETPROGRAMRESOURCEINDEX>(loader.Invoke("glGetProgramResourceIndex"));
             _glShaderStorageBlockBinding = Marshal.GetDelegateForFunctionPointer<PFNGLSHADERSTORAGEBLOCKBINDING>(loader.Invoke("glShaderStorageBlockBinding"));
+            _glGetProgramResourceLocation = Marshal.GetDelegateForFunctionPointer<PFNGLGETPROGRAMRESOURCELOCATION>(loader.Invoke("glGetProgramResourceLocation"));
         }
     }
 }

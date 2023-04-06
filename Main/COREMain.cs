@@ -247,17 +247,11 @@ namespace CORERenderer.Main
                 Texture texture = Texture.GenerateEmptyTexture(Width, Height);
 
                 float[] data = { 1.0f, 2.0f, 3.0f, 4.0f };
-
-                /*GetError();
                 ssbo = glGenBuffer();
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, data.Length * sizeof(float), data, GL_STATIC_DRAW);
-                //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo); // Bind the buffer to binding index 1
-                Console.WriteLine(glGetProgramResourceIndex(comp.Handle, GL_SHADER_STORAGE_BLOCK, "VertexData"));
-
-                Console.WriteLine(GetError());
+                glBufferData(GL_SHADER_STORAGE_BUFFER, data.Length * sizeof(float), data, GL_DYNAMIC_DRAW);
                 comp.SetInt("imgOutput", GL_TEXTURE0);
-                renderFramebuffer.Texture = texture.Handle;*/
+                renderFramebuffer.Texture = texture.Handle;
 
                 glViewport(0, 0, monitorWidth, monitorHeight);
                 //-------------------------------------------------------------------------------------------
@@ -434,15 +428,18 @@ namespace CORERenderer.Main
 
                     #region Compute shader related events
                     {
-                        /*int error = GetError();
+                        //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
+                        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+                        int error = GetError();
                         comp.Use();
                         glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
                         texture.Use(GL_TEXTURE0);
                         glDispatchCompute((uint)Width / 8, (uint)Height / 8, 1);
-                        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);*/
+                        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-                        //error = GetError();
-                        //Console.Write(error + " ");
+                        error = GetError();
+                        if (error != 0)
+                        Console.Write(error + " ");
                     }
                     #endregion
 

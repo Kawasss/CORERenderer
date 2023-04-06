@@ -3,17 +3,17 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout (rgba32f) uniform image2D imgOutput;
 
-layout(std140, binding = 0) buffer VertexData
+layout(std430, binding = 0) buffer VertexData
 {
-    float[] vertexData;
-} data;
+    float vertexData[];
+};
 
 void main() {
     vec4 value = vec4(0.1, 0.1, 0.1, 1.0);
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
-    if (data.vertexData.length() == 0)
-    imageStore(imgOutput, texelCoord, vec4(gl_GlobalInvocationID.xy, 0, 1));
+    if (vertexData.length() == 0)
+    imageStore(imgOutput, texelCoord, vec4(1));
     else
     imageStore(imgOutput, texelCoord, vec4(0, 1, 0, 1));
 }
