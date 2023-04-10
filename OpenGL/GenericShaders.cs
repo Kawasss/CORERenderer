@@ -37,7 +37,7 @@ namespace CORERenderer.OpenGL
         //default shader source codes here
         private static string fullBrightFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             struct Material
@@ -58,7 +58,7 @@ namespace CORERenderer.OpenGL
 
         private static string pathTracingFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             struct PointLight
@@ -96,7 +96,7 @@ namespace CORERenderer.OpenGL
 
         private static string pathTracingGeomText =
             """
-            #version 460 core
+            #version 430 core
             layout(triangles) in;
             layout(triangle_strip, max_vertices = 3) out;
 
@@ -293,7 +293,7 @@ namespace CORERenderer.OpenGL
 
         private static string arrowVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (location = 0) in vec3 aPos;
             layout (location = 1) in vec3 aNormal;
             layout (location = 2) in vec2 aTexCoords;
@@ -314,7 +314,7 @@ namespace CORERenderer.OpenGL
 
         private static string arrowFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             uniform vec3 color;
@@ -327,7 +327,7 @@ namespace CORERenderer.OpenGL
 
         private static string lightVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (std140, binding = 0) uniform Matrices
             {
             	mat4 projection;
@@ -366,7 +366,7 @@ namespace CORERenderer.OpenGL
 
         private static string lightFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             void main() 
@@ -377,7 +377,7 @@ namespace CORERenderer.OpenGL
 
         private static string image2DVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (location = 0) in vec4 vertex;
 
             out vec2 TexCoords;
@@ -393,7 +393,7 @@ namespace CORERenderer.OpenGL
 
         private static string image2DFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             in vec2 TexCoords;
@@ -408,7 +408,7 @@ namespace CORERenderer.OpenGL
 
         private static string gridVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (std140, binding = 0) uniform Matrices
             {
             	mat4 projection;
@@ -446,7 +446,7 @@ namespace CORERenderer.OpenGL
 
         private static string gridFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 gridColor;
 
             in mat4 oModel;
@@ -495,7 +495,7 @@ namespace CORERenderer.OpenGL
 
         private static string backgroundVertText =
             """
-            #version 460 core
+            #version 430 core
 
             out vec3 TexCoords;
 
@@ -560,7 +560,7 @@ namespace CORERenderer.OpenGL
 
         private static string backgroundFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
             in vec3 TexCoords;
 
@@ -575,7 +575,7 @@ namespace CORERenderer.OpenGL
 
         private static string quadVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (location = 0) in vec2 aPos;
 
             uniform mat4 projection;
@@ -588,7 +588,7 @@ namespace CORERenderer.OpenGL
 
         private static string quadFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             uniform vec3 color;
@@ -606,7 +606,7 @@ namespace CORERenderer.OpenGL
 
         private static string defaultFrameBufferVertText =
             """
-            #version 460 core
+            #version 430 core
             layout (location = 0) in vec2 aPos;
             layout (location = 1) in vec2 aTexCoords;
 
@@ -621,7 +621,7 @@ namespace CORERenderer.OpenGL
 
         private static string defaultFrameBufferFragText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             in vec2 TexCoords;
@@ -665,7 +665,7 @@ namespace CORERenderer.OpenGL
 
         private static string defaultVertexShaderText =
             """
-            #version 460 core
+            #version 430 core
             layout (location = 0) in vec3 aPos;
             layout (location = 1) in vec3 aNormal;
             layout (location = 2) in vec2 aTexCoords;
@@ -704,7 +704,7 @@ namespace CORERenderer.OpenGL
 
         private static string defaultLightingShaderText =
             """
-            #version 460 core
+            #version 430 core
             out vec4 FragColor;
 
             struct PointLight

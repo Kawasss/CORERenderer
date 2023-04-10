@@ -148,13 +148,13 @@ namespace CORERenderer.Main
         {
             float[] FrameBufferVertices = new float[]
             {
-                (-COREMain.monitorWidth / 2f + x) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y + height) / COREMain.monitorHeight, 0, 1,
-                (-COREMain.monitorWidth / 2f + x) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y) / COREMain.monitorHeight,           0, 0,
-                (-COREMain.monitorWidth / 2f + x + width) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y) / COREMain.monitorHeight,           1, 0,
+                (-width / 2f + x) / width, (-height / 2f + y + height) / height, 0, 1,
+                (-width / 2f + x) / width, (-height / 2f + y) / height,           0, 0,
+                (-width / 2f + x + width) / width, (-height / 2f + y) / height,           1, 0,
 
-                (-COREMain.monitorWidth / 2f + x) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y + height) / COREMain.monitorHeight, 0, 1,
-                (-COREMain.monitorWidth / 2f + x + width) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y) / COREMain.monitorHeight,           1, 0,
-                (-COREMain.monitorWidth / 2f + x + width) / COREMain.monitorWidth, (-COREMain.monitorHeight / 2f + y + height) / COREMain.monitorHeight, 1, 1
+                (-width / 2f + x) / width, (-height / 2f + y + height) / height, 0, 1,
+                (-width / 2f + x + width) / width, (-height / 2f + y) / height,           1, 0,
+                (-width / 2f + x + width) / width, (-height / 2f + y + height) / height, 1, 1
             };
             FrameBufferVertices[0] *= 2;
             FrameBufferVertices[1] *= 2;
@@ -188,8 +188,11 @@ namespace CORERenderer.Main
             
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
 
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.Texture, 0);
                 glBindTexture(GL_TEXTURE_2D, 0);

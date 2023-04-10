@@ -16,7 +16,7 @@ namespace CORERenderer
         {
             //creating the window
             Glfw.WindowHint(Hint.ContextVersionMajor, 4);
-            Glfw.WindowHint(Hint.ContextVersionMinor, 6);
+            Glfw.WindowHint(Hint.ContextVersionMinor, 3);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
             Glfw.WindowHint(Hint.Visible, false);
             Glfw.WindowHint(Hint.Decorated, true);

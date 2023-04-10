@@ -13,6 +13,8 @@ namespace CORERenderer.Loaders
 {
     public class Model : Readers
     {
+        public static int totalSSBOSizeUsed = 0;
+
         public List<List<float>> vertices;
         public List<List<uint>> indices;
 
@@ -150,6 +152,18 @@ namespace CORERenderer.Loaders
 
             COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readSTLFile, 2)} seconds");
             COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
+            float[] vertexData = localVertices.ToArray();
+            unsafe
+            { //transfer the vertex data to the compute shader
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, COREMain.ssbo);
+                glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
+
+                int size = totalAmountOfVertices / sizeof(float) + vertexData.Length;
+                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int), &size);
+
+                glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
+                totalSSBOSizeUsed += vertexData.Length * sizeof(float);
+            }
         }
         
         private void GenerateObj(string path)

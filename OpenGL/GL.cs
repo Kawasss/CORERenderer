@@ -7342,7 +7342,7 @@ namespace CORERenderer.OpenGL
         public static void glDispatchCompute(uint amountGroupsX, uint amountGroupsY, uint AmountGroupsZ) => _glDispatchCompute(amountGroupsX, amountGroupsY, AmountGroupsZ);
         public static void glMemoryBarrier(uint barriers) => _glMemoryBarrier(barriers);
         public static void glBindImageTexture(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format) => _glBindImageTexture(unit, texture, level, layered, layer, access, format);
-        public static int glGetProgramResourceIndex(uint program, uint programInterface, string name) => _glGetProgramResourceIndex(program, programInterface, name);
+        public static uint glGetProgramResourceIndex(uint program, uint programInterface, string name) => _glGetProgramResourceIndex(program, programInterface, name);
         public static int glGetProgramResourceLocation(uint program, uint programInterface, string name) => _glGetProgramResourceLocation(program, programInterface, name);
         public static void glShaderStorageBlockBinding(uint program, uint storageBlockIndex, uint storageBlockBinding) => _glShaderStorageBlockBinding(program, storageBlockBinding, storageBlockBinding);
 
@@ -7410,6 +7410,8 @@ namespace CORERenderer.OpenGL
         public const int GL_SHADER_IMAGE_ACCESS_BARRIER_BIT = 0x20;
         public const int GL_SHADER_STORAGE_BUFFER = 0x90d2;
         public const int GL_SHADER_STORAGE_BLOCK = 0x92e6;
+        public const uint GL_ALL_BARRIER_BITS = 0xFFFFFFFF;
+        public const int GL_MAP_PERSISTENT_BIT = 0x40;
 
         //----------------------------------------------------------------
 
@@ -9365,7 +9367,7 @@ namespace CORERenderer.OpenGL
         private delegate void PFNGLBINDIMAGETEXTURE(uint unit, uint texture, int level, bool layered, int layer, uint access, uint format);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int PFNGLGETPROGRAMRESOURCEINDEX(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)]string name);
+        private delegate uint PFNGLGETPROGRAMRESOURCEINDEX(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)]string name);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate int PFNGLGETPROGRAMRESOURCELOCATION(uint program, uint programInterface, [MarshalAs(UnmanagedType.LPStr)] string name);

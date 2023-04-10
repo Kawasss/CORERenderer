@@ -19,7 +19,7 @@ namespace CORERenderer.Main
     public class COREMain
     {
         [NotNull]
-
+        #region Declarations
         //ints
         public static int Width, Height, monitorWidth, monitorHeight, renderWidth, renderHeight, viewportX, viewportY;
 
@@ -98,6 +98,7 @@ namespace CORERenderer.Main
 
         public static uint ssbo;
         public static ComputeShader comp;
+        #endregion
 
         public static int Main(string[] args)
         {
@@ -135,14 +136,25 @@ namespace CORERenderer.Main
                 vertexArrayObjectLightSource = GenerateBufferlessVAO();
                 vertexArrayObjectGrid = GenerateBufferlessVAO();
 
+                #region Starting other processes
                 Overrides.AlwaysLoad();
                 LoadConfig();
                 Rendering.Init();
+                #endregion
 
-                if (glGetString(GL_RENDERER).IndexOf('/') != -1)
-                    GPU = glGetString(GL_RENDERER)[..glGetString(GL_RENDERER).IndexOf('/')];
+                #region Identifying GPU and their associated shortcomings
+                string GPUString = glGetString(GL_RENDERER);
+
+                if (GPUString.IndexOf('/') != -1)
+                    GPU = GPUString[..GPUString.IndexOf('/')];
+                else if (GPUString.Contains("HD Graphics")) //intel iGPU
+                    GPU = GPUString;
                 else
                     GPU = "Not Recognized";
+
+                if (GPUString.Contains("NVIDIA"))
+                    consoleCache.Add("ERROR Raytracing is not supported by this GPU");
+                #endregion
 
                 debugText = new((uint)(monitorHeight * 0.01333), $"{pathRenderer}\\Fonts\\baseFont.ttf");
 
@@ -192,17 +204,39 @@ namespace CORERenderer.Main
                 //submodelList.RenderSubmodelList();
                 #endregion
 
+                #region Framebuffer related events
                 Framebuffer gui = GenerateFramebuffer(monitorWidth, monitorHeight);
                 renderFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
                 Framebuffer wrapperFBO = GenerateFramebuffer(monitorWidth, monitorHeight);
                 IDFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
-
+                Framebuffer computeShader = GenerateFramebuffer(monitorWidth, monitorHeight);
 
                 //test
                 renderFramebuffer.shader.SetBool("useVignette", useVignette);
                 renderFramebuffer.shader.SetFloat("vignetteStrength", 0.1f);
                 renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
                 renderFramebuffer.shader.SetVector3("chromAberIntensities", 0.014f, 0.009f, 0.006f);
+                #endregion
+
+                //GetError();
+                //compute shader test section
+                comp = new($"{pathRenderer}\\shaders\\test.comp");
+                Texture texture = Texture.GenerateEmptyTexture(Width, Height);
+
+                comp.Use();
+
+                uint blockIndex = glGetProgramResourceIndex(comp.Handle, GL_SHADER_STORAGE_BLOCK, "VertexData");
+                uint bindingIndex = 1;
+                glShaderStorageBlockBinding(comp.Handle, blockIndex, bindingIndex);
+                ssbo = glGenBuffer();
+                GetError();
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, 738, (IntPtr)null, GL_DYNAMIC_DRAW);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
+                //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, ssbo, 0, 0);
+                //Console.WriteLine(GetError());
+                comp.SetInt("imgOutput", GL_TEXTURE0);
+                computeShader.Texture = texture.Handle;
 
                 //sets the default scene
                 scenes.Add(new());
@@ -241,26 +275,14 @@ namespace CORERenderer.Main
                 Rendering.SetCamera(GetCurrentScene.camera);
                 Rendering.SetUniformBuffers();
 
-                //GetError();
-                //compute shader test section
-                comp = new($"{pathRenderer}\\shaders\\test.comp");
-                Texture texture = Texture.GenerateEmptyTexture(Width, Height);
-
-                float[] data = { 1.0f, 2.0f, 3.0f, 4.0f };
-                ssbo = glGenBuffer();
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, data.Length * sizeof(float), data, GL_DYNAMIC_DRAW);
-                comp.SetInt("imgOutput", GL_TEXTURE0);
-                renderFramebuffer.Texture = texture.Handle;
-
                 glViewport(0, 0, monitorWidth, monitorHeight);
                 //-------------------------------------------------------------------------------------------
                 if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                     throw new GLFW.Exception("Framebuffer is not complete");
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-                splashScreen.WriteLine($"Initialised in {Math.Round(Glfw.Time, 1)} seconds");
-                Thread.Sleep(500); //allows user to read the printed text
+                //splashScreen.WriteLine($"Initialised in {Math.Round(Glfw.Time, 1)} seconds");
+                //Thread.Sleep(500); //allows user to read the printed text
                 console.WriteLine($"Initialised in {Glfw.Time} seconds");
                 console.WriteLine("Beginning render loop");
 
@@ -351,6 +373,7 @@ namespace CORERenderer.Main
                         #region Rendering related stuff if the app is actively being used
                         if (!destroyWindow || keyIsPressed || mouseIsPressed)
                         {
+                            #region Generic OpenGL calls like cleaning the bits
                             IDFramebuffer.Bind();
 
                             glClearColor(1f, 1f, 1f, 1);
@@ -363,7 +386,8 @@ namespace CORERenderer.Main
                             glEnable(GL_DEPTH_TEST);
                             glClearColor(0.3f, 0.3f, 0.3f, 1);
                             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                            
+                            #endregion
+
                             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && fullscreen)
                             {
                                 fullscreen = false;
@@ -428,18 +452,23 @@ namespace CORERenderer.Main
 
                     #region Compute shader related events
                     {
-                        //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
-                        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_2D, renderFramebuffer.Texture);
+
                         int error = GetError();
                         comp.Use();
-                        glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-                        texture.Use(GL_TEXTURE0);
-                        glDispatchCompute((uint)Width / 8, (uint)Height / 8, 1);
-                        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-                        error = GetError();
-                        if (error != 0)
-                        Console.Write(error + " ");
+                        comp.SetVector3("cameraPos", GetCurrentScene.camera.position);
+                        comp.SetVector3("lookAt", GetCurrentScene.camera.front);
+                        comp.SetInt("backgroundImage", GL_TEXTURE1);
+
+                        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
+                        glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+
+                        texture.Use(GL_TEXTURE0);
+
+                        glDispatchCompute((uint)Math.Ceiling((double)Width / 8), (uint)Math.Ceiling((double)Height / 8), 1);
+                        glMemoryBarrier(GL_ALL_BARRIER_BITS);
                     }
                     #endregion
 
@@ -453,6 +482,9 @@ namespace CORERenderer.Main
                     IDFramebuffer.RenderFramebuffer();
                     UpdateSelectedID();
 
+                    computeShader.RenderFramebuffer();
+
+                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
                     renderFramebuffer.RenderFramebuffer();
 
                     if (renderIDFramebuffer)

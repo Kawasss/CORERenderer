@@ -1,4 +1,4 @@
-﻿#version 460 core
+﻿#version 430 core
 out vec2 TexCoords;
 
 vec4[] vertices =
