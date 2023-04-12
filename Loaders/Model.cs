@@ -8,6 +8,7 @@ using CORERenderer.OpenGL;
 using CORERenderer.textures;
 using CORERenderer.shaders;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
 
 namespace CORERenderer.Loaders
 {
@@ -138,7 +139,7 @@ namespace CORERenderer.Loaders
             double startedReading = Glfw.Time;
             bool loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
-
+            
             GenerateFilledBuffer(out VBO, out VAO, localVertices.ToArray());
             vertices = new();
             vertices.Add(localVertices);
@@ -156,13 +157,29 @@ namespace CORERenderer.Loaders
             unsafe
             { //transfer the vertex data to the compute shader
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, COREMain.ssbo);
-                glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
+                //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
 
-                int size = totalAmountOfVertices / sizeof(float) + vertexData.Length;
+                int size = totalSSBOSizeUsed / sizeof(float) + vertexData.Length;
                 glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int), &size);
 
                 glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
                 totalSSBOSizeUsed += vertexData.Length * sizeof(float);
+
+                for (int i = 0; i < vertexData.Length; i++)
+                {
+                    IntPtr data = new(&size);
+                    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + sizeof(float) * i, sizeof(float), data);
+
+                    byte[] floats = new byte[4];
+                    Marshal.Copy(data, floats, 0, floats.Length);
+                    float final = BitConverter.ToSingle(floats);
+
+                    string test = "failed";
+                    if (final == localVertices[i])
+                        test = "passed";
+
+                    Console.WriteLine($"In buffer: {final} In array: {localVertices[i]}, {test}");
+                }
             }
         }
         
@@ -290,7 +307,7 @@ namespace CORERenderer.Loaders
         private void RenderSTL()
         {
             shader.SetFloat("transparency", 1);
-            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z);
+            Matrix model = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z); 
             shader.SetMatrix("model", model);
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             usedTextures[2].Use(GL_TEXTURE0);

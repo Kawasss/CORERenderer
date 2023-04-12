@@ -370,6 +370,15 @@ namespace CORERenderer.GUI
                 else
                     WriteError("Couldn't find shader type");
             }
+            else if (input == "recompile shaders")
+            {
+                if (COREMain.LoadFilePath == null)
+                    Process.Start("CORERenderer.exe");
+                else
+                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                GenerateCacheFile(COREMain.pathRenderer);
+                Environment.Exit(1);
+            }
             else if (currentContext == Context.Console)
                 HandleConsoleCommands(input);
             else if (currentContext == Context.Camera)
@@ -737,7 +746,7 @@ namespace CORERenderer.GUI
 
             using StreamWriter sw = File.CreateText($"{dirPath}\\consoleCache");
             foreach (string command in allCommands)
-                if (command != "exit" && !command.Contains("reload") && !command.Contains("set shaders"))
+                if (command != "exit" && !command.Contains("reload") && !command.Contains("set shaders") && !command.Contains("recompile shaders"))
                     sw.WriteLine(command);
         }
     }

@@ -18,53 +18,173 @@ layout(std430, binding = 1) buffer VertexData
     float vertexData[];
 };
 
+/*layout (std430, binding = 2) buffer Lamp
+{
+    float positionX;
+    float positionY;
+    float positionZ;
+
+    float colorX;
+    float colorY;
+    float colorZ;
+
+    float radius;
+};*/
+
 struct Ray
 {
     vec3 origin;
     vec3 direction;
+    bool isTerminated;
+    bool hasHitSomething;
 };
+
+
+uniform vec3 color;
+uniform vec3 position;
+uniform float radius;
+
 
 uniform int samplesPerPixel;
 
 uniform vec3 cameraPos;
+
 uniform vec3 lookAt;
+uniform vec3 right;
+uniform vec3 up;
+uniform vec3 forward;
+
 uniform float nearPlane;
 
 uniform sampler2D backgroundImage;
 
-bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3 vertex2);
+bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3 vertex2, out float t);
+bool IntersectsLamp(Ray ray, out vec3 intersection, out float t);
+
+shared float highestT;
 
 void main() 
 {
+
     ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
     ivec2 imgSize = imageSize(imgOutput);
 
-    float x = uv.x / imgSize.x;
-    float y = uv.y / imgSize.y;
-    vec2 pixelCoor = vec2(x, y);
-    //vec2 ndcCoor = uv / imgSize * 2 - 1;
+    imageStore(imgOutput, uv, vec4(.1));
+
+    float x = uv.x;
+    float y = uv.y;
+
+    float planeHeight = tan(radians(45)) * 0.1;
+    float aspectRatio = imgSize.x / imgSize.y;
+    float planeWidth = planeHeight * aspectRatio;
+
+    vec3 bottomLeftLocal = vec3(-planeWidth / 2, -planeHeight / 2, 0.1);
+
+    float temp = imgSize.x;
+    float temp2 = imgSize.y;
+
+    float tx = x / (imgSize.x - 1f);
+    float ty = y / (imgSize.y - 1f);
+
+    vec3 pointLocal = bottomLeftLocal + vec3(planeWidth * tx, planeHeight * ty, 0);
+    vec3 point = right * pointLocal.x + up * pointLocal.y + forward * pointLocal.z;
 
     Ray ray;
     ray.origin = cameraPos;
-    ray.direction = lookAt;
-    for (int i = 0; i < amount; i += 24)
-    {
-        vec3 v1 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
-        vec3 v2 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
-        vec3 v3 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
+    ray.direction = normalize(point);
+    ray.isTerminated = false;
 
-        vec3 intersection;
-        bool success = Intersects(intersection, ray, v1, v2, v3);
-        if (success)
+    int totalBounces = 0;
+    ray.hasHitSomething = false;
+    vec3 endColor = color;
+    while (!ray.isTerminated && totalBounces < 10) //continue bouncing the ray around till it flies into nowhere or bounces too much
+    {
+        bool hasIntersected = false;
+
+        for (int i = 0; i < amount; i += 24) //check each triangle
         {
-            imageStore(imgOutput, uv, vec4(0, 1, 0, 1));
+            if (i + 24 >= amount) //if the ray doesnt collide with all of the geometry, terminate it
+            {
+                ray.isTerminated = true;
+                break;
+            }
+
+            if (hasIntersected)
+                break;
+
+            //assemble the triangle
+            vec3 v1 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+            vec3 v2 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
+            vec3 v3 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
+            vec3 normal = vec3(vertexData[i + 5], vertexData[i + 6], vertexData[i + 7]); 
+            //vec3 normal = cross(v2 - v1, v3 - v1);
+
+            vec3 intersection;
+            float t;
+            bool success = Intersects(intersection, ray, v1, v2, v3, t);
+
+            if (success)
+            {
+            highestT = t > highestT ? t : highestT;
+
+            imageStore(imgOutput, uv, vec4(t / highestT));
+            return;
+            }
+            /*vec3 intersectionLamp;
+            float sphereT;
+            bool lampSuccess = IntersectsLamp(ray, intersectionLamp, sphereT);
+
+            if (lampSuccess)//((lampSuccess && sphereT < t) || (lampSuccess && !success))
+            {
+                if (totalBounces > 0)
+                imageStore(imgOutput, uv, vec4(endColor / totalBounces, 1));
+                else
+                imageStore(imgOutput, uv, vec4(endColor, 1));
+            }
+
+            if (success)// || (success && lampSuccess && t < sphereT))
+            {
+                ray.hasHitSomething = true;
+
+                ray.origin = intersection;
+
+                normal = dot(normal, ray.direction) < 0 ? normal : normal * -1;
+
+                ray.direction = -ray.direction + 2 * normal * dot(ray.direction, normal);
+                endColor *= .5; //material color
+            }*/
         }
-        else
-        imageStore(imgOutput, uv, vec4(0, 0, 0, 1));
+        totalBounces++;
     }
 }
 
-bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3 vertex2)
+bool IntersectsLamp(Ray ray, out vec3 intersection, out float t)
+{
+	float rad = radius;
+	vec3 sphereCentre = position;
+	vec3 op = sphereCentre - ray.origin;
+	t = 1e-4;
+	float eps = 1e-4;
+	float b = dot(op, ray.direction);
+	float det = b * b - dot(op, op) + rad * rad;
+	if (det < 0)
+	{
+		intersection = vec3(0);
+		return false;
+	}
+	else
+		det = sqrt(det);
+	
+	float option1 = b - det;
+	float option2 = b + det;
+	float result = option1 > eps ? t : option2 > eps ? t : 0;
+
+    t = result;
+	intersection = ray.origin + result * ray.direction;
+	return true;
+}
+
+bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3 vertex2, out float t)
 {
     vec3 edge0 = vertex1 - vertex0;
     vec3 edge1 = vertex2 - vertex0;
@@ -92,11 +212,11 @@ bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3
 
     if (v < 0 || v > 1)
     {
-        //intersection = vec3(0);
+        intersection = vec3(0);
         return false;
     }
 
-    float t = f * dot(edge1, q);
+    t = f * dot(edge1, q);
     if (t > EPSILON)
     {
         intersection = ray.origin + ray.direction * t;

@@ -1,4 +1,5 @@
-﻿using COREMath;
+﻿#region using statements
+using COREMath;
 using CORERenderer.Fonts;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Enums;
@@ -12,7 +13,7 @@ using CORERenderer.shaders;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
-using System.Reflection.Metadata;
+#endregion
 
 namespace CORERenderer.Main
 {
@@ -151,9 +152,6 @@ namespace CORERenderer.Main
                     GPU = GPUString;
                 else
                     GPU = "Not Recognized";
-
-                if (GPUString.Contains("NVIDIA"))
-                    consoleCache.Add("ERROR Raytracing is not supported by this GPU");
                 #endregion
 
                 debugText = new((uint)(monitorHeight * 0.01333), $"{pathRenderer}\\Fonts\\baseFont.ttf");
@@ -218,8 +216,7 @@ namespace CORERenderer.Main
                 renderFramebuffer.shader.SetVector3("chromAberIntensities", 0.014f, 0.009f, 0.006f);
                 #endregion
 
-                //GetError();
-                //compute shader test section
+                #region Setting up the compute shader for ray-tracing
                 comp = new($"{pathRenderer}\\shaders\\test.comp");
                 Texture texture = Texture.GenerateEmptyTexture(Width, Height);
 
@@ -231,12 +228,16 @@ namespace CORERenderer.Main
                 ssbo = glGenBuffer();
                 GetError();
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, 738, (IntPtr)null, GL_DYNAMIC_DRAW);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, 23620, (IntPtr)null, GL_DYNAMIC_DRAW);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
                 //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, ssbo, 0, 0);
                 //Console.WriteLine(GetError());
                 comp.SetInt("imgOutput", GL_TEXTURE0);
                 computeShader.Texture = texture.Handle;
+
+                //Lamp lamp = new(new(0, 0, 0), new(1, 1, 1), 2);
+                //lamp.BindTo(comp);
+                #endregion
 
                 //sets the default scene
                 scenes.Add(new());
@@ -354,7 +355,7 @@ namespace CORERenderer.Main
                             console.Render();
 
                             if (saveAsImage.isPressed)
-                                Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", renderFramebuffer.Texture, renderFramebuffer.width, renderFramebuffer.height);
+                                Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
                         }
                         
                         graphManager.Render();
@@ -460,6 +461,14 @@ namespace CORERenderer.Main
 
                         comp.SetVector3("cameraPos", GetCurrentScene.camera.position);
                         comp.SetVector3("lookAt", GetCurrentScene.camera.front);
+                        comp.SetVector3("right", GetCurrentScene.camera.right);
+                        comp.SetVector3("up", GetCurrentScene.camera.up);
+                        comp.SetVector3("forward", GetCurrentScene.camera.front);
+
+                        comp.SetVector3("position", new(0, 20, 0));
+                        comp.SetVector3("color", new(1, 0, 1));
+                        comp.SetFloat("radius", 1);
+
                         comp.SetInt("backgroundImage", GL_TEXTURE1);
 
                         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
@@ -484,8 +493,8 @@ namespace CORERenderer.Main
 
                     computeShader.RenderFramebuffer();
 
-                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
-                    renderFramebuffer.RenderFramebuffer();
+                    //glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                    //renderFramebuffer.RenderFramebuffer();
 
                     if (renderIDFramebuffer)
                     {

@@ -82,7 +82,7 @@ namespace CORERenderer.Loaders
 
                 ClampValues();
 
-                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
+                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling * parent.Scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x + parent.rotation.x) * MathC.GetRotationYMatrix(rotation.y + parent.rotation.y) * MathC.GetRotationZMatrix(rotation.z + parent.rotation.z));
 
                 shader.SetMatrix("model", model);
 
