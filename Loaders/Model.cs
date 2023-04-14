@@ -21,7 +21,7 @@ namespace CORERenderer.Loaders
 
         public List<Material> Materials;
 
-        public List<Submodel> submodels;
+        public List<Submodel> submodels = new();
 
         public List<Vector3> offsets;
 
@@ -98,11 +98,13 @@ namespace CORERenderer.Loaders
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
                 submodels[i].translation = offsets[i] - this.translation;
                 submodels[i].parent = this;
-                totalAmountOfVertices += submodels[^1].numberOfVertices;
+                totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
         }
+
+        public Model() { }
 
         private void GenerateImage(string path)
         {
@@ -139,20 +141,11 @@ namespace CORERenderer.Loaders
             double startedReading = Glfw.Time;
             bool loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
-            
-            GenerateFilledBuffer(out VBO, out VAO, localVertices.ToArray());
-            vertices = new();
-            vertices.Add(localVertices);
-            translation = offset;
-            totalAmountOfVertices += vertices[0].Count;
-            submodels = new();
 
-            shader.Use();
+            submodels.Add(new(Path.GetFileNameWithoutExtension(path), localVertices, offset, this));
 
-            SetUpShader();
-
-            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readSTLFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
+            COREMain.console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
             float[] vertexData = localVertices.ToArray();
             unsafe
             { //transfer the vertex data to the compute shader
@@ -164,22 +157,6 @@ namespace CORERenderer.Loaders
 
                 glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
                 totalSSBOSizeUsed += vertexData.Length * sizeof(float);
-
-                for (int i = 0; i < vertexData.Length; i++)
-                {
-                    IntPtr data = new(&size);
-                    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + sizeof(float) * i, sizeof(float), data);
-
-                    byte[] floats = new byte[4];
-                    Marshal.Copy(data, floats, 0, floats.Length);
-                    float final = BitConverter.ToSingle(floats);
-
-                    string test = "failed";
-                    if (final == localVertices[i])
-                        test = "passed";
-
-                    Console.WriteLine($"In buffer: {final} In array: {localVertices[i]}, {test}");
-                }
             }
         }
         
@@ -196,15 +173,11 @@ namespace CORERenderer.Loaders
             if (!loaded)
                 throw new GLFW.Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
 
-            List<int> temp = new();
-            for (int i = path.IndexOf("\\"); i > -1; i = path.IndexOf("\\", i + 1))
-                temp.Add(i);
-
-            name = path[(temp[^1] + 1)..path.IndexOf(".obj")];
+            name = Path.GetFileNameWithoutExtension(path);
 
             startedReading = Glfw.Time;
             if (mtllib != "default")
-                loaded = LoadMTL($"{path[..(temp[^1] + 1)]}{mtllib}", mtlNames, out Materials, out error);
+                loaded = LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out Materials, out error);
             else
                 loaded = LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials, out error);
             double readMTLFile = Glfw.Time - startedReading;
@@ -220,7 +193,7 @@ namespace CORERenderer.Loaders
                 submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
                 submodels[i].translation = offsets[i] - this.translation;
                 submodels[i].parent = this;
-                totalAmountOfVertices += submodels[^1].numberOfVertices;
+                totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
 
             //depth sorting
@@ -253,8 +226,8 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
-            if (type == RenderMode.ObjFile)
-                RenderObj();
+            if (type == RenderMode.ObjFile || type == RenderMode.STLFile)
+                RenderModel();
 
             else if (type == RenderMode.JPGImage)
                 RenderImage();
@@ -263,15 +236,13 @@ namespace CORERenderer.Loaders
                 RenderImage();
             else if (type == RenderMode.HDRFile)
                 Rendering.RenderBackground(hdr);
-            else if (type == RenderMode.STLFile)
-                RenderSTL();
         }
 
         public void RenderBackground() => Rendering.RenderBackground(hdr);
 
-        private unsafe void RenderObj()
+        private unsafe void RenderModel()
         {
-            for (int i = submodels.Count - 1; i >= 0; i--)
+            for (int i = 0; i < submodels.Count; i++)
             {
                 submodels[i].renderLines = renderLines;
                 submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
@@ -299,27 +270,6 @@ namespace CORERenderer.Loaders
             {
                 GL.glLineWidth(1.5f);
                 shader.SetVector3("overrideColor", new(1, 0, 1));
-                glDrawArrays(PrimitiveType.Lines, 0, vertices[0].Count / 8);
-                shader.SetVector3("overrideColor", new(0, 0, 0));
-            }
-        }
-
-        private void RenderSTL()
-        {
-            shader.SetFloat("transparency", 1);
-            Matrix model = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z); 
-            shader.SetMatrix("model", model);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            usedTextures[2].Use(GL_TEXTURE0);
-
-            glBindVertexArray(VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, vertices[0].Count / 8);
-            if (renderLines)
-            {
-                GL.glLineWidth(1.5f);
-                //glEnable(GL_CULL_FACE);
-                shader.SetVector3("overrideColor", new(1, 0, 1));
-                //glClear(GL_DEPTH_BUFFER_BIT);
                 glDrawArrays(PrimitiveType.Lines, 0, vertices[0].Count / 8);
                 shader.SetVector3("overrideColor", new(0, 0, 0));
             }

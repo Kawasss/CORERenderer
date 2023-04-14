@@ -23,16 +23,15 @@ namespace CORERenderer.Loaders
         public Model parent = null;
 
         public readonly List<float> vertices;
-        private List<uint> indices;
 
-        public int numberOfVertices = 0;
+        public int NumberOfVertices { get { return vertices.Count / 8; } }
 
         private Material material;
 
         private Shader shader = GenericShaders.GenericLighting;
         private Shader IDShader = GenericShaders.IDPicking;
 
-        private uint VBO, VAO, EBO;
+        private uint VBO, VAO;
 
         public int ID = COREMain.NewAvaibleID;
         private Vector3 IDColor;
@@ -46,20 +45,16 @@ namespace CORERenderer.Loaders
 
         public bool isTranslucent = false;
 
-        public bool useGlDrawElements = true;
-
         public bool hasMaterials = true;
 
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
             this.name = name;
-            this.vertices = vertices;
-            this.indices = indices;
+            this.vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
+            //this.indices = indices;
             this.material = material;
 
             isTranslucent = material.Transparency != 1;
-
-            numberOfVertices = vertices.Count / 8;
 
             GenerateBuffers();
 
@@ -69,6 +64,41 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
             shader.SetInt("material.normalMap", GL_TEXTURE3);
+            
+        }
+
+        public Submodel(string name, List<float> vertices, Vector3 offset, Model parent, Material material)
+        {
+            this.name = name;
+            this.vertices = vertices;
+            this.material = material;
+            this.translation = offset;
+            this.scaling = new(1, 1, 1);
+            this.parent = parent;
+
+            GenerateBuffers();
+
+            IDColor = COREMain.GenerateIDColor(ID);
+
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+        }
+
+        public Submodel(string name, List<float> vertices, Vector3 offset, Model parent)
+        {
+            this.name = name;
+            this.vertices = vertices;
+            this.material = new();
+            this.translation = offset;
+            this.scaling = new(1, 1, 1);
+            this.parent = parent;
+
+            GenerateBuffers();
+
+            IDColor = COREMain.GenerateIDColor(ID);
+
+            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            material.Transparency = 1;
+            material.Texture = 2;
         }
 
         public void Render()
@@ -98,10 +128,11 @@ namespace CORERenderer.Loaders
                 glBindVertexArray(VAO);
                 unsafe
                 {
+                    GL.glLineWidth(1.5f);
                     if (renderLines)
-                        glDrawElements(PrimitiveType.Lines, indices.Count, GLType.UnsingedInt, (void*)0);
+                        glDrawArrays(PrimitiveType.Lines, 0, vertices.Count / 8);
                     else
-                        glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                        glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
 
                     if (COREMain.renderToIDFramebuffer)
                     {
@@ -112,10 +143,7 @@ namespace CORERenderer.Loaders
                         IDShader.SetVector3("color", IDColor);
                         IDShader.SetMatrix("model", model);
 
-                        if (useGlDrawElements)
-                            glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
-                        else
-                            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+                        glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
 
                         if (!highlighted)
                             highlighted = COREMain.selectedID == ID;
@@ -126,6 +154,26 @@ namespace CORERenderer.Loaders
                     }
                 }
             }
+        }
+
+        private List<float> ConvertIndices(List<float> vertices, List<uint> indices)
+        {
+            List<float> result = new();
+
+            foreach (uint Indice in indices)
+            {
+                uint indice = Indice * 8;
+                result.Add(vertices[(int)indice]);
+                result.Add(vertices[(int)indice + 1]);
+                result.Add(vertices[(int)indice + 2]);
+                result.Add(vertices[(int)indice + 3]);
+                result.Add(vertices[(int)indice + 4]);
+                result.Add(vertices[(int)indice + 5]);
+                result.Add(vertices[(int)indice + 6]);
+                result.Add(vertices[(int)indice + 7]);
+            }
+
+            return result;
         }
 
         private void GenerateBuffers()
@@ -148,8 +196,6 @@ namespace CORERenderer.Loaders
             vertexLocation = shader.GetAttribLocation("aNormal");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
-
-            GenerateFilledBuffer(out EBO, indices.ToArray());
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -175,7 +221,6 @@ namespace CORERenderer.Loaders
         {
             glDeleteBuffer(VBO);
             glDeleteVertexArray(VAO);
-            glDeleteBuffer(EBO);
             GC.Collect();
         }
     }

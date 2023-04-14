@@ -30,7 +30,15 @@ namespace CORERenderer.Loaders
                         Vector3 submodelScaling = GetVector3(fs);
 
                         bool hasMaterials = GetBool(fs);
-                        bool useGlDrawElements = GetBool(fs);
+
+                        int amountPolygons = GetInt(fs);
+                        int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
+
+                        List<float> vertices = new();
+                        for (int k = 0; k < amountVertices; k++)
+                            vertices.Add(GetFloat(fs));
+
+                        //add the segment for retreiving material values if given
                     }
                 }
             }

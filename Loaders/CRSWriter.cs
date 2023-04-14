@@ -56,16 +56,14 @@
             byte[] scaling = submodel.scaling.Bytes;
 
             byte[] hasMaterials = BitConverter.GetBytes(submodel.hasMaterials);
-            byte[] useGlDrawElements = BitConverter.GetBytes(submodel.useGlDrawElements);
 
-            byte[] amountPolygons = BitConverter.GetBytes(submodel.numberOfVertices / 3);
+            byte[] amountPolygons = BitConverter.GetBytes(submodel.NumberOfVertices / 3);
 
             sw.BaseStream.Write(smName);
             sw.BaseStream.Write(position);
             sw.BaseStream.Write(scaling);
 
             sw.BaseStream.Write(hasMaterials);
-            sw.BaseStream.Write(useGlDrawElements);
 
             sw.BaseStream.Write(amountPolygons);
         }

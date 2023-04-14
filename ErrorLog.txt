@@ -1,0 +1,16 @@
+Error occured at 3:15:40 : 
+    System.NullReferenceException: Object reference not set to an instance of an object.
+   at CORERenderer.Loaders.Submodel.Render() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Submodel.cs:line 100
+   at CORERenderer.Loaders.Model.RenderModel() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 285
+   at CORERenderer.Loaders.Model.Render() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 259
+   at CORERenderer.OpenGL.Rendering.RenderAllModels(List`1 models) in C:\Users\wveen\source\repos\CORERenderer\OpenGL\Rendering.cs:line 284
+   at CORERenderer.Scene.RenderEveryFrame(Single delta) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 48
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 413
+Error occured at 3:17:10 : 
+    System.NullReferenceException: Object reference not set to an instance of an object.
+   at CORERenderer.Loaders.Submodel.Render() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Submodel.cs:line 101
+   at CORERenderer.Loaders.Model.RenderModel() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 285
+   at CORERenderer.Loaders.Model.Render() in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 259
+   at CORERenderer.OpenGL.Rendering.RenderAllModels(List`1 models) in C:\Users\wveen\source\repos\CORERenderer\OpenGL\Rendering.cs:line 284
+   at CORERenderer.Scene.RenderEveryFrame(Single delta) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 48
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 413

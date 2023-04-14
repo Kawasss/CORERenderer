@@ -1,11 +1,6 @@
 ﻿using CORERenderer.textures;
 using CORERenderer.shaders;
 using COREMath;
-using static CORERenderer.OpenGL.GL;
-using static CORERenderer.OpenGL.Rendering;
-using System.Runtime.CompilerServices;
-using CORERenderer.OpenGL;
-
 namespace CORERenderer.Main
 {
     public struct Character
