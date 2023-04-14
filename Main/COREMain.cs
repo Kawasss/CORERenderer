@@ -493,8 +493,8 @@ namespace CORERenderer.Main
 
                     computeShader.RenderFramebuffer();
 
-                    //glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
-                    //renderFramebuffer.RenderFramebuffer();
+                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                    renderFramebuffer.RenderFramebuffer();
 
                     if (renderIDFramebuffer)
                     {

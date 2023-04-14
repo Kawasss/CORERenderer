@@ -159,5 +159,26 @@ namespace COREMath
         {
             Console.WriteLine($"({this.x}, {this.y}, {this.z})");
         }
+
+        /// <summary>
+        /// Returns 12 bytes representing the x, y and z values
+        /// </summary>
+        public byte[] Bytes
+        {
+            get
+            {
+                byte[] allBytes = new byte[12];
+
+                byte[] bytesX = BitConverter.GetBytes(x);
+                byte[] bytesY = BitConverter.GetBytes(y);
+                byte[] bytesZ = BitConverter.GetBytes(z);
+
+                bytesX.CopyTo(allBytes, 0);
+                bytesY.CopyTo(allBytes, bytesX.Length);
+                bytesZ.CopyTo(allBytes, bytesX.Length + bytesY.Length);
+
+                return allBytes;
+            }
+        }
     }
 }

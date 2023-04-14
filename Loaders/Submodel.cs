@@ -22,7 +22,7 @@ namespace CORERenderer.Loaders
         public Matrix parentModel;
         public Model parent = null;
 
-        private List<float> vertices;
+        public readonly List<float> vertices;
         private List<uint> indices;
 
         public int numberOfVertices = 0;
@@ -45,6 +45,10 @@ namespace CORERenderer.Loaders
         public bool highlighted = false;
 
         public bool isTranslucent = false;
+
+        public bool useGlDrawElements = true;
+
+        public bool hasMaterials = true;
 
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
@@ -108,7 +112,10 @@ namespace CORERenderer.Loaders
                         IDShader.SetVector3("color", IDColor);
                         IDShader.SetMatrix("model", model);
 
-                        glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                        if (useGlDrawElements)
+                            glDrawElements(PrimitiveType.Triangles, indices.Count, GLType.UnsingedInt, (void*)0);
+                        else
+                            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
 
                         if (!highlighted)
                             highlighted = COREMain.selectedID == ID;
