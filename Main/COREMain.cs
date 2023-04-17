@@ -86,8 +86,8 @@ namespace CORERenderer.Main
         public static Div modelList;
         public static Submenu menu;
 
-        public static Model GetCurrentModelFromCurrentScene { get => scenes[selectedScene].models[GetCurrentObjFromScene]; }
-        public static Scene GetCurrentScene { get => scenes[selectedScene]; }
+        public static Model CurrentModel { get => scenes[selectedScene].models[GetCurrentObjFromScene]; }
+        public static Scene CurrentScene { get => scenes[selectedScene]; }
 
         //structs
         public static Window window;
@@ -241,7 +241,6 @@ namespace CORERenderer.Main
 
                 //sets the default scene
                 scenes.Add(new());
-                scenes[0].OnLoad(args);
                 selectedScene = 0;
 
                 #region Restoring any console commands from the previous session and start up
@@ -273,7 +272,9 @@ namespace CORERenderer.Main
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
 
-                Rendering.SetCamera(GetCurrentScene.camera);
+                scenes[0].OnLoad(args);
+
+                Rendering.SetCamera(CurrentScene.camera);
                 Rendering.SetUniformBuffers();
 
                 glViewport(0, 0, monitorWidth, monitorHeight);
@@ -286,6 +287,8 @@ namespace CORERenderer.Main
                 //Thread.Sleep(500); //allows user to read the printed text
                 console.WriteLine($"Initialised in {Glfw.Time} seconds");
                 console.WriteLine("Beginning render loop");
+
+                
 
                 #region First time rendering
                 Rendering.UpdateUniformBuffers();
@@ -398,13 +401,13 @@ namespace CORERenderer.Main
                             #region Add certain shapes based on GUI input
                             if (addCube)
                             {
-                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
+                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cube.stl"));
                                 addCube = false;
                                 menu.SetBool("  Cube", addCube);
                             }
                             if (addCylinder)
                             {
-                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cylinder.obj"));
+                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cylinder.stl"));
                                 addCylinder = false;
                                 menu.SetBool("  Cylinder", addCylinder);
                             }
@@ -443,7 +446,7 @@ namespace CORERenderer.Main
                             foreach (ModelInfo model in dirLoadedModels)
                             {
                                 Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials, out int error); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
-                                GetCurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
+                                CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
                             }
                             dirLoadedModels = null;
                         }
@@ -453,17 +456,17 @@ namespace CORERenderer.Main
 
                     #region Compute shader related events
                     {
-                        glActiveTexture(GL_TEXTURE1);
+                        /*glActiveTexture(GL_TEXTURE1);
                         glBindTexture(GL_TEXTURE_2D, renderFramebuffer.Texture);
 
                         int error = GetError();
                         comp.Use();
 
-                        comp.SetVector3("cameraPos", GetCurrentScene.camera.position);
-                        comp.SetVector3("lookAt", GetCurrentScene.camera.front);
-                        comp.SetVector3("right", GetCurrentScene.camera.right);
-                        comp.SetVector3("up", GetCurrentScene.camera.up);
-                        comp.SetVector3("forward", GetCurrentScene.camera.front);
+                        comp.SetVector3("cameraPos", CurrentScene.camera.position);
+                        comp.SetVector3("lookAt", CurrentScene.camera.front);
+                        comp.SetVector3("right", CurrentScene.camera.right);
+                        comp.SetVector3("up", CurrentScene.camera.up);
+                        comp.SetVector3("forward", CurrentScene.camera.front);
 
                         comp.SetVector3("position", new(0, 20, 0));
                         comp.SetVector3("color", new(1, 0, 1));
@@ -477,7 +480,7 @@ namespace CORERenderer.Main
                         texture.Use(GL_TEXTURE0);
 
                         glDispatchCompute((uint)Math.Ceiling((double)Width / 8), (uint)Math.Ceiling((double)Height / 8), 1);
-                        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+                        glMemoryBarrier(GL_ALL_BARRIER_BITS);*/
                     }
                     #endregion
 
@@ -491,9 +494,9 @@ namespace CORERenderer.Main
                     IDFramebuffer.RenderFramebuffer();
                     UpdateSelectedID();
 
-                    computeShader.RenderFramebuffer();
+                    //computeShader.RenderFramebuffer();
 
-                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                    //glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
                     renderFramebuffer.RenderFramebuffer();
 
                     if (renderIDFramebuffer)
@@ -535,7 +538,7 @@ namespace CORERenderer.Main
             vertices = new();
             indices = new();
             offsets = new();
-            foreach (Model model in GetCurrentScene.models)
+            foreach (Model model in CurrentScene.models)
                 for (int i = 0; i < model.vertices.Count; i++)
                 {
                     vertices.Add(model.vertices[i]);

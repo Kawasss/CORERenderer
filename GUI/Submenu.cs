@@ -102,8 +102,8 @@ namespace CORERenderer.GUI
                 COREMain.renderBackground = isOptionTrue[list[1]];
                 if (COREMain.scenes[COREMain.selectedScene].currentObj != -1)
                 {
-                    COREMain.GetCurrentModelFromCurrentScene.renderLines = isOptionTrue[list[2]];
-                    COREMain.GetCurrentModelFromCurrentScene.renderNormals = isOptionTrue[list[3]];
+                    COREMain.CurrentModel.renderLines = isOptionTrue[list[2]];
+                    COREMain.CurrentModel.renderNormals = isOptionTrue[list[3]];
                 }
                 COREMain.renderGUI = isOptionTrue[list[4]];
                 COREMain.renderIDFramebuffer = isOptionTrue[list[5]];

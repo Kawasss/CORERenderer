@@ -40,7 +40,8 @@ namespace CORERenderer.Loaders
         private static void WriteMaterialNode(StreamWriter sw, Material material)
         {
             WriteMaterialInfo(sw, material);
-            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.DiffuseMap]); //writes the diffuse map
+            Console.WriteLine(material.DiffuseMap);
+            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.Texture]); //writes the diffuse map
             WriteTextureNode(sw, material.Specular, Globals.usedTextures[material.SpecularMap]); //writes the specular map
             WriteTextureNode(sw, Globals.usedTextures[material.NormalMap]); //writes the normal map
         }

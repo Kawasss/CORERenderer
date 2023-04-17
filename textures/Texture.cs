@@ -16,7 +16,7 @@ namespace CORERenderer.textures
         public int width;
         public int height;
 
-        public byte[] Data { get { return GetData(); } }
+        public byte[] Data;// { get { return GetData(); } }
 
         public Texture(string name, int width, int height, byte[] data)
         {
@@ -35,6 +35,7 @@ namespace CORERenderer.textures
 
             glGenerateMipmap(GL_TEXTURE_2D);
 
+            this.Data = data;
             this.name = name;
         }
 
@@ -60,6 +61,7 @@ namespace CORERenderer.textures
                 stream.CopyTo(memoryStream);
 
                 image = Stbi.LoadFromMemory(memoryStream, 4);
+                
                 glTexImage2D(GL_TEXTURE_2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -75,7 +77,7 @@ namespace CORERenderer.textures
             for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
                 local.Add(i);
 
-            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height };
+            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height, Data = image.Data.ToArray() };
         }
 
         public static Texture GenerateEmptyTexture(int Width, int Height)

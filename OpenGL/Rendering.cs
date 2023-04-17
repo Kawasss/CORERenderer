@@ -291,7 +291,7 @@ namespace CORERenderer.OpenGL
             Dictionary<float, Submodel> distanceModelTable = new();
             foreach (Submodel model in translucentSubmodels)
             {
-                float distance = MathC.Distance(COREMain.GetCurrentScene.camera.position, model.translation + model.parent.translation);
+                float distance = MathC.Distance(COREMain.CurrentScene.camera.position, model.translation + model.parent.translation);
                 while (distanceModelTable.ContainsKey(distance))
                     distance += 0.01f;
                 distances.Add(distance);
@@ -329,7 +329,7 @@ namespace CORERenderer.OpenGL
         {
             GenericShaders.Grid.Use();
 
-            GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 500));
+            GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 1000));
 
             GenericShaders.Grid.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
 

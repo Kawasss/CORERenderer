@@ -195,7 +195,7 @@ namespace CORERenderer.Loaders
                 submodels[i].parent = this;
                 totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
-
+            
             //depth sorting
             Submodel[] submodelsInCorrectOrder = new Submodel[submodels.Count];
             List<float> distances = new();
@@ -293,9 +293,9 @@ namespace CORERenderer.Loaders
 
         public void Dispose()
         {
-            if (COREMain.GetCurrentScene.currentObj == COREMain.GetCurrentScene.models.IndexOf(this))
-                COREMain.GetCurrentScene.currentObj = -1;
-            COREMain.GetCurrentScene.models.Remove(this);
+            if (COREMain.CurrentScene.currentObj == COREMain.CurrentScene.models.IndexOf(this))
+                COREMain.CurrentScene.currentObj = -1;
+            COREMain.CurrentScene.models.Remove(this);
             foreach (Submodel sub in submodels)
                 sub.Dispose();
         }

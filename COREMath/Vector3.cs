@@ -63,11 +63,11 @@ namespace COREMath
             this.z = 0;
         }
 
-        public static Vector3 Zero = new(0, 0, 0);
+        public static Vector3 Zero { get { return new(0, 0, 0); } }
 
-        public static Vector3 UnitVectorX = new(1, 0, 0);
-        public static Vector3 UnitVectorY = new(0, 1, 0);
-        public static Vector3 UnitVectorZ = new(0, 0, 1);
+        public static Vector3 UnitVectorX { get { return new(1, 0, 0); } }
+        public static Vector3 UnitVectorY { get { return new(0, 1, 0); } }
+        public static Vector3 UnitVectorZ { get { return new(0, 0, 1); } }
 
         public float Length { get { return MathC.GetLengthOf(this); } }
 

@@ -53,8 +53,8 @@ namespace CORERenderer
         {
             if (shaderConfig == ShaderType.PathTracing)
             {
-                GenericShaders.GenericLighting.SetVector3("RAY.origin", COREMain.GetCurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("RAY.direction", COREMain.GetCurrentScene.camera.front);
+                GenericShaders.GenericLighting.SetVector3("RAY.origin", COREMain.CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("RAY.direction", COREMain.CurrentScene.camera.front);
                 GenericShaders.GenericLighting.SetInt("isReflective", 0);
                 GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
                 GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
@@ -62,8 +62,8 @@ namespace CORERenderer
             }
             else if (shaderConfig == ShaderType.Lighting)
             {
-                GenericShaders.GenericLighting.SetVector3("viewPos", COREMain.GetCurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", COREMain.GetCurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("viewPos", COREMain.CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", COREMain.CurrentScene.camera.position);
             }
 
 
@@ -91,23 +91,23 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                        GetCurrentModelFromCurrentScene.rotation.x += 15f * delta;
+                        CurrentModel.rotation.x += 15f * delta;
                     if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                        GetCurrentModelFromCurrentScene.rotation.y += 15f * delta;
+                        CurrentModel.rotation.y += 15f * delta;
                     if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                        GetCurrentModelFromCurrentScene.rotation.z += 15f * delta;
+                        CurrentModel.rotation.z += 15f * delta;
 
                     if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
                     {
-                        GetCurrentModelFromCurrentScene.Scaling.x -= 2f * delta;
-                        GetCurrentModelFromCurrentScene.Scaling.y -= 2f * delta;
-                        GetCurrentModelFromCurrentScene.Scaling.z -= 2f * delta;
+                        CurrentModel.Scaling.x -= 2f * delta;
+                        CurrentModel.Scaling.y -= 2f * delta;
+                        CurrentModel.Scaling.z -= 2f * delta;
                     }
                     if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
                     {
-                        GetCurrentModelFromCurrentScene.Scaling.x += 2f * delta;
-                        GetCurrentModelFromCurrentScene.Scaling.y += 2f * delta;
-                        GetCurrentModelFromCurrentScene.Scaling.z += 2f * delta;
+                        CurrentModel.Scaling.x += 2f * delta;
+                        CurrentModel.Scaling.y += 2f * delta;
+                        CurrentModel.Scaling.z += 2f * delta;
                     }
 
 

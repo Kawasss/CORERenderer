@@ -25,7 +25,7 @@ namespace CORERenderer.Loaders
                     models[^1].name = modelName;
                     models[^1].translation = translation;
                     models[^1].Scaling = scaling;
-
+                    Console.WriteLine($"model: {translation}");
                     Console.WriteLine(submodelCount);
                     //getting the submodels
                     for (int j = 0; j < submodelCount; j++)
@@ -57,7 +57,7 @@ namespace CORERenderer.Loaders
 
                             //retrieve the normal texture
                             RetrieveTextureNode(fs, out textureWidth, out textureHeight, out imageData);
-                            Texture normTex = new("specular", textureWidth, textureHeight, imageData);
+                            Texture normTex = new("normal", textureWidth, textureHeight, imageData);
                             Globals.usedTextures.Add(normTex);
                             int normIndex = Globals.usedTextures.IndexOf(normTex);
 
@@ -72,14 +72,14 @@ namespace CORERenderer.Loaders
                             material.DiffuseMap = difIndex;
                             material.SpecularMap = specIndex;
                             material.NormalMap = normIndex;
-
+                            Console.WriteLine($"submodel: {submodelTranslation}");
                             models[^1].type = RenderMode.ObjFile;
-                            models[^1].submodels.Add(new(submodelName, vertices, translation, submodelScaling, models[^1], material));
+                            models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1], material));
                         }
                         else
                         {
                             models[^1].type = RenderMode.STLFile;
-                            models[^1].submodels.Add(new(submodelName, vertices, translation, submodelScaling, models[^1]));
+                            models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
                         }
                     }
                 }

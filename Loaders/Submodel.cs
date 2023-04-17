@@ -53,7 +53,6 @@ namespace CORERenderer.Loaders
             this.vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
             //this.indices = indices;
             this.material = material;
-
             isTranslucent = material.Transparency != 1;
             hasMaterials = true;
 
@@ -65,7 +64,6 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
             shader.SetInt("material.normalMap", GL_TEXTURE3);
-            
         }
 
         public Submodel(string name, List<float> vertices, Vector3 offset, Model parent, Material material)
@@ -83,7 +81,10 @@ namespace CORERenderer.Loaders
 
             IDColor = COREMain.GenerateIDColor(ID);
 
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.Texture", GL_TEXTURE0);
+            shader.SetInt("material.diffuse", GL_TEXTURE1);
+            shader.SetInt("material.specular", GL_TEXTURE2);
+            shader.SetInt("material.normalMap", GL_TEXTURE3);
         }
 
         public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent)
@@ -99,7 +100,10 @@ namespace CORERenderer.Loaders
 
             IDColor = COREMain.GenerateIDColor(ID);
 
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
+            shader.SetInt("material.Texture", GL_TEXTURE0);
+            shader.SetInt("material.diffuse", GL_TEXTURE1);
+            shader.SetInt("material.specular", GL_TEXTURE2);
+            shader.SetInt("material.normalMap", GL_TEXTURE3);
             material.Transparency = 1;
             material.Texture = 2;
         }
@@ -108,7 +112,7 @@ namespace CORERenderer.Loaders
         {
             this.name = name;
             this.vertices = vertices;
-            this.material = new();
+            this.material = material;
             this.translation = offset;
             this.scaling = scaling;
             this.parent = parent;
@@ -119,8 +123,6 @@ namespace CORERenderer.Loaders
 
             IDColor = COREMain.GenerateIDColor(ID);
 
-            this.material = material;
-
             shader.SetInt("material.Texture", GL_TEXTURE0);
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
@@ -129,8 +131,10 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
-            if (!useRenderDistance || MathC.Distance(COREMain.GetCurrentScene.camera.position, translation + parent.translation) < renderDistance)
+            if (!useRenderDistance || MathC.Distance(COREMain.CurrentScene.camera.position, translation + parent.translation) < renderDistance)
             {
+                shader.Use();
+
                 highlighted = COREMain.selectedID == ID;
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);

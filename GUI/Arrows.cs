@@ -116,12 +116,12 @@ namespace CORERenderer.GUI
             glClear(GL_DEPTH_BUFFER_BIT);
 
             if (maxScale == 0)
-                maxScale = MathC.GetLengthOf((COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.GetCurrentModelFromCurrentScene.translation));
+                maxScale = MathC.GetLengthOf((COREMain.scenes[COREMain.selectedScene].camera.position - COREMain.CurrentModel.translation));
 
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.GetCurrentModelFromCurrentScene.submodels[COREMain.GetCurrentModelFromCurrentScene.selectedSubmodel].translation);
+            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.submodels[COREMain.CurrentModel.selectedSubmodel].translation);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)

@@ -20,7 +20,7 @@ namespace CORERenderer.GUI
 
             int offset = 20;
             int aa = 0;
-            foreach (Model model in COREMain.GetCurrentScene.models.ToList())
+            foreach (Model model in COREMain.CurrentScene.models.ToList())
             {
                 if (offset >= Height)
                 {
