@@ -1,4 +1,8 @@
-﻿namespace CORERenderer.Loaders
+﻿using CORERenderer.Main;
+using CORERenderer.textures;
+using COREMath;
+
+namespace CORERenderer.Loaders
 {
     public partial class Writers
     {
@@ -16,12 +20,68 @@
 
                     foreach (Submodel submodel in model.submodels)
                     {
-                        WriteSubmodelInfo(sw, submodel);
-                        foreach (float value in submodel.vertices)
-                            sw.BaseStream.Write(BitConverter.GetBytes(value));
+                        WriteSubmodelNode(sw, submodel);
                     }
                 }
             }
+        }
+
+        private static void WriteSubmodelNode(StreamWriter sw, Submodel submodel)
+        {
+            WriteSubmodelInfo(sw, submodel);
+
+            foreach (float value in submodel.vertices)
+                sw.BaseStream.Write(BitConverter.GetBytes(value));
+
+            if (submodel.hasMaterials)
+                WriteMaterialNode(sw, submodel.material);
+        }
+
+        private static void WriteMaterialNode(StreamWriter sw, Material material)
+        {
+            WriteMaterialInfo(sw, material);
+            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.DiffuseMap]); //writes the diffuse map
+            WriteTextureNode(sw, material.Specular, Globals.usedTextures[material.SpecularMap]); //writes the specular map
+            WriteTextureNode(sw, Globals.usedTextures[material.NormalMap]); //writes the normal map
+        }
+
+        private static void WriteTextureNode(StreamWriter sw, Vector3 strength, Texture texture)
+        {
+            byte[] width = BitConverter.GetBytes(texture.width);
+            byte[] height = BitConverter.GetBytes(texture.height);
+
+            byte[] data = texture.Data;
+
+            sw.BaseStream.Write(strength.Bytes);
+            sw.BaseStream.Write(width);
+            sw.BaseStream.Write(height);
+            sw.BaseStream.Write(data);
+        }
+
+        private static void WriteTextureNode(StreamWriter sw, Texture texture)
+        {
+            byte[] width = BitConverter.GetBytes(texture.width);
+            byte[] height = BitConverter.GetBytes(texture.height);
+
+            byte[] data = texture.Data;
+
+            sw.BaseStream.Write(width);
+            sw.BaseStream.Write(height);
+            sw.BaseStream.Write(data);
+        }
+
+        private static void WriteMaterialInfo(StreamWriter sw, Material material)
+        {
+            byte[] materialName = GenerateHeader(material.Name, 10);
+
+            byte[] shininess = BitConverter.GetBytes(material.Shininess);
+            byte[] transparency = BitConverter.GetBytes(material.Transparency);
+            byte[] ambient = material.Ambient.Bytes;
+
+            sw.BaseStream.Write(materialName);
+            sw.BaseStream.Write(shininess);
+            sw.BaseStream.Write(transparency);
+            sw.BaseStream.Write(ambient);
         }
 
         private static void WriteGeneralInfo(StreamWriter sw, string header, int modelCount)
@@ -56,10 +116,8 @@
             byte[] scaling = submodel.scaling.Bytes;
 
             byte[] hasMaterials = BitConverter.GetBytes(submodel.hasMaterials);
-            Console.WriteLine(hasMaterials.Length);
 
             byte[] amountPolygons = BitConverter.GetBytes(submodel.NumberOfVertices / 3);
-
 
             sw.BaseStream.Write(smName);
             sw.BaseStream.Write(position);

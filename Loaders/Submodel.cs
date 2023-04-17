@@ -26,7 +26,7 @@ namespace CORERenderer.Loaders
 
         public int NumberOfVertices { get { return vertices.Count / 8; } }
 
-        private Material material;
+        public readonly Material material;
 
         private Shader shader = GenericShaders.GenericLighting;
         private Shader IDShader = GenericShaders.IDPicking;
@@ -55,6 +55,7 @@ namespace CORERenderer.Loaders
             this.material = material;
 
             isTranslucent = material.Transparency != 1;
+            hasMaterials = true;
 
             GenerateBuffers();
 
@@ -76,6 +77,8 @@ namespace CORERenderer.Loaders
             this.scaling = new(1, 1, 1);
             this.parent = parent;
 
+            hasMaterials = true;
+
             GenerateBuffers();
 
             IDColor = COREMain.GenerateIDColor(ID);
@@ -91,7 +94,7 @@ namespace CORERenderer.Loaders
             this.translation = offset;
             this.scaling = scaling;
             this.parent = parent;
-
+            hasMaterials = false;
             GenerateBuffers();
 
             IDColor = COREMain.GenerateIDColor(ID);
@@ -99,6 +102,29 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE0);
             material.Transparency = 1;
             material.Texture = 2;
+        }
+
+        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent, Material material)
+        {
+            this.name = name;
+            this.vertices = vertices;
+            this.material = new();
+            this.translation = offset;
+            this.scaling = scaling;
+            this.parent = parent;
+
+            hasMaterials = true;
+
+            GenerateBuffers();
+
+            IDColor = COREMain.GenerateIDColor(ID);
+
+            this.material = material;
+
+            shader.SetInt("material.Texture", GL_TEXTURE0);
+            shader.SetInt("material.diffuse", GL_TEXTURE1);
+            shader.SetInt("material.specular", GL_TEXTURE2);
+            shader.SetInt("material.normalMap", GL_TEXTURE3);
         }
 
         public void Render()

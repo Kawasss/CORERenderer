@@ -1,0 +1,102 @@
+﻿crs file format:
+A crs file contains metadata about the scene and a multitude of nodes, detailing the objects in the scene.
+The file always start with a 100 bytes header, which can generally be skipped. After this are 4 bytes, representing a 32-bit integer, showing the model count.
+After this follow the model nodes, the amount specified by the aforementioned 32-bit integer.
+Each model node contains atleast one submodel, although there can be more.
+
+
+Model node:
+The structure of a model node looks like this:
+
+10 bytes - model name : UTF8 string
+12 bytes - position : vector3
+12 bytes - scaling : vector3
+4  bytes - amount of submodels : 32-bit integer
+.. bytes - submodel nodes
+
+Models are used as a container for the submodels: it keeps them organized together.
+The amount of submodels is stated by the 4 bytes named "amount of submodels" here.
+Vector3's are 3 float values resembling the x, y and z axis.
+
+
+Submodel node:
+The structure of a submodel node looks like this:
+
+10 bytes - model name : UTF8 string
+12 bytes - position : vector3
+12 bytes - scaling : vector3
+1  byte  - has material : bool
+4  bytes - amount of polygons : 32-bit integer
+amount of polygons * 3 * 8 * 4 bytes - all vertices : float
+.. bytes - material node
+
+The bool "has material" states if a submodel has a material attached or if it should use the engines default textures.
+The material node is not present if "has material" is false.
+If materials are attached, they are stated after "all vertices".
+A vertex is defined as follows:
+
+Vector3 position (12 bytes)
+	x
+	y
+	z
+Vector2 UV-coordinates (8 bytes)
+	x
+	y
+Vector3 normal (12 bytes)
+	x
+	y
+	z
+
+This means that one vertex takes up 32 bytes (8 floats). One polygon always consists of 3 vertices, so the vertex count is calculated with amount of polygons * 3 * 8.
+multiply this with 4 bytes and you get the total byte size of the mesh.
+
+
+Material node:
+The structure of a material is as following:
+
+10 bytes - material name : UTF8 string
+4  bytes - shininess : float
+4  bytes - transparency : float
+12 bytes - ambient : vector3
+.. bytes - diffuse node
+.. bytes - specular node
+.. bytes - normal node
+
+Each also has their own default value (from top to bottom):
+32
+1
+0.2, 0.2, 0.2
+
+
+diffuse node:
+The structure of a diffuse node is as following:
+
+12 bytes - strength : vector3
+4  bytes - width : 32-bit integer
+4  bytes - height : 32-bit integer
+width * height * 4 bytes - image data
+
+The image data can be loaded in directly, it is the raw data retrieved from OpenGL. 
+Strength has a default value of 0.5 at every axis.
+
+
+specular node:
+The structure of a specular node is as following:
+
+12 bytes - strength : vector3
+4  bytes - width : 32-bit integer
+4  bytes - height : 32-bit integer
+width * height * 4 bytes - image data
+
+The image data can be loaded in directly, it is the raw data retrieved from OpenGL. 
+Strength has a default value of 1 at every axis.
+
+
+normal node:
+The structure of a normal node is as following:
+
+4  bytes - width : 32-bit integer
+4  bytes - height : 32-bit integer
+width * height * 4 bytes - image data
+
+The image data can be loaded in directly, it is the raw data retrieved from OpenGL.

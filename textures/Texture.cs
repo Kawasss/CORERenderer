@@ -16,6 +16,28 @@ namespace CORERenderer.textures
         public int width;
         public int height;
 
+        public byte[] Data { get { return GetData(); } }
+
+        public Texture(string name, int width, int height, byte[] data)
+        {
+            Handle = glGenTexture();
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, Handle);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            this.name = name;
+        }
+
         private static unsafe Texture ReadFromColorFile(bool flip, int mode, string imagePath)
         {
             Stbi.SetFlipVerticallyOnLoad(flip);
@@ -107,6 +129,32 @@ namespace CORERenderer.textures
         {
             glActiveTexture(texture);
             glBindTexture(GL_TEXTURE_2D, Handle);
+        }
+
+        private unsafe byte[] GetData()
+        {
+            this.Use(GL_TEXTURE0);
+
+            int textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
+            int textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
+            byte[] pixels = new byte[textureWidth * textureHeight * 4];
+            fixed (byte* temp = &pixels[0])
+            {
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+            }
+            return pixels;
+        }
+        public unsafe void GetData(out byte[] pixels, out int textureWidth, out int textureHeight)
+        {
+            this.Use(GL_TEXTURE0);
+
+            textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
+            textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
+            pixels = new byte[textureWidth * textureHeight * 4];
+            fixed (byte* temp = &pixels[0])
+            {
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+            }
         }
 
         public static unsafe void WriteAsPNG(string destination, uint textureHandle, int width, int height)
