@@ -242,22 +242,22 @@ namespace CORERenderer.Main
             for (int i = 0; i < Object.Materials.Count; i++)
             {
                 delete = true;
-                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
-                    if (Object.Materials[i].Texture == COREMain.scenes[COREMain.selectedScene].allModels[i].Materials[i].Texture)
+                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].models.Count; j++)
+                    if (Object.Materials[i].Texture == COREMain.scenes[COREMain.selectedScene].models[i].Materials[i].Texture)
                         delete = false;
                 if (delete)
                     glDeleteTexture(usedTextures[Object.Materials[i].Texture].Handle);
 
                 delete = true;
-                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
-                    if (Object.Materials[i].DiffuseMap == COREMain.scenes[COREMain.selectedScene].allModels[j].Materials[i].DiffuseMap)
+                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].models.Count; j++)
+                    if (Object.Materials[i].DiffuseMap == COREMain.scenes[COREMain.selectedScene].models[j].Materials[i].DiffuseMap)
                         delete = false;
                 if (delete)
                     glDeleteTexture(usedTextures[Object.Materials[i].DiffuseMap].Handle);
 
                 delete = true;
-                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
-                    if (Object.Materials[i].SpecularMap == COREMain.scenes[COREMain.selectedScene].allModels[j].Materials[i].SpecularMap)
+                for (int j = 0; j < COREMain.scenes[COREMain.selectedScene].models.Count; j++)
+                    if (Object.Materials[i].SpecularMap == COREMain.scenes[COREMain.selectedScene].models[j].Materials[i].SpecularMap)
                         delete = false;
                 if (delete)
                     glDeleteTexture(usedTextures[Object.Materials[i].SpecularMap].Handle);

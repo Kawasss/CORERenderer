@@ -142,12 +142,12 @@ namespace CORERenderer.Loaders
             bool loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
 
-            submodels.Add(new(Path.GetFileNameWithoutExtension(path), localVertices, offset, this));
+            submodels.Add(new(Path.GetFileNameWithoutExtension(path), localVertices, offset, new(1, 1, 1), this));
 
             COREMain.console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
             COREMain.console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
             float[] vertexData = localVertices.ToArray();
-            unsafe
+            /*unsafe
             { //transfer the vertex data to the compute shader
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, COREMain.ssbo);
                 //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
@@ -157,7 +157,7 @@ namespace CORERenderer.Loaders
 
                 glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
                 totalSSBOSizeUsed += vertexData.Length * sizeof(float);
-            }
+            }*/
         }
         
         private void GenerateObj(string path)
@@ -167,7 +167,7 @@ namespace CORERenderer.Loaders
             double readOBJFile = Glfw.Time - startedReading;
 
             this.highlighted = true;
-            COREMain.scenes[COREMain.selectedScene].currentObj = COREMain.scenes[COREMain.selectedScene].allModels.Count - 1;
+            COREMain.scenes[COREMain.selectedScene].currentObj = COREMain.scenes[COREMain.selectedScene].models.Count - 1;
 
             int error;
             if (!loaded)
@@ -293,9 +293,9 @@ namespace CORERenderer.Loaders
 
         public void Dispose()
         {
-            if (COREMain.scenes[COREMain.selectedScene].currentObj == COREMain.scenes[COREMain.selectedScene].allModels.IndexOf(this))
-                COREMain.scenes[COREMain.selectedScene].currentObj = -1;
-            COREMain.scenes[COREMain.selectedScene].allModels.Remove(this);
+            if (COREMain.GetCurrentScene.currentObj == COREMain.GetCurrentScene.models.IndexOf(this))
+                COREMain.GetCurrentScene.currentObj = -1;
+            COREMain.GetCurrentScene.models.Remove(this);
             foreach (Submodel sub in submodels)
                 sub.Dispose();
         }

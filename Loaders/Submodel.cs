@@ -83,13 +83,13 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE0);
         }
 
-        public Submodel(string name, List<float> vertices, Vector3 offset, Model parent)
+        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent)
         {
             this.name = name;
             this.vertices = vertices;
             this.material = new();
             this.translation = offset;
-            this.scaling = new(1, 1, 1);
+            this.scaling = scaling;
             this.parent = parent;
 
             GenerateBuffers();

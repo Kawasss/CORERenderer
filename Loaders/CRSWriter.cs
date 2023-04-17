@@ -18,7 +18,7 @@
                     {
                         WriteSubmodelInfo(sw, submodel);
                         foreach (float value in submodel.vertices)
-                            sw.Write(BitConverter.GetBytes(value));
+                            sw.BaseStream.Write(BitConverter.GetBytes(value));
                     }
                 }
             }
@@ -56,8 +56,10 @@
             byte[] scaling = submodel.scaling.Bytes;
 
             byte[] hasMaterials = BitConverter.GetBytes(submodel.hasMaterials);
+            Console.WriteLine(hasMaterials.Length);
 
             byte[] amountPolygons = BitConverter.GetBytes(submodel.NumberOfVertices / 3);
+
 
             sw.BaseStream.Write(smName);
             sw.BaseStream.Write(position);

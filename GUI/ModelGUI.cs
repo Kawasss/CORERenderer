@@ -20,7 +20,7 @@ namespace CORERenderer.GUI
 
             int offset = 20;
             int aa = 0;
-            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels.ToList())
+            foreach (Model model in COREMain.GetCurrentScene.models.ToList())
             {
                 if (offset >= Height)
                 {
@@ -34,7 +34,7 @@ namespace CORERenderer.GUI
                         {
                             model.highlighted = true;
                             if (COREMain.scenes[COREMain.selectedScene].currentObj != -1)
-                            COREMain.scenes[COREMain.selectedScene].allModels[COREMain.scenes[COREMain.selectedScene].currentObj].highlighted = false;
+                            COREMain.scenes[COREMain.selectedScene].models[COREMain.scenes[COREMain.selectedScene].currentObj].highlighted = false;
                             COREMain.scenes[COREMain.selectedScene].currentObj = aa;
                         }
                         else
@@ -110,7 +110,7 @@ namespace CORERenderer.GUI
         private void renderSubmodelList()
         {
             int offset = 20;
-            foreach (Model model in COREMain.scenes[COREMain.selectedScene].allModels) //(int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
+            foreach (Model model in COREMain.scenes[COREMain.selectedScene].models) //(int j = 0; j < COREMain.scenes[COREMain.selectedScene].allModels.Count; j++)
             {
                 foreach (Submodel submodel in model.submodels)//(int i = 0; i < COREMain.scenes[COREMain.selectedScene].allModels[j].submodelNames.Count; i++, offset  += 37)
                 {

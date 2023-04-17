@@ -16,19 +16,18 @@ namespace CORERenderer
     {
         public Camera camera;
 
-        public List<Model> allModels;
+        public List<Model> models;
         public List<Light> allLights;
 
         public bool loaded = false;
 
         public int currentObj = -1;
 
-
         private Vector2 lastPos = null;
 
         public override void OnLoad(string[] args)
         {
-            allModels = new();
+            models = new();
             allLights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
 
@@ -37,15 +36,17 @@ namespace CORERenderer
                 if (LoadFile != RenderMode.CRSFile)
                 {
                     loaded = true;
-                    allModels.Add(new(args[0]));
+                    models.Add(new(args[0]));
                     currentObj = 0;
                 }
+                else
+                    Readers.LoadCRS(args[0], out models, out _);
             }
         }
 
         public override void RenderEveryFrame(float delta)
         {
-            RenderAllModels(allModels);
+            RenderAllModels(models);
         }
 
         public override void EveryFrame(Window window, float delta)

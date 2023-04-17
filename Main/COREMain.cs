@@ -86,7 +86,7 @@ namespace CORERenderer.Main
         public static Div modelList;
         public static Submenu menu;
 
-        public static Model GetCurrentModelFromCurrentScene { get => scenes[selectedScene].allModels[GetCurrentObjFromScene]; }
+        public static Model GetCurrentModelFromCurrentScene { get => scenes[selectedScene].models[GetCurrentObjFromScene]; }
         public static Scene GetCurrentScene { get => scenes[selectedScene]; }
 
         //structs
@@ -398,13 +398,13 @@ namespace CORERenderer.Main
                             #region Add certain shapes based on GUI input
                             if (addCube)
                             {
-                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
+                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cube.obj"));
                                 addCube = false;
                                 menu.SetBool("  Cube", addCube);
                             }
                             if (addCylinder)
                             {
-                                scenes[selectedScene].allModels.Add(new($"{pathRenderer}\\OBJs\\cylinder.obj"));
+                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cylinder.obj"));
                                 addCylinder = false;
                                 menu.SetBool("  Cylinder", addCylinder);
                             }
@@ -443,7 +443,7 @@ namespace CORERenderer.Main
                             foreach (ModelInfo model in dirLoadedModels)
                             {
                                 Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials, out int error); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
-                                GetCurrentScene.allModels.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
+                                GetCurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
                             }
                             dirLoadedModels = null;
                         }
@@ -535,7 +535,7 @@ namespace CORERenderer.Main
             vertices = new();
             indices = new();
             offsets = new();
-            foreach (Model model in GetCurrentScene.allModels)
+            foreach (Model model in GetCurrentScene.models)
                 for (int i = 0; i < model.vertices.Count; i++)
                 {
                     vertices.Add(model.vertices[i]);
@@ -615,7 +615,7 @@ namespace CORERenderer.Main
             List<List<List<uint>>> allIndices = new();
             List<List<Vector3>> allOffsets = new();
             List<List<string>> mtlnames = new();
-            List<Model> models = scenes[selectedScene].allModels;
+            List<Model> models = scenes[selectedScene].models;
             List<ModelInfo> localVersion = new();
             Task.Run(() =>
             {

@@ -5,23 +5,26 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static void LoadCRS(string path, out Model[] models, out string header)
+        public static void LoadCRS(string path, out List<Model> models, out string header)
         {
             using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 header = GetString(fs, 100);
 
-                models = new Model[GetInt(fs)];
+                models = new();
 
-                for (int i = 0; i < models.Length; i++)
+                int modelCount = GetInt(fs);
+                Console.WriteLine(modelCount);
+                for (int i = 0; i < modelCount; i++)
                 {
                     //getting the model information
                     string modelName = GetString(fs, 10);
+
                     Vector3 translation = GetVector3(fs);
                     Vector3 scaling = GetVector3(fs);
 
                     int submodelCount = GetInt(fs);
-
+                    Console.WriteLine(submodelCount);
                     //getting the submodels
                     for (int j = 0; j < submodelCount; j++)
                     {
@@ -33,11 +36,14 @@ namespace CORERenderer.Loaders
 
                         int amountPolygons = GetInt(fs);
                         int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
-
+                        Console.WriteLine(amountVertices);
                         List<float> vertices = new();
                         for (int k = 0; k < amountVertices; k++)
                             vertices.Add(GetFloat(fs));
 
+                        models.Add(new());
+                        models[^1].type = Main.RenderMode.STLFile;
+                        models[^1].submodels.Add(new(submodelName, vertices, translation, submodelScaling, models[^1]));
                         //add the segment for retreiving material values if given
                     }
                 }
@@ -55,7 +61,7 @@ namespace CORERenderer.Loaders
             return vector;
         }
 
-        private static bool GetBool(FileStream fs) => BitConverter.ToBoolean(Get4Bytes(fs));
+        private static bool GetBool(FileStream fs) => Convert.ToBoolean((byte)fs.ReadByte());
 
         private static float GetFloat(FileStream fs) => BitConverter.ToSingle(Get4Bytes(fs));
 
