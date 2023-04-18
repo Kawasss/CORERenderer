@@ -16,6 +16,7 @@ namespace CORERenderer.textures
         public int width;
         public int height;
 
+        public byte[] FileContent;
         public byte[] Data;// { get { return GetData(); } }
 
         public Texture(string name, int width, int height, byte[] data)
@@ -77,7 +78,7 @@ namespace CORERenderer.textures
             for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
                 local.Add(i);
 
-            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height, Data = image.Data.ToArray() };
+            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height, FileContent = File.ReadAllBytes(imagePath) };//, Data = image.Data.ToArray() };
         }
 
         public static Texture GenerateEmptyTexture(int Width, int Height)

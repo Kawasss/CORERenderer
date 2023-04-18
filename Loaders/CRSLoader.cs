@@ -16,7 +16,7 @@ namespace CORERenderer.Loaders
                 models = new();
 
                 int modelCount = GetInt(fs);
-                Console.WriteLine(modelCount);
+                
                 for (int i = 0; i < modelCount; i++)
                 {
                     RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out int submodelCount);
@@ -25,8 +25,7 @@ namespace CORERenderer.Loaders
                     models[^1].name = modelName;
                     models[^1].translation = translation;
                     models[^1].Scaling = scaling;
-                    Console.WriteLine($"model: {translation}");
-                    Console.WriteLine(submodelCount);
+
                     //getting the submodels
                     for (int j = 0; j < submodelCount; j++)
                     {
@@ -34,45 +33,12 @@ namespace CORERenderer.Loaders
 
                         int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
                         List<float> vertices = RetrieveVertices(fs, amountVertices);
-
+                        
                         //add the segment for retreiving material values if given
                         if (hasMaterial)
                         {
-                            string materialName = GetString(fs, 10);
-                            float shininess = GetFloat(fs);
-                            float transparency = GetFloat(fs);
-                            Vector3 ambient = GetVector3(fs);
-
-                            //retrieve the diffuse texture
-                            RetrieveTextureNode(fs, out Vector3 diffuseStrength, out int textureWidth, out int textureHeight, out byte[] imageData);
-                            Texture difTex = new("diffuse", textureWidth, textureHeight, imageData);
-                            Globals.usedTextures.Add(difTex);
-                            int difIndex = Globals.usedTextures.IndexOf(difTex);
-
-                            //retrieve the specular texture
-                            RetrieveTextureNode(fs, out Vector3 specularStrength, out textureWidth, out textureHeight, out imageData);
-                            Texture specTex = new("specular", textureWidth, textureHeight, imageData);
-                            Globals.usedTextures.Add(specTex);
-                            int specIndex = Globals.usedTextures.IndexOf(specTex);
-
-                            //retrieve the normal texture
-                            RetrieveTextureNode(fs, out textureWidth, out textureHeight, out imageData);
-                            Texture normTex = new("normal", textureWidth, textureHeight, imageData);
-                            Globals.usedTextures.Add(normTex);
-                            int normIndex = Globals.usedTextures.IndexOf(normTex);
-
-                            Material material = new();
-                            material.Name = materialName;
-                            material.Shininess = shininess;
-                            material.Ambient = ambient;
-                            material.Diffuse = diffuseStrength;
-                            material.Specular = specularStrength;
-                            material.Transparency = transparency;
-                            material.Texture = difIndex;
-                            material.DiffuseMap = difIndex;
-                            material.SpecularMap = specIndex;
-                            material.NormalMap = normIndex;
-                            Console.WriteLine($"submodel: {submodelTranslation}");
+                            Material material = RetrieveMaterialNode(fs);
+                            
                             models[^1].type = RenderMode.ObjFile;
                             models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1], material));
                         }
@@ -86,25 +52,62 @@ namespace CORERenderer.Loaders
             }
         }
 
-        private static void RetrieveTextureNode(FileStream fs, out Vector3 textureStrength, out int textureWidth, out int textureHeight, out byte[] imageData)
+        private static Material RetrieveMaterialNode(FileStream fs)
         {
-            textureStrength = GetVector3(fs);
-            textureWidth = GetInt(fs);
-            textureHeight = GetInt(fs);
+            string materialName = GetString(fs, 10);
+            float shininess = GetFloat(fs);
+            float transparency = GetFloat(fs);
+            Vector3 ambient = GetVector3(fs);
 
-            imageData = new byte[textureWidth * textureHeight * 4];
-            for (int k = 0; k < imageData.Length; k++)
-                imageData[k] = (byte)fs.ReadByte();
+            //retrieve all materials
+            RetrieveTextureNode(fs, out Vector3 diffuseStrength, out byte[] diffusePNGData);
+            Texture difTex = GenerateTextureFromData(diffusePNGData);
+            Globals.usedTextures.Add(difTex);
+            int difIndex = Globals.usedTextures.Count - 1;
+
+            RetrieveTextureNode(fs, out Vector3 specularStrength, out byte[] specularPNGData);
+            Texture specTex = GenerateTextureFromData(specularPNGData);
+            Globals.usedTextures.Add(specTex);
+            int specIndex = Globals.usedTextures.Count - 1;
+
+            RetrieveTextureNode(fs, out byte[] normalPNGData);
+            Texture normTex = GenerateTextureFromData(normalPNGData);
+            Globals.usedTextures.Add(normTex);
+            int normIndex = Globals.usedTextures.Count - 1;
+
+            return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difIndex, DiffuseMap = difIndex, SpecularMap = specIndex, NormalMap = normIndex };
         }
 
-        private static void RetrieveTextureNode(FileStream fs, out int textureWidth, out int textureHeight, out byte[] imageData)
+        private static Texture GenerateTextureFromData(byte[] imageData)
         {
-            textureWidth = GetInt(fs);
-            textureHeight = GetInt(fs);
+            string dir = Path.GetTempPath();
+            using (FileStream fs = File.Create($"{dir}diffuseHolder.png"))
+            using (StreamWriter sw = new(fs))
+            {
+                sw.BaseStream.Write(imageData);
+            }
+            Texture tex = Texture.ReadFromFile($"{dir}diffuseHolder.png");
+            File.Delete($"{dir}diffuseHolder.png");
+            return tex;
+        }
 
-            imageData = new byte[textureWidth * textureHeight * 4];
-            for (int k = 0; k < imageData.Length; k++)
-                imageData[k] = (byte)fs.ReadByte();
+        private static void RetrieveTextureNode(FileStream fs, out Vector3 textureStrength, out byte[] imageData)
+        {
+            textureStrength = GetVector3(fs);
+            int length = GetInt(fs);
+            imageData = new byte[length];
+
+            for (int i = 0; i < length; i++)
+                imageData[i] = (byte)fs.ReadByte();
+        }
+
+        private static void RetrieveTextureNode(FileStream fs, out byte[] imageData)
+        {
+            int length = GetInt(fs);
+            imageData = new byte[length];
+
+            for (int i = 0; i < length; i++)
+                imageData[i] = (byte)fs.ReadByte();
         }
 
         private static List<float> RetrieveVertices(FileStream fs, int amountVertices)
