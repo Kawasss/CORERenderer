@@ -77,7 +77,7 @@ namespace CORERenderer.GUI
                 iconVBO = glGenBuffer();
                 iconVAO = glGenVertexArray();
 
-                glBindBuffer(GL_ARRAY_BUFFER, iconVBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, iconVBO);
                 glBindVertexArray(iconVAO);
 
                 //tell the gpu how large the buffer has to be
@@ -95,7 +95,7 @@ namespace CORERenderer.GUI
             lineVBO = glGenBuffer();
             lineVAO = glGenVertexArray();
 
-            glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
             glBindVertexArray(lineVAO);
 
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * 2, (IntPtr)null, GL_DYNAMIC_DRAW);

@@ -6,17 +6,17 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static bool LoadSTL(string path, out string name, out List<float> vertices, out Vector3 offset)
+        public static Error LoadSTL(string path, out string name, out List<float> vertices, out Vector3 offset)
         {
             if (!File.Exists(path))
             {
                 name = "ERROR";
                 vertices = new();
                 offset = Vector3.Zero;
-                return false;
+                return Error.FileNotFound;
             }
 
-
+            Error succes = Error.None;
             using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new(fs))
             using (StreamReader sr = new(bs))
@@ -27,19 +27,19 @@ namespace CORERenderer.Loaders
                     name = "ERROR";
                     vertices = new();
                     offset = Vector3.Zero;
-                    return false;
+                    return Error.InvalidContents;
                 }
 
-                bool succes = false;
+                
                 if (binaryOrASCII[..5] == "solid")
                     succes = LoadSTLInASCII(path, out name, out vertices, out offset);
                 else
                     succes = LoadSTLInBinary(path, out name, out vertices, out offset);
             }
-            return true;
+            return succes;
         }
 
-        private static bool LoadSTLInASCII(string path, out string name, out List<float> vertices, out Vector3 offset) //ASCII STI files are made of this sequence:
+        private static Error LoadSTLInASCII(string path, out string name, out List<float> vertices, out Vector3 offset) //ASCII STI files are made of this sequence:
         {                                                                                                              //facet normal VALUE VALUE  VALUE
             vertices = new();                                                                                          // outer loop
             offset = Vector3.Zero;                                                                                     //  vertex VALUE VALUE VALUE
@@ -82,10 +82,10 @@ namespace CORERenderer.Loaders
                 }
             }
 
-            return false;
+            return Error.None;
         }
 
-        private static bool LoadSTLInBinary(string path, out string name, out List<float> vertices, out Vector3 offset)
+        private static Error LoadSTLInBinary(string path, out string name, out List<float> vertices, out Vector3 offset)
         {
             vertices = new();
             name = Path.GetFileName(path)[..^4];
@@ -140,7 +140,7 @@ namespace CORERenderer.Loaders
             }
             //offset = new(holder[0], holder[1], holder[2]);
             offset = Vector3.Zero;
-            return true;
+            return Error.None;
         }
 
         public static Vector3 GetThreeFloatsWithRegEx(string line)

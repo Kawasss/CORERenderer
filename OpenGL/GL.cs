@@ -2120,7 +2120,7 @@ namespace CORERenderer.OpenGL
         /// </summary>
         /// <param name="target">Specifies the target to which the buffer object is bound.</param>
         /// <param name="buffer">Specifies the name of a buffer object.</param>
-        public static void glBindBuffer(int target, uint buffer) => _glBindBuffer(target, buffer);
+        internal static void GlBindBuffer(int target, uint buffer) => _glBindBuffer(target, buffer);
 
         /// <summary>
         /// Bind a named framebuffer object.

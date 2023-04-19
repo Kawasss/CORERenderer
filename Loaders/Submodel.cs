@@ -227,7 +227,7 @@ namespace CORERenderer.Loaders
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
         }
 

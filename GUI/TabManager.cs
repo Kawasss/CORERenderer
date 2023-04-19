@@ -268,9 +268,9 @@ namespace CORERenderer.GUI
                             localX + COREMain.monitorWidth * 0.01f, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f
                         };
 
-                        glBindBuffer(GL_ARRAY_BUFFER, plusVBO);
+                        glBindBuffer(BufferTarget.ArrayBuffer, plusVBO);
                         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                        glBindBuffer(GL_ARRAY_BUFFER, 0);
+                        glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                         plusShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * COREMain.monitorWidth * 0.034f, 0, 0)));//new(0.471f, 1, 1, COREMain.monitorWidth * 0.034f * i, 0, 0));// * MathC.GetScalingMatrix(0.471f, 1, 1)
                         

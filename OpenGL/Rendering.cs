@@ -8,28 +8,13 @@ using System.Runtime.CompilerServices;
 
 namespace CORERenderer.OpenGL
 {
-    public class Rendering : GL
+    public partial class Rendering : GL
     {
-        private static int totalAmountOfTransferredBytes = 0;
-        private static int lastAmountOfTransferredBytes = 0;
-
-        public static int unresolvedInstances = 0;
-        private static int estimatedDataLoss = 0;
-        public static int shaderByteSize = 0;
-
-        public static int TotalAmountOfTransferredBytes { get { return totalAmountOfTransferredBytes; } set { totalAmountOfTransferredBytes += value; lastAmountOfTransferredBytes = value; } }
-        public static string TotalAmountOfTransferredBytesString { get { if (totalAmountOfTransferredBytes >= 1000000) return $"{MathF.Round(totalAmountOfTransferredBytes * 0.000001f):N0} MB"; else if (totalAmountOfTransferredBytes >= 1000) return $"{MathF.Round(totalAmountOfTransferredBytes * 0.001f):N0} KB"; else return $"{totalAmountOfTransferredBytes}"; } }
-        public static string LastAmountOfTransferredBytesString { get { if (lastAmountOfTransferredBytes >= 1000000) return $"{MathF.Round(lastAmountOfTransferredBytes * 0.000001f):N0} MB"; else if (lastAmountOfTransferredBytes >= 1000) return $"{MathF.Round(lastAmountOfTransferredBytes * 0.001f):N0} KB"; else return $"{lastAmountOfTransferredBytes}"; } }
-        public static string EstimatedDataLossString { get { if (estimatedDataLoss >= 1000000) return $"{MathF.Round(estimatedDataLoss * 0.000001f):N0} MB"; else if (estimatedDataLoss >= 1000) return $"{MathF.Round(estimatedDataLoss * 0.001f):N0} KB"; else return $"{estimatedDataLoss}"; } }
-        public static string TotalShaderByteSizeString { get { if (shaderByteSize >= 1000000) return $"{MathF.Round(shaderByteSize * 0.000001f):N0} MB"; else if (shaderByteSize >= 1000) return $"{MathF.Round(shaderByteSize * 0.001f):N0} KB"; else return $"{shaderByteSize}"; } }
-
         private static uint lineVBO;
         private static uint lineVAO;
 
         public static bool cullFaces = true;
         public static bool renderOrthographic = false;
-
-        public static int drawCalls = 0;
 
         public static ShaderType shaderConfig = ShaderType.Lighting;
 
@@ -43,72 +28,6 @@ namespace CORERenderer.OpenGL
         public static void SetCamera(Camera currentCamera)
         {
             camera = currentCamera;
-        }
-
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)
-        {
-            unsafe
-            {
-                fixed (byte* temp = &pixels[0])
-                {
-                    IntPtr intptr = new(temp);
-                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, intptr);
-                }
-            }
-            TotalAmountOfTransferredBytes = pixels.Length * sizeof(byte); //bytes are 1 byte of size but still
-        }
-
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels)
-        {
-            unsafe
-            {
-                GlTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
-            }
-            unresolvedInstances++;
-            estimatedDataLoss += width * height * 4;
-        }
-
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, byte[] pixels)
-        {
-            unsafe
-            {
-                if (pixels != null)
-                    fixed (byte* temp = &pixels[0])
-                    {
-                        IntPtr intptr = new(temp);
-                        GlTexImage2D(target, level, internalFormat, width, height, border, format, type, intptr);
-                        TotalAmountOfTransferredBytes = pixels.Length;
-                    }
-                else
-                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
-            }
-        }
-
-        /// <summary>
-        ///     Render primitives from array data.
-        /// </summary>
-        /// <param name="mode">Specifies what kind of primitives to render.</param>
-        /// <param name="first">Specifies the starting index in the enabled arrays.</param>
-        /// <param name="count">Specifies the number of indices to be rendered.</param>
-        public static void glDrawArrays(PrimitiveType mode, int first, int count)
-        {
-            drawCalls++;
-            GlDrawArrays((int)mode, first, count);
-        }
-
-        /// <summary>
-        ///     Render primitives from array data.
-        /// </summary>
-        /// <param name="mode">Specifies what kind of primitives to render.</param>
-        /// <param name="count">Specifies the number of elements to be rendered.</param>
-        /// <param name="type">
-        ///     Specifies the type of the values in indices.
-        /// </param>
-        /// <param name="indices">Specifies a pointer to the location where the indices are stored.</param>
-        public unsafe static void glDrawElements(PrimitiveType mode, int count, GLType type, void* indices)
-        {
-            drawCalls++;
-            GlDrawElements((int)mode, count, (int)type, indices);
         }
 
         /// <summary>
@@ -166,7 +85,7 @@ namespace CORERenderer.OpenGL
         public static void GenerateEmptyBuffer(out uint VBO, out uint VAO, int sizeInBytes)
         {
             VBO = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
 
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
@@ -185,7 +104,7 @@ namespace CORERenderer.OpenGL
         public static void GenerateFilledBuffer(out uint VBO, out uint VAO, float[] vertices)
         {
             VBO = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
             
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
@@ -198,7 +117,7 @@ namespace CORERenderer.OpenGL
         public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Matrix[] matrices)
         {
             VBO = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
 
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
@@ -218,7 +137,7 @@ namespace CORERenderer.OpenGL
         public static void GenerateFilledBuffer(out uint VBO, Matrix[] matrices)
         {
             VBO = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
 
             unsafe
             {
@@ -240,7 +159,7 @@ namespace CORERenderer.OpenGL
         public static void GenerateFilledBuffer(out uint EBO, uint[] indices)
         {
             EBO = glGenBuffer();
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glBindBuffer(BufferTarget.ElementArrayBuffer, EBO);
 
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Length * sizeof(uint), indices, GL_STATIC_DRAW);
 
@@ -360,7 +279,7 @@ namespace CORERenderer.OpenGL
         public static void UpdateUniformBuffers()//can be made private if render loop is put here
         {
             //assigns values to the freed up gpu memory for global uniforms
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             MatrixToUniformBuffer(camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
             MatrixToUniformBuffer(camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
             if (!renderOrthographic)
@@ -373,18 +292,18 @@ namespace CORERenderer.OpenGL
         {
             uboMatrices = glGenBuffer();
 
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             glBufferData(GL_UNIFORM_BUFFER, 3 * GL_MAT4_FLOAT_SIZE, NULL, GL_STATIC_DRAW);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            glBindBuffer(BufferTarget.UniformBuffer, 0);
             glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 3 * GL_MAT4_FLOAT_SIZE);
 
             //assigns values to the freed up gpu memory for global uniforms
-            glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             if (!renderOrthographic)
                 MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
             else
                 MatrixToUniformBuffer(camera.GetOrthographicProjectionMatrix(), 0);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            glBindBuffer(BufferTarget.UniformBuffer, 0);
         }
 
         static uint cubeVAO;
@@ -442,7 +361,7 @@ namespace CORERenderer.OpenGL
                 cubeVAO = glGenVertexArray();
                 cubeVBO = glGenBuffer();
                 // fill buffer
-                glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, cubeVBO);
                 fixed (float* temp = &vertices[0])
                 {
                     IntPtr intptr = new(temp);
@@ -457,7 +376,7 @@ namespace CORERenderer.OpenGL
                 glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
                 glEnableVertexAttribArray(2);
                 glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
                 glBindVertexArray(0);
             }
             // render Cube

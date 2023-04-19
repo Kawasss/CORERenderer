@@ -207,7 +207,7 @@ namespace CORERenderer.Main
 
             
                 fb.VBO = glGenBuffer();
-                glBindBuffer(GL_ARRAY_BUFFER, fb.VBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, fb.VBO);
 
                 fixed (float* temp = &FrameBufferVertices[0])
                 {
@@ -226,7 +226,7 @@ namespace CORERenderer.Main
                 glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
                 glEnableVertexAttribArray((uint)vertexLocation);
             }
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
 
             return fb;

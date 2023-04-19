@@ -29,19 +29,16 @@ namespace CORERenderer.Loaders
         public Vector3 translation = new(0, 0, 0);
         public Vector3 rotation = new(0, 0, 0);
 
-        private Shader shader = GenericShaders.GenericLighting;
+        private readonly Shader shader = GenericShaders.GenericLighting;
 
         public RenderMode type;
+        public Error error = Error.None;
 
         public string name = "PLACEHOLDER";
 
         public List<string> submodelNames = new();
 
-        public bool renderNormals = false;
-
-        public bool highlighted = false;
-
-        public bool renderLines = false;
+        public bool highlighted = false, renderLines = false, renderNormals = false, terminate = false;
 
         public string mtllib;
 
@@ -139,8 +136,15 @@ namespace CORERenderer.Loaders
         private void generateStl(string path)
         {
             double startedReading = Glfw.Time;
-            bool loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
+            Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
+
+            if (loaded != Error.None)
+            {
+                this.error = loaded;
+                terminate = true;
+                return;
+            }
 
             submodels.Add(new(Path.GetFileNameWithoutExtension(path), localVertices, offset, new(1, 1, 1), this));
 
@@ -163,27 +167,34 @@ namespace CORERenderer.Loaders
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            bool loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out offsets, out mtllib);
+            Error loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out offsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             this.highlighted = true;
             COREMain.scenes[COREMain.selectedScene].currentObj = COREMain.scenes[COREMain.selectedScene].models.Count - 1;
 
-            int error;
-            if (!loaded)
-                throw new GLFW.Exception($"Invalid file format for {name} (!.obj && !.OBJ)");
+            if (loaded != Error.None)
+            {
+                this.error = loaded;
+                terminate = true;
+                return;
+            }
 
             name = Path.GetFileNameWithoutExtension(path);
 
             startedReading = Glfw.Time;
-            if (mtllib != "default")
-                loaded = LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out Materials, out error);
-            else
-                loaded = LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials, out error);
+
+            //decide to load the default mtl file or not
+            loaded = mtllib != "default" ? LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out Materials) : LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials);
+            
             double readMTLFile = Glfw.Time - startedReading;
 
-            if (!loaded)
-                ErrorLogic(error);
+            if (loaded != Error.None)
+            {
+                this.error = loaded;
+                terminate = true;
+                return;
+            }
 
             submodels = new();
             this.translation = offsets[0];
@@ -317,7 +328,7 @@ namespace CORERenderer.Loaders
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
         }
 

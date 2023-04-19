@@ -69,9 +69,9 @@ namespace CORERenderer.GUI
                     (int)(bottomX + Width * 0.1f + Width * 0.083f), (int)(bottomY + Height - offset + 18f - Height * 0.024f), 1, 1,
                     (int)(bottomX + Width * 0.1f + Width * 0.083f), (int)(bottomY + Height - offset + 18f),                   1, 0
                 };
-                glBindBuffer(GL_ARRAY_BUFFER, iconVBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, iconVBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                 //determines what icon to use
                 if (model.type == RenderMode.ObjFile)
@@ -91,9 +91,9 @@ namespace CORERenderer.GUI
                     bottomX + Width * 0.9f, bottomY + Height - offset - 9
                 };
 
-                glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                 shader.Use();
                 shader.SetVector3("color", 0.3f, 0.3f, 0.3f);
@@ -148,9 +148,9 @@ namespace CORERenderer.GUI
                             bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f - 25, 1, 1,
                             bottomX + Width * 0.1f + 25, bottomY + Height - offset + 18f,      1, 0
                     };
-                    glBindBuffer(GL_ARRAY_BUFFER, iconVBO);
+                    glBindBuffer(BufferTarget.ArrayBuffer, iconVBO);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                     objIcon.Use(GL_TEXTURE0);
 
@@ -164,9 +164,9 @@ namespace CORERenderer.GUI
                             bottomX + Width * 0.9f, bottomY + Height - offset - 9
                     };
 
-                    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+                    glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                     shader.Use();
                     shader.SetVector3("color", 0.3f, 0.3f, 0.3f);

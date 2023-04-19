@@ -7,49 +7,64 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static void LoadCRS(string path, out List<Model> models, out string header)
+        public const string CURRENT_VERSION = "v1.0";
+
+        public static Error LoadCRS(string path, out List<Model> models, out string header)
         {
-            using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            try
             {
-                header = GetString(fs, 100);
-
-                models = new();
-
-                int modelCount = GetInt(fs);
-                
-                for (int i = 0; i < modelCount; i++)
+                using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out int submodelCount);
+                    header = GetString(fs, 100);
+                    
+                    models = new();
 
-                    models.Add(new());
-                    models[^1].name = modelName;
-                    models[^1].translation = translation;
-                    models[^1].Scaling = scaling;
+                    if (!header.Contains(CURRENT_VERSION))
+                        return Error.Outdated;
 
-                    //getting the submodels
-                    for (int j = 0; j < submodelCount; j++)
+                    int modelCount = GetInt(fs);
+
+                    for (int i = 0; i < modelCount; i++)
                     {
-                        RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out bool hasMaterial, out int amountPolygons);
+                        RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out int submodelCount);
 
-                        int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
-                        List<float> vertices = RetrieveVertices(fs, amountVertices);
-                        
-                        //add the segment for retreiving material values if given
-                        if (hasMaterial)
+                        models.Add(new());
+                        models[^1].name = modelName;
+                        models[^1].translation = translation;
+                        models[^1].Scaling = scaling;
+
+                        //getting the submodels
+                        for (int j = 0; j < submodelCount; j++)
                         {
-                            Material material = RetrieveMaterialNode(fs);
-                            
-                            models[^1].type = RenderMode.ObjFile;
-                            models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1], material));
-                        }
-                        else
-                        {
-                            models[^1].type = RenderMode.STLFile;
-                            models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
+                            RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out bool hasMaterial, out int amountPolygons);
+
+                            int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
+                            List<float> vertices = RetrieveVertices(fs, amountVertices);
+
+                            //add the segment for retreiving material values if given
+                            if (hasMaterial)
+                            {
+                                Material material = RetrieveMaterialNode(fs);
+
+                                models[^1].type = RenderMode.ObjFile;
+                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1], material));
+                            }
+                            else
+                            {
+                                models[^1].type = RenderMode.STLFile;
+                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
+                            }
                         }
                     }
                 }
             }
+            catch (Exception)
+            {
+                models = new();
+                header = "";
+                return Error.InvalidContents;
+            }
+            return Error.None;
         }
 
         private static Material RetrieveMaterialNode(FileStream fs)

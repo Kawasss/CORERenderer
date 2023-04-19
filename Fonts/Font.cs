@@ -72,7 +72,7 @@ namespace CORERenderer.Fonts
             glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
             VBO = glGenBuffer();
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
 
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, (IntPtr)null, GL_DYNAMIC_DRAW);
 
@@ -130,13 +130,13 @@ namespace CORERenderer.Fonts
                 };
                 glBindTexture(GL_TEXTURE_2D, ch.textureID);
 
-                glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, VBO);
                 fixed (float* temp = &vertices[0])
                 {
                     IntPtr intptr = new(temp);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), intptr);
                 }
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                 glDrawArrays(PrimitiveType.Triangles, 0, 6);
                 x += (ch.advance >> 6) * scale;

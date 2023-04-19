@@ -42,6 +42,12 @@ namespace CORERenderer
                 else
                     Readers.LoadCRS(args[0], out models, out _);
             }
+            for (int i = 0; i < models.Count; i++)
+                if (models[i].terminate)
+                {
+                    console.WriteError($"Couldn't create model: {models[i].error}");
+                    models.RemoveAt(i);
+                }
         }
 
         public override void RenderEveryFrame(float delta)
@@ -51,10 +57,16 @@ namespace CORERenderer
 
         public override void EveryFrame(Window window, float delta)
         {
+            if (models.Count > 0 && models[^1].terminate)
+            {
+                console.WriteError($"Couldn't create model: {models[^1].error}");
+                models.RemoveAt(models.Count - 1);
+            }
+
             if (shaderConfig == ShaderType.PathTracing)
             {
-                GenericShaders.GenericLighting.SetVector3("RAY.origin", COREMain.CurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("RAY.direction", COREMain.CurrentScene.camera.front);
+                GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
                 GenericShaders.GenericLighting.SetInt("isReflective", 0);
                 GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
                 GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
@@ -62,8 +74,8 @@ namespace CORERenderer
             }
             else if (shaderConfig == ShaderType.Lighting)
             {
-                GenericShaders.GenericLighting.SetVector3("viewPos", COREMain.CurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", COREMain.CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", CurrentScene.camera.position);
             }
 
 
@@ -136,9 +148,6 @@ namespace CORERenderer
             glEnable(GL_STENCIL_TEST);
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-            //glEnable(GL_TEXTURE_2D);//error 1280
-            //glEnable(GL_TEXTURE_CUBE_MAP);//error 1280
 
             glEnable(GL_DEBUG_OUTPUT);
 

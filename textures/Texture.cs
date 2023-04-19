@@ -238,7 +238,7 @@ namespace CORERenderer.textures
                 float height = (float)image.Height / (float)image.Width;
 
                 h.VBO2D = glGenBuffer();
-                glBindBuffer(GL_ARRAY_BUFFER, h.VBO2D);
+                glBindBuffer(BufferTarget.ArrayBuffer, h.VBO2D);
 
                 float[] vertices = new float[]
                 {
@@ -268,7 +268,7 @@ namespace CORERenderer.textures
                 h.testShader.SetInt("Texture", GL_TEXTURE0);
                 h.testShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
                 glBindVertexArray(0);
 
                 glBindTexture(GL_TEXTURE_2D, h.Handle);

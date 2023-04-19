@@ -24,21 +24,19 @@ namespace CORERenderer.Loaders
             );
         }
 
-        public static bool LoadMTL(string path, List<string> mtlNames, out List<Material> materials, out int error)
+        public static Error LoadMTL(string path, List<string> mtlNames, out List<Material> materials)
         {
             if (path == null)
             {
                 materials = new();
-                error = 0;
-                return false;
+                return Error.InvalidPath;
             }
 
             if (!File.Exists(path))
             {
                 Console.WriteLine($"path {path} doesnt exist");
                 materials = new();
-                error = -1;
-                return false;
+                return Error.FileNotFound;
             }
 
             List<int> temp = new();
@@ -51,8 +49,7 @@ namespace CORERenderer.Loaders
             if (filename == "None")
             {
                 materials = new();
-                error = 0;
-                return false;
+                return Error.FileNotFound;
             }
 
             Console.WriteLine("Reading .mtl file..");
@@ -64,9 +61,8 @@ namespace CORERenderer.Loaders
             if ((path[(path.Length - 4)..].ToLower() != ".mtl"))
             {
                 Console.WriteLine($"Invalid file {filename}");
-                error = -1;
 
-                return false;
+                return Error.InvalidFile;
             }
 
             bool firstMTLPassed = false;
@@ -180,9 +176,8 @@ namespace CORERenderer.Loaders
                 for (int j = 0; j < tempMtl.Count; j++)
                     if (mtlNames[i] == tempMtl[j].Name)
                         materials.Add(tempMtl[j]); 
-            error = 1;
 
-            return true;
+            return Error.None;
         }
     }
 

@@ -98,9 +98,9 @@ namespace CORERenderer.GUI
                     vertices.Add(pointLocations[i + 1]); vertices.Add(pointValues[i + 1] + 1);
                 }
 
-                glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+                glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Count * sizeof(float), vertices.ToArray());
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
                 glBindVertexArray(lineVAO);
 

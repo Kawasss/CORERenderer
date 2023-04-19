@@ -227,7 +227,7 @@ namespace CORERenderer.Main
                 glShaderStorageBlockBinding(comp.Handle, blockIndex, bindingIndex);
                 ssbo = glGenBuffer();
                 GetError();
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+                glBindBuffer(BufferTarget.ShaderStorageBuffer, ssbo);
                 glBufferData(GL_SHADER_STORAGE_BUFFER, 23620, (IntPtr)null, GL_DYNAMIC_DRAW);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
                 //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, ssbo, 0, 0);
@@ -445,7 +445,7 @@ namespace CORERenderer.Main
                         {
                             foreach (ModelInfo model in dirLoadedModels)
                             {
-                                Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials, out int error); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
+                                Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
                                 CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
                             }
                             dirLoadedModels = null;
@@ -581,15 +581,9 @@ namespace CORERenderer.Main
                 text = sr.ReadLine();
 
                 Camera.cameraSpeed = float.Parse(text[(text.IndexOf('=') + 1)..]);
-
-                text = sr.ReadLine();
-                COREConsole.writeDebug = text.Contains("True");
-
-                text = sr.ReadLine();
-                COREConsole.writeError = text.Contains("True");
-
-                text = sr.ReadLine();
-                loadInfoOnstartup = text.Contains("True");
+                COREConsole.writeDebug = sr.ReadLine().Contains("True");
+                COREConsole.writeError = sr.ReadLine().Contains("True");
+                loadInfoOnstartup = sr.ReadLine().Contains("True");
 
                 consoleCache.Add("DEBUG Loaded config file");
             }

@@ -67,7 +67,7 @@ namespace CORERenderer.GUI
             cross = Texture.ReadFromFile($"{COREMain.pathRenderer}\\GUI\\exitCross.png");
             cross.Use(GL_TEXTURE0);
 
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
         }
 

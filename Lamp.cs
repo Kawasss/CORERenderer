@@ -3,6 +3,8 @@ using CORERenderer.Loaders;
 using CORERenderer.Main;
 using static CORERenderer.OpenGL.GL;
 using COREMath;
+using CORERenderer.OpenGL;
+using static CORERenderer.OpenGL.Rendering;
 
 namespace CORERenderer
 {
@@ -33,7 +35,7 @@ namespace CORERenderer
             computeShader.Use();
 
             ssbo = glGenBuffer();
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+            glBindBuffer(BufferTarget.ShaderStorageBuffer, ssbo);
 
             uint blockIndex = glGetProgramResourceIndex(computeShader.Handle, GL_SHADER_STORAGE_BLOCK, "Lamp");
             uint bindingIndex = 2;
