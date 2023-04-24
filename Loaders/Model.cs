@@ -14,6 +14,10 @@ namespace CORERenderer.Loaders
 {
     public class Model : Readers
     {
+        public static Model Cube { get { return new($"{COREMain.pathRenderer}\\OBJs\\cube.stl"); } }
+        public static Model Cylinder { get { return new($"{COREMain.pathRenderer}\\OBJs\\cylinder.stl"); } }
+        public static Model Plane { get { return new($"{COREMain.pathRenderer}\\OBJs\\plane.stl"); } }
+
         public static int totalSSBOSizeUsed = 0;
 
         public List<List<float>> vertices;
@@ -138,6 +142,7 @@ namespace CORERenderer.Loaders
             double startedReading = Glfw.Time;
             Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
+            Console.WriteLine(offset);
 
             if (loaded != Error.None)
             {

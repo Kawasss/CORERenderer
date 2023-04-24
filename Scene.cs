@@ -57,7 +57,19 @@ namespace CORERenderer
 
         public override void EveryFrame(Window window, float delta)
         {
-            if (models.Count > 0 && models[^1].terminate)
+            loaded = models.Count > 0;
+            
+            for (int i = 0; i < models.Count; i++) //inefficient, better to have a dictionary to look it up
+            {
+                if (selectedID == models[i].ID)
+                {
+                    models[i].highlighted = true;
+                    currentObj = i;
+                    Console.WriteLine(1);
+                }
+            }
+
+            if (loaded && models[^1].terminate)
             {
                 console.WriteError($"Couldn't create model: {models[^1].error}");
                 models.RemoveAt(models.Count - 1);
@@ -123,14 +135,14 @@ namespace CORERenderer
                     }
 
 
-                    /*if (arrows.wantsToMoveYAxis && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, deltaY / 150, 0);
+                    if (arrows.wantsToMoveYAxis && loaded)
+                        CurrentModel.translation += new Vector3(0, deltaY / 150, 0);
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation -= new Vector3(deltaX / 150, 0, 0);
+                        CurrentModel.translation -= new Vector3(deltaX / 150, 0, 0);
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        allModels[currentObj].submodels[allModels[currentObj].selectedSubmodel].translation += new Vector3(0, 0, -deltaX / 150);*/
+                        CurrentModel.translation += new Vector3(0, 0, -deltaX / 150);
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

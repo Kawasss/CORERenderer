@@ -288,7 +288,7 @@ namespace CORERenderer.Main
                 console.WriteLine($"Initialised in {Glfw.Time} seconds");
                 console.WriteLine("Beginning render loop");
 
-                
+                arrows = new();
 
                 #region First time rendering
                 Rendering.UpdateUniformBuffers();
@@ -401,13 +401,14 @@ namespace CORERenderer.Main
                             #region Add certain shapes based on GUI input
                             if (addCube)
                             {
-                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cube.stl"));
+                                CurrentScene.models.Add(Model.Cube);
                                 addCube = false;
                                 menu.SetBool("  Cube", addCube);
+                                CurrentScene.currentObj = CurrentScene.models.Count - 1;
                             }
                             if (addCylinder)
                             {
-                                scenes[selectedScene].models.Add(new($"{pathRenderer}\\OBJs\\cylinder.stl"));
+                                CurrentScene.models.Add(Model.Cylinder);
                                 addCylinder = false;
                                 menu.SetBool("  Cylinder", addCylinder);
                             }
@@ -418,8 +419,8 @@ namespace CORERenderer.Main
                             if (renderGrid)
                                 RenderGrid();
 
-                            //glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
-                            //arrows.Render();
+                            glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
+                            arrows.Render();
                         }
                         else if (!mouseIsPressed)
                             Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
@@ -493,6 +494,7 @@ namespace CORERenderer.Main
                     //check for mouse picking
                     IDFramebuffer.RenderFramebuffer();
                     UpdateSelectedID();
+                    arrows.UpdateArrowsMovement();
 
                     //computeShader.RenderFramebuffer();
 
