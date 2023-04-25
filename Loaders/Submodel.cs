@@ -110,13 +110,14 @@ namespace CORERenderer.Loaders
             material.Texture = 2;
         }
 
-        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent, Material material)
+        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
         {
             this.name = name;
             this.vertices = vertices;
             this.material = material;
             this.translation = offset;
             this.scaling = scaling;
+            this.rotation = rotation;
             this.parent = parent;
 
             hasMaterials = true;

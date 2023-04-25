@@ -26,17 +26,18 @@ namespace CORERenderer.Loaders
 
                     for (int i = 0; i < modelCount; i++)
                     {
-                        RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out int submodelCount);
+                        RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount);
 
                         models.Add(new());
                         models[^1].name = modelName;
                         models[^1].translation = translation;
                         models[^1].Scaling = scaling;
+                        models[^1].rotation = rotation;
 
                         //getting the submodels
                         for (int j = 0; j < submodelCount; j++)
                         {
-                            RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out bool hasMaterial, out int amountPolygons);
+                            RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out Vector3 submodelRotation, out bool hasMaterial, out int amountPolygons);
 
                             int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
                             List<float> vertices = RetrieveVertices(fs, amountVertices);
@@ -47,7 +48,7 @@ namespace CORERenderer.Loaders
                                 Material material = RetrieveMaterialNode(fs);
 
                                 models[^1].type = RenderMode.ObjFile;
-                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1], material));
+                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
                             }
                             else
                             {
@@ -93,7 +94,7 @@ namespace CORERenderer.Loaders
             return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difIndex, DiffuseMap = difIndex, SpecularMap = specIndex, NormalMap = normIndex };
         }
 
-        private static Texture GenerateTextureFromData(byte[] imageData)
+        private static Texture GenerateTextureFromData(byte[] imageData) //its incredible slow to create and delete a file
         {
             string dir = Path.GetTempPath();
             using (FileStream fs = File.Create($"{dir}diffuseHolder.png"))
@@ -134,23 +135,25 @@ namespace CORERenderer.Loaders
             return vertices;
         }
 
-        private static void RetrieveSubmodelNode(FileStream fs, out string name, out Vector3 translation, out Vector3 scaling, out bool hasMaterial, out int amountPolygons)
+        private static void RetrieveSubmodelNode(FileStream fs, out string name, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out bool hasMaterial, out int amountPolygons)
         {
             name = GetString(fs, 10);
             translation = GetVector3(fs);
             scaling = GetVector3(fs);
+            rotation = GetVector3(fs);
 
             hasMaterial = GetBool(fs);
 
             amountPolygons = GetInt(fs);
         }
 
-        private static void RetrieveModelNode(FileStream fs, out string name, out Vector3 translation, out Vector3 scaling, out int submodelCount)
+        private static void RetrieveModelNode(FileStream fs, out string name, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount)
         {
             name = GetString(fs, 10);
 
             translation = GetVector3(fs);
             scaling = GetVector3(fs);
+            rotation = GetVector3(fs);
 
             submodelCount = GetInt(fs);
         }

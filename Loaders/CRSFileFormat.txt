@@ -11,6 +11,7 @@ The structure of a model node looks like this:
 10 bytes - model name : UTF8 string
 12 bytes - position : vector3
 12 bytes - scaling : vector3
+12 bytes - rotation : vector3
 4  bytes - amount of submodels : 32-bit integer
 .. bytes - submodel nodes
 
@@ -25,6 +26,7 @@ The structure of a submodel node looks like this:
 10 bytes - model name : UTF8 string
 12 bytes - position : vector3
 12 bytes - scaling : vector3
+12 bytes - rotation : vector3
 1  byte  - has material : bool
 4  bytes - amount of polygons : 32-bit integer
 amount of polygons * 3 * 8 * 4 bytes - all vertices : float

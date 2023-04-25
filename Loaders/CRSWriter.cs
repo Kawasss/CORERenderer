@@ -93,6 +93,7 @@ namespace CORERenderer.Loaders
 
             byte[] position = model.translation.Bytes;
             byte[] scaling = model.Scaling.Bytes;
+            byte[] rotation = model.rotation.Bytes;
 
             byte[] amountSubmodels = BitConverter.GetBytes(model.submodels.Count);
 
@@ -100,6 +101,7 @@ namespace CORERenderer.Loaders
 
             sw.BaseStream.Write(position);
             sw.BaseStream.Write(scaling);
+            sw.BaseStream.Write(rotation);
 
             sw.BaseStream.Write(amountSubmodels);
         }
@@ -109,6 +111,7 @@ namespace CORERenderer.Loaders
             byte[] smName = GenerateHeader(submodel.Name, 10);
             byte[] position = submodel.translation.Bytes;
             byte[] scaling = submodel.scaling.Bytes;
+            byte[] rotation = submodel.rotation.Bytes;
 
             byte[] hasMaterials = BitConverter.GetBytes(submodel.hasMaterials);
 
@@ -117,6 +120,7 @@ namespace CORERenderer.Loaders
             sw.BaseStream.Write(smName);
             sw.BaseStream.Write(position);
             sw.BaseStream.Write(scaling);
+            sw.BaseStream.Write(rotation);
 
             sw.BaseStream.Write(hasMaterials);
 
