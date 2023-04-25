@@ -8,6 +8,7 @@ using CORERenderer.shaders;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW;
+using SharpFont;
 
 namespace CORERenderer.GUI
 {
@@ -25,16 +26,21 @@ namespace CORERenderer.GUI
         private Shader pickShader = GenericShaders.IDPicking;
         private Shader shader = GenericShaders.Arrow;
 
-        private Vector3[] rgbs = new Vector3[3];
+        private Vector3[] rgbs = new Vector3[9];
 
-        public bool wantsToMoveXAxis = false;
-        public bool wantsToMoveYAxis = false;
-        public bool wantsToMoveZAxis = false;
+        private Model rotation;
+
+        public bool wantsToMoveXAxis = false, wantsToMoveZAxis = false, wantsToMoveYAxis = false;
+        public bool wantsToScaleXAxis = false, wantsToScaleYAxis = false, wantsToScaleZAxis = false;
+        public bool wantsToRotateXAxis = false, wantsToRotateYAxis = false, wantsToRotateZAxis = false;
 
         public static bool disableArrows = false;
 
         public Arrows()
         {
+            rotation = new($"{COREMain.pathRenderer}\\OBJs\\triangle.stl");
+            rotation.submodels[0].renderIDVersion = false;
+
             Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out vertices, out indices, out _, out _);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
@@ -57,13 +63,13 @@ namespace CORERenderer.GUI
 
             GenerateFilledBuffer(out EBO, indices[0].ToArray());
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 9; i++)
                 rgbs[i] = COREMain.GenerateIDColor(i);
                 
             if (COREMain.scenes[COREMain.selectedScene].currentObj == -1)
                 return;
 
-            maxScale = 0.6f;//MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation);
+            maxScale = MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation);
         }
 
         public void Render()
@@ -82,11 +88,12 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f);
+            model *= MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f) * MathC.GetRotationMatrix(COREMain.CurrentModel.rotation);
 
             shader.SetVector3("color", 0, 1, 0);
 
             glBindVertexArray(VAO);
+
             for (int i = 0; i < 3; i++)
             {
                 Matrix local = model;
@@ -106,6 +113,55 @@ namespace CORERenderer.GUI
                 shader.SetMatrix("model", local);
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
+
+            shader.SetVector3("color", 0, 1, 0);
+            Matrix cubeModel = model * MathC.GetTranslationMatrix(0, 1.1f, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            shader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            shader.SetVector3("color", 1, 0, 0);
+            cubeModel = model * MathC.GetTranslationMatrix(1.1f, 0, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            shader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            shader.SetVector3("color", 0, 0, 1);
+            cubeModel = model * MathC.GetTranslationMatrix(0, 0, 1.1f) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            shader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale);
+
+            //draw the triangles that indicate the rotations
+            glDisable(GL_CULL_FACE);
+
+            //triangle 1
+            shader.SetVector3("color", 1, 1, 0);
+            Matrix triangleModel = model * MathC.GetTranslationMatrix(.1f, 0.35f, 0) * MathC.GetScalingMatrix(.1f);
+            shader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            //triangle 2
+            shader.SetVector3("color", 0, 1, 1);
+            triangleModel = model * MathC.GetTranslationMatrix(0, 0.35f, .15f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationYMatrix(-90);
+            shader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            //triangle 3
+            shader.SetVector3("color", 1, 0, 1);
+            triangleModel = model * MathC.GetTranslationMatrix(.1f, 0, .3f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationXMatrix(90);
+            shader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            glEnable(GL_CULL_FACE);
+
+            GenericShaders.GenericLighting.SetVector3("overrideColor", Vector3.Zero);
+
             RenderIDVersion();        
         }
 
@@ -121,7 +177,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f);//model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
+            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f) * MathC.GetRotationMatrix(COREMain.CurrentModel.rotation);//model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
@@ -147,23 +203,120 @@ namespace CORERenderer.GUI
                 pickShader.SetMatrix("model", local);
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
+            pickShader.SetVector3("color", rgbs[3]);
+            Matrix cubeModel = model * MathC.GetTranslationMatrix(0, 1.1f, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            pickShader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            pickShader.SetVector3("color", rgbs[4]);
+            cubeModel = model * MathC.GetTranslationMatrix(1.1f, 0, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            pickShader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            pickShader.SetVector3("color", rgbs[5]);
+            cubeModel = model * MathC.GetTranslationMatrix(0, 0, 1.1f) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
+            pickShader.SetMatrix("model", cubeModel);
+            RenderCube();
+
+            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale);
+
+            //draw the triangles that indicate the rotations
+            glDisable(GL_CULL_FACE);
+            //triangle 1
+            pickShader.SetVector3("color", rgbs[6]);
+            Matrix triangleModel = model * MathC.GetTranslationMatrix(.1f, 0.35f, 0) * MathC.GetScalingMatrix(.1f);
+            pickShader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            //triangle 2
+            pickShader.SetVector3("color", rgbs[7]);
+            triangleModel = model * MathC.GetTranslationMatrix(0, 0.35f, .15f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationYMatrix(-90);
+            pickShader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            //triangle 3
+            pickShader.SetVector3("color", rgbs[8]);
+            triangleModel = model * MathC.GetTranslationMatrix(.1f, 0, .3f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationXMatrix(90);
+            pickShader.SetMatrix("model", triangleModel);
+
+            glBindVertexArray(rotation.submodels[0].VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+
+            glEnable(GL_CULL_FACE);
+
+            GenericShaders.GenericLighting.SetVector3("overrideColor", Vector3.Zero);
+
             COREMain.renderFramebuffer.Bind();
         }
 
         public void UpdateArrowsMovement()
-        {
-            if (COREMain.selectedID == 0 && wantsToMoveXAxis == false && wantsToMoveZAxis == false)
-                wantsToMoveYAxis = true;
-            else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
-                wantsToMoveYAxis = false;
-            if (COREMain.selectedID == 1 && wantsToMoveYAxis == false && wantsToMoveZAxis == false)
-                wantsToMoveXAxis = true;
-            else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
-                wantsToMoveXAxis = false;
-            if (COREMain.selectedID == 2 && wantsToMoveXAxis == false && wantsToMoveYAxis == false)
-                wantsToMoveZAxis = true;
-            else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
-                wantsToMoveZAxis = false;
+        { //dont know if it can be coded better
+            if (!wantsToScaleXAxis && !wantsToScaleYAxis && !wantsToScaleZAxis && !wantsToRotateXAxis && !wantsToRotateYAxis && !wantsToRotateZAxis)
+            {
+                if (COREMain.selectedID == 0 && !wantsToMoveXAxis && !wantsToMoveZAxis)
+                    wantsToMoveYAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToMoveYAxis = false;
+
+                if (COREMain.selectedID == 1 && !wantsToMoveYAxis && !wantsToMoveZAxis)
+                    wantsToMoveXAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToMoveXAxis = false;
+
+                if (COREMain.selectedID == 2 && !wantsToMoveXAxis && !wantsToMoveYAxis)
+                    wantsToMoveZAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToMoveZAxis = false;
+            }
+            
+            if (!wantsToMoveXAxis && !wantsToMoveYAxis && !wantsToMoveZAxis && !wantsToRotateXAxis && !wantsToRotateYAxis && !wantsToRotateZAxis)
+            {
+                if (COREMain.selectedID == 3 && !wantsToScaleXAxis && !wantsToScaleZAxis)
+                    wantsToScaleYAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToScaleYAxis = false;
+
+                if (COREMain.selectedID == 4 && !wantsToScaleYAxis && !wantsToScaleZAxis)
+                    wantsToScaleXAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToScaleXAxis = false;
+
+                if (COREMain.selectedID == 5 && !wantsToScaleXAxis && !wantsToScaleYAxis)
+                    wantsToScaleZAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToScaleZAxis = false;
+            }
+
+            if (!wantsToMoveXAxis && !wantsToMoveYAxis && !wantsToMoveZAxis && !wantsToScaleXAxis && !wantsToScaleYAxis && !wantsToScaleZAxis)
+            {
+                if (COREMain.selectedID == 6 && !wantsToRotateXAxis && !wantsToRotateZAxis)
+                    wantsToRotateZAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToRotateZAxis = false;
+
+                if (COREMain.selectedID == 7 && !wantsToRotateYAxis && !wantsToRotateZAxis)
+                    wantsToRotateXAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToRotateXAxis = false;
+
+                if (COREMain.selectedID == 8 && !wantsToRotateXAxis && !wantsToRotateYAxis)
+                    wantsToRotateYAxis = true;
+
+                else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
+                    wantsToRotateYAxis = false;
+            }
         }
     }
 }

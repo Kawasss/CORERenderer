@@ -40,7 +40,11 @@ namespace CORERenderer
                     currentObj = 0;
                 }
                 else
+                {
                     Readers.LoadCRS(args[0], out models, out _);
+                    currentObj = models.Count > 0 ? 0 : -1;
+                }
+                    
             }
             for (int i = 0; i < models.Count; i++)
                 if (models[i].terminate)
@@ -114,35 +118,31 @@ namespace CORERenderer
                 if (state2 == InputState.Press && state != InputState.Press)
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
-                    if (Glfw.GetKey(window, Keys.Delete) == InputState.Press && loaded)
-                        CurrentModel.rotation.x += 15f * delta;
-                    if (Glfw.GetKey(window, Keys.End) == InputState.Press && loaded)
-                        CurrentModel.rotation.y += 15f * delta;
-                    if (Glfw.GetKey(window, Keys.PageDown) == InputState.Press && loaded)
-                        CurrentModel.rotation.z += 15f * delta;
-
-                    if (Glfw.GetKey(window, Keys.Minus) == InputState.Press && loaded)
-                    {
-                        CurrentModel.Scaling.x -= 2f * delta;
-                        CurrentModel.Scaling.y -= 2f * delta;
-                        CurrentModel.Scaling.z -= 2f * delta;
-                    }
-                    if (Glfw.GetKey(window, Keys.Equal) == InputState.Press && loaded)
-                    {
-                        CurrentModel.Scaling.x += 2f * delta;
-                        CurrentModel.Scaling.y += 2f * delta;
-                        CurrentModel.Scaling.z += 2f * delta;
-                    }
-
+                    if (arrows.wantsToRotateYAxis && loaded)
+                        CurrentModel.rotation.y -= deltaX / 30;
+                    if (arrows.wantsToRotateXAxis && loaded)
+                        CurrentModel.rotation.x += deltaX / 30;
+                    if (arrows.wantsToRotateZAxis && loaded)
+                        CurrentModel.rotation.z += -deltaX / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                        CurrentModel.translation += new Vector3(0, deltaY / 150, 0);
+                        CurrentModel.translation.y += deltaY / 150;
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        CurrentModel.translation -= new Vector3(deltaX / 150, 0, 0);
+                        CurrentModel.translation.x -= deltaX / 150;
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        CurrentModel.translation += new Vector3(0, 0, -deltaX / 150);
+                        CurrentModel.translation.z += -deltaX / 150;
+
+
+                    if (arrows.wantsToScaleYAxis && loaded)
+                        CurrentModel.Scaling.y -= deltaY / 200;
+
+                    if (arrows.wantsToScaleXAxis && loaded)
+                        CurrentModel.Scaling.x += deltaX / 200;
+
+                    if (arrows.wantsToScaleZAxis && loaded)
+                        CurrentModel.Scaling.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

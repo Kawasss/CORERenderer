@@ -31,7 +31,7 @@ namespace CORERenderer.Loaders
         private Shader shader = GenericShaders.GenericLighting;
         private Shader IDShader = GenericShaders.IDPicking;
 
-        private uint VBO, VAO;
+        public uint VBO, VAO;
 
         public int ID = COREMain.NewAvaibleID;
         private Vector3 IDColor;
@@ -46,6 +46,8 @@ namespace CORERenderer.Loaders
         public bool isTranslucent = false;
 
         public bool hasMaterials = true;
+
+        public bool renderIDVersion = true;
 
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
@@ -164,7 +166,7 @@ namespace CORERenderer.Loaders
                     else
                         glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
 
-                    if (COREMain.renderToIDFramebuffer)
+                    if (COREMain.renderToIDFramebuffer && renderIDVersion)
                     {
                         COREMain.IDFramebuffer.Bind();
 

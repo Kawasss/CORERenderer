@@ -28,7 +28,7 @@ namespace CORERenderer.Main
         public static int fps = 0, frameCount = 0;
         public static int selectedScene = 0;
 
-        public static int selectedID = 0x00FFFF, nextAvaibleID = 3; //white (background) //first 3 IDs are used by Arrows
+        public static int selectedID = 0x00FFFF, nextAvaibleID = 3; //white (background) //first 9 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
 
@@ -48,7 +48,7 @@ namespace CORERenderer.Main
         //strings
         public static string LoadFilePath = null;
         public static string GPU = "Not Recognized";
-        public const string VERSION = "v0.4.P";
+        public const string VERSION = "v0.6";
         public static string pathRenderer;
         private static List<string> consoleCache = new();
 
@@ -352,6 +352,7 @@ namespace CORERenderer.Main
                                 tab.Render();
 
                                 modelInformation.Render();
+                                modelInformation.RenderModelInformation();
 
                                 sceneManager.Render();
                             }

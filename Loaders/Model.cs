@@ -291,20 +291,11 @@ namespace CORERenderer.Loaders
             }
         }
 
-        private void ErrorLogic(int error)
+        public void Reset()
         {
-            switch (error)
-            {
-                case -1:
-                    throw new GLFW.Exception($"Invalid file format for {name}, should end with .mtl, not {mtllib[mtllib.IndexOf('.')..]} (error == -1)");
-                case 0:
-                    Console.WriteLine($"No material library found for {name} (error == 0)");
-                    break;
-                case 1:
-                    break;
-                default:
-                    throw new GLFW.Exception($"Undefined error: {error}");
-            }
+            translation = Vector3.Zero;
+            rotation = Vector3.Zero;
+            Scaling = new(1);
         }
 
         public void Dispose()

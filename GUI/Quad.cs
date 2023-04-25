@@ -127,10 +127,6 @@ namespace CORERenderer.GUI
             renderCallBackMethod?.Invoke(); //only activates if it isnt null
         }
 
-        public void RenderModelList() => SetRenderCallBack(renderModelList);
-
-        public void RenderSubmodelList() => SetRenderCallBack(renderSubmodelList);
-
         public void RenderStatic() => Render();
 
         /// <summary>

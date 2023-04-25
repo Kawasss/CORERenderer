@@ -21,6 +21,13 @@ namespace COREMath
                 this.xyz[i] = 0;
         }
 
+        public Vector3(float value)
+        {
+            x = value;
+            y = value;
+            z = value;
+        }
+
         public Vector3(string x, string y, string z)
         {
             bool sX = float.TryParse(x, NumberStyles.Any, CultureInfo.InvariantCulture, out this.x);

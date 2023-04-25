@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using CORERenderer.GLFW;
+using System.Numerics;
 
 namespace COREMath
 {
@@ -208,6 +209,20 @@ namespace COREMath
         {
             return MathF.Sqrt(Squared(vector.x) + Squared(vector.y) + Squared(vector.z));
         }
+
+        /// <summary>
+        /// returns the product of GetRotationXmatrix, GetRotationYmatrix and GetRotationZmatrix
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static Matrix GetRotationMatrix(Vector3 v) => GetRotationMatrix(v.x, v.y, v.z);
+
+        /// <summary>
+        /// returns the product of GetRotationXmatrix, GetRotationYmatrix and GetRotationZmatrix
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static Matrix GetRotationMatrix(float x, float y, float z) => GetRotationXMatrix(x) * GetRotationYMatrix(y) * GetRotationZMatrix(z);
 
         /// <summary>
         /// Gives a rotation matrix around the x axis with the given angle

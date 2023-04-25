@@ -1,4 +1,4 @@
-version=v0.4.P
+version=v0.6
 shaders=Lighting
 cameraSpeed=3
 writedebug=False
