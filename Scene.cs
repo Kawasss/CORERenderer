@@ -69,7 +69,6 @@ namespace CORERenderer
                 {
                     models[i].highlighted = true;
                     currentObj = i;
-                    Console.WriteLine(1);
                 }
             }
 

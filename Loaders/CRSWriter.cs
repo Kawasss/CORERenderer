@@ -89,7 +89,7 @@ namespace CORERenderer.Loaders
 
         private static void WriteModelInfo(StreamWriter sw, Model model)
         {
-            byte[] modelName = GenerateHeader(model.name, 10);
+            byte[] modelName = GenerateHeader(model.Name, 10);
 
             byte[] position = model.translation.Bytes;
             byte[] scaling = model.Scaling.Bytes;

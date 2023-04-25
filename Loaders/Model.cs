@@ -38,7 +38,8 @@ namespace CORERenderer.Loaders
         public RenderMode type;
         public Error error = Error.None;
 
-        public string name = "PLACEHOLDER";
+        private string name = "PLACEHOLDER";
+        public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
         public List<string> submodelNames = new();
 
@@ -89,7 +90,7 @@ namespace CORERenderer.Loaders
             this.Materials = materials;
             this.offsets = offsets;
 
-            name = Path.GetFileName(path)[..^4];
+            Name = Path.GetFileName(path)[..^4];
 
             submodels = new();
             this.translation = offsets[0];
@@ -142,7 +143,6 @@ namespace CORERenderer.Loaders
             double startedReading = Glfw.Time;
             Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
-            Console.WriteLine(offset);
 
             if (loaded != Error.None)
             {
@@ -175,9 +175,6 @@ namespace CORERenderer.Loaders
             Error loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out offsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
-            this.highlighted = true;
-            COREMain.scenes[COREMain.selectedScene].currentObj = COREMain.scenes[COREMain.selectedScene].models.Count - 1;
-
             if (loaded != Error.None)
             {
                 this.error = loaded;
@@ -185,7 +182,7 @@ namespace CORERenderer.Loaders
                 return;
             }
 
-            name = Path.GetFileNameWithoutExtension(path);
+            Name = Path.GetFileNameWithoutExtension(path);
 
             startedReading = Glfw.Time;
 
@@ -242,6 +239,8 @@ namespace CORERenderer.Loaders
 
         public void Render()
         {
+            highlighted = COREMain.selectedID == ID;
+
             if (type == RenderMode.ObjFile || type == RenderMode.STLFile)
                 RenderModel();
 
@@ -264,7 +263,11 @@ namespace CORERenderer.Loaders
                 submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
 
                 if (submodels[i].highlighted)
+                {
+                    this.highlighted = true;
                     selectedSubmodel = i;
+                }
+                    
 
                 if (!submodels[i].isTranslucent)
                     submodels[i].Render();

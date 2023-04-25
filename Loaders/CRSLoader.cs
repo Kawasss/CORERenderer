@@ -29,7 +29,7 @@ namespace CORERenderer.Loaders
                         RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount);
 
                         models.Add(new());
-                        models[^1].name = modelName;
+                        models[^1].Name = modelName;
                         models[^1].translation = translation;
                         models[^1].Scaling = scaling;
                         models[^1].rotation = rotation;

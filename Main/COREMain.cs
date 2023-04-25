@@ -354,6 +354,8 @@ namespace CORERenderer.Main
                                 modelInformation.Render();
                                 modelInformation.RenderModelInformation();
 
+                                modelList.RenderModelList(CurrentScene.models);
+
                                 sceneManager.Render();
                             }
                             console.Render();

@@ -293,7 +293,7 @@ namespace CORERenderer.GUI
                 if (COREMain.CurrentScene.models.Count > 0 && COREMain.GetCurrentObjFromScene != -1)
                 {
                     Writers.GenerateSTL(COREMain.pathRenderer, $"Written by CORE-Renderer {COREMain.VERSION}", COREMain.CurrentModel);
-                    WriteDebug($"Generated {COREMain.CurrentModel.name}.stl");
+                    WriteDebug($"Generated {COREMain.CurrentModel.Name}.stl");
                 }
                 else
                     WriteError("There is no model to get data from");
