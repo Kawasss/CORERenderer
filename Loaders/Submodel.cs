@@ -133,7 +133,7 @@ namespace CORERenderer.Loaders
 
                 ClampValues();
 
-                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling * parent.scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x + parent.rotation.x) * MathC.GetRotationYMatrix(rotation.y + parent.rotation.y) * MathC.GetRotationZMatrix(rotation.z + parent.rotation.z));
+                Matrix model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation + parent.rotation) * MathC.GetScalingMatrix(this.scaling + parent.scaling) * MathC.GetTranslationMatrix(this.translation + parent.translation);
 
                 shader.SetMatrix("model", model);
 
@@ -176,18 +176,12 @@ namespace CORERenderer.Loaders
         private List<float> ConvertIndices(List<float> vertices, List<uint> indices)
         {
             List<float> result = new();
-
+            
             foreach (uint Indice in indices)
             {
                 uint indice = Indice * 8;
-                result.Add(vertices[(int)indice]);
-                result.Add(vertices[(int)indice + 1]);
-                result.Add(vertices[(int)indice + 2]);
-                result.Add(vertices[(int)indice + 3]);
-                result.Add(vertices[(int)indice + 4]);
-                result.Add(vertices[(int)indice + 5]);
-                result.Add(vertices[(int)indice + 6]);
-                result.Add(vertices[(int)indice + 7]);
+                for (int i = 0; i < 8; i++)
+                    result.Add(vertices[(int)indice + i]);
             }
 
             return result;

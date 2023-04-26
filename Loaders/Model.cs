@@ -55,7 +55,6 @@ namespace CORERenderer.Loaders
 
         public int ID;
 
-        public int debug = 0;
         private int totalAmountOfVertices = 0;
 
         private uint VBO, VAO;
@@ -204,6 +203,7 @@ namespace CORERenderer.Loaders
             Submodel[] submodelsInCorrectOrder = new Submodel[submodels.Count];
             List<float> distances = new();
             Dictionary<float, Submodel> distanceSubmodelTable = new();
+
             foreach (Submodel submodel in submodels)
             {
                 float distance = submodel.translation.Length;
