@@ -28,7 +28,7 @@ namespace CORERenderer.Main
         public static int fps = 0, frameCount = 0;
         public static int selectedScene = 0;
 
-        public static int selectedID = 0x00FFFF, nextAvaibleID = 3; //white (background) //first 9 IDs are used by Arrows
+        public static int selectedID = 0x00FFFF, nextAvaibleID = 9; //white (background) //first 9 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
 
@@ -538,17 +538,17 @@ namespace CORERenderer.Main
             return 0;
         }
 
-        public static void MergeAllModels(out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets)
+        public static void MergeAllModels(out List<List<float>> vertices, /*out List<List<uint>> indices,*/ out List<Vector3> offsets)
         {
             vertices = new();
-            indices = new();
+            //indices = new();
             offsets = new();
             foreach (Model model in CurrentScene.models)
-                for (int i = 0; i < model.vertices.Count; i++)
+                for (int i = 0; i < model.Vertices.Count; i++)
                 {
-                    vertices.Add(model.vertices[i]);
-                    indices.Add(model.indices[i]);
-                    offsets.Add(model.offsets[i]);
+                    vertices.Add(model.Vertices[i]);
+                    //indices.Add(model.indices[i]);
+                    offsets.Add(model.Offsets[i]);
                 }
         }
 

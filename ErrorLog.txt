@@ -1,31 +1,21 @@
-Error occured at 9:45:18 : 
+Error occured at 5:00:12 : 
     System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
    at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at CORERenderer.Main.COREMain.get_CurrentModel() in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 89
-   at CORERenderer.GUI.Arrows..ctor() in C:\Users\wveen\source\repos\CORERenderer\GUI\Arrows.cs:line 71
-   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 291
-Error occured at 9:45:47 : 
-    System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
-   at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at CORERenderer.Main.COREMain.get_CurrentModel() in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 89
-   at CORERenderer.GUI.Arrows..ctor() in C:\Users\wveen\source\repos\CORERenderer\GUI\Arrows.cs:line 71
-   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 291
-Error occured at 9:46:27 : 
-    System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
-   at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at CORERenderer.Main.COREMain.get_CurrentModel() in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 89
-   at CORERenderer.GUI.Arrows..ctor() in C:\Users\wveen\source\repos\CORERenderer\GUI\Arrows.cs:line 71
-   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 291
-Error occured at 9:49:53 : 
-    System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
-   at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at CORERenderer.Loaders.Model.GenerateObj(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 209
-   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 73
+   at CORERenderer.Loaders.Model.GenerateObj(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 192
+   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 72
    at CORERenderer.Scene.OnLoad(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 39
    at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 275
-Error occured at 11:15:49 : 
+Error occured at 5:18:28 : 
     System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
    at System.Collections.Generic.List`1.get_Item(Int32 index)
-   at CORERenderer.Main.COREMain.get_CurrentModel() in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 89
-   at CORERenderer.Scene.EveryFrame(Window window, Single delta) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 135
-   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 431
+   at CORERenderer.Loaders.Model.GenerateObj(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 188
+   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 75
+   at CORERenderer.Scene.OnLoad(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 39
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 275
+Error occured at 5:18:34 : 
+    System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+   at System.Collections.Generic.List`1.get_Item(Int32 index)
+   at CORERenderer.Loaders.Model.GenerateObj(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 188
+   at CORERenderer.Loaders.Model..ctor(String path) in C:\Users\wveen\source\repos\CORERenderer\Loaders\Model.cs:line 75
+   at CORERenderer.Scene.OnLoad(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Scene.cs:line 39
+   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 275

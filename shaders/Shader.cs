@@ -111,6 +111,26 @@ namespace CORERenderer.shaders
             Rendering.shaderByteSize += pname[0];
         }
 
+        /// <summary>
+        /// This method assumes that the vertex shader has 3 intakes: vec3 for position coordinates, vec2 for uv coordinates and vec3 for normal coordinates
+        /// </summary>
+        public void ActivateGenericAttributes()
+        {
+            int vertexLocation = this.GetAttribLocation("aPos");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //UV texture coordinates
+            vertexLocation = this.GetAttribLocation("aTexCoords");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            //normal coordinates
+            vertexLocation = this.GetAttribLocation("aNormal");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+        }
+
         public void SetInt(string name, int value)
         {
             glUseProgram(Handle);

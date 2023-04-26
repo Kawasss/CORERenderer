@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace CORERenderer.Loaders
 {
@@ -13,9 +15,9 @@ namespace CORERenderer.Loaders
         public static void GenerateSTL(string directoryPath, string header, Model model) //generates an .stl file according to the official format (80 bytes header, 4 bytes for triangle amount, 50 bytes for each face (12 for normal, 36 for vertices and 2 for attributes)
         {
             if (model.type == Main.RenderMode.ObjFile)
-                Task.Run(() => GenerateSTL(directoryPath, model.Name, header, model.vertices, model.indices, model.offsets));
+                Task.Run(() => GenerateSTL(directoryPath, model.Name, header, model.Vertices, model.Offsets));
             else if (model.type == Main.RenderMode.STLFile)
-                Task.Run(() => GenerateSTL(directoryPath, model.Name, header, model.vertices[0]));
+                Task.Run(() => GenerateSTL(directoryPath, model.Name, header, model.Vertices[0]));
         }
 
         /// <summary>
@@ -79,8 +81,25 @@ namespace CORERenderer.Loaders
             GenerateSTL(directoryPath, name, header, allVertices);
         }
 
-        public static void GenerateSTL(string directoryPath, string name, string header, List<List<float>> vertices, List<List<uint>> indices, List<COREMath.Vector3> offsets)
+        public static void GenerateSTL(string directoryPath, string name, string header, List<List<float>> vertices, List<COREMath.Vector3> offsets)
         {
+            List<float> newVertices = new();
+            for (int j = 0; j < vertices.Count; j++)
+            {
+                for (int i = 0; i < vertices[j].Count; i += 8) //adds the offset to the vertices 
+                {
+                    newVertices.Add(vertices[j][i] + offsets[j].x);
+                    newVertices.Add(vertices[j][i + 1] + offsets[j].y);
+                    newVertices.Add(vertices[j][i + 2] + offsets[j].z);
+                    for (int k = 0; k < 5; k++)
+                        newVertices.Add(vertices[j][i + 3 + k]);
+                }
+            }
+            GenerateSTL(directoryPath, name, header, newVertices);
+        }
+
+        public static void GenerateSTL(string directoryPath, string name, string header, List<List<float>> vertices, List<List<uint>> indices, List<COREMath.Vector3> offsets)
+        { //mess of a code below, dont question it so long as it works
             List<List<List<float>>> oneVertex = new(); //seperates all of the vertex values in this hierarchy: all vertice groups -> all vertices in vertice group -> vertex
             for (int i = 0; i < vertices.Count; i++)
             {

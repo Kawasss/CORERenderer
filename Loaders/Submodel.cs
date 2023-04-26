@@ -15,9 +15,7 @@ namespace CORERenderer.Loaders
         public static bool useRenderDistance = false;
         public static float renderDistance = 100;
 
-        public Vector3 scaling = new(1, 1, 1);
-        public Vector3 translation = new(0, 0, 0);
-        public Vector3 rotation = new(0, 0, 0);
+        public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
 
         public Matrix parentModel;
         public Model parent = null;
@@ -36,83 +34,53 @@ namespace CORERenderer.Loaders
         public int ID = COREMain.NewAvaibleID;
         private Vector3 IDColor;
 
-        private string name;
-        public string Name { get { return name; } }
+        private string name = "PLACEHOLDER";
+        public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
-        public bool renderLines = false;
-
-        public bool highlighted = false;
-
-        public bool isTranslucent = false;
-
-        public bool hasMaterials = true;
-
-        public bool renderIDVersion = true;
+        public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true;
 
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
-            this.name = name;
+            this.Name = name;
             this.vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
-            //this.indices = indices;
             this.material = material;
             isTranslucent = material.Transparency != 1;
-            hasMaterials = true;
 
-            GenerateBuffers();
-
-            IDColor = COREMain.GenerateIDColor(ID);
-
-            shader.SetInt("material.Texture", GL_TEXTURE0);
-            shader.SetInt("material.diffuse", GL_TEXTURE1);
-            shader.SetInt("material.specular", GL_TEXTURE2);
-            shader.SetInt("material.normalMap", GL_TEXTURE3);
+            DefaultSetUp();
         }
 
         public Submodel(string name, List<float> vertices, Vector3 offset, Model parent, Material material)
         {
-            this.name = name;
+            this.Name = name;
             this.vertices = vertices;
             this.material = material;
             this.translation = offset;
             this.scaling = new(1, 1, 1);
             this.parent = parent;
 
-            hasMaterials = true;
-
-            GenerateBuffers();
-
-            IDColor = COREMain.GenerateIDColor(ID);
-
-            shader.SetInt("material.Texture", GL_TEXTURE0);
-            shader.SetInt("material.diffuse", GL_TEXTURE1);
-            shader.SetInt("material.specular", GL_TEXTURE2);
-            shader.SetInt("material.normalMap", GL_TEXTURE3);
+            DefaultSetUp();
         }
 
         public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent)
         {
-            this.name = name;
+            this.Name = name;
             this.vertices = vertices;
             this.material = new();
             this.translation = offset;
             this.scaling = scaling;
             this.parent = parent;
+            
+            DefaultSetUp();
+            
             hasMaterials = false;
-            GenerateBuffers();
-
-            IDColor = COREMain.GenerateIDColor(ID);
-
-            shader.SetInt("material.Texture", GL_TEXTURE0);
-            shader.SetInt("material.diffuse", GL_TEXTURE1);
-            shader.SetInt("material.specular", GL_TEXTURE2);
-            shader.SetInt("material.normalMap", GL_TEXTURE3);
+            
             material.Transparency = 1;
             material.Texture = 2;
         }
 
         public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
         {
-            this.name = name;
+            this.Name = name;
             this.vertices = vertices;
             this.material = material;
             this.translation = offset;
@@ -120,6 +88,22 @@ namespace CORERenderer.Loaders
             this.rotation = rotation;
             this.parent = parent;
 
+            DefaultSetUp();
+        }
+
+        public Submodel(string name, List<float> vertices, List<uint> indices, Vector3 translation, Model parent, Material material)
+        {
+            this.Name = name;
+            this.vertices = ConvertIndices(vertices, indices);
+            this.translation = translation;
+            this.parent = parent;
+            this.material = material;
+
+            DefaultSetUp();
+        }
+
+        private void DefaultSetUp()
+        {
             hasMaterials = true;
 
             GenerateBuffers();
@@ -149,7 +133,7 @@ namespace CORERenderer.Loaders
 
                 ClampValues();
 
-                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling * parent.Scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x + parent.rotation.x) * MathC.GetRotationYMatrix(rotation.y + parent.rotation.y) * MathC.GetRotationZMatrix(rotation.z + parent.rotation.z));
+                Matrix model = Matrix.IdentityMatrix * new Matrix(scaling * parent.scaling, translation + parent.translation) * (MathC.GetRotationXMatrix(rotation.x + parent.rotation.x) * MathC.GetRotationYMatrix(rotation.y + parent.rotation.y) * MathC.GetRotationZMatrix(rotation.z + parent.rotation.z));
 
                 shader.SetMatrix("model", model);
 
@@ -215,27 +199,14 @@ namespace CORERenderer.Loaders
 
             shader.Use();
 
-            //3D coordinates
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //UV texture coordinates
-            vertexLocation = shader.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //normal coordinates
-            vertexLocation = shader.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateGenericAttributes();
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
         }
 
         private void ClampValues()
-        {
+        { //maybe just use clamp?
             if (scaling.x < 0.01f)
                 scaling.x = 0.01f;
             if (scaling.y < 0.01f)

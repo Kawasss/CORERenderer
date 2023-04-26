@@ -300,8 +300,8 @@ namespace CORERenderer.GUI
             }
             else if (input == "save all as stl")
             {
-                COREMain.MergeAllModels(out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets);
-                Writers.GenerateSTL(COREMain.pathRenderer, "test", "test.stl written by CORE-Renderer V0.2.P", vertices, indices, offsets);
+                COREMain.MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets);
+                Writers.GenerateSTL(COREMain.pathRenderer, "test", $"test.stl written by CORE-Renderer {COREMain.VERSION}", vertices, offsets);
             }
 
             else if (input == "goto console") //introducing contexts allows for better grouping of commands and better readability / makes it more expandable

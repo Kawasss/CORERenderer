@@ -31,7 +31,7 @@ namespace CORERenderer.Loaders
                         models.Add(new());
                         models[^1].Name = modelName;
                         models[^1].translation = translation;
-                        models[^1].Scaling = scaling;
+                        models[^1].scaling = scaling;
                         models[^1].rotation = rotation;
 
                         //getting the submodels

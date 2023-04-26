@@ -22,6 +22,7 @@ namespace CORERenderer.GUI
         private float maxScale = 0;
 
         public int pickedID;
+        private int previousID;
 
         private Shader pickShader = GenericShaders.IDPicking;
         private Shader shader = GenericShaders.Arrow;
@@ -47,19 +48,7 @@ namespace CORERenderer.GUI
 
             shader.Use();
 
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //UV texture coordinates
-            vertexLocation = shader.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //normal coordinates
-            vertexLocation = shader.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateGenericAttributes();
 
             GenerateFilledBuffer(out EBO, indices[0].ToArray());
 
@@ -69,7 +58,7 @@ namespace CORERenderer.GUI
             if (COREMain.scenes[COREMain.selectedScene].currentObj == -1)
                 return;
 
-            maxScale = MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation);
+            maxScale = MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) * 0.8f;
         }
 
         public void Render()
@@ -79,6 +68,9 @@ namespace CORERenderer.GUI
 
             if (COREMain.CurrentScene.currentObj == -1)
                 return;
+
+            //if (previousID != COREMain.selectedID)
+            //    maxScale = 0;
 
             if (maxScale == 0)
                 maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation)) / 2;
@@ -162,7 +154,9 @@ namespace CORERenderer.GUI
 
             GenericShaders.GenericLighting.SetVector3("overrideColor", Vector3.Zero);
 
-            RenderIDVersion();        
+            RenderIDVersion();
+
+            previousID = COREMain.selectedID;
         }
 
         private void RenderIDVersion()

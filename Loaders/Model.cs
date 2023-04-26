@@ -7,12 +7,10 @@ using CORERenderer.GLFW;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
 using CORERenderer.shaders;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
 
 namespace CORERenderer.Loaders
 {
-    public class Model : Readers
+    public partial class Model : Readers
     {
         public static Model Cube { get { return new($"{COREMain.pathRenderer}\\OBJs\\cube.stl"); } }
         public static Model Cylinder { get { return new($"{COREMain.pathRenderer}\\OBJs\\cylinder.stl"); } }
@@ -20,18 +18,29 @@ namespace CORERenderer.Loaders
 
         public static int totalSSBOSizeUsed = 0;
 
-        public List<List<float>> vertices;
-        public List<List<uint>> indices;
+        #region Properties
+        /// <summary>
+        /// Gives the vertices of the submodels, each submodel is a new list. Translations are not applied to this.
+        /// </summary>
+        public List<List<float>> Vertices { get { List<List<float>> value = new(); foreach (Submodel s in submodels) value.Add(s.vertices); return value; } } //adds the vertices from the submodels into one list
 
-        public List<Material> Materials;
+        public List<Material> Materials { get { List<Material> value = new(); foreach (Submodel s in submodels) value.Add(s.material); return value; } } //adds the materials from the submodels into one list
+
+        /// <summary>
+        /// Gives the current translations of all of the submodels
+        /// </summary>
+        public List<Vector3> Offsets { get { List<Vector3> value = new(); foreach (Submodel s in submodels) value.Add(s.translation); return value; } } //adds the materials from the submodels into one list
+
+        public Submodel CurrentSubmodel { get { return submodels[selectedSubmodel]; } }
+
+        public string AmountOfVertices { get { string value = totalAmountOfVertices / 1000 >= 1 ? $"{MathF.Round(totalAmountOfVertices / 1000):N0}k" : $"{totalAmountOfVertices}"; return value; } }
+
+        public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
+        #endregion
 
         public List<Submodel> submodels = new();
 
-        public List<Vector3> offsets;
-
-        public Vector3 Scaling = new(1, 1, 1);
-        public Vector3 translation = new(0, 0, 0);
-        public Vector3 rotation = new(0, 0, 0);
+        public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
 
         private readonly Shader shader = GenericShaders.GenericLighting;
 
@@ -39,10 +48,7 @@ namespace CORERenderer.Loaders
         public Error error = Error.None;
 
         private string name = "PLACEHOLDER";
-        public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
-
-        public List<string> submodelNames = new();
-
+        
         public bool highlighted = false, renderLines = false, renderNormals = false, terminate = false;
 
         public string mtllib;
@@ -53,14 +59,6 @@ namespace CORERenderer.Loaders
         private int totalAmountOfVertices = 0;
 
         private uint VBO, VAO;
-
-        public string amountOfVertices { get 
-            {
-                if (totalAmountOfVertices / 1000 >= 1) 
-                    return $"{MathF.Round(totalAmountOfVertices / 1000):N0}k"; 
-                else 
-                    return $"{totalAmountOfVertices}"; 
-            } }
 
         public int selectedSubmodel = 0;
 
@@ -78,17 +76,12 @@ namespace CORERenderer.Loaders
             else if (type == RenderMode.HDRFile && hdr == null)
                 hdr = HDRTexture.ReadFromFile(path);
             else if (type == RenderMode.STLFile)
-                generateStl(path);
+                GenerateStl(path);
         }
         
         public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets)
         {
             type = COREMain.SetRenderMode(path);
-
-            this.vertices = vertices;
-            this.indices = indices;
-            this.Materials = materials;
-            this.offsets = offsets;
 
             Name = Path.GetFileName(path)[..^4];
 
@@ -96,10 +89,7 @@ namespace CORERenderer.Loaders
             this.translation = offsets[0];
             for (int i = 0; i < vertices.Count; i++)
             {
-
-                submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
-                submodels[i].translation = offsets[i] - this.translation;
-                submodels[i].parent = this;
+                submodels.Add(new(Materials[i].Name, vertices[i], indices[i], offsets[i] - this.translation, this, Materials[i]));
                 totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
             submodels[0].highlighted = true;
@@ -129,16 +119,10 @@ namespace CORERenderer.Loaders
 
             SetUpShader();
 
-            vertices = new();
-            vertices.Add(new());
-            foreach (float value in iVertices)
-                vertices[0].Add(value);
-
-            Materials = new();
             Materials.Add(material);
         }
 
-        private void generateStl(string path)
+        private void GenerateStl(string path)
         {
             double startedReading = Glfw.Time;
             Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
@@ -155,8 +139,8 @@ namespace CORERenderer.Loaders
 
             COREMain.console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
             COREMain.console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
-            float[] vertexData = localVertices.ToArray();
-            /*unsafe
+            /*float[] vertexData = localVertices.ToArray();
+            unsafe
             { //transfer the vertex data to the compute shader
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, COREMain.ssbo);
                 //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
@@ -168,11 +152,11 @@ namespace CORERenderer.Loaders
                 totalSSBOSizeUsed += vertexData.Length * sizeof(float);
             }*/
         }
-        
+
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out List<string> mtlNames, out vertices, out indices, out offsets, out mtllib);
+            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<float>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             if (loaded != Error.None)
@@ -187,8 +171,8 @@ namespace CORERenderer.Loaders
             startedReading = Glfw.Time;
 
             //decide to load the default mtl file or not
-            loaded = mtllib != "default" ? LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out Materials) : LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out Materials);
-            
+            loaded = mtllib != "default" ? LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out List<Material> materials) : LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out materials);
+
             double readMTLFile = Glfw.Time - startedReading;
 
             if (loaded != Error.None)
@@ -198,18 +182,25 @@ namespace CORERenderer.Loaders
                 return;
             }
 
-            submodels = new();
-            this.translation = offsets[0];
-            for (int i = 0; i < vertices.Count; i++)
+            this.translation = lOffsets[0];
+            for (int i = 0; i <  lVertices.Count; i++)
             {
-
-                submodels.Add(new(Materials[i].Name, vertices[i], indices[i], Materials[i]));
-                submodels[i].translation = offsets[i] - this.translation;
-                submodels[i].parent = this;
+                submodels.Add(new(materials[i].Name, lVertices[i], indices[i], lOffsets[i] - this.translation, this, materials[i]));
                 totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
-            
-            //depth sorting
+
+            SortSubmodelsByDepth();
+
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
+
+            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
+            COREMain.console.WriteDebug($"Amount of vertices: {AmountOfVertices}");
+        }
+
+        private void SortSubmodelsByDepth()
+        {
             Submodel[] submodelsInCorrectOrder = new Submodel[submodels.Count];
             List<float> distances = new();
             Dictionary<float, Submodel> distanceSubmodelTable = new();
@@ -228,77 +219,13 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < distancesArray.Length; i++)
                 submodelsInCorrectOrder[i] = distanceSubmodelTable[distancesArray[i]];
             submodels = submodelsInCorrectOrder.ToList();
-
-            submodels[0].highlighted = true;
-            selectedSubmodel = 0;
-
-            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Amount of vertices: {amountOfVertices}");
-        }
-
-        public void Render()
-        {
-            highlighted = COREMain.selectedID == ID;
-
-            if (type == RenderMode.ObjFile || type == RenderMode.STLFile)
-                RenderModel();
-
-            else if (type == RenderMode.JPGImage)
-                RenderImage();
-
-            else if (type == RenderMode.PNGImage)
-                RenderImage();
-            else if (type == RenderMode.HDRFile)
-                Rendering.RenderBackground(hdr);
-        }
-
-        public void RenderBackground() => Rendering.RenderBackground(hdr);
-
-        private unsafe void RenderModel()
-        {
-            for (int i = 0; i < submodels.Count; i++)
-            {
-                submodels[i].renderLines = renderLines;
-                submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(Scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
-
-                if (submodels[i].highlighted)
-                {
-                    this.highlighted = true;
-                    selectedSubmodel = i;
-                }
-                    
-
-                if (!submodels[i].isTranslucent)
-                    submodels[i].Render();
-                else
-                    translucentSubmodels.Add(submodels[i]);
-            }
-        }
-
-        private void RenderImage()
-        {
-            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(Scaling) * MathC.GetTranslationMatrix(translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z);
-            shader.SetMatrix("model", model);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            usedTextures[Materials[0].Texture].Use(GL_TEXTURE0);
-
-            glBindVertexArray(VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, vertices[0].Count / 8);
-            if (renderLines)
-            {
-                GL.glLineWidth(1.5f);
-                shader.SetVector3("overrideColor", new(1, 0, 1));
-                glDrawArrays(PrimitiveType.Lines, 0, vertices[0].Count / 8);
-                shader.SetVector3("overrideColor", new(0, 0, 0));
-            }
         }
 
         public void Reset()
         {
             translation = Vector3.Zero;
             rotation = Vector3.Zero;
-            Scaling = new(1);
+            scaling = new(1);
         }
 
         public void Dispose()
@@ -312,20 +239,7 @@ namespace CORERenderer.Loaders
 
         private void SetUpShader()
         {
-            //3D coordinates
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //UV texture coordinates
-            vertexLocation = shader.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
-
-            //normal coordinates
-            vertexLocation = shader.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateGenericAttributes();
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);

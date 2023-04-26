@@ -135,13 +135,13 @@ namespace CORERenderer
 
 
                     if (arrows.wantsToScaleYAxis && loaded)
-                        CurrentModel.Scaling.y -= deltaY / 200;
+                        CurrentModel.scaling.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
-                        CurrentModel.Scaling.x += deltaX / 200;
+                        CurrentModel.scaling.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        CurrentModel.Scaling.z += (deltaX + deltaY) / 400;
+                        CurrentModel.scaling.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

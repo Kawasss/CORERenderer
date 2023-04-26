@@ -92,7 +92,7 @@ namespace CORERenderer.Loaders
             byte[] modelName = GenerateHeader(model.Name, 10);
 
             byte[] position = model.translation.Bytes;
-            byte[] scaling = model.Scaling.Bytes;
+            byte[] scaling = model.scaling.Bytes;
             byte[] rotation = model.rotation.Bytes;
 
             byte[] amountSubmodels = BitConverter.GetBytes(model.submodels.Count);
