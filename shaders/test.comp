@@ -111,9 +111,9 @@ void main()
                 break;
 
             //assemble the triangle
-            vec3 v1 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
-            vec3 v2 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
-            vec3 v3 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
+            vec3 v2 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+            vec3 v3 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
+            vec3 v1 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
             vec3 normal = vec3(vertexData[i + 5], vertexData[i + 6], vertexData[i + 7]); 
             normal = dot(normal, ray.direction) < 0 ? normal : normal * -1; //orient the normal correctly
 
@@ -121,7 +121,13 @@ void main()
             float t;
             bool success = Intersects(intersection, ray, v1, v2, v3, t); //check for any triangle collision
 
-            vec3 lampIntersection;
+            if (success)
+            {
+                imageStore(imgOutput, uv, vec4(1));
+                return;
+            }
+
+            /*vec3 lampIntersection;
             float lampT;
             bool lampSuccess = IntersectsLamp(ray, lampIntersection, lampT);
 
@@ -143,7 +149,7 @@ void main()
                 ray.direction = ray.direction - 2 * dot(normal, ray.direction) * normal;
 
                 totalBounces++;
-            }
+            }*/
         }
     }
 }

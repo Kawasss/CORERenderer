@@ -42,7 +42,6 @@ namespace CORERenderer.Loaders
                             int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
                             List<float> vertices = RetrieveVertices(fs, amountVertices);
 
-                            //add the segment for retreiving material values if given
                             if (hasMaterial)
                             {
                                 Material material = RetrieveMaterialNode(fs);

@@ -1,5 +1,5 @@
 version=v0.6
-shaders=FullBright
+shaders=Lighting
 cameraSpeed=3
 writedebug=False
 writeerror=True

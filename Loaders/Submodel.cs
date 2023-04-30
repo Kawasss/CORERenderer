@@ -173,7 +173,7 @@ namespace CORERenderer.Loaders
             }
         }
 
-        private List<float> ConvertIndices(List<float> vertices, List<uint> indices)
+        private static List<float> ConvertIndices(List<float> vertices, List<uint> indices)
         {
             List<float> result = new();
             
