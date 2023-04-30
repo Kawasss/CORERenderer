@@ -1,8 +1,6 @@
 ﻿using COREMath;
 using CORERenderer.Main;
 using CORERenderer.OpenGL;
-using static CORERenderer.Main.Globals;
-using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 
 namespace CORERenderer.Loaders
@@ -27,14 +25,12 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < submodels.Count; i++)
             {
                 submodels[i].renderLines = renderLines;
-                submodels[i].parentModel = Matrix.IdentityMatrix * new Matrix(scaling, translation) * (MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z));
 
                 if (submodels[i].highlighted)
                 {
                     this.highlighted = true;
                     selectedSubmodel = i;
                 }
-
 
                 if (!submodels[i].isTranslucent)
                     submodels[i].Render();

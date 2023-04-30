@@ -18,7 +18,6 @@ namespace CORERenderer.Loaders
         public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
         private Vector3 previousScaling = new(1, 1, 1), previousTranslation = new(0, 0, 0), previousRotation = new(0, 0, 0);
 
-        public Matrix parentModel;
         public Model parent = null;
 
         public readonly List<float> vertices;
@@ -199,7 +198,6 @@ namespace CORERenderer.Loaders
 
         private void SetShaderValues()
         {
-            shader.SetVector3("viewPos", COREMain.CurrentScene.camera.position);
             shader.SetFloat("transparency", material.Transparency);
             shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
 
@@ -216,7 +214,7 @@ namespace CORERenderer.Loaders
             usedTextures[material.NormalMap].Use(GL_TEXTURE3);
         }
 
-        private static List<float> ConvertIndices(List<float> vertices, List<uint> indices)
+        public static List<float> ConvertIndices(List<float> vertices, List<uint> indices)
         {
             List<float> result = new();
             
@@ -255,8 +253,8 @@ namespace CORERenderer.Loaders
 
         ~Submodel()
         {
-            glDeleteBuffer(VBO);
-            glDeleteVertexArray(VAO);
+            //glDeleteBuffer(VBO);
+            //glDeleteVertexArray(VAO);
         }
     }
 }

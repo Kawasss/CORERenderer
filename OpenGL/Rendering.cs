@@ -186,6 +186,8 @@ namespace CORERenderer.OpenGL
 
         public static void RenderAllModels(List<Model> models)
         {
+            GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
+
             if (cullFaces)
                 glEnable(GL_CULL_FACE);
             else 

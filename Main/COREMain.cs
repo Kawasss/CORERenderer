@@ -13,6 +13,7 @@ using CORERenderer.shaders;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
+using System.Reflection.Metadata.Ecma335;
 #endregion
 
 namespace CORERenderer.Main
@@ -167,6 +168,7 @@ namespace CORERenderer.Main
                 Graph drawCallsPerFrameGraph = new(0,(int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.224f - 25),viewportX,(int)(monitorHeight * 0.004f));
 
                 console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
+                console.GenerateConsoleErrorLog(pathRenderer);
 
                 TabManager tab = new(new string[] { "Models", "Submodels" });
                 TabManager graphManager = new(new string[] { "FT", "CPU %", "DCPF" });
@@ -538,16 +540,14 @@ namespace CORERenderer.Main
             return 0;
         }
 
-        public static void MergeAllModels(out List<List<float>> vertices, /*out List<List<uint>> indices,*/ out List<Vector3> offsets)
+        public static void MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets)
         {
             vertices = new();
-            //indices = new();
             offsets = new();
             foreach (Model model in CurrentScene.models)
                 for (int i = 0; i < model.Vertices.Count; i++)
                 {
                     vertices.Add(model.Vertices[i]);
-                    //indices.Add(model.indices[i]);
                     offsets.Add(model.Offsets[i]);
                 }
         }
@@ -626,13 +626,18 @@ namespace CORERenderer.Main
                     if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read// && !readFiles.Contains(file)
                     {
                         readFiles.Add(file);
-                        Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out string mtllib);
 
-                        allVertices.Add(vertices);
-                        allIndices.Add(indices);
-                        allOffsets.Add(offsets);
-                        mtllibs.Add(dir + '\\' + mtllib);
-                        mtlnames.Add(mtlNames);
+                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out string mtllib);
+                        if (error != Error.None)
+                            console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
+                        else
+                        {
+                            allVertices.Add(vertices);
+                            allIndices.Add(indices);
+                            allOffsets.Add(offsets);
+                            mtllibs.Add(dir + '\\' + mtllib);
+                            mtlnames.Add(mtlNames);
+                        }
                     }
                 });
                 loaded = true;

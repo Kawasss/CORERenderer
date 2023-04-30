@@ -16,6 +16,8 @@ namespace CORERenderer.shaders
 
         public int byteSize = 0;
 
+        private Dictionary<string, int> uniformLocations = new();
+
         public Shader(string vertexPath, string fragmentPath)
         {
             vertexShaderSource = !vertexPath.ToLower().Contains("void main()") ? vertexShaderSource = File.ReadAllText(vertexPath) : vertexPath;
@@ -131,11 +133,18 @@ namespace CORERenderer.shaders
             glEnableVertexAttribArray((uint)vertexLocation);
         }
 
+        private int GetUniformLocation(string name) //caches the location of uniform variables so they can be found faster, string comparisons arent cheap
+        {
+            if (!uniformLocations.ContainsKey(name))
+                uniformLocations.Add(name, glGetUniformLocation(Handle, name));
+            return uniformLocations[name];
+        }
+
         public void SetInt(string name, int value)
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
             glUniform1i(location, value);
         }
 
@@ -143,7 +152,7 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
             glUniform1i(location, value ? 1 : 0);
         }
 
@@ -151,7 +160,7 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
             glUniform1f(location, value);
         }
 
@@ -159,7 +168,7 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
 
             fixed (float* temp = &matrix.matrix4x4[0, 0])
             {
@@ -171,7 +180,7 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
             glUniform3f(location, v3.x, v3.y, v3.z);
         }
 
@@ -179,7 +188,7 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = glGetUniformLocation(Handle, name);
+            int location = GetUniformLocation(name);
             glUniform3f(location, v1, v2, v3);
         }
 

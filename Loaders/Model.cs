@@ -84,13 +84,29 @@ namespace CORERenderer.Loaders
 
             submodels = new();
             this.translation = offsets[0];
+            int amountOfFailures = 0;
+
             for (int i = 0; i < vertices.Count; i++)
             {
-                submodels.Add(new(Materials[i].Name, vertices[i], indices[i], offsets[i] - this.translation, this, Materials[i]));
-                totalAmountOfVertices += submodels[^1].NumberOfVertices;
+                try
+                {
+                    submodels.Add(new(materials[i].Name, vertices[i], indices[i], offsets[i] - this.translation, this, materials[i]));
+                    totalAmountOfVertices += submodels[^1].NumberOfVertices;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    COREMain.console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {COREMain.CurrentScene.models.Count} \"{Name}\"");
+                    amountOfFailures++;
+                    continue;
+                }
             }
-            submodels[0].highlighted = true;
-            selectedSubmodel = 0;
+            if (amountOfFailures >= vertices.Count - 1)
+                terminate = true;
+            if (!terminate)
+            {
+                submodels[0].highlighted = true;
+                selectedSubmodel = 0;
+            }
         }
 
         public Model() { }

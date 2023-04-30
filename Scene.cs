@@ -49,7 +49,7 @@ namespace CORERenderer
             for (int i = 0; i < models.Count; i++)
                 if (models[i].terminate)
                 {
-                    console.WriteError($"Couldn't create model: {models[i].error}");
+                    console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
         }

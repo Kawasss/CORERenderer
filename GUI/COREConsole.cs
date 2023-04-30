@@ -12,8 +12,9 @@ namespace CORERenderer.GUI
 {
     public class COREConsole
     {
-        public static bool writeDebug = false;
-        public static bool writeError = true;
+        public static bool writeDebug = false, writeError = true;
+        private bool canWriteToLog;
+        private string logLocation;
 
         private Div quad;
 
@@ -137,10 +138,10 @@ namespace CORERenderer.GUI
                 if (lines[i] == null)
                     continue;
                 if (lines[i].Length > 5 && lines[i][..5] == "ERROR")
-                    quad.WriteError(lines[i], 0, Height - lineOffset, 0.7f);
+                    quad.WriteError(lines[i][6..], 0, Height - lineOffset, 0.7f);
 
                 else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
-                    quad.Write(lines[i], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
+                    quad.Write(lines[i][6..], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
 
                 else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
@@ -205,6 +206,13 @@ namespace CORERenderer.GUI
         {
             if (writeError)
                 WriteLine("ERROR " + err);
+
+            if (canWriteToLog)
+            {
+                using FileStream fs = new(logLocation, FileMode.Append);
+                using StreamWriter sw = new(fs);
+                sw.Write(err + "\n");
+            }
         }
 
         public void WriteDebug(string debug)
@@ -223,6 +231,14 @@ namespace CORERenderer.GUI
         }
 
         public void RenderStatic() => Render();
+
+        public void GenerateConsoleErrorLog(string path)
+        {
+            FileStream fs = File.Create($"{path}\\consoleErrorLog.txt");
+            fs.Close();
+            canWriteToLog = true;
+            logLocation = $"{path}\\consoleErrorLog.txt";
+        }
 
         /// <summary>
         /// Writes all information gathered from the initial start up to the console
