@@ -57,8 +57,6 @@ namespace CORERenderer.Loaders
 
         private int totalAmountOfVertices = 0;
 
-        private uint VBO, VAO;
-
         public int selectedSubmodel = 0;
 
         private HDRTexture hdr = null;
@@ -99,6 +97,7 @@ namespace CORERenderer.Loaders
 
         private void GenerateImage(string path)
         {
+            Name = Path.GetFileNameWithoutExtension(path);
             Material material = new() { Texture = FindTexture(path) };
             float width = usedTextures[material.Texture].width * 0.01f;
             float height = usedTextures[material.Texture].height * 0.01f;
@@ -113,12 +112,8 @@ namespace CORERenderer.Loaders
                 width / 2,  0.1f,  height / 2,    1, 0,   0, 1, 0,
                 width / 2,  0.1f, -height / 2,    1, 1,   0, 1, 0
             };
-
-            GenerateFilledBuffer(out VBO, out VAO, iVertices);
-
-            SetUpShader();
-
-            Materials.Add(material);
+            submodels.Add(new(Name, iVertices.ToList(), Vector3.Zero, this, material));
+            submodels[^1].cullFaces = true;
         }
 
         private void GenerateStl(string path)
@@ -232,9 +227,7 @@ namespace CORERenderer.Loaders
         {
             if (COREMain.CurrentScene.currentObj == COREMain.CurrentScene.models.IndexOf(this))
                 COREMain.CurrentScene.currentObj = -1;
-            COREMain.CurrentScene.models.Remove(this);
-            foreach (Submodel sub in submodels)
-                sub.Dispose();
+            terminate = true;
         }
 
         private void SetUpShader()
@@ -243,15 +236,6 @@ namespace CORERenderer.Loaders
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
-        }
-
-        ~Model()
-        {
-            if (VBO != 0 && VAO != 0)
-            {
-                glDeleteBuffer(VBO);
-                glDeleteVertexArray(VAO);
-            }
         }
     }
 }

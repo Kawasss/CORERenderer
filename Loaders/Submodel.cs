@@ -38,7 +38,7 @@ namespace CORERenderer.Loaders
         private string name = "PLACEHOLDER";
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
-        public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true;
+        public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         private Matrix model = Matrix.IdentityMatrix;
 
@@ -109,6 +109,8 @@ namespace CORERenderer.Loaders
 
         private void DefaultSetUp()
         {
+            glLineWidth(1.5f);
+
             hasMaterials = true;
 
             GenerateBuffers();
@@ -138,42 +140,55 @@ namespace CORERenderer.Loaders
 
                 ClampValues();
 
-                
+                SetModel();
 
                 SetShaderValues();
 
                 glBindVertexArray(VAO);
                 unsafe
                 {
-                    GL.glLineWidth(1.5f);
-                    if (renderLines)
-                        glDrawArrays(PrimitiveType.Lines, 0, vertices.Count / 8);
-                    else
-                        glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+                    if (!cullFaces)
+                        glDisable(GL_CULL_FACE);
+
+                    RenderColorVersion();
 
                     if (COREMain.renderToIDFramebuffer && renderIDVersion)
-                    {
-                        COREMain.IDFramebuffer.Bind();
+                        RenderIDVersion();
 
-                        IDShader.Use();
-
-                        IDShader.SetVector3("color", IDColor);
-                        IDShader.SetMatrix("model", model);
-
-                        glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
-
-                        if (!highlighted)
-                            highlighted = COREMain.selectedID == ID;
-                        else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
-                            highlighted = false;
-
-                        COREMain.renderFramebuffer.Bind();
-                    }
+                    if (!cullFaces)
+                        glEnable(GL_CULL_FACE);
                 }
                 previousScaling = scaling + parent.scaling;
                 previousTranslation = translation + parent.translation;
                 previousRotation = rotation + parent.rotation;
             }
+        }
+
+        private void RenderColorVersion()
+        {
+            if (renderLines)
+                glDrawArrays(PrimitiveType.Lines, 0, vertices.Count / 8);
+            else
+                glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+        }
+
+        private void RenderIDVersion()
+        {
+            COREMain.IDFramebuffer.Bind();
+
+            IDShader.Use();
+
+            IDShader.SetVector3("color", IDColor);
+            IDShader.SetMatrix("model", model);
+
+            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+
+            if (!highlighted)
+                highlighted = COREMain.selectedID == ID;
+            else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
+                highlighted = false;
+
+            COREMain.renderFramebuffer.Bind();
         }
 
         private void SetModel()//doesnt create a new matrix if the model hasnt moved in any way, this reduces amount of calculations per frame
@@ -228,26 +243,20 @@ namespace CORERenderer.Loaders
         }
 
         private void ClampValues()
-        { //maybe just use clamp?
-            if (scaling.x < 0.01f)
-                scaling.x = 0.01f;
-            if (scaling.y < 0.01f)
-                scaling.y = 0.01f;
-            if (scaling.z < 0.01f)
-                scaling.z = 0.01f;
-            if (rotation.x >= 360)
-                rotation.x = 0;
-            if (rotation.y >= 360)
-                rotation.y = 0;
-            if (rotation.z >= 360)
-                rotation.z = 0;
+        {
+            /*scaling.x = Math.Max(0, scaling.x);
+            scaling.y = Math.Max(0, scaling.y);
+            scaling.z = Math.Max(0, scaling.z);*/
+
+            rotation.x = Math.Max(0, rotation.x);
+            rotation.y = Math.Max(0, rotation.y);
+            rotation.z = Math.Max(0, rotation.z);
         }
 
-        public void Dispose()
+        ~Submodel()
         {
             glDeleteBuffer(VBO);
             glDeleteVertexArray(VAO);
-            GC.Collect();
         }
     }
 }

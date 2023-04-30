@@ -13,14 +13,9 @@ namespace CORERenderer.Loaders
         {
             highlighted = COREMain.selectedID == ID;
 
-            if (type == RenderMode.ObjFile || type == RenderMode.STLFile)
+            if (type == RenderMode.ObjFile || type == RenderMode.STLFile || type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 RenderModel();
 
-            else if (type == RenderMode.JPGImage)
-                RenderImage();
-
-            else if (type == RenderMode.PNGImage)
-                RenderImage();
             else if (type == RenderMode.HDRFile)
                 Rendering.RenderBackground(hdr);
         }
@@ -47,24 +42,5 @@ namespace CORERenderer.Loaders
                     translucentSubmodels.Add(submodels[i]);
             }
         }
-
-        private void RenderImage()
-        {
-            Matrix model = Matrix.IdentityMatrix * MathC.GetScalingMatrix(scaling) * MathC.GetTranslationMatrix(translation) * MathC.GetRotationXMatrix(rotation.x) * MathC.GetRotationYMatrix(rotation.y) * MathC.GetRotationZMatrix(rotation.z);
-            shader.SetMatrix("model", model);
-            shader.SetInt("material.diffuse", GL_TEXTURE0);
-            usedTextures[Materials[0].Texture].Use(GL_TEXTURE0);
-
-            glBindVertexArray(VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, Vertices[0].Count / 8);
-            if (renderLines)
-            {
-                GL.glLineWidth(1.5f);
-                shader.SetVector3("overrideColor", new(1, 0, 1));
-                glDrawArrays(PrimitiveType.Lines, 0, Vertices[0].Count / 8);
-                shader.SetVector3("overrideColor", new(0, 0, 0));
-            }
-        }
-
     }
 }

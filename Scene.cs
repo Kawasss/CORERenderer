@@ -65,7 +65,10 @@ namespace CORERenderer
             
             for (int i = 0; i < models.Count; i++) //inefficient, better to have a dictionary to look it up
             {
-                if (selectedID == models[i].ID)
+                if (models[i].terminate)
+                    models.RemoveAt(i);
+
+                else if (selectedID == models[i].ID)
                 {
                     models[i].highlighted = true;
                     currentObj = i;
@@ -120,9 +123,9 @@ namespace CORERenderer
                     if (arrows.wantsToRotateYAxis && loaded)
                         CurrentModel.rotation.y -= deltaX / 30;
                     if (arrows.wantsToRotateXAxis && loaded)
-                        CurrentModel.rotation.x += deltaX / 30;
+                        CurrentModel.rotation.x +=  (deltaY + deltaX) / 30;
                     if (arrows.wantsToRotateZAxis && loaded)
-                        CurrentModel.rotation.z += -deltaX / 30;
+                        CurrentModel.rotation.z += (deltaY + deltaX) / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
                         CurrentModel.translation.y += deltaY / 150;

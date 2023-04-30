@@ -63,14 +63,8 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
-            if (disableArrows)
+            if (COREMain.CurrentScene.currentObj == -1 || disableArrows)
                 return;
-
-            if (COREMain.CurrentScene.currentObj == -1)
-                return;
-
-            //if (previousID != COREMain.selectedID)
-            //    maxScale = 0;
 
             if (maxScale == 0)
                 maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation)) / 2;
@@ -80,7 +74,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f) * MathC.GetRotationMatrix(COREMain.CurrentModel.rotation);
+            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.rotation) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
 
             shader.SetVector3("color", 0, 1, 0);
 
@@ -171,7 +165,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation) * MathC.GetScalingMatrix((MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * 0.75f) * MathC.GetRotationMatrix(COREMain.CurrentModel.rotation);//model *= Matrix.IdentityMatrix * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
+            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.rotation) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
