@@ -16,6 +16,7 @@ namespace CORERenderer.Loaders
         public static float renderDistance = 100;
 
         public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
+        private Vector3 previousScaling = new(1, 1, 1), previousTranslation = new(0, 0, 0), previousRotation = new(0, 0, 0);
 
         public Matrix parentModel;
         public Model parent = null;
@@ -39,6 +40,9 @@ namespace CORERenderer.Loaders
 
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true;
 
+        private Matrix model = Matrix.IdentityMatrix;
+
+        #region constructors
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
         {
             this.Name = name;
@@ -101,6 +105,7 @@ namespace CORERenderer.Loaders
 
             DefaultSetUp();
         }
+        #endregion
 
         private void DefaultSetUp()
         {
@@ -114,6 +119,10 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
             shader.SetInt("material.normalMap", GL_TEXTURE3);
+
+            previousScaling = scaling + parent.scaling;
+            previousTranslation = translation + parent.translation;
+            previousRotation = rotation + parent.rotation;
         }
 
         public void Render()
@@ -126,21 +135,12 @@ namespace CORERenderer.Loaders
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
-                
-                shader.SetVector3("viewPos", COREMain.scenes[COREMain.selectedScene].camera.position);
-                shader.SetFloat("transparency", material.Transparency);
-                shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
 
                 ClampValues();
 
-                Matrix model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation + parent.rotation) * MathC.GetScalingMatrix(this.scaling + parent.scaling) * MathC.GetTranslationMatrix(this.translation + parent.translation);
+                
 
-                shader.SetMatrix("model", model);
-
-                usedTextures[material.Texture].Use(GL_TEXTURE0);
-                usedTextures[material.DiffuseMap].Use(GL_TEXTURE1);
-                usedTextures[material.SpecularMap].Use(GL_TEXTURE2);
-                usedTextures[material.NormalMap].Use(GL_TEXTURE3);
+                SetShaderValues();
 
                 glBindVertexArray(VAO);
                 unsafe
@@ -170,7 +170,35 @@ namespace CORERenderer.Loaders
                         COREMain.renderFramebuffer.Bind();
                     }
                 }
+                previousScaling = scaling + parent.scaling;
+                previousTranslation = translation + parent.translation;
+                previousRotation = rotation + parent.rotation;
             }
+        }
+
+        private void SetModel()//doesnt create a new matrix if the model hasnt moved in any way, this reduces amount of calculations per frame
+        {
+            if (previousRotation != rotation + parent.rotation || previousScaling != scaling + parent.scaling || previousTranslation != translation + parent.translation)
+                model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation + parent.rotation) * MathC.GetScalingMatrix(this.scaling + parent.scaling) * MathC.GetTranslationMatrix(this.translation + parent.translation);
+        }
+
+        private void SetShaderValues()
+        {
+            shader.SetVector3("viewPos", COREMain.CurrentScene.camera.position);
+            shader.SetFloat("transparency", material.Transparency);
+            shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
+
+            shader.SetMatrix("model", model);
+
+            UseTextures();
+        }
+
+        private void UseTextures()
+        {
+            usedTextures[material.Texture].Use(GL_TEXTURE0);
+            usedTextures[material.DiffuseMap].Use(GL_TEXTURE1);
+            usedTextures[material.SpecularMap].Use(GL_TEXTURE2);
+            usedTextures[material.NormalMap].Use(GL_TEXTURE3);
         }
 
         private static List<float> ConvertIndices(List<float> vertices, List<uint> indices)

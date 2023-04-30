@@ -28,7 +28,7 @@ namespace COREMath
         /// <param name="r2c3">Translation for z</param>
         public Matrix(float r0c0, float r1c1, float r2c2, float r0c3, float r1c3, float r2c3)
         {
-            this.matrix4x4 = new float[4, 4] 
+            this.matrix4x4 = new float[4, 4]
             {
                 { r0c0, 0, 0, r0c3 },
                 { 0, r1c1, 0, r1c3 },
@@ -52,7 +52,7 @@ namespace COREMath
                 { 0, 0, 0,       1 }
              };
         }
-       
+
         /// <summary>
         /// Gives a transformation matrix with the given vectors
         /// </summary>
@@ -213,7 +213,7 @@ namespace COREMath
             }
         }
 
-        public static Matrix IdentityMatrix = new(1, 1, 1, 0, 0, 0);
+        public static Matrix IdentityMatrix { get { return new(1, 1, 1, 0, 0, 0); } }
 
         public static Matrix Createorthographic(float width, float height, float depthNear, float depthFar) => CreateOrthographicOffCenter(-width / 2, width / 2, -height / 2, height / 2, depthNear, depthFar);
 
@@ -446,32 +446,17 @@ namespace COREMath
         /// <summary>
         /// Prints the current matrix to the console
         /// </summary>
-        public void Print()
+        public override string ToString()
         {
+            string end = string.Empty;
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    Console.Write(matrix4x4[i, j] + " ");
+                    end += matrix4x4[i, j] + " ";
                 }
-                Console.WriteLine();
             }
-        }
-
-        /// <summary>
-        /// Prints the given matrix
-        /// </summary>
-        /// <param name="matrix"></param>
-        public static void Print(float[,] matrix)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    Console.Write(matrix[i, j] + " ");
-                }
-                Console.WriteLine();
-            }
+            return end;
         }
     }
 }

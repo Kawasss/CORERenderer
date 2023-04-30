@@ -308,9 +308,9 @@ namespace COREMath
         /// <summary>
         /// Prints the current vector to the console
         /// </summary>
-        public void Print()
+        public override string ToString()
         {
-            Console.WriteLine($"({this.x}, {this.y}, {this.z}, {this.w})");
+            return $"({this.x}, {this.y}, {this.z}, {this.w})";
         }
     }
 }
