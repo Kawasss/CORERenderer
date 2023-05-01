@@ -2,6 +2,8 @@
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 #define PI 3.14159265
+#define STEPS 32
+#define STEPS_LIGHT 10
 const float EPSILON = 0.0000001;
 
 layout (std140, binding = 0) uniform Matrices
@@ -39,6 +41,25 @@ struct Ray
     bool hasHitSomething;
 };
 
+vec3 coordinates[36] = vec3[](
+	vec3(-0.5, -0.5, -0.5), vec3(0.5, 0.5, -0.5), vec3(0.5, -0.5, -0.5),
+    vec3(0.5, 0.5, -0.5), vec3(-0.5, -0.5, -0.5), vec3(-0.5, 0.5, -0.5),
+	
+	vec3(-0.5, -0.5, 0.5), vec3(0.5, -0.5, 0.5), vec3(0.5, 0.5, 0.5),
+    vec3(0.5, 0.5, 0.5), vec3(-0.5, 0.5, 0.5), vec3(-0.5, -0.5, 0.5),
+	
+	vec3(-0.5, 0.5, 0.5), vec3(-0.5, 0.5, -0.5), vec3(-0.5, -0.5, -0.5),
+    vec3(-0.5, -0.5, -0.5), vec3(-0.5, -0.5, 0.5), vec3(-0.5, 0.5, 0.5),
+
+	vec3(0.5, 0.5, 0.5), vec3(0.5, -0.5, -0.5), vec3(0.5, 0.5, -0.5),
+    vec3(0.5, -0.5, -0.5), vec3(0.5, 0.5, 0.5), vec3(0.5, -0.5, 0.5),
+
+	vec3(-0.5, -0.5, -0.5), vec3(0.5, -0.5, -0.5), vec3(0.5, -0.5, 0.5),
+    vec3(0.5, -0.5, 0.5), vec3(-0.5, -0.5, 0.5), vec3(-0.5, -0.5, -0.5),
+
+	vec3(-0.5, 0.5, -0.5), vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, -0.5),
+    vec3(0.5, 0.5, 0.5), vec3(-0.5, 0.5, -0.5), vec3(-0.5, 0.5, 0.5)
+);
 
 uniform vec3 color;
 uniform vec3 position;
@@ -55,11 +76,13 @@ uniform vec3 up;
 uniform vec3 forward;
 
 uniform float nearPlane;
+uniform float frametime;
 
 uniform sampler2D backgroundImage;
 
 bool Intersects(out vec3 intersection, Ray ray, vec3 vertex0, vec3 vertex1, vec3 vertex2, out float t);
 bool IntersectsLamp(Ray ray, out vec3 intersection, out float t);
+float HenyeyGreenstein(float g, float costh);
 
 void main() 
 {
@@ -67,7 +90,7 @@ void main()
     ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
     ivec2 imgSize = imageSize(imgOutput);
 
-    imageStore(imgOutput, uv, vec4(.1));
+    imageStore(imgOutput, uv, vec4(.5, .8, .9, 1));
 
     float x = uv.x;
     float y = uv.y;
@@ -95,13 +118,17 @@ void main()
     int totalBounces = 0;
     ray.hasHitSomething = false;
     vec3 endColor = color;
+
+    vec3 intersectionPoint = vec3(0); //debug
+    bool hasHit = false;
+
     while (!ray.isTerminated && totalBounces < 10) //continue bouncing the ray around till it flies into nowhere or bounces too much
     {
         bool hasIntersected = false;
 
-        for (int i = 0; i < amount; i += 24) //check each triangle
+        for (int i = 0; i < 36; i += 3) //check each triangle //< amount : i += 24
         {
-            if (i + 24 >= amount) //if the ray doesnt collide with all of the geometry, terminate it
+            if (i + 3 >= 36) //if the ray doesnt collide with all of the geometry, terminate it //i + 24 > amount
             {
                 ray.isTerminated = true;
                 break;
@@ -111,9 +138,9 @@ void main()
                 break;
 
             //assemble the triangle
-            vec3 v2 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
-            vec3 v3 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
-            vec3 v1 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
+            vec3 v1 = vec3(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+            vec3 v2 = vec3(vertexData[i + 8], vertexData[i + 9], vertexData[i + 10]);
+            vec3 v3 = vec3(vertexData[i + 16], vertexData[i + 17], vertexData[i + 18]);
             vec3 normal = vec3(vertexData[i + 5], vertexData[i + 6], vertexData[i + 7]); 
             normal = dot(normal, ray.direction) < 0 ? normal : normal * -1; //orient the normal correctly
 
@@ -121,43 +148,52 @@ void main()
             float t;
             bool success = Intersects(intersection, ray, v1, v2, v3, t); //check for any triangle collision
 
-            if (success)
-            {
-                imageStore(imgOutput, uv, vec4(1));
-                return;
-            }
-
-            /*vec3 lampIntersection;
+            vec3 lampIntersection;
             float lampT;
             bool lampSuccess = IntersectsLamp(ray, lampIntersection, lampT);
 
-            if (lampSuccess && !success)
-            {
-                imageStore(imgOutput, uv, vec4(1));
-                return;
-            }
-
-            if (lampSuccess && success && (distance(cameraPos, ray.origin + lampT) < distance(cameraPos, ray.origin * t)))
-            {
-                imageStore(imgOutput, uv, vec4(vec3(1) / totalBounces, 1));
-                return;
-            }
-
-            if (success)
+            if (success && !lampSuccess)
             {
                 ray.origin = intersection;
                 ray.direction = ray.direction - 2 * dot(normal, ray.direction) * normal;
 
                 totalBounces++;
-            }*/
+            }
+            else if (success && lampSuccess)
+            {
+                float distanceLamp = distance(cameraPos, vec3(0, 5, 0));
+                float distanceModel = distance(cameraPos, intersection);
+
+                if (distanceLamp < distanceModel)
+                {
+                    imageStore(imgOutput, uv, vec4(vec3(1) / totalBounces, 1));
+                    break;
+                }
+                else
+                {
+                    ray.origin = intersection;
+                    ray.direction = ray.direction - 2 * dot(normal, ray.direction) * normal;
+
+                    totalBounces++;
+                }
+            }
+            else if (lampSuccess && !success)
+            {
+                imageStore(imgOutput, uv, vec4(vec3(1) / totalBounces, 1));
+            }
         }
     }
+}
+
+float HenyeyGreenstein(float g, float costh)
+{
+	return (1.0 / (4.0 * 3.1415))  * ((1.0 - g * g) / pow(1.0 + g*g - 2.0*g*costh, 1.5));
 }
 
 bool IntersectsLamp(Ray ray, out vec3 intersection, out float t)
 {
 	float rad = radius;
-	vec3 sphereCentre = position;
+	vec3 sphereCentre = vec3(0, 5, 0);
 	vec3 op = sphereCentre - ray.origin;
 	t = 1e-4;
 	float eps = 1e-4;

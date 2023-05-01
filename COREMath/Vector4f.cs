@@ -5,10 +5,12 @@ namespace COREMath
 {
     public class Vector4
     {                     //still needs to be tested for faulty code
-        public float x { get; set; }
-        public float y { get; set; }
-        public float z { get; set; }
-        public float w { get; set; }
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+
+        public Vector3 xyz { get { return new(x, y, z); } }
 
         public float Length { get { return MathC.GetLengthOf(this); } }
 
@@ -26,6 +28,15 @@ namespace COREMath
             this.z = vec4Z;
             this.w = vec4W;
         }
+
+        public Vector4(Vector3 v3, float v1)
+        {
+            this.x = v3.x;
+            this.y = v3.y;
+            this.z = v3.z;
+            this.w = v1;
+        }
+
         /// <summary>
         /// Creates a new vector with the given vector
         /// </summary>
@@ -66,6 +77,14 @@ namespace COREMath
             this.x = matrix.matrix4x4[0, 0] * this.x + matrix.matrix4x4[0, 3];
             this.y = matrix.matrix4x4[1, 1] * this.x + matrix.matrix4x4[1, 3];
             this.z = matrix.matrix4x4[2, 2] * this.z + matrix.matrix4x4[2, 3];
+        }
+
+        public static Vector4 operator * (Matrix matrix, Vector4 v)
+        {
+            float x = matrix.matrix4x4[0, 0] * v.x + matrix.matrix4x4[0, 3];
+            float y = matrix.matrix4x4[1, 1] * v.x + matrix.matrix4x4[1, 3];
+            float z = matrix.matrix4x4[2, 2] * v.z + matrix.matrix4x4[2, 3];
+            return new(x, y, z, 1);
         }
 
         /// <summary>

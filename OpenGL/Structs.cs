@@ -8,17 +8,17 @@ namespace CORERenderer.OpenGL
 {
     public struct Plane
     {
-        Vector3 normal = Vector3.UnitVectorY;
-        float distance = 0;
+        public Vector3 normal = Vector3.UnitVectorY;
+        public float distance = 0;
 
-        public Plane(Vector3 normal, float distance)
+        public Plane(Vector3 point, Vector3 normal)
         {
-            this.normal = normal;
-            this.distance = distance;
+            this.normal = MathC.Normalize(normal);
+            this.distance = MathC.GetDotProductOf(normal, point);
         }
     }
 
-    public struct Frustrum
+    public struct Frustum
     {
         public Plane topFace;
         public Plane bottomFace;
@@ -26,6 +26,24 @@ namespace CORERenderer.OpenGL
         public Plane leftFace;
         public Plane farFace;
         public Plane nearFace;
+    }
+
+    public struct AABB
+    {
+        public Vector3 center = Vector3.Zero;
+        public Vector3 extents = Vector3.Zero;
+
+        public AABB(Vector3 min, Vector3 max)
+        {
+            this.center = (min + max) * 0.5f;
+            this.extents = max - center;
+        }
+
+        public AABB(Vector3 center, float iI, float iJ, float iK)
+        {
+            this.center = center;
+            this.extents = new(iI, iJ, iK);
+        }
     }
 
     public struct Framebuffer

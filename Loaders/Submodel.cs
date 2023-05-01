@@ -18,6 +18,12 @@ namespace CORERenderer.Loaders
         public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
         private Vector3 previousScaling = new(1, 1, 1), previousTranslation = new(0, 0, 0), previousRotation = new(0, 0, 0);
 
+        //better to put this in a Transform class
+        public Vector3 Right { get { return new(model.matrix4x4[0,0], model.matrix4x4[0,1], model.matrix4x4[0,2]); } }
+        //public float Right { get { return model.matrix4x4[0, 0]; } }
+        public float Up { get { return model.matrix4x4[0, 1]; } }
+        public float Forward { get { return -model.matrix4x4[0, 2]; } }
+
         public Model parent = null;
 
         public readonly List<float> vertices;
@@ -40,6 +46,8 @@ namespace CORERenderer.Loaders
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         private Matrix model = Matrix.IdentityMatrix;
+
+        private AABB boundingBox = new();
 
         #region constructors
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
@@ -124,6 +132,15 @@ namespace CORERenderer.Loaders
             previousScaling = scaling + parent.scaling;
             previousTranslation = translation + parent.translation;
             previousRotation = rotation + parent.rotation;
+        }
+
+        public bool IsInFrustum(Frustum frustum)
+        {
+            Vector3 globalCenter = (model * new Vector4(boundingBox.center, 1)).xyz;
+
+            Vector3 right = Right * boundingBox.extents.x;
+
+            return true;
         }
 
         public void Render()

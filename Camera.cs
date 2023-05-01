@@ -93,6 +93,23 @@ namespace CORERenderer
             }
         }
 
+        public Frustum GenerateFrustum()
+        {
+            Frustum frustum;
+            float halfWidth = farPlane * MathC.Tan(fov * 0.5f);
+            float halfHeight = halfWidth * AspectRatio;
+            Vector3 positionFarPlane = farPlane * front;
+
+            frustum.nearFace = new(position + nearPlane * front, front);
+            frustum.farFace = new(position + positionFarPlane, -front);
+            frustum.rightFace = new(position, MathC.GetCrossProduct(positionFarPlane - right * halfHeight, up));
+            frustum.leftFace = new(position, MathC.GetCrossProduct(up, positionFarPlane + right * halfHeight));
+            frustum.topFace = new(position, MathC.GetCrossProduct(right, positionFarPlane - up * halfWidth));
+            frustum.bottomFace = new(position, MathC.GetCrossProduct(positionFarPlane + up * halfWidth, right));
+
+            return frustum;
+        }
+
         public void SetPosition(float x, float y, float z)
         {
             position = new Vector3(x, y, z);

@@ -462,12 +462,12 @@ namespace CORERenderer.Main
 
                     #region Compute shader related events
                     {
-                        /*glActiveTexture(GL_TEXTURE1);
+                        /*glActiveTexture(GL_TEXTURE1); //buffer overflow
                         glBindTexture(GL_TEXTURE_2D, renderFramebuffer.Texture);
 
                         int error = GetError();
                         comp.Use();
-
+                        comp.SetFloat("frametime", currentFrameTime);
                         comp.SetVector3("cameraPos", CurrentScene.camera.position);
                         comp.SetVector3("lookAt", CurrentScene.camera.front);
                         comp.SetVector3("right", CurrentScene.camera.right);
@@ -501,9 +501,9 @@ namespace CORERenderer.Main
                     UpdateSelectedID();
                     arrows.UpdateArrowsMovement();
 
-                    //computeShader.RenderFramebuffer();
+                    computeShader.RenderFramebuffer();
 
-                    //glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
                     renderFramebuffer.RenderFramebuffer();
 
                     if (renderIDFramebuffer)
