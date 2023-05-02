@@ -21,6 +21,8 @@ namespace CORERenderer.Fonts
 
         private readonly Shader shader;
 
+        public bool drawWithHighlights = false;
+
         public unsafe Font(uint pixelHeight, string fontPath)
         {
             shader = new($"{COREMain.pathRenderer}\\shaders\\Font.vert", $"{COREMain.pathRenderer}\\shaders\\Font.frag");
@@ -102,6 +104,9 @@ namespace CORERenderer.Fonts
             //Matrix rotation = MathC.GetRotationZMatrix(MathC.RadToDeg(angle));
             //Matrix translation = MathC.GetTranslationMatrix(x, y, 0);
 
+            int indexOfTrue = text.IndexOf("True");
+            int indexOfFalse = text.IndexOf("False");
+
             for (int i = 0; i < text.Length; i++)
             {
                 byte c = (byte)text[i];
@@ -112,6 +117,14 @@ namespace CORERenderer.Fonts
                     x += (ch.advance >> 6) * scale;
                     continue;
                 }
+                if (indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3))
+                    shader.SetVector3("textColor", new(0, 1, 0));
+                else if (indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
+                    shader.SetVector3("textColor", new(1, 0, 0));
+                else if (drawWithHighlights && int.TryParse($"{text[i]}", out _))
+                    shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));
+                else
+                    shader.SetVector3("textColor", color);
 
                 float xpos = x + ch.bearing.x * scale;
                 float ypos = y - (ch.size.y - ch.bearing.y) * scale;

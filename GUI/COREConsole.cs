@@ -141,7 +141,7 @@ namespace CORERenderer.GUI
                     quad.WriteError(lines[i][6..], 0, Height - lineOffset, 0.7f);
 
                 else if (lines[i].Length > 5 && lines[i][..5] == "DEBUG")
-                    quad.Write(lines[i][6..], 0, Height - lineOffset, 0.7f, new(0, 1, 0));
+                    quad.Write(lines[i][6..], 0, Height - lineOffset, 0.7f, new(1, 0, 0));
 
                 else if (lines.Length > 0 && i != linesPrinted - 1) //determines if the line is an error or not
                     quad.Write(lines[i], 0, Height - lineOffset, 0.7f);
@@ -151,7 +151,7 @@ namespace CORERenderer.GUI
             }
         }
 
-        public void WriteLine(string text)
+        private void WriteLineF(string text)
         {
             changed = true; //tells the console render everything again (could be optimised better by only rendering the newly added sentence / letters instead of every (already existing) sentence)
 
@@ -176,18 +176,52 @@ namespace CORERenderer.GUI
         public void WriteLine(object value)
         {
             Type type = value.GetType();
-            MethodInfo[] mInfos = type.GetMethods();
-
             bool containsToString = false;
-            for (int i = 0; i < mInfos.Length; i++)
-                if (mInfos[i].Name == "ToString")
-                {
-                    containsToString = true;
-                    break;
-                }
+            if (type != typeof(string))
+            {
+                MethodInfo[] mInfos = type.GetMethods(BindingFlags.DeclaredOnly);
+
+
+                for (int i = 0; i < mInfos.Length; i++)
+                    if (mInfos[i].Name == "ToString")
+                    {
+                        containsToString = true;
+                        break;
+                    }
+            }
+            else
+                containsToString = true;
 
             if (containsToString)
-                this.WriteLine(value.ToString());
+            {
+                string end = value.ToString();
+                if (end.Contains('\n'))
+                {
+                    List<int> newLineIndexes = new();
+                    for (int i = end.IndexOf('\n'); i != -1; i = end.IndexOf('\n', i + 1))
+                        newLineIndexes.Add(i);
+
+                    string[] seperatedLines = new string[newLineIndexes.Count];
+                    for (int i = 0; i < newLineIndexes.Count; i++)
+                    {
+                        seperatedLines[i] = i > 0 ? end[(newLineIndexes[i - 1] + 1)..newLineIndexes[i]] : end[..newLineIndexes[i]];
+                        if (end.Contains("DEBUG ") && i != 0)
+                            this.WriteLine("DEBUG " + seperatedLines[i]);
+                        else if (end.Contains("ERROR ") && i != 0)
+                            this.WriteLine("ERROR " + seperatedLines[i]);
+                        else
+                            this.WriteLineF(seperatedLines[i]);
+                    }
+                    if (end.Contains("DEBUG "))
+                        this.WriteLine("DEBUG " + end[(newLineIndexes[^1] + 1)..]);
+                    else if (end.Contains("ERROR "))
+                        this.WriteLine("ERROR " + end[(newLineIndexes[^1] + 1)..]);
+                    else
+                        this.WriteLineF(end[(newLineIndexes[^1] + 1)..]);
+                }
+                else
+                    this.WriteLineF(value.ToString());
+            }
             else
                 this.WriteError($"Couldn't get value of variable {nameof(value)}");
         }

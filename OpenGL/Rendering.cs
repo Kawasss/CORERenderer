@@ -5,6 +5,7 @@ using CORERenderer.Loaders;
 using CORERenderer.GLFW;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using CORERenderer.GUI;
 
 namespace CORERenderer.OpenGL
 {
@@ -19,6 +20,9 @@ namespace CORERenderer.OpenGL
         public static ShaderType shaderConfig = ShaderType.Lighting;
 
         private static Camera camera = null;
+
+        private static string renderStatistics = string.Empty;
+        public static string RenderStatistics { get { return renderStatistics; } }
 
         public static void Init()
         {
@@ -186,6 +190,9 @@ namespace CORERenderer.OpenGL
 
         public static void RenderAllModels(List<Model> models)
         {
+            int currentDrawCalls = drawCalls;
+            Stopwatch sw = new();
+
             GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
 
             if (cullFaces)
@@ -197,6 +204,7 @@ namespace CORERenderer.OpenGL
 
             GenericShaders.GenericLighting.Use();
 
+            sw.Start();
             foreach (Model model in models)
             {
                 if (model == null)
@@ -206,8 +214,12 @@ namespace CORERenderer.OpenGL
                 else
                     backgroundModel = model;
             }
+            sw.Stop();
+            long timeSpentRenderingOpaque = sw.ElapsedTicks;
 
-            //depth sorting
+            #region depth sorting
+            sw = new();
+            sw.Start();
             List<float> distances = new();
             Dictionary<float, Submodel> distanceModelTable = new();
             foreach (Submodel model in translucentSubmodels)
@@ -224,11 +236,30 @@ namespace CORERenderer.OpenGL
             Array.Reverse(distancesArray);
             for (int i = 0; i < distancesArray.Length; i++)
                 translucentSubmodels[i] = distanceModelTable[distancesArray[i]];
+            sw.Stop();
+            long timeSpentDepthSorting = sw.ElapsedTicks;
+            #endregion
 
+            sw = new();
+            sw.Start();
             foreach (Submodel model in translucentSubmodels)
                 model.Render();
+            sw.Stop();
+            long timeSpentRenderingTranslucent = sw.ElapsedTicks;
 
             backgroundModel?.Render();
+
+            renderStatistics =
+                $"Ticks spent rendering opaque models: {timeSpentRenderingOpaque}\n" +
+                $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}\n" +
+                $"Ticks spent depth sorting: {timeSpentDepthSorting}\n" +
+                $"Ticks spent overall: {timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting}\n" +
+                $"Models rendered: {models.Count}\n" +
+                $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:\n" +
+                $"   {translucentSubmodels.Count} are translucent\n" +
+                $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque\n" +
+                $"Draw calls this frame: {drawCalls - currentDrawCalls}\n" +
+                $"{0 == 0} {1 == 0}";
 
             translucentSubmodels = new();
         }

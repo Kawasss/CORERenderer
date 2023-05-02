@@ -118,6 +118,8 @@ namespace CORERenderer.Loaders
         {
             glLineWidth(1.5f);
 
+            isTranslucent = material.Transparency != 1;
+
             hasMaterials = true;
 
             GenerateBuffers();

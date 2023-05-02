@@ -33,6 +33,8 @@ namespace CORERenderer.Main
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
 
+        public static int refreshRate = 0;
+
         //uints
         public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
 
@@ -45,6 +47,7 @@ namespace CORERenderer.Main
         public static float mousePosX, mousePosY;
 
         private static float currentFrameTime = 0;
+        public static float FrameTime { get { return currentFrameTime; } }
 
         //strings
         public static string LoadFilePath = null;
@@ -119,7 +122,7 @@ namespace CORERenderer.Main
                 Glfw.Init();
 
                 splashScreen = new();
-
+                refreshRate = splashScreen.refreshRate;
                 //sets the width for the window that shows the 3D space
                 #region Calculates all of the appropriate dimensions
                 Width = monitorWidth;
@@ -420,6 +423,11 @@ namespace CORERenderer.Main
                             #endregion
 
                             scenes[selectedScene].RenderEveryFrame(currentFrameTime);
+                            if (CurrentScene.models.Count > 1)
+                            {
+                                console.Wipe();
+                                console.WriteLine(RenderStatistics);
+                            }
 
                             if (renderGrid)
                                 RenderGrid();

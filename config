@@ -1,6 +1,6 @@
 version=v0.6
 shaders=Lighting
 cameraSpeed=3
-writedebug=False
+writedebug=True
 writeerror=True
 loadinfo=True
