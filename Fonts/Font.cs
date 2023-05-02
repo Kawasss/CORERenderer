@@ -117,9 +117,9 @@ namespace CORERenderer.Fonts
                     x += (ch.advance >> 6) * scale;
                     continue;
                 }
-                if (indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3))
+                if (IsColorWhite(color) && indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3))
                     shader.SetVector3("textColor", new(0, 1, 0));
-                else if (indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
+                else if (IsColorWhite(color) && indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
                     shader.SetVector3("textColor", new(1, 0, 0));
                 else if (drawWithHighlights && int.TryParse($"{text[i]}", out _))
                     shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));
@@ -177,6 +177,11 @@ namespace CORERenderer.Fonts
             }
 
             return x;
+        }
+
+        private bool IsColorWhite(Vector3 color)
+        {
+            return color.x == 1 && color.y == 1 && color.z == 1;
         }
 
         ~Font()

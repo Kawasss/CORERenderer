@@ -328,203 +328,209 @@ namespace CORERenderer.Main
                 //render loop
                 while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
                 {
-                    Rendering.UpdateUniformBuffers();
-                    UpdateRenderStatistics();
-                    UpdateCursorLocation();
-
-                    glViewport(0, 0, monitorWidth, monitorHeight);
-
-                    #region GUI related events
+                    try
                     {
-                        gui.Bind();
-                        tb.Render();
-                        if (renderGUI)
+                        Rendering.UpdateUniformBuffers();
+                        UpdateRenderStatistics();
+                        UpdateCursorLocation();
+
+                        glViewport(0, 0, monitorWidth, monitorHeight);
+
+                        #region GUI related events
                         {
-                            button.Render();
-                            saveAsImage.Render();
-
-                            graph.Update((float)CPUUsage); //update even without any input because the data always changes
-                            graph.MaxValue = 100;
-
-                            drawCallsPerFrameGraph.Update(drawCallsPerFrame);
-
-                            frametimeGraph.Update(currentFrameTime * 1000);
-                            console.Update();
-
-                            if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
+                            gui.Bind();
+                            tb.Render();
+                            if (renderGUI)
                             {
-                                tab.Render();
+                                button.Render();
+                                saveAsImage.Render();
 
-                                modelInformation.Render();
-                                modelInformation.RenderModelInformation();
+                                graph.Update((float)CPUUsage); //update even without any input because the data always changes
+                                graph.MaxValue = 100;
 
-                                modelList.RenderModelList(CurrentScene.models);
+                                drawCallsPerFrameGraph.Update(drawCallsPerFrame);
 
-                                sceneManager.Render();
-                            }
-                            console.Render();
+                                frametimeGraph.Update(currentFrameTime * 1000);
+                                console.Update();
 
-                            if (saveAsImage.isPressed)
-                                Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
-                        }
-                        
-                        graphManager.Render();
-                        tb.CheckForUpdate(mousePosX, mousePosY);
+                                if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
+                                {
+                                    tab.Render();
 
-                        
-                        clearedGUI = false;
-                    }
-                    #endregion
+                                    modelInformation.Render();
+                                    modelInformation.RenderModelInformation();
 
-                    #region Scene related events
-                    {
-                        if (Scene.IsCursorInFrame(mousePosX, mousePosY))
-                            UpdateCamera(currentFrameTime);
+                                    modelList.RenderModelList(CurrentScene.models);
 
-                        #region Rendering related stuff if the app is actively being used
-                        if (!destroyWindow || keyIsPressed || mouseIsPressed)
-                        {
-                            #region Generic OpenGL calls like cleaning the bits
-                            IDFramebuffer.Bind();
+                                    sceneManager.Render();
+                                }
+                                console.Render();
 
-                            glClearColor(1f, 1f, 1f, 1);
-                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                            renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
-
-                            glEnable(GL_BLEND);
-                            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                            glEnable(GL_DEPTH_TEST);
-                            glClearColor(0.3f, 0.3f, 0.3f, 1);
-                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                            #endregion
-
-                            if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && fullscreen)
-                            {
-                                fullscreen = false;
-                                menu.SetBool("fullscreen", false);
+                                if (saveAsImage.isPressed)
+                                    Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
 
-                            #region Add certain shapes based on GUI input
-                            if (addCube)
-                            {
-                                CurrentScene.models.Add(Model.Cube);
-                                addCube = false;
-                                menu.SetBool("  Cube", addCube);
-                                CurrentScene.currentObj = CurrentScene.models.Count - 1;
-                            }
-                            if (addCylinder)
-                            {
-                                CurrentScene.models.Add(Model.Cylinder);
-                                addCylinder = false;
-                                menu.SetBool("  Cylinder", addCylinder);
-                            }
-                            #endregion
-
-                            scenes[selectedScene].RenderEveryFrame(currentFrameTime);
-                            if (CurrentScene.models.Count > 1)
-                            {
-                                console.Wipe();
-                                console.WriteLine(RenderStatistics);
-                            }
-
-                            if (renderGrid)
-                                RenderGrid();
-
-                            glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
-                            arrows.Render();
-                        }
-                        else if (!mouseIsPressed)
-                            Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
-                        #endregion
+                            graphManager.Render();
+                            tb.CheckForUpdate(mousePosX, mousePosY);
 
 
-                        scenes[selectedScene].EveryFrame(window, currentFrameTime);
-
-                        #region Checks if a directory wants to be loaded, last part checks whether it is done loading by checking for a null value
-                        if (renderEntireDir)
-                        {
-                            if (LoadFilePath == null || args.Length == 0) //if there isnt any directory given, dont load it
-                                console.WriteError("Can't load directory since one isn't given");
-                            else
-                            {
-                                string dir = Path.GetDirectoryName(LoadFilePath);
-                                LoadDir(dir);
-                            }
-                            renderEntireDir = false;
-                            menu.SetBool("Load entire directory", false);
-                        }
-                        if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
-                        {
-                            foreach (ModelInfo model in dirLoadedModels)
-                            {
-                                Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
-                                CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
-                            }
-                            dirLoadedModels = null;
+                            clearedGUI = false;
                         }
                         #endregion
-                    }
-                    #endregion
 
-                    #region Compute shader related events
-                    {
-                        /*glActiveTexture(GL_TEXTURE1); //buffer overflow
-                        glBindTexture(GL_TEXTURE_2D, renderFramebuffer.Texture);
+                        #region Scene related events
+                        {
+                            if (Scene.IsCursorInFrame(mousePosX, mousePosY))
+                                UpdateCamera(currentFrameTime);
 
-                        int error = GetError();
-                        comp.Use();
-                        comp.SetFloat("frametime", currentFrameTime);
-                        comp.SetVector3("cameraPos", CurrentScene.camera.position);
-                        comp.SetVector3("lookAt", CurrentScene.camera.front);
-                        comp.SetVector3("right", CurrentScene.camera.right);
-                        comp.SetVector3("up", CurrentScene.camera.up);
-                        comp.SetVector3("forward", CurrentScene.camera.front);
+                            #region Rendering related stuff if the app is actively being used
+                            if (!destroyWindow || keyIsPressed || mouseIsPressed)
+                            {
+                                #region Generic OpenGL calls like cleaning the bits
+                                IDFramebuffer.Bind();
 
-                        comp.SetVector3("position", new(0, 20, 0));
-                        comp.SetVector3("color", new(1, 0, 1));
-                        comp.SetFloat("radius", 1);
+                                glClearColor(1f, 1f, 1f, 1);
+                                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-                        comp.SetInt("backgroundImage", GL_TEXTURE1);
+                                renderFramebuffer.Bind(); //bind the framebuffer for the 3D scene
 
-                        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
-                        glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+                                glEnable(GL_BLEND);
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                                glEnable(GL_DEPTH_TEST);
+                                glClearColor(0.3f, 0.3f, 0.3f, 1);
+                                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                                #endregion
 
-                        texture.Use(GL_TEXTURE0);
+                                if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && fullscreen)
+                                {
+                                    fullscreen = false;
+                                    menu.SetBool("fullscreen", false);
+                                }
 
-                        glDispatchCompute((uint)Math.Ceiling((double)Width / 8), (uint)Math.Ceiling((double)Height / 8), 1);
-                        glMemoryBarrier(GL_ALL_BARRIER_BITS);*/
-                    }
-                    #endregion
+                                #region Add certain shapes based on GUI input
+                                if (addCube)
+                                {
+                                    CurrentScene.models.Add(Model.Cube);
+                                    addCube = false;
+                                    menu.SetBool("  Cube", addCube);
+                                    CurrentScene.currentObj = CurrentScene.models.Count - 1;
+                                }
+                                if (addCylinder)
+                                {
+                                    CurrentScene.models.Add(Model.Cylinder);
+                                    addCylinder = false;
+                                    menu.SetBool("  Cylinder", addCylinder);
+                                }
+                                #endregion
 
-                    #region Assembling the screen shown on the monitor
-                    gui.RenderFramebuffer();
+                                scenes[selectedScene].RenderEveryFrame(currentFrameTime);
+                                if (CurrentScene.models.Count > 1)
+                                {
+                                    console.Wipe();
+                                    console.WriteLine(RenderStatistics);
+                                }
 
-                    if (!fullscreen)
-                        glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+                                if (renderGrid)
+                                    RenderGrid();
 
-                    //check for mouse picking
-                    IDFramebuffer.RenderFramebuffer();
-                    UpdateSelectedID();
-                    arrows.UpdateArrowsMovement();
+                                glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
+                                arrows.Render();
+                            }
+                            else if (!mouseIsPressed)
+                                Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
+                            #endregion
 
-                    computeShader.RenderFramebuffer();
 
-                    glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
-                    renderFramebuffer.RenderFramebuffer();
+                            scenes[selectedScene].EveryFrame(window, currentFrameTime);
 
-                    if (renderIDFramebuffer)
-                    {
-                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                            #region Checks if a directory wants to be loaded, last part checks whether it is done loading by checking for a null value
+                            if (renderEntireDir)
+                            {
+                                if (LoadFilePath == null || args.Length == 0) //if there isnt any directory given, dont load it
+                                    console.WriteError("Can't load directory since one isn't given");
+                                else
+                                {
+                                    string dir = Path.GetDirectoryName(LoadFilePath);
+                                    LoadDir(dir);
+                                }
+                                renderEntireDir = false;
+                                menu.SetBool("Load entire directory", false);
+                            }
+                            if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
+                            {
+                                foreach (ModelInfo model in dirLoadedModels)
+                                {
+                                    Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
+                                    CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
+                                }
+                                dirLoadedModels = null;
+                            }
+                            #endregion
+                        }
+                        #endregion
+
+                        #region Compute shader related events
+                        {
+                            /*glActiveTexture(GL_TEXTURE1); //buffer overflow
+                            glBindTexture(GL_TEXTURE_2D, renderFramebuffer.Texture);
+
+                            int error = GetError();
+                            comp.Use();
+                            comp.SetFloat("frametime", currentFrameTime);
+                            comp.SetVector3("cameraPos", CurrentScene.camera.position);
+                            comp.SetVector3("lookAt", CurrentScene.camera.front);
+                            comp.SetVector3("right", CurrentScene.camera.right);
+                            comp.SetVector3("up", CurrentScene.camera.up);
+                            comp.SetVector3("forward", CurrentScene.camera.front);
+
+                            comp.SetVector3("position", new(0, 20, 0));
+                            comp.SetVector3("color", new(1, 0, 1));
+                            comp.SetFloat("radius", 1);
+
+                            comp.SetInt("backgroundImage", GL_TEXTURE1);
+
+                            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo);
+                            glBindImageTexture(0, texture.Handle, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+
+                            texture.Use(GL_TEXTURE0);
+
+                            glDispatchCompute((uint)Math.Ceiling((double)Width / 8), (uint)Math.Ceiling((double)Height / 8), 1);
+                            glMemoryBarrier(GL_ALL_BARRIER_BITS);*/
+                        }
+                        #endregion
+
+                        #region Assembling the screen shown on the monitor
+                        gui.RenderFramebuffer();
+
+                        if (!fullscreen)
+                            glViewport(viewportX, viewportY, renderWidth, renderHeight); //make screen smaller for GUI space
+
+                        //check for mouse picking
                         IDFramebuffer.RenderFramebuffer();
+                        UpdateSelectedID();
+                        arrows.UpdateArrowsMovement();
+
+                        computeShader.RenderFramebuffer();
+
+                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                        renderFramebuffer.RenderFramebuffer();
+
+                        if (renderIDFramebuffer)
+                        {
+                            glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                            IDFramebuffer.RenderFramebuffer();
+                        }
+
+                        glViewport(0, 0, monitorWidth, monitorHeight);
+                        #endregion
+
+                        scrollWheelMoved = false;
+                        scrollWheelMovedAmount = 0;
                     }
-
-                    glViewport(0, 0, monitorWidth, monitorHeight);
-                    #endregion
-
-                    scrollWheelMoved = false;
-                    scrollWheelMovedAmount = 0;
-
+                    catch (System.Exception err)
+                    {
+                        console.WriteError(err);
+                    }
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
 
