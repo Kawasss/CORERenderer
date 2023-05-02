@@ -537,11 +537,12 @@ namespace CORERenderer.Main
                     //destroys the splashscreen after the first render loop to present it more "professionally"
                     if (!destroyWindow)
                     {
-                        destroyWindow = true;
                         splashScreen.Dispose();
 
                         if (loadInfoOnstartup)
                             console.ShowInfo();
+
+                        destroyWindow = true;
                     }
                 }
                 DeleteAllBuffers();

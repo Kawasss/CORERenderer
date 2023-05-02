@@ -131,7 +131,7 @@ namespace CORERenderer.GUI
             {
                 if (lines[i] == null)
                     continue;
-                COREMain.debugText.drawWithHighlights = i > maxLines + 5;
+                COREMain.debugText.drawWithHighlights = !lines[i].Contains('@');
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
                 string suffix = i == lines.Count - 1 ? "|" : ""; //the | indicates the cursor. Only the last string has this
 
