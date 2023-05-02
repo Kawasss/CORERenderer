@@ -121,7 +121,7 @@ namespace CORERenderer.Fonts
                     shader.SetVector3("textColor", new(0, 1, 0));
                 else if (IsColorWhite(color) && indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
                     shader.SetVector3("textColor", new(1, 0, 0));
-                else if (drawWithHighlights && int.TryParse($"{text[i]}", out _))
+                else if (IsColorWhite(color) && drawWithHighlights && int.TryParse($"{text[i]}", out _))
                     shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));
                 else
                     shader.SetVector3("textColor", color);

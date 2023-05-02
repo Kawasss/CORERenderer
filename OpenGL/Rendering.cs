@@ -258,8 +258,7 @@ namespace CORERenderer.OpenGL
                 $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:\n" +
                 $"   {translucentSubmodels.Count} are translucent\n" +
                 $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque\n" +
-                $"Draw calls this frame: {drawCalls - currentDrawCalls}\n" +
-                $"{0 == 0} {1 == 0}";
+                $"Draw calls this frame: {drawCalls - currentDrawCalls}";
 
             translucentSubmodels = new();
         }
