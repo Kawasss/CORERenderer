@@ -116,6 +116,7 @@ namespace CORERenderer
 
             if (IsCursorInFrame(mousePosX, mousePosY))
             {
+                camera.Fov -= (float)scrollWheelMovedAmount * 1.5f;
                 //!!temporary debug movement for obj files !!rewrite
                 if (state2 == InputState.Press && state != InputState.Press)
                 {

@@ -41,6 +41,7 @@ namespace CORERenderer.Main
         //doubles
         private static double previousTime = 0;
         public static double CPUUsage = 0;
+        public static double scrollWheelMovedAmount = 0;
         private static TimeSpan previousCPU;
 
         //floats
@@ -68,7 +69,7 @@ namespace CORERenderer.Main
         public static bool allowAlphaOverride = true;
         public static bool isCompiledForWindows = false;
 
-        public static bool keyIsPressed = false, mouseIsPressed = false;
+        public static bool keyIsPressed = false, mouseIsPressed = false, scrollWheelMoved = false;
         public static bool clearedGUI = false;
 
         public static bool subMenuOpenLastFrame = false, submenuOpen = false;
@@ -250,13 +251,11 @@ namespace CORERenderer.Main
 
                 #region Restoring any console commands from the previous session and start up
                 if (File.Exists($"{pathRenderer}\\consoleCache"))
-                    console.LoadCacheFile(pathRenderer);
-
                 foreach (string s in consoleCache)
                 {
-                    if (s.Length > 5 && s[..5] == "ERROR")
+                    if (s.StartsWith("ERROR "))
                         console.WriteError(s);
-                    else if (s.Length > 5 && s[..5] == "DEBUG")
+                    else if (s.StartsWith("DEBUG "))
                         console.WriteDebug(s);
                     else
                         console.WriteLine(s);
@@ -523,6 +522,9 @@ namespace CORERenderer.Main
                     glViewport(0, 0, monitorWidth, monitorHeight);
                     #endregion
 
+                    scrollWheelMoved = false;
+                    scrollWheelMovedAmount = 0;
+
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
 
@@ -693,8 +695,12 @@ namespace CORERenderer.Main
         }
 
         //zoom in or out
-        public static void ScrollCallback(Window window, double x, double y) =>
-            scenes[selectedScene].camera.Fov -= (float)y * 1.5f;
+        public static void ScrollCallback(Window window, double x, double y)
+        {
+            
+            scrollWheelMoved = true;
+            scrollWheelMovedAmount = y;
+        }
 
         public static bool CheckAABBCollision(int x, int y, int width, int height) =>
             mousePosX >= x && mousePosX <= x + width && monitorHeight - mousePosY >= y && monitorHeight - mousePosY <= y + height;
