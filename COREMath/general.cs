@@ -43,6 +43,11 @@ namespace COREMath
             return matrix;
         }
 
+        public static Vector3 Round(Vector3 v, int numberspastdecimal)
+        {
+            return new((float)Math.Round(v.x, numberspastdecimal), (float)Math.Round(v.y, numberspastdecimal), (float)Math.Round(v.z, numberspastdecimal));
+        }
+
         public static float Distance(Vector3 v1, Vector3 v2) => GetLengthOf(v1 - v2);
 
         public static float Clamp(float n, float min, float max)

@@ -49,7 +49,7 @@ namespace CORERenderer.Fonts
                     // create glyph texture
                     uint texObj = glGenTexture();
                     glBindTexture(GL_TEXTURE_2D, texObj);
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, bitmap.Width, bitmap.Rows, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap.Buffer);
+                    glTexImage2D(Image2DTarget.Texture2D, 0, GL_RED, bitmap.Width, bitmap.Rows, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap.Buffer);
                     //(int)texObj
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -94,7 +94,6 @@ namespace CORERenderer.Fonts
 
         public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction, Vector3 color)
         {
-            shader.Use();
             shader.SetVector3("textColor", color);
 
             glActiveTexture(GL_TEXTURE0);
@@ -121,8 +120,10 @@ namespace CORERenderer.Fonts
                     shader.SetVector3("textColor", new(0, 1, 0));
                 else if (IsColorWhite(color) && indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
                     shader.SetVector3("textColor", new(1, 0, 0));
-                else if (IsColorWhite(color) && drawWithHighlights && int.TryParse($"{text[i]}", out _))
+                else if (drawWithHighlights && IsCharUsedNumerical(text, i))
                     shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));
+                else if (drawWithHighlights && int.TryParse($"{text[i]}", out _) && IsIntUsedNumerical(text, i))
+                        shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));
                 else
                     shader.SetVector3("textColor", color);
 
@@ -156,6 +157,30 @@ namespace CORERenderer.Fonts
             }
             glBindVertexArray(0);
             glBindTexture(GL_TEXTURE0, 0);
+        }
+
+        private bool IsCharUsedNumerical(string fullText, int index)
+        {
+            if (index + 1 >= fullText.Length)
+                return false;
+            if ((fullText[index] == ',' || fullText[index] == '.' || fullText[index] == '-') && int.TryParse($"{fullText[index + 1]}", out _))
+                return true;
+            return false;
+        }
+
+        private bool IsIntUsedNumerical(string fullText, int index)
+        {
+            if (fullText.Length == 1)
+                return true;
+
+            if (index - 1 < 0)
+                return fullText[index + 1] == ' ' || fullText[index + 1] == '%' || int.TryParse($"{fullText[index + 1]}", out _);
+
+            else if (index + 1 >= fullText.Length)
+                return fullText[index - 1] == ' ' || fullText[index - 1] == '~' || fullText[index - 1] == '-' || int.TryParse($"{fullText[index - 1]}", out _);
+
+            else
+                return (int.TryParse($"{fullText[index - 1]}", out _) || fullText[index - 1] == '~' || fullText[index - 1] == ' ' || fullText[index - 1] == ',' || fullText[index - 1] == '.' || fullText[index - 1] == '-') && (int.TryParse($"{fullText[index + 1]}", out _) || fullText[index + 1] == ' ' || fullText[index + 1] == ',' || fullText[index + 1] == '.' || fullText[index + 1] == '%');
         }
 
         /// <summary>

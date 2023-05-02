@@ -167,5 +167,23 @@ namespace CORERenderer.Loaders
             }
             return returnValue;
         }
+
+        private static float GetOneFloatWithRegEx(string line)
+        {
+            float returnValue = 0;
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");
+            if (matches.Count == 1)
+                returnValue = float.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
+            return returnValue;
+        }
+
+        private static int GetOneIntWithRegEx(string line)
+        {
+            int returnValue = 0;
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");
+            if (matches.Count == 1)
+                returnValue = int.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
+            return returnValue;
+        }
     }
 }

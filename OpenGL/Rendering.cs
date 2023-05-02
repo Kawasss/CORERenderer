@@ -21,8 +21,10 @@ namespace CORERenderer.OpenGL
 
         private static Camera camera = null;
 
-        private static string renderStatistics = string.Empty;
-        public static string RenderStatistics { get { return renderStatistics; } }
+        private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "  0 are opaque", "Draw calls this frame: 0" };
+        public static string[] RenderStatistics { get { return renderStatistics; } }
+        private static long ticksSpent3DRenderingThisFrame = 0;
+        public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
 
         public static void Init()
         {
@@ -249,16 +251,18 @@ namespace CORERenderer.OpenGL
 
             backgroundModel?.Render();
 
-            renderStatistics =
-                $"Ticks spent rendering opaque models: {timeSpentRenderingOpaque}\n" +
-                $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}\n" +
-                $"Ticks spent depth sorting: {timeSpentDepthSorting}\n" +
-                $"Ticks spent overall: {timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting}\n" +
-                $"Models rendered: {models.Count}\n" +
-                $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:\n" +
-                $"   {translucentSubmodels.Count} are translucent\n" +
-                $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque\n" +
-                $"Draw calls this frame: {drawCalls - currentDrawCalls}";
+            ticksSpent3DRenderingThisFrame = timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting;
+
+            renderStatistics[0] = $"Ticks spent rendering opaque models: {timeSpentRenderingOpaque}";
+            renderStatistics[1] = $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}";
+            renderStatistics[2] = $"Ticks spent depth sorting: {timeSpentDepthSorting}";
+            renderStatistics[3] = $"Ticks spent overall: {ticksSpent3DRenderingThisFrame}";
+            renderStatistics[4] = $"Models rendered: {models.Count}";
+            renderStatistics[5] = $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:";
+            renderStatistics[6] = $"   {translucentSubmodels.Count} are translucent";
+            renderStatistics[7] = $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque";
+            renderStatistics[8] = $"Draw calls this frame: {drawCalls - currentDrawCalls}";
+            
 
             translucentSubmodels = new();
         }

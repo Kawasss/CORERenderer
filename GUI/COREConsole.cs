@@ -131,7 +131,7 @@ namespace CORERenderer.GUI
             {
                 if (lines[i] == null)
                     continue;
-                COREMain.debugText.drawWithHighlights = !lines[i].Contains('@');
+                COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
                 string suffix = i == lines.Count - 1 ? "|" : ""; //the | indicates the cursor. Only the last string has this
 
@@ -150,21 +150,16 @@ namespace CORERenderer.GUI
 
         public void WriteLine(object value)
         {
-            Type type = value.GetType();
-            bool containsToString = false;
-            if (type != typeof(string)) //this checks if the type / class of the value has a ToString() method to use, could also try { value.ToString() } and if that throws an error it doesnt contain a ToStrin() but that seems flimsy and gimmicky
+            bool containsToString = true;
+            try
             {
-                MethodInfo[] mInfos = type.GetMethods(BindingFlags.DeclaredOnly);
-
-                for (int i = 0; i < mInfos.Length; i++)
-                    if (mInfos[i].Name == "ToString")
-                    {
-                        containsToString = true;
-                        break;
-                    }
+                string test = value.ToString();
             }
-            else
-                containsToString = true;
+            catch (System.Exception)
+            {
+                this.WriteError($"Couldn't get value of variable {nameof(value)}");
+                return;
+            }
 
             if (containsToString)
             {
@@ -185,7 +180,7 @@ namespace CORERenderer.GUI
                 this.WriteError($"Couldn't get value of variable {nameof(value)}");
         }
 
-        private string[] SeperateByNewLines(string end)
+        public string[] SeperateByNewLines(string end)
         {
             string prefix = GetPrefix(end); //decides if the base string is an error or debug by checking if it starts with its prefix
 
@@ -196,7 +191,8 @@ namespace CORERenderer.GUI
             string[] seperatedLines = new string[newLineIndexes.Count + 1];
             for (int i = 0; i < newLineIndexes.Count; i++)
                 seperatedLines[i] = i > 0 ? prefix + end[(newLineIndexes[i - 1] + 1)..newLineIndexes[i]] : end[..newLineIndexes[i]]; //the first string is seperated from the beginning to the first \n, like ..indexOf(\n). this needs to be done seperately, because it otherwise usees an index of -1 aka index of out range error (beginning of string index = 0, 0 - 1 = -1) 
-            seperatedLines[^1] = prefix + end[(newLineIndexes[^1] + 1)..];
+            seperatedLines[^1] = newLineIndexes[^1] != end.Length - 1 && newLineIndexes[^1] != -1 ? prefix + end[(newLineIndexes[^1] + 1)..] : "";
+            
             return seperatedLines;
         }
 
@@ -271,7 +267,7 @@ namespace CORERenderer.GUI
             else if (s.StartsWith("DEBUG "))
             {
                 trimmedString = s[6..];
-                return new(0, 0, 1);
+                return new(0.3f, 0.8f, 0.9f);
             }
             else
             {

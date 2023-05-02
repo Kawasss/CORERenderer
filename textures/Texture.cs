@@ -26,7 +26,7 @@ namespace CORERenderer.textures
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, Handle);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -63,7 +63,7 @@ namespace CORERenderer.textures
 
                 image = Stbi.LoadFromMemory(memoryStream, 4);
                 
-                glTexImage2D(GL_TEXTURE_2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
+                glTexImage2D(Image2DTarget.Texture2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -90,7 +90,7 @@ namespace CORERenderer.textures
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Width, Height, 0, GL_RGBA, GL_FLOAT, null);
+            glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGBA32F, Width, Height, 0, GL_RGBA, GL_FLOAT, null);
 
             return new(handle) { width = Width, height = Height };
         }
@@ -277,7 +277,7 @@ namespace CORERenderer.textures
                 for (int i = 0; i < data.Length; i++)
                     data[i] = image.Data[i];
 
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
+                glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

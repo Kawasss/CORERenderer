@@ -14,15 +14,6 @@ namespace CORERenderer.Loaders
             else 
                 return s1.IndexOf('#'); 
         }
-        private static Vector3 GetVector3(string s, string s1, string s2) //removes incredibly long and repetitive lines of code
-        {
-            return new
-            (
-                float.Parse(s, CultureInfo.InvariantCulture),
-                float.Parse(s1, CultureInfo.InvariantCulture),
-                float.Parse(s2, CultureInfo.InvariantCulture)
-            );
-        }
 
         public static Error LoadMTL(string path, List<string> mtlNames, out List<Material> materials)
         {
@@ -52,7 +43,7 @@ namespace CORERenderer.Loaders
                 return Error.FileNotFound;
             }
 
-            Console.WriteLine("Reading .mtl file..");
+            COREMain.console.WriteDebug($"Reading {Path.GetFileName(path)} file..");
 
             materials = new();
             List<Material> tempMtl = new();
@@ -91,7 +82,7 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "Ns": //shininess
-                            material.Shininess = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            material.Shininess = GetOneFloatWithRegEx(n);
                             break;
 
                         case "Kd":
@@ -111,15 +102,15 @@ namespace CORERenderer.Loaders
                             break;
 
                         case "Ni":
-                            material.OpticalDensity = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            material.OpticalDensity = GetOneFloatWithRegEx(n);
                             break;
 
                         case "il":
-                            material.Illum = int.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            material.Illum = GetOneIntWithRegEx(n);
                             break;
 
                         case "d ":
-                            material.Transparency = float.Parse(n[n.IndexOf(" ")..Length(n)], CultureInfo.InvariantCulture);
+                            material.Transparency = GetOneFloatWithRegEx(n);
                             break;
 
                         case "ma":
@@ -127,25 +118,25 @@ namespace CORERenderer.Loaders
                             {
                                 case "map_Kd":
                                     if (!n.Contains("  "))
-                                        material.Texture = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        material.Texture = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
                                         material.Texture = 0;
                                     break;
                                 case "map_d ":
                                     if (!n.Contains("  "))
-                                        material.DiffuseMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        material.DiffuseMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
                                         material.DiffuseMap = 0;
                                     break;
                                 case "map_Ks":
                                     if (!n.Contains("  "))
-                                        material.SpecularMap = Globals.FindTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        material.SpecularMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
                                         material.SpecularMap = 1;
                                     break;
                                 case "map_Bu":
                                     if (!n.Contains("  "))
-                                        material.NormalMap = Globals.FindSRGBTexture($"{path[..(temp[^1] + 1)]}{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        material.NormalMap = Globals.FindSRGBTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                     else
                                         material.NormalMap = 3;
                                     break;

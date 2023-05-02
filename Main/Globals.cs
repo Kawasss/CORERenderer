@@ -46,14 +46,51 @@ namespace CORERenderer.Main
         /// Look up table for all supported render modes, needs to . at the beginning to work
         /// </summary>
         public readonly static Dictionary<string, RenderMode> RenderModeLookUpTable = new()
-    {
-        {".crs", RenderMode.CRSFile },
-        {".png", RenderMode.PNGImage},
-        {".jpg", RenderMode.JPGImage},
-        {".hdr", RenderMode.HDRFile },
-        {".stl", RenderMode.STLFile },
-        {".obj", RenderMode.ObjFile }
-    };
+        {
+            {".crs", RenderMode.CRSFile },
+            {".png", RenderMode.PNGImage},
+            {".jpg", RenderMode.JPGImage},
+            {".hdr", RenderMode.HDRFile },
+            {".stl", RenderMode.STLFile },
+            {".obj", RenderMode.ObjFile }
+        };
+
+        /// <summary>
+        /// Formats a given amount of bytes in KB, MB or GB
+        /// </summary>
+        /// <param name="sizeInBytes"></param>
+        /// <returns></returns>
+        public static string FormatSize(int sizeInBytes)
+        {
+            const int kilobyte = 1024;
+            const int megabyte = kilobyte * 1024;
+            const int gigabyte = megabyte * 1024;
+            string unit;
+            double size;
+
+            if (sizeInBytes >= gigabyte)
+            {
+                size = (double)sizeInBytes / gigabyte;
+                unit = "GB";
+            }
+            else if (sizeInBytes >= megabyte)
+            {
+                size = (double)sizeInBytes / megabyte;
+                unit = "MB";
+            }
+            else if (sizeInBytes >= kilobyte)
+            {
+                size = (double)sizeInBytes / kilobyte;
+                unit = "KB";
+            }
+            else
+            {
+                size = sizeInBytes;
+                unit = "bytes";
+            }
+
+            return $"{size:0.#} {unit}";
+        }
 
         /// <summary>
         /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. The third is used for solid white and the fourth for the normal map
@@ -69,9 +106,13 @@ namespace CORERenderer.Main
         {
             for (int i = 0; i < usedTextures.Count; i++)
                 if (usedTextures[i].path == path)
+                {
+                    COREMain.console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
                     return i;
+                }
             
             usedTextures.Add(Texture.ReadFromFile(path));
+            COREMain.console.WriteLine($"Allocated {FormatSize(usedTextures[^1].width * usedTextures[^1].height * 4)} of VRAM for texture {usedTextures[^1].name} ({usedTextures.Count - 1})");
             return usedTextures.Count - 1;
         }
 
@@ -85,77 +126,6 @@ namespace CORERenderer.Main
             return usedTextures.Count - 1;
         }
 
-        /// <summary>
-        /// Creates a basic framebuffer with the default resolution
-        /// </summary>
-        /// <returns></returns>
-        /*public unsafe static Framebuffer GenerateFramebuffer()
-        {
-            float[] FrameBufferVertices = new float[]
-            {
-                -1,  1,  0,  1,
-                -1, -1,  0,  0,
-                 1, -1,  1,  0,
-
-                -1,  1,  0,  1,
-                 1, -1,  1,  0,
-                 1,  1,  1,  1
-            };
-
-            Framebuffer fb = new();
-
-            fb.shader = new($"{COREMain.pathRenderer}\\shaders\\FrameBuffer.vert", $"{COREMain.pathRenderer}\\shaders\\FrameBuffer.frag");
-
-            fb.FBO = glGenFramebuffer();
-            glBindFramebuffer(GL_FRAMEBUFFER, fb.FBO);
-
-            fb.Texture = glGenTexture();
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, fb.Texture);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, COREMain.Width, COREMain.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.Texture, 0);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            fb.RBO = glGenRenderbuffer();
-            glBindRenderbuffer(GL_RENDERBUFFER, fb.RBO);
-
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, COREMain.Width, COREMain.Height);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.RBO);
-
-            {
-                fb.VBO = glGenBuffer();
-                glBindBuffer(GL_ARRAY_BUFFER, fb.VBO);
-
-                fixed (float* temp = &FrameBufferVertices[0])
-                {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ARRAY_BUFFER, FrameBufferVertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
-                }
-
-                fb.VAO = glGenVertexArray();
-                glBindVertexArray(fb.VAO);
-
-                int vertexLocation = fb.shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                vertexLocation = fb.shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                glBindVertexArray(0);
-            }
-
-            return fb;
-        }*/
         public static Framebuffer GenerateFramebuffer(int width, int height) => GenerateFramebuffer(0, 0, width, height);
 
         public static Framebuffer GenerateFramebuffer(int x, int y, int width, int height)
@@ -170,7 +140,7 @@ namespace CORERenderer.Main
                 (-width / 2f + x + width) / width, (-height / 2f + y) / height,           1, 0,
                 (-width / 2f + x + width) / width, (-height / 2f + y + height) / height, 1, 1
             };
-            FrameBufferVertices[0] *= 2;
+            FrameBufferVertices[0] *= 2; //ugly
             FrameBufferVertices[1] *= 2;
             FrameBufferVertices[4] *= 2;
             FrameBufferVertices[5] *= 2;
@@ -200,7 +170,7 @@ namespace CORERenderer.Main
                 glBindTexture(GL_TEXTURE_2D, fb.Texture);
 
             
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+                glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

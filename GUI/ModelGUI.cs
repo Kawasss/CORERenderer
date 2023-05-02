@@ -26,14 +26,14 @@ namespace CORERenderer.GUI
         {
             for (int i = 0; i < models.Count; i++)
             {
-                float offset = this.Height - COREMain.debugText.characterHeight * 1.1f * (i + 1);
+                float offset = this.Height - COREMain.debugText.characterHeight * 0.8f * (i + 1);
 
                 if (offset <= 0) //return when the list goes outside the bounds of the div
                     return;
 
                 //if the model is selected it gets a different color to reflect that
                 Vector3 color = models[i].highlighted ? new(1, 0, 1) : new(1, 1, 1);
-                this.Write($"[{models[i].type}] {models[i].Name}", (int)(this.Width * 0.03f), (int)offset, 0.85f, color);
+                this.Write($"[{models[i].type}] {models[i].Name}", (int)(this.Width * 0.03f), (int)offset, 0.7f, color);
             }
         }
     }

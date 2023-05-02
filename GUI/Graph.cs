@@ -3,28 +3,29 @@ using CORERenderer.OpenGL;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.shaders;
+using COREMath;
 
 namespace CORERenderer.GUI
 {
     public class Graph
     {
-        private uint lineVBO;
-        private uint lineVAO;
+        private uint lineVBO, lineVAO;
 
-        private float bottomX;
-        private float bottomY;
+        private float bottomX, bottomY;
 
         private float lastValue = 0;
 
-        private int Width;
-        private int Height;
+        private int Width, Height;
 
         public int MaxValue;
 
-        private float[] pointLocations;
-        private float[] pointValues;
+        private float[] pointLocations, pointValues, actualValues;
 
         public Div div;
+
+        public Vector3 color = new(1f, 0f, 1f);
+
+        public bool showValues = true;
 
         private Shader shader = GenericShaders.Quad;
 
@@ -32,7 +33,7 @@ namespace CORERenderer.GUI
         {
             Width = width;
             Height = height;
-            MaxValue = maxYValue;
+            MaxValue = maxYValue > 0 ? maxYValue : 10;
 
             bottomX = -(COREMain.monitorWidth / 2) + x;
             bottomY = -(COREMain.monitorHeight / 2) + y;
@@ -44,13 +45,16 @@ namespace CORERenderer.GUI
             //more points = more data / accuracy but requires more raw power, right now 5 per row
             List<float> temp = new();
             List<float> temp2 = new();
+            List<float> temp3 = new();
             for (float i = 0.05f; i <= 0.95f; i += 0.0125f)
             {
                 temp.Add(bottomX + width * i);
-                temp2.Add(bottomY + 5);
+                temp2.Add(bottomY + Height * 0.05f);
+                temp3.Add(0);
             }
             pointLocations = temp.ToArray();
             pointValues = temp2.ToArray();
+            actualValues = temp3.ToArray();
 
             GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 2 * 2 * pointLocations.Length);
 
@@ -62,63 +66,65 @@ namespace CORERenderer.GUI
         public void Update(float value)
         {
             if (COREMain.secondPassed) //makes the graph update only once every second to make it readable
+                UpdateConditionless(value);
+        }
+
+        public void UpdateConditionless(float value)
+        {
+            if (value > MaxValue)
+                MaxValue = (int)(value * 1.2f);
+
+            for (int i = 0; i < actualValues.Length - 1; i++)
             {
-                if (value >= MaxValue - 1)
-                {
-                    for (int i = 0; i < pointValues.Length; i++)
-                    {
-                        float oldValue = (pointValues[i] - bottomY) / Height * MaxValue; //reverse the calculations done at float position = ...
-                        pointValues[i] = oldValue / value * Height + bottomY;
-                    }
-                    MaxValue = (int)(value + 10);
-                }
-
-                float position = value / MaxValue * Height + bottomY; //normalizes the given value to get a percentage of where the point is
-                if (value > MaxValue)
-                    position = Height;
-
-                //all values get pushed back once so that the values gets passed down as time goes on
-                for (int i = 0; i < pointValues.Length - 1; i++)
-                    pointValues[i] = pointValues[i + 1];
-                pointValues[^1] = position;
-
-                lastValue = value;
+                actualValues[i] = actualValues[i + 1];
+                float dividend = actualValues[i] / MaxValue;
+                dividend = dividend > 1 ? 1 : dividend;
+                pointValues[i] = dividend * Height + bottomY;
             }
+            actualValues[^1] = value;
+            pointValues[^1] = value / MaxValue * Height + bottomY;
+
+            lastValue = value;
         }
 
         public void Render()
         {
             if (COREMain.secondPassed)
+                RenderConditionless();
+        }
+
+        public void RenderConditionless()
+        {
+            List<float> vertices = new();
+            //slower but way more pleasant to write
+            for (int i = 0; i < pointLocations.Length - 1; i++)
             {
-                List<float> vertices = new();
-                //slower but way more pleasant to write
-                for (int i = 0; i < pointLocations.Length - 1; i++)
-                {
-                    vertices.Add(pointLocations[i]); vertices.Add(pointValues[i] + 1);
-                    vertices.Add(pointLocations[i + 1]); vertices.Add(pointValues[i + 1] + 1);
-                }
+                vertices.Add(pointLocations[i]); vertices.Add(pointValues[i] + 1);
+                vertices.Add(pointLocations[i + 1]); vertices.Add(pointValues[i + 1] + 1);
+            }
 
-                glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
-                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Count * sizeof(float), vertices.ToArray());
-                glBindBuffer(BufferTarget.ArrayBuffer, 0);
+            glBindBuffer(BufferTarget.ArrayBuffer, lineVBO);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Count * sizeof(float), vertices.ToArray());
+            glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
-                glBindVertexArray(lineVAO);
+            glBindVertexArray(lineVAO);
 
-                RenderLine(new COREMath.Vector2(pointLocations[^1], pointValues[^1]), new COREMath.Vector2(pointLocations[0], pointValues[^1]), new COREMath.Vector3(0.7f, 0.7f, 0.7f));
+            RenderLine(new COREMath.Vector2(pointLocations[^1], pointValues[^1]), new COREMath.Vector2(pointLocations[0], pointValues[^1]), new COREMath.Vector3(0.7f, 0.7f, 0.7f));
 
-                shader.SetVector3("color", 1f, 0f, 1f);
-                glDrawArrays(OpenGL.PrimitiveType.Lines, 0, 148);
-                shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
+            shader.SetVector3("color", color);
+            glDrawArrays(OpenGL.PrimitiveType.Lines, 0, pointLocations.Length * 2);
+            shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
+            if (showValues)
+            {
                 COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
                 COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
 
                 COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.8f, new COREMath.Vector2(1, 0));
-
-                glBindVertexArray(0);
             }
+            glBindVertexArray(0);
         }
 
         public void RenderStatic() => div.Render();

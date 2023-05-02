@@ -45,6 +45,24 @@ namespace CORERenderer.OpenGL
         UniformBuffer = GL_UNIFORM_BUFFER
     }
 
+    public enum Image2DTarget
+    { 
+        Texture2D = GL_TEXTURE_2D,
+        ProxyTexture2D = GL_PROXY_TEXTURE_2D,
+        Texture1DArray = GL_TEXTURE_1D_ARRAY,
+        ProxyTexture1DArray = GL_PROXY_TEXTURE_1D_ARRAY,
+        TextureRectangle = GL_TEXTURE_RECTANGLE,
+        ProxyTextureRectangle = GL_PROXY_TEXTURE_RECTANGLE,
+        TextureCubeMapPositiveX = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        TextureCubeMapNegativeX = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        TextureCubeMapPositiveY = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        TextureCubeMapNegativeY = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        TextureCubeMapPositiveZ = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        TextureCubeMapNegativeZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        ProxyTextureCubeMap = GL_PROXY_TEXTURE_CUBE_MAP
+    }
+
+
     public enum ShaderType
     {
         Lighting,

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CORERenderer.OpenGL
+﻿namespace CORERenderer.OpenGL
 {
     public partial class Rendering : GL
     {
@@ -25,6 +19,19 @@ namespace CORERenderer.OpenGL
 
         public static void glBindBuffer(BufferTarget target, uint buffer) => GlBindBuffer((int)target, buffer);
 
+        public static void glTexImage2D(Image2DTarget target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)
+        {
+            unsafe
+            {
+                fixed (byte* temp = &pixels[0])
+                {
+                    IntPtr intptr = new(temp);
+                    GlTexImage2D((int)target, level, internalFormat, width, height, border, format, type, intptr);
+                }
+            }
+            TotalAmountOfTransferredBytes = pixels.Length * sizeof(byte); //bytes are 1 byte of size but still
+        }
+
         public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ReadOnlySpan<byte> pixels)
         {
             unsafe
@@ -38,17 +45,17 @@ namespace CORERenderer.OpenGL
             TotalAmountOfTransferredBytes = pixels.Length * sizeof(byte); //bytes are 1 byte of size but still
         }
 
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels)
+        public static void glTexImage2D(Image2DTarget target, int level, int internalFormat, int width, int height, int border, int format, int type, IntPtr pixels)
         {
             unsafe
             {
-                GlTexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+                GlTexImage2D((int)target, level, internalFormat, width, height, border, format, type, pixels);
             }
             unresolvedInstances++;
             estimatedDataLoss += width * height * 4;
         }
 
-        public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, byte[] pixels)
+        public static void glTexImage2D(Image2DTarget target, int level, int internalFormat, int width, int height, int border, int format, int type, byte[] pixels)
         {
             unsafe
             {
@@ -56,11 +63,11 @@ namespace CORERenderer.OpenGL
                     fixed (byte* temp = &pixels[0])
                     {
                         IntPtr intptr = new(temp);
-                        GlTexImage2D(target, level, internalFormat, width, height, border, format, type, intptr);
+                        GlTexImage2D((int)target, level, internalFormat, width, height, border, format, type, intptr);
                         TotalAmountOfTransferredBytes = pixels.Length;
                     }
                 else
-                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+                    GlTexImage2D((int)target, level, internalFormat, width, height, border, format, type, null);
             }
         }
 

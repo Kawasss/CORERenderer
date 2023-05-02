@@ -26,12 +26,13 @@ namespace CORERenderer.Main
         public static int Width, Height, monitorWidth, monitorHeight, renderWidth, renderHeight, viewportX, viewportY;
 
         public static int drawCallsPerSecond = 0, drawCallsPerFrame = 0;
-        public static int fps = 0, frameCount = 0;
+        public static int fps = 0, frameCount = 0, totalFrameCount = 0;
         public static int selectedScene = 0;
 
         public static int selectedID = 0x00FFFF, nextAvaibleID = 9; //white (background) //first 9 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
+        public static int FrameCount { get { return totalFrameCount; } }
 
         public static int refreshRate = 0;
 
@@ -42,6 +43,7 @@ namespace CORERenderer.Main
         private static double previousTime = 0;
         public static double CPUUsage = 0;
         public static double scrollWheelMovedAmount = 0;
+        private static double timeSinceLastFrame = 0;
         private static TimeSpan previousCPU;
 
         //floats
@@ -55,7 +57,7 @@ namespace CORERenderer.Main
         public static string GPU = "Not Recognized";
         public const string VERSION = "v0.6";
         public static string pathRenderer;
-        private static List<string> consoleCache = new();
+        public static List<string> consoleCache = new();
 
         //bools
         public static bool renderGrid = true, renderBackground = true, renderGUI = true, renderIDFramebuffer = false, renderToIDFramebuffer = true; //rendering related options
@@ -86,7 +88,7 @@ namespace CORERenderer.Main
 
         public static SplashScreen splashScreen;
         public static Font debugText;
-        public static COREConsole console;
+        public static COREConsole console = null;
         public static Arrows arrows;
         public static Div modelList;
         public static Submenu menu;
@@ -170,6 +172,12 @@ namespace CORERenderer.Main
                 Graph graph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25), viewportX, (int)(monitorHeight * 0.004f));
                 Graph frametimeGraph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25),viewportX, (int)(monitorHeight * 0.004f));
                 Graph drawCallsPerFrameGraph = new(0,(int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.224f - 25),viewportX,(int)(monitorHeight * 0.004f));
+
+                int debugWidth = (int)debugText.GetStringWidth("Ticks spent depth sorting: timeSpentDepthSorting", 0.7f);
+                Graph renderingTicks = new(0, debugWidth, (int)(debugText.characterHeight * 2), viewportX - (int)(debugWidth * 0.05f), (int)(viewportY + renderHeight - debugText.characterHeight * 12));
+                Graph debugFSGraph = new(0, debugWidth, (int)(debugText.characterHeight * 2), viewportX - (int)(debugWidth * 0.05f), (int)(viewportY + renderHeight - debugText.characterHeight * 18));
+                debugFSGraph.showValues = false;
+                renderingTicks.showValues = false;
 
                 console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
                 console.GenerateConsoleErrorLog(pathRenderer);
@@ -293,7 +301,7 @@ namespace CORERenderer.Main
                 console.WriteLine("Beginning render loop");
 
                 arrows = new();
-
+                double timeSinceLastFrame2 = Glfw.Time;
                 #region First time rendering
                 Rendering.UpdateUniformBuffers();
                 UpdateRenderStatistics();
@@ -324,12 +332,15 @@ namespace CORERenderer.Main
 
                 sceneManager.Render();
                 #endregion
-
+                
                 //render loop
                 while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
                 {
                     try
                     {
+                        timeSinceLastFrame = Glfw.Time - timeSinceLastFrame2;
+                        timeSinceLastFrame2 = Glfw.Time;
+
                         Rendering.UpdateUniformBuffers();
                         UpdateRenderStatistics();
                         UpdateCursorLocation();
@@ -364,11 +375,16 @@ namespace CORERenderer.Main
 
                                     sceneManager.Render();
                                 }
+                                
                                 console.Render();
-
+                                
                                 if (saveAsImage.isPressed)
                                     Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
+                            renderingTicks.UpdateConditionless(TicksSpent3DRenderingThisFrame);
+                            if (debugFSGraph.MaxValue > 70) debugFSGraph.MaxValue = (int)(timeSinceLastFrame * 1000 * 1.5f);
+                            debugFSGraph.color = 1 / timeSinceLastFrame < refreshRate / 2 ? new(1, 0, 0) : new(1, 0, 1);
+                            debugFSGraph.UpdateConditionless((float)(timeSinceLastFrame * 1000));
 
                             graphManager.Render();
                             tb.CheckForUpdate(mousePosX, mousePosY);
@@ -424,11 +440,6 @@ namespace CORERenderer.Main
                                 #endregion
 
                                 scenes[selectedScene].RenderEveryFrame(currentFrameTime);
-                                if (CurrentScene.models.Count > 1)
-                                {
-                                    console.Wipe();
-                                    console.WriteLine(RenderStatistics);
-                                }
 
                                 if (renderGrid)
                                     RenderGrid();
@@ -440,8 +451,7 @@ namespace CORERenderer.Main
                                 Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
                             #endregion
 
-
-                            scenes[selectedScene].EveryFrame(window, currentFrameTime);
+                            CurrentScene.EveryFrame(window, currentFrameTime);
 
                             #region Checks if a directory wants to be loaded, last part checks whether it is done loading by checking for a null value
                             if (renderEntireDir)
@@ -464,6 +474,7 @@ namespace CORERenderer.Main
                                     CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
                                 }
                                 dirLoadedModels = null;
+                                timeSinceLastFrame2 = Glfw.Time;
                             }
                             #endregion
                         }
@@ -510,11 +521,11 @@ namespace CORERenderer.Main
                         UpdateSelectedID();
                         arrows.UpdateArrowsMovement();
 
-                        computeShader.RenderFramebuffer();
-
-                        glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
+                        //computeShader.RenderFramebuffer();
+                        
+                        //glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f) + 1, (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
                         renderFramebuffer.RenderFramebuffer();
-
+                        
                         if (renderIDFramebuffer)
                         {
                             glViewport((int)(viewportX + renderWidth * 0.75f), (int)(viewportY + renderHeight * 0.75f), (int)(renderWidth * 0.25f), (int)(renderHeight * 0.25f));
@@ -522,14 +533,20 @@ namespace CORERenderer.Main
                         }
 
                         glViewport(0, 0, monitorWidth, monitorHeight);
+                        renderingTicks.RenderConditionless();
+                        debugFSGraph.RenderConditionless();
+                        glDisable(GL_CULL_FACE);
+                        ShowRenderStatistics();
                         #endregion
 
                         scrollWheelMoved = false;
                         scrollWheelMovedAmount = 0;
+                        totalFrameCount++;
                     }
                     catch (System.Exception err)
                     {
                         console.WriteError(err);
+                        //Console.WriteLine(err);
                     }
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
@@ -555,6 +572,25 @@ namespace CORERenderer.Main
                 return -1;
             }
             return 0;
+        }
+
+        private static void ShowRenderStatistics()
+        {
+            string[] results = RenderStatistics;
+            debugText.drawWithHighlights = true;
+            for (int i = 0; i < results.Length; i++)
+            {
+                string result = results[i];
+                debugText.RenderText(result, -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (i + 1), 0.7f, new(1, 0), new(1, 1, 1));
+            }
+            debugText.RenderText($"CPU usage: {CPUUsage}%", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 5), 0.7f, new(1, 0), new(1, 1, 1)); 
+            debugText.RenderText($"Framecount: {totalFrameCount}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 0), new(1, 1, 1));
+            debugText.RenderText($"Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 0), new(1, 1, 1));
+
+            debugText.RenderText($"Camera position: {MathC.Round(CurrentScene.camera.position, 2)}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 10), 0.7f, new(1, 0), new(1, 1, 1));
+            debugText.RenderText($"Camera front: {MathC.Round(CurrentScene.camera.front, 2)}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 11), 0.7f, new(1, 0), new(1, 1, 1));
+            debugText.RenderText($"Selected scene: {selectedScene}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 12), 0.7f, new(1, 0), new(1, 1, 1));
+            debugText.drawWithHighlights = false;
         }
 
         public static void MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets)
