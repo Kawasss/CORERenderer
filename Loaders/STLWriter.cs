@@ -88,9 +88,9 @@ namespace CORERenderer.Loaders
             {
                 for (int i = 0; i < vertices[j].Count; i += 8) //adds the offset to the vertices 
                 {
-                    newVertices.Add(vertices[j][i] + offsets[j].x);
-                    newVertices.Add(vertices[j][i + 1] + offsets[j].y);
-                    newVertices.Add(vertices[j][i + 2] + offsets[j].z);
+                    newVertices.Add(vertices[j][i] + offsets[0].x);
+                    newVertices.Add(vertices[j][i + 1] + offsets[0].y);
+                    newVertices.Add(vertices[j][i + 2] + offsets[0].z);
                     for (int k = 0; k < 5; k++)
                         newVertices.Add(vertices[j][i + 3 + k]);
                 }
@@ -117,9 +117,9 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < oneVertex.Count; i++) //inefficient since its not together with the for loops below but its easier to work with
                 for (int j = 0; j < oneVertex[i].Count; j++)
                 {
-                    oneVertex[i][j][0] += offsets[i].x;
-                    oneVertex[i][j][1] += offsets[i].y;
-                    oneVertex[i][j][2] += offsets[i].z;
+                    oneVertex[i][j][0] += offsets[0].x;
+                    oneVertex[i][j][1] += offsets[0].y;
+                    oneVertex[i][j][2] += offsets[0].z;
                 }
 
             for (int i = 0; i < indices.Count; i++)

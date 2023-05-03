@@ -122,30 +122,30 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (arrows.wantsToRotateYAxis && loaded)
-                        CurrentModel.rotation.y -= deltaX / 30;
+                        CurrentModel.Transform.rotation.y -= deltaX / 30;
                     if (arrows.wantsToRotateXAxis && loaded)
-                        CurrentModel.rotation.x +=  (deltaY + deltaX) / 30;
+                        CurrentModel.Transform.rotation.x += (deltaY + deltaX) / 30;
                     if (arrows.wantsToRotateZAxis && loaded)
-                        CurrentModel.rotation.z += (deltaY + deltaX) / 30;
+                        CurrentModel.Transform.rotation.z += (deltaY + deltaX) / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                        CurrentModel.translation.y += deltaY / 150;
+                        CurrentModel.Transform.translation.y += deltaY / 150;
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        CurrentModel.translation.x -= deltaX / 150;
+                        CurrentModel.Transform.translation.x -= deltaX / 150;
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        CurrentModel.translation.z += -deltaX / 150;
+                        CurrentModel.Transform.translation.z += -deltaX / 150;
 
 
                     if (arrows.wantsToScaleYAxis && loaded)
-                        CurrentModel.scaling.y -= deltaY / 200;
+                        CurrentModel.Transform.scale.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
-                        CurrentModel.scaling.x += deltaX / 200;
+                        CurrentModel.Transform.scale.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        CurrentModel.scaling.z += (deltaX + deltaY) / 400;
+                        CurrentModel.Transform.scale.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

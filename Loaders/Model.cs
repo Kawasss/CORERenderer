@@ -29,7 +29,7 @@ namespace CORERenderer.Loaders
         /// <summary>
         /// Gives the current translations of all of the submodels
         /// </summary>
-        public List<Vector3> Offsets { get { List<Vector3> value = new(); foreach (Submodel s in submodels) value.Add(s.translation); return value; } } //adds the materials from the submodels into one list
+        public List<Vector3> Offsets { get { List<Vector3> value = new(); value.Add(transform.translation); foreach (Submodel s in submodels) value.Add(s.translation); return value; } } //adds the materials from the submodels into one list
 
         public Submodel CurrentSubmodel { get { return submodels[selectedSubmodel]; } }
 
@@ -39,8 +39,6 @@ namespace CORERenderer.Loaders
         #endregion
 
         public List<Submodel> submodels = new();
-
-        public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
 
         private readonly Shader shader = GenericShaders.GenericLighting;
 
@@ -61,6 +59,9 @@ namespace CORERenderer.Loaders
 
         private HDRTexture hdr = null;
 
+        private Transform transform = new();
+        public Transform Transform { get { return transform; } }
+
         public Model(string path)
         {
             type = COREMain.SetRenderMode(path);
@@ -76,21 +77,21 @@ namespace CORERenderer.Loaders
                 GenerateStl(path);
         }
         
-        public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets)
+        public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
             type = COREMain.SetRenderMode(path);
 
             Name = Path.GetFileName(path)[..^4];
 
             submodels = new();
-            this.translation = offsets[0];
+            this.transform = new(offsets[0], Vector3.Zero, new(1, 1, 1), extents, center);
             int amountOfFailures = 0;
 
             for (int i = 0; i < vertices.Count; i++)
             {
                 try
                 {
-                    submodels.Add(new(materials[i].Name, vertices[i], indices[i], offsets[i] - this.translation, this, materials[i]));
+                    submodels.Add(new(materials[i].Name, vertices[i], indices[i], offsets[i] - this.Transform.translation, this, materials[i]));
                     totalAmountOfVertices += submodels[^1].NumberOfVertices;
                 }
                 catch (ArgumentOutOfRangeException)
@@ -128,6 +129,11 @@ namespace CORERenderer.Loaders
                 width / 2,  0.1f,  height / 2,    1, 0,   0, 1, 0,
                 width / 2,  0.1f, -height / 2,    1, 1,   0, 1, 0
             };
+            Vector3 max = new(width / 2, 0.1f, height / 2);
+            Vector3 min = new(-width / 2, 0.1f, -height / 2);
+            Vector3 center = (min + max) * 0.5f;
+            Vector3 extents = max - center;
+            this.transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
             submodels.Add(new(Name, iVertices.ToList(), Vector3.Zero, this, material));
             submodels[^1].cullFaces = true;
         }
@@ -137,6 +143,21 @@ namespace CORERenderer.Loaders
             double startedReading = Glfw.Time;
             Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
             double readSTLFile = Glfw.Time - startedReading;
+
+            Vector3 min = Vector3.Zero, max = Vector3.Zero;
+            for (int i = 0; i < localVertices.Count; i += 8)
+            {
+                max.x = localVertices[i] > max.x ? localVertices[i] : max.x;
+                max.y = localVertices[i + 1] > max.y ? localVertices[i + 1] : max.y;
+                max.z = localVertices[i + 2] > max.z ? localVertices[i + 2] : max.z;
+
+                min.x = localVertices[i] < min.x ? localVertices[i] : min.x;
+                min.y = localVertices[i + 1] < min.y ? localVertices[i + 1] : min.y;
+                min.z = localVertices[i + 2]< min.z ? localVertices[i + 2] : min.z;
+            }
+            Vector3 center = (min + max) * 0.5f;
+            Vector3 extents = max - center;
+            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
 
             if (loaded != Error.None)
             {
@@ -166,7 +187,7 @@ namespace CORERenderer.Loaders
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<float>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out mtllib);
+            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<float>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out Vector3 center, out Vector3 extents, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             if (loaded != Error.None)
@@ -192,14 +213,14 @@ namespace CORERenderer.Loaders
                 return;
             }
 
-            this.translation = lOffsets[0];
+            this.transform = new(lOffsets[0], Vector3.Zero, new(1, 1, 1), extents, center);
             for (int i = 0; i <  lVertices.Count; i++)
             {
-                submodels.Add(new(materials[i].Name, lVertices[i], indices[i], lOffsets[i] - this.translation, this, materials[i]));
+                submodels.Add(new(materials[i].Name, lVertices[i], indices[i], lOffsets[i] - this.Transform.translation, this, materials[i]));
                 totalAmountOfVertices += submodels[^1].NumberOfVertices;
             }
 
-            SortSubmodelsByDepth();
+            //SortSubmodelsByDepth();
 
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
@@ -218,11 +239,10 @@ namespace CORERenderer.Loaders
             foreach (Submodel submodel in submodels)
             {
                 float distance = submodel.translation.Length;
+                while (distanceSubmodelTable.ContainsKey(distance))
+                    distance += 0.01f;
                 distances.Add(distance);
-                if (!distanceSubmodelTable.ContainsKey(distance))
-                    distanceSubmodelTable.Add(distance, submodel);
-                else
-                    distanceSubmodelTable.Add(distance + 0.1f, submodel);
+                distanceSubmodelTable.Add(distance, submodel);
             }
 
             float[] distancesArray = distances.ToArray();
@@ -234,9 +254,7 @@ namespace CORERenderer.Loaders
 
         public void Reset()
         {
-            translation = Vector3.Zero;
-            rotation = Vector3.Zero;
-            scaling = new(1);
+            transform = new();
         }
 
         public void Dispose()

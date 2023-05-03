@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Transactions;
 using COREMath;
 using CORERenderer.Main;
 using CORERenderer.textures;
@@ -30,17 +31,19 @@ namespace CORERenderer.Loaders
 
                         models.Add(new());
                         models[^1].Name = modelName;
-                        models[^1].translation = translation;
-                        models[^1].scaling = scaling;
-                        models[^1].rotation = rotation;
+                        models[^1].Transform.translation = translation;
+                        models[^1].Transform.scale = scaling;
+                        models[^1].Transform.rotation = rotation;
 
                         //getting the submodels
+                        Vector3 min = Vector3.Zero, max = Vector3.Zero;
                         for (int j = 0; j < submodelCount; j++)
                         {
                             RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out Vector3 submodelRotation, out bool hasMaterial, out int amountPolygons);
 
                             int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
                             List<float> vertices = RetrieveVertices(fs, amountVertices);
+                            DetermineMinMax(vertices, translation, ref min, ref max);
 
                             if (hasMaterial)
                             {
@@ -55,6 +58,7 @@ namespace CORERenderer.Loaders
                                 models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
                             }
                         }
+                        models[^1].Transform.BoundingBox = new(min, max);
                     }
                 }
             }
@@ -65,6 +69,20 @@ namespace CORERenderer.Loaders
                 return Error.InvalidContents;
             }
             return Error.None;
+        }
+
+        private static void DetermineMinMax(List<float> vertices, Vector3 translation, ref Vector3 min, ref Vector3 max)
+        {
+            for (int i = 0; i < vertices.Count; i += 8)
+            {
+                max.x = vertices[i] > max.x ? vertices[i] : max.x;
+                max.y = vertices[i + 1] > max.y ? vertices[i + 1] : max.y;
+                max.z = vertices[i + 2] > max.z ? vertices[i + 2] : max.z;
+
+                min.x = vertices[i] < min.x ? vertices[i] : min.x;
+                min.y = vertices[i + 1] < min.y ? vertices[i + 1] : min.y;
+                min.z = vertices[i + 2] < min.z ? vertices[i + 2] : min.z;
+            }
         }
 
         private static Material RetrieveMaterialNode(FileStream fs)

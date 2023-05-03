@@ -34,6 +34,8 @@ namespace CORERenderer
         public Vector3 up = Vector3.UnitVectorY;
         public Vector3 right = Vector3.UnitVectorX;
 
+        public Frustum Frustum { get { return GenerateFrustum(); } }
+
         public Camera(Vector3 Position, float aspectRatio)
         {
             position = Position;
@@ -93,7 +95,7 @@ namespace CORERenderer
             }
         }
 
-        public Frustum GenerateFrustum()
+        private Frustum GenerateFrustum()
         {
             Frustum frustum;
             float halfWidth = farPlane * MathC.Tan(fov * 0.5f);

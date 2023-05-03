@@ -6,6 +6,7 @@ using CORERenderer.GLFW;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using CORERenderer.GUI;
+using System.Collections.Concurrent;
 
 namespace CORERenderer.OpenGL
 {
@@ -21,7 +22,7 @@ namespace CORERenderer.OpenGL
 
         private static Camera camera = null;
 
-        private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "  0 are opaque", "Draw calls this frame: 0" };
+        private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "   0 are opaque", "Draw calls this frame: 0" };
         public static string[] RenderStatistics { get { return renderStatistics; } }
         private static long ticksSpent3DRenderingThisFrame = 0;
         public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
@@ -192,6 +193,11 @@ namespace CORERenderer.OpenGL
 
         public static void RenderAllModels(List<Model> models)
         {
+            int modelsFrustumCulled = 0;
+            ConcurrentBag<int> indexesOfCulledModels = new();
+            lock(indexesOfCulledModels)
+            Parallel.For(0, models.Count, i => { if (!models[i].Transform.BoundingBox.IsInFrustum(camera.Frustum, models[i].Transform)) indexesOfCulledModels.Add(i); });
+
             int currentDrawCalls = drawCalls;
             Stopwatch sw = new();
 
@@ -207,14 +213,21 @@ namespace CORERenderer.OpenGL
             GenericShaders.GenericLighting.Use();
 
             sw.Start();
-            foreach (Model model in models)
+
+            for (int i = 0; i < models.Count; i++)
             {
-                if (model == null)
+                if (models[i] == null)
                     continue;
-                if (model.type != RenderMode.HDRFile)
-                    model.Render();
+                if (indexesOfCulledModels.Contains(i))
+                {
+                    modelsFrustumCulled++;
+                    continue;
+                }
+                    
+                if (models[i].type != RenderMode.HDRFile)
+                    models[i].Render();
                 else
-                    backgroundModel = model;
+                    backgroundModel = models[i];
             }
             sw.Stop();
             long timeSpentRenderingOpaque = sw.ElapsedTicks;
@@ -226,7 +239,7 @@ namespace CORERenderer.OpenGL
             Dictionary<float, Submodel> distanceModelTable = new();
             foreach (Submodel model in translucentSubmodels)
             {
-                float distance = MathC.Distance(COREMain.CurrentScene.camera.position, model.translation + model.parent.translation);
+                float distance = MathC.Distance(COREMain.CurrentScene.camera.position, model.parent.Transform.translation);
                 while (distanceModelTable.ContainsKey(distance))
                     distance += 0.01f;
                 distances.Add(distance);
@@ -257,11 +270,11 @@ namespace CORERenderer.OpenGL
             renderStatistics[1] = $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}";
             renderStatistics[2] = $"Ticks spent depth sorting: {timeSpentDepthSorting}";
             renderStatistics[3] = $"Ticks spent overall: {ticksSpent3DRenderingThisFrame}";
-            renderStatistics[4] = $"Models rendered: {models.Count}";
+            renderStatistics[4] = $"Total models: {models.Count}, of which {modelsFrustumCulled} are frustum culled";
             renderStatistics[5] = $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:";
             renderStatistics[6] = $"   {translucentSubmodels.Count} are translucent";
             renderStatistics[7] = $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque";
-            renderStatistics[8] = $"Draw calls this frame: {drawCalls - currentDrawCalls}";
+            renderStatistics[8] = $"Draw calls this frame: {drawCalls - currentDrawCalls}, cull faces: {cullFaces}";
             
 
             translucentSubmodels = new();
@@ -284,7 +297,7 @@ namespace CORERenderer.OpenGL
         {
             GenericShaders.Grid.Use();
 
-            GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * new Matrix(true, 1000));
+            GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetScalingMatrix(1000));
 
             GenericShaders.Grid.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
 

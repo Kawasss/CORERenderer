@@ -40,7 +40,7 @@ namespace CORERenderer.textures
             this.name = name;
         }
 
-        private static unsafe Texture ReadFromColorFile(bool flip, int mode, string imagePath)
+        private static Texture ReadFromColorFile(bool flip, int mode, string imagePath)
         {
             Stbi.SetFlipVerticallyOnLoad(flip);
 
@@ -51,19 +51,21 @@ namespace CORERenderer.textures
 
             if (!File.Exists(imagePath))
             {
-                Console.WriteLine($"Couldnt find given texture at {imagePath}, using default texture");
+                Console.WriteLine($"Couldn't find given texture at {imagePath}, using default texture");
                 imagePath = $"{COREMain.pathRenderer}\\textures\\placeholder.png";
             }
             StbiImage image;
-
+            int imageHeight = 0, imageWidth = 0;
+            byte[] imageData = Array.Empty<byte>();
             using (FileStream stream = File.OpenRead(imagePath))
             using (MemoryStream memoryStream = new())
             {
                 stream.CopyTo(memoryStream);
 
-                image = Stbi.LoadFromMemory(memoryStream, 4);
-                
-                glTexImage2D(Image2DTarget.Texture2D, 0, mode, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
+                Task task = Task.Run(() => { image = Stbi.LoadFromMemory(memoryStream, 4); imageWidth = image.Width; imageHeight = image.Height; imageData = image.Data.ToArray(); } );
+                task.Wait();
+
+                glTexImage2D(Image2DTarget.Texture2D, 0, mode, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -74,11 +76,7 @@ namespace CORERenderer.textures
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
 
-            List<int> local = new();
-            for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
-                local.Add(i);
-
-            return new Texture(handle) { path = imagePath, name = imagePath[local[^1]..], width = image.Width, height = image.Height, FileContent = File.ReadAllBytes(imagePath) };//, Data = image.Data.ToArray() };
+            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath) };//, Data = image.Data.ToArray() };
         }
 
         public static Texture GenerateEmptyTexture(int Width, int Height)

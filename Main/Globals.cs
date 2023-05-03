@@ -107,7 +107,10 @@ namespace CORERenderer.Main
             for (int i = 0; i < usedTextures.Count; i++)
                 if (usedTextures[i].path == path)
                 {
-                    COREMain.console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
+                    if (i > 3)
+                        COREMain.console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
+                    else
+                        COREMain.console.WriteLine($"Using default texture {usedTextures[i].name} ({i})");
                     return i;
                 }
             

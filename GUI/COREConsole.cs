@@ -697,13 +697,13 @@ namespace CORERenderer.GUI
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[(indexOfSymbol + 1)..]);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = location - model.translation;
-                            model.translation += distance;
+                            Vector3 distance = location - model.Transform.translation;
+                            model.Transform.translation += distance;
                             WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
-                            model.translation += location;
+                            model.Transform.translation += location;
                             WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
                         }
                     }
@@ -712,15 +712,15 @@ namespace CORERenderer.GUI
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = location - COREMain.CurrentScene.models[0].translation;
+                            Vector3 distance = location - COREMain.CurrentScene.models[0].Transform.translation;
                             foreach (Model model in COREMain.CurrentScene.models)
-                                model.translation += distance;
+                                model.Transform.translation += distance;
                             WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
                             foreach (Model model in COREMain.CurrentScene.models)
-                                    model.translation += location;
+                                    model.Transform.translation += location;
                             WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
                         }
                     }

@@ -427,8 +427,8 @@ namespace CORERenderer.OpenGL
             uniform vec3 playerPos;
 
             vec3 coordinates[6] = vec3[](
-            	vec3(-1, 0, -1), vec3(1, 0, 1), vec3(1, 0, -1),
-                vec3(1, 0, 1), vec3(-1, 0, -1), vec3(-1, 0, 1)
+            	vec3(-10, 0, -10), vec3(10, 0, 10), vec3(10, 0, -10),
+                vec3(10, 0, 10), vec3(-10, 0, -10), vec3(-10, 0, 10)
             );
 
             void main() 
@@ -483,13 +483,16 @@ namespace CORERenderer.OpenGL
 
             void main() 
             {
-                vec3 coor3D = (vec4(coor, 1) * oModel * oView * oProjection).xyz;
+                vec3 coor3D = (vec4(coor, 1) * oModel).xyz;
 
                 float Distance = distance(oPlayerPos, coor);
-                float opacity = clamp(Distance / length(oPlayerPos + coor3D) * 2, 0, 1);
+                //float opacity = clamp(Distance / length(oPlayerPos + coor3D) * 2, 0, 1);
 
                 gridColor = grid(coor, 1000, true) + grid(coor, 100, true);
-                gridColor.a *= opacity;
+                if (gridColor.a == 0)
+                    discard;
+                gridColor.a *= exp(-distance(vec3(oPlayerPos.x, 0, oPlayerPos.z), vec3(coor3D.x, 0, coor3D.z)) * 0.03);
+                //gridColor.a *= opacity;
             }
             """;
 

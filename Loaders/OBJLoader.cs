@@ -5,8 +5,14 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static Error LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out string mtllib)
+        public static Error LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib)
         {
+            extents = Vector3.Zero;
+            center = Vector3.Zero;
+
+            Vector3 min = Vector3.Zero;
+            Vector3 max = Vector3.Zero;
+
             if (path == null)
             {
                 outVertices = new();
@@ -87,9 +93,19 @@ namespace CORERenderer.Loaders
 
                             case "v ": //vector
                                 vertices.Add(GetThreeFloatsWithRegEx(n));
-                                if (currentgroup == offsets.Count)
+                                if (offsets.Count == 0)
                                     offsets.Add(vertices[^1]);
-                                vertices[^1] -= offsets[^1];
+                                else
+                                    offsets.Add(offsets[0]);
+                                vertices[^1] -= offsets[0];
+
+                                max.x = vertices[^1].x > max.x ? vertices[^1].x : max.x;
+                                max.y = vertices[^1].y > max.y ? vertices[^1].y : max.y;
+                                max.z = vertices[^1].z > max.z ? vertices[^1].z : max.z;
+
+                                min.x = vertices[^1].x < min.x ? vertices[^1].x : min.x;
+                                min.y = vertices[^1].y < min.y ? vertices[^1].y : min.y;
+                                min.z = vertices[^1].z < min.z ? vertices[^1].z : min.z;
                                 break;
 
                             case "vn": //vector normal
@@ -232,6 +248,9 @@ namespace CORERenderer.Loaders
             {
                 return Error.InvalidContents;
             }
+            center = (min + max) * 0.5f;
+            extents = max - center;
+
             if (unreadableLines.Count > 0)
                 COREMain.console.WriteError($" Couldn't read {unreadableLines.Count} lines in {filename}");
 

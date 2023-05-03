@@ -42,7 +42,7 @@ namespace CORERenderer.GUI
             rotation = new($"{COREMain.pathRenderer}\\OBJs\\triangle.stl");
             rotation.submodels[0].renderIDVersion = false;
 
-            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out vertices, out indices, out _, out _);
+            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out vertices, out indices, out _, out _, out _, out _);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
 
@@ -58,7 +58,7 @@ namespace CORERenderer.GUI
             if (COREMain.scenes[COREMain.selectedScene].currentObj == -1)
                 return;
 
-            maxScale = MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) * 0.8f;
+            maxScale = MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) * 0.8f;
         }
 
         public void Render()
@@ -67,14 +67,14 @@ namespace CORERenderer.GUI
                 return;
 
             if (maxScale == 0)
-                maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation)) / 2;
+                maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation)) / 2;
 
             shader.Use();
 
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.rotation) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
+            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) /* MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale)*/ * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz);
 
             shader.SetVector3("color", 0, 1, 0);
 
@@ -115,7 +115,7 @@ namespace CORERenderer.GUI
             shader.SetMatrix("model", cubeModel);
             RenderCube();
 
-            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale);
+            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale);
 
             //draw the triangles that indicate the rotations
             glDisable(GL_CULL_FACE);
@@ -160,12 +160,12 @@ namespace CORERenderer.GUI
             glClear(GL_DEPTH_BUFFER_BIT);
 
             if (maxScale == 0)
-                maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation)) / 2;
+                maxScale = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation)) / 2;
 
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.rotation) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale) * MathC.GetTranslationMatrix(COREMain.CurrentModel.translation);
+            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) /* MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale)*/ * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
@@ -206,7 +206,7 @@ namespace CORERenderer.GUI
             pickShader.SetMatrix("model", cubeModel);
             RenderCube();
 
-            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.translation) / maxScale);
+            float maxSize = (MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale);
 
             //draw the triangles that indicate the rotations
             glDisable(GL_CULL_FACE);
@@ -287,7 +287,7 @@ namespace CORERenderer.GUI
 
             if (!wantsToMoveXAxis && !wantsToMoveYAxis && !wantsToMoveZAxis && !wantsToScaleXAxis && !wantsToScaleYAxis && !wantsToScaleZAxis)
             {
-                if (COREMain.selectedID == 6 && !wantsToRotateXAxis && !wantsToRotateZAxis)
+                if (COREMain.selectedID == 6 && !wantsToRotateXAxis && !wantsToRotateYAxis)
                     wantsToRotateZAxis = true;
 
                 else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
@@ -299,7 +299,7 @@ namespace CORERenderer.GUI
                 else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
                     wantsToRotateXAxis = false;
 
-                if (COREMain.selectedID == 8 && !wantsToRotateXAxis && !wantsToRotateYAxis)
+                if (COREMain.selectedID == 8 && !wantsToRotateXAxis && !wantsToRotateZAxis)
                     wantsToRotateYAxis = true;
 
                 else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)

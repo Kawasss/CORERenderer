@@ -17,9 +17,9 @@ namespace CORERenderer.GUI
 
             Model model = COREMain.CurrentModel;
 
-            this.Write($"Translation: {Math.Round(model.translation.x, 2)} {Math.Round(model.translation.y, 2)} {Math.Round(model.translation.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f), 0.7f);
-            this.Write($"Scaling:     {Math.Round(model.scaling.x, 2)} {Math.Round(model.scaling.y, 2)} {Math.Round(model.scaling.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f * 2), 0.7f);
-            this.Write($"Rotation:    {Math.Round(model.rotation.x, 2)} {Math.Round(model.rotation.y, 2)} {Math.Round(model.rotation.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f * 3), 0.7f);
+            this.Write($"Translation: {Math.Round(model.Transform.translation.x, 2)} {Math.Round(model.Transform.translation.y, 2)} {Math.Round(model.Transform.translation.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f), 0.7f);
+            this.Write($"Scaling:     {Math.Round(model.Transform.scale.x, 2)} {Math.Round(model.Transform.scale.y, 2)} {Math.Round(model.Transform.scale.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f * 2), 0.7f);
+            this.Write($"Rotation:    {Math.Round(model.Transform.rotation.x, 2)} {Math.Round(model.Transform.rotation.y, 2)} {Math.Round(model.Transform.rotation.z, 2)}", (int)(this.Width * 0.05f), (int)(this.Height - COREMain.debugText.characterHeight * 1.1f * 3), 0.7f);
         }
 
         public void RenderModelList(List<Model> models)

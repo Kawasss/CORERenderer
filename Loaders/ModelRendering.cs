@@ -32,10 +32,13 @@ namespace CORERenderer.Loaders
                     selectedSubmodel = i;
                 }
 
-                if (!submodels[i].isTranslucent)
-                    submodels[i].Render();
-                else
+                if (submodels[i].isTranslucent)
+                {
                     translucentSubmodels.Add(submodels[i]);
+                    continue;
+                }
+
+                submodels[i].Render();
             }
         }
     }

@@ -96,6 +96,9 @@ namespace CORERenderer.Main
         public static Model CurrentModel { get => scenes[selectedScene].models[GetCurrentObjFromScene]; }
         public static Scene CurrentScene { get => scenes[selectedScene]; }
 
+        private static Thread mainThread;
+        public static Thread MainThread { get { return mainThread; } }
+
         //structs
         public static Window window;
         public static Framebuffer IDFramebuffer;
@@ -115,6 +118,8 @@ namespace CORERenderer.Main
             #endif
             try //primitive error handling, could be better
             {
+                mainThread = Thread.CurrentThread;
+
                 //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
                 string root = AppDomain.CurrentDomain.BaseDirectory;
                 string directory = Path.GetDirectoryName(root);
@@ -363,7 +368,6 @@ namespace CORERenderer.Main
 
                                 frametimeGraph.Update(currentFrameTime * 1000);
                                 console.Update();
-
                                 if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
                                 {
                                     tab.Render();
@@ -381,10 +385,7 @@ namespace CORERenderer.Main
                                 if (saveAsImage.isPressed)
                                     Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
-                            renderingTicks.UpdateConditionless(TicksSpent3DRenderingThisFrame);
-                            if (debugFSGraph.MaxValue > 70) debugFSGraph.MaxValue = (int)(timeSinceLastFrame * 1000 * 1.5f);
-                            debugFSGraph.color = 1 / timeSinceLastFrame < refreshRate / 2 ? new(1, 0, 0) : new(1, 0, 1);
-                            debugFSGraph.UpdateConditionless((float)(timeSinceLastFrame * 1000));
+                            
 
                             graphManager.Render();
                             tb.CheckForUpdate(mousePosX, mousePosY);
@@ -471,7 +472,7 @@ namespace CORERenderer.Main
                                 foreach (ModelInfo model in dirLoadedModels)
                                 {
                                     Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
-                                    CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets));
+                                    CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets, model.center, model.extents));
                                 }
                                 dirLoadedModels = null;
                                 timeSinceLastFrame2 = Glfw.Time;
@@ -533,6 +534,10 @@ namespace CORERenderer.Main
                         }
 
                         glViewport(0, 0, monitorWidth, monitorHeight);
+                        renderingTicks.UpdateConditionless(TicksSpent3DRenderingThisFrame);
+                        if (debugFSGraph.MaxValue > 70) debugFSGraph.MaxValue = (int)(timeSinceLastFrame * 1000 * 1.5f);
+                        debugFSGraph.color = 1 / timeSinceLastFrame < refreshRate / 2 ? new(1, 0, 0) : new(1, 0, 1);
+                        debugFSGraph.UpdateConditionless((float)(timeSinceLastFrame * 1000));
                         renderingTicks.RenderConditionless();
                         debugFSGraph.RenderConditionless();
                         glDisable(GL_CULL_FACE);
@@ -665,12 +670,12 @@ namespace CORERenderer.Main
         {
             bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
-            List<string> readFiles = new(), mtllibs = new();
+            /*List<string> readFiles = new(), mtllibs = new();
             List<List<List<float>>> allVertices = new();
             List<List<List<uint>>> allIndices = new();
             List<List<Vector3>> allOffsets = new();
             List<List<string>> mtlnames = new();
-            List<Model> models = scenes[selectedScene].models;
+            List<Model> models = scenes[selectedScene].models;*/
             List<ModelInfo> localVersion = new();
             Task.Run(() =>
             {
@@ -678,25 +683,26 @@ namespace CORERenderer.Main
                 {
                     if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read// && !readFiles.Contains(file)
                     {
-                        readFiles.Add(file);
+                        //readFiles.Add(file);
 
-                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out string mtllib);
+                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib);
                         if (error != Error.None)
                             console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
                         else
                         {
-                            allVertices.Add(vertices);
-                            allIndices.Add(indices);
-                            allOffsets.Add(offsets);
-                            mtllibs.Add(dir + '\\' + mtllib);
-                            mtlnames.Add(mtlNames);
+                            localVersion.Add(new(file, dir + '\\' + mtllib, mtlNames, vertices, indices, offsets, extents, center));
+                            //allVertices.Add(vertices);
+                            //allIndices.Add(indices);
+                            //allOffsets.Add(offsets);
+                            //mtllibs.Add(dir + '\\' + mtllib);
+                            //mtlnames.Add(mtlNames);
                         }
                     }
                 });
                 loaded = true;
                 if (loaded)
-                    for (int i = 0; i < readFiles.Count; i++)
-                        localVersion.Add(new(readFiles[i], mtllibs[i], mtlnames[i], allVertices[i], allIndices[i], allOffsets[i]));
+                    //for (int i = 0; i < readFiles.Count; i++)
+                        //localVersion.Add(new(readFiles[i], mtllibs[i], mtlnames[i], allVertices[i], allIndices[i], allOffsets[i]));
                 dirLoadedModels = localVersion;
             });
         }
@@ -709,8 +715,10 @@ namespace CORERenderer.Main
             public List<List<float>> vertices;
             public List<List<uint>> indices;
             public List<Vector3> offsets;
+            public Vector3 extents;
+            public Vector3 center;
 
-            public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<float>> vertices, List<List<uint>> indices, List<Vector3> offsets)// List<Material> materials,
+            public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<float>> vertices, List<List<uint>> indices, List<Vector3> offsets, Vector3 extents, Vector3 center)// List<Material> materials,
             {
                 this.path = path;
                 this.mtllib = mtllib;
@@ -718,6 +726,8 @@ namespace CORERenderer.Main
                 this.vertices = vertices;
                 this.indices = indices;
                 this.offsets = offsets;
+                this.extents = extents;
+                this.center = center;
             }
         }
 

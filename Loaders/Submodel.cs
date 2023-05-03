@@ -16,13 +16,6 @@ namespace CORERenderer.Loaders
         public static float renderDistance = 100;
 
         public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
-        private Vector3 previousScaling = new(1, 1, 1), previousTranslation = new(0, 0, 0), previousRotation = new(0, 0, 0);
-
-        //better to put this in a Transform class
-        public Vector3 Right { get { return new(model.matrix4x4[0,0], model.matrix4x4[0,1], model.matrix4x4[0,2]); } }
-        //public float Right { get { return model.matrix4x4[0, 0]; } }
-        public float Up { get { return model.matrix4x4[0, 1]; } }
-        public float Forward { get { return -model.matrix4x4[0, 2]; } }
 
         public Model parent = null;
 
@@ -44,10 +37,6 @@ namespace CORERenderer.Loaders
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
-
-        private Matrix model = Matrix.IdentityMatrix;
-
-        private AABB boundingBox = new();
 
         #region constructors
         public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
@@ -130,24 +119,11 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
             shader.SetInt("material.normalMap", GL_TEXTURE3);
-
-            previousScaling = scaling + parent.scaling;
-            previousTranslation = translation + parent.translation;
-            previousRotation = rotation + parent.rotation;
-        }
-
-        public bool IsInFrustum(Frustum frustum)
-        {
-            Vector3 globalCenter = (model * new Vector4(boundingBox.center, 1)).xyz;
-
-            Vector3 right = Right * boundingBox.extents.x;
-
-            return true;
         }
 
         public void Render()
         {
-            if (!useRenderDistance || MathC.Distance(COREMain.CurrentScene.camera.position, translation + parent.translation) < renderDistance)
+            if (!useRenderDistance || MathC.Distance(COREMain.CurrentScene.camera.position, parent.Transform.translation) < renderDistance)
             {
                 shader.Use();
 
@@ -157,8 +133,6 @@ namespace CORERenderer.Loaders
                 glStencilMask(0xFF);
 
                 ClampValues();
-
-                SetModel();
 
                 SetShaderValues();
 
@@ -176,9 +150,6 @@ namespace CORERenderer.Loaders
                     if (!cullFaces)
                         glEnable(GL_CULL_FACE);
                 }
-                previousScaling = scaling + parent.scaling;
-                previousTranslation = translation + parent.translation;
-                previousRotation = rotation + parent.rotation;
             }
         }
 
@@ -197,7 +168,7 @@ namespace CORERenderer.Loaders
             IDShader.Use();
 
             IDShader.SetVector3("color", IDColor);
-            IDShader.SetMatrix("model", model);
+            IDShader.SetMatrix("model", parent.Transform.ModelMatrix);
 
             glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
 
@@ -209,18 +180,12 @@ namespace CORERenderer.Loaders
             COREMain.renderFramebuffer.Bind();
         }
 
-        private void SetModel()//doesnt create a new matrix if the model hasnt moved in any way, this reduces amount of calculations per frame
-        {
-            if (previousRotation != rotation + parent.rotation || previousScaling != scaling + parent.scaling || previousTranslation != translation + parent.translation)
-                model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation + parent.rotation) * MathC.GetScalingMatrix(this.scaling + parent.scaling) * MathC.GetTranslationMatrix(this.translation + parent.translation);
-        }
-
         private void SetShaderValues()
         {
             shader.SetFloat("transparency", material.Transparency);
             shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
 
-            shader.SetMatrix("model", model);
+            shader.SetMatrix("model", parent.Transform.ModelMatrix);
 
             UseTextures();
         }

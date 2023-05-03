@@ -138,8 +138,7 @@ namespace CORERenderer.Loaders
                     fs.ReadByte();
                 }
             }
-            //offset = new(holder[0], holder[1], holder[2]);
-            offset = Vector3.Zero;
+            offset = new(holder[0], holder[1], holder[2]);
             return Error.None;
         }
 

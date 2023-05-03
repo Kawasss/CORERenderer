@@ -18,6 +18,7 @@ The structure of a model node looks like this:
 Models are used as a container for the submodels: it keeps them organized together.
 The amount of submodels is stated by the 4 bytes named "amount of submodels" here.
 Vector3's are 3 float values resembling the x, y and z axis.
+There isn't any information regarding the center and extents of the models, those have to be calculated manually.
 
 
 Submodel node:
