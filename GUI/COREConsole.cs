@@ -208,9 +208,11 @@ namespace CORERenderer.GUI
 
             int amountOfCharsForCorrectWidth = (int)(stringLength / tooBigPercentage);
             int timesTooBig = (int)tooBigPercentage;
-            string[] seperations = new string[timesTooBig];
+            string[] seperations = new string[timesTooBig + 1];
             for (int i = 0; i < timesTooBig; i++)
-                seperations[i] = i == 0 ? end[..(amountOfCharsForCorrectWidth - 1)] : prefix + end[((amountOfCharsForCorrectWidth - 1) * i)..((amountOfCharsForCorrectWidth - 1) * (i + 1))];//end = end.Insert((amountOfCharsForCorrectWidth - 1) * (i + 1), "\n");
+                seperations[i] = i == 0 ? end[..amountOfCharsForCorrectWidth] : prefix + end[(amountOfCharsForCorrectWidth * i)..(amountOfCharsForCorrectWidth * (i + 1))];//end = end.Insert((amountOfCharsForCorrectWidth - 1) * (i + 1), "\n");
+            seperations[^1] = prefix + end[(amountOfCharsForCorrectWidth * timesTooBig)..];
+
             return seperations;
         }
 
@@ -384,63 +386,22 @@ namespace CORERenderer.GUI
                     WriteError($"Couldn't solve argument reference {arg}");
             }
             else if (input == "reload config")
-            {
-                if (COREMain.LoadFilePath == null)
-                    Process.Start("CORERenderer.exe");
-                else
-                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                GenerateCacheFile(COREMain.pathRenderer);
-                Environment.Exit(1);
-            }
-            else if (input.Contains("set shaders"))
-            {
-                if (input.ToLower().Contains("pathtracing"))
-                {
-                    Rendering.shaderConfig = ShaderType.PathTracing;
-                    COREMain.GenerateConfig();
-                    if (COREMain.LoadFilePath == null)
-                        Process.Start("CORERenderer.exe");
-                    else
-                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                    GenerateCacheFile(COREMain.pathRenderer);
-                    Environment.Exit(1);
-                }
-                else if (input.ToLower().Contains("lighting"))
-                {
-                    Rendering.shaderConfig = ShaderType.Lighting;
-                    COREMain.GenerateConfig();
-                    if (COREMain.LoadFilePath == null)
-                        Process.Start("CORERenderer.exe");
-                    else
-                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                    GenerateCacheFile(COREMain.pathRenderer);
-                    Environment.Exit(1);
-                }
-                else if (input.ToLower().Contains("fullbright"))
-                {
-                    Rendering.shaderConfig = ShaderType.FullBright;
-                    COREMain.GenerateConfig();
-                    if (COREMain.LoadFilePath == null)
-                        Process.Start("CORERenderer.exe");
-                    else
-                        Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                    GenerateCacheFile(COREMain.pathRenderer);
-                    Environment.Exit(1);
-                }
-                else
-                    WriteError("Couldn't find shader type");
-            }
-            else if (input == "recompile shaders")
-            {
-                if (COREMain.LoadFilePath == null)
-                    Process.Start("CORERenderer.exe");
-                else
-                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                GenerateCacheFile(COREMain.pathRenderer);
-                Environment.Exit(1);
-            }
+                Restart();
 
-            else if (currentContext == Context.Console)
+            else if (input.Contains("set shaders"))
+                ChangeShaders(input);
+
+            else if (input == "recompile shaders")
+                Restart();
+
+            else HandleContextCommand(input);
+
+            WriteLine($"COREConsole/{currentContext} > ");
+        }
+
+        private void HandleContextCommand(string input)
+        {
+            if (currentContext == Context.Console)
                 HandleConsoleCommands(input);
             else if (currentContext == Context.Camera)
                 HandleCameraCommands(input);
@@ -448,10 +409,7 @@ namespace CORERenderer.GUI
                 HandleSceneCommands(input);
             else
                 WriteError($"Couldn't parse command \"{input}\"");
-
-            WriteLine($"COREConsole/{currentContext} > ");
         }
-
 
         private void HandleCameraCommands(string input)
         { //every if statement checks the length of the input first, because if it tries the check the contents if the input like input[..4] == "get " it could throw an error if the input isnt 4 chars long (out of range). This is also prevented later on by using try { } catch (OutOfRangeException) { }
@@ -459,30 +417,21 @@ namespace CORERenderer.GUI
             {
                 switch (input[4..]) 
                 {
-                    case "speed":
-                        WriteLine($"{Camera.cameraSpeed}");
+                    case "speed": WriteLine($"{Camera.cameraSpeed}");
                         break;
-                    case "fov":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.Fov}");
+                    case "fov": WriteLine($"{COREMain.CurrentScene.camera.Fov}");
                         break;
-                    case "yaw":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.Yaw}");
+                    case "yaw": WriteLine($"{COREMain.CurrentScene.camera.Yaw}");
                         break;
-                    case "pitch":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.Pitch}");
+                    case "pitch": WriteLine($"{COREMain.CurrentScene.camera.Pitch}");
                         break;
-                    case "farplane":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.FarPlane}");
+                    case "farplane": WriteLine($"{COREMain.CurrentScene.camera.FarPlane}");
                         break;
-                    case "nearplane":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].camera.NearPlane}");
+                    case "nearplane": WriteLine($"{COREMain.CurrentScene.camera.NearPlane}");
                         break;
-                    case "position":
-                        Vector3 location = COREMain.scenes[COREMain.selectedScene].camera.position;
-                        WriteLine($"{location.x}, {location.y}, {location.z}");
+                    case "position": WriteLine($"{COREMain.CurrentScene.camera.position}");
                         break;
-                    default:
-                        WriteError($"Unknown variable: \"{input[5..]}\"");
+                    default: WriteError($"Unknown variable: \"{input[5..]}\"");
                         break;
                 }
             }
@@ -501,27 +450,27 @@ namespace CORERenderer.GUI
                     case "fov":
                         float result = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result, input[7..]);
-                        COREMain.scenes[COREMain.selectedScene].camera.Fov = result;
+                        COREMain.CurrentScene.camera.Fov = result;
                         break;
                     case "yaw":
                         float result2 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result2, input[7..]);
-                        COREMain.scenes[COREMain.selectedScene].camera.Yaw = result2;
+                        COREMain.CurrentScene.camera.Yaw = result2;
                         break;
                     case "pitch":
                         float result3 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result3, input[9..]);
-                        COREMain.scenes[COREMain.selectedScene].camera.Pitch = result3;
+                        COREMain.CurrentScene.camera.Pitch = result3;
                         break;
                     case "farplane":
                         float result4 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result4, input[12..]);
-                        COREMain.scenes[COREMain.selectedScene].camera.FarPlane = result4;
+                        COREMain.CurrentScene.camera.FarPlane = result4;
                         break;
                     case "nearplane":
                         float result5 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result5, input[13..]);
-                        COREMain.scenes[COREMain.selectedScene].camera.NearPlane = result5;
+                        COREMain.CurrentScene.camera.NearPlane = result5;
                         break;
                     default:
                         WriteError($"Unknown variable: \"{input[4..input.IndexOf(' ', input.IndexOf(' ') + 1)]}\"");
@@ -534,59 +483,47 @@ namespace CORERenderer.GUI
         private void HandleSceneCommands(string input)
         {
             //delete
-            if (input.Length > 7 && input[..7] == "delete ") //keyword for deleting one or more models
+            if (input.StartsWith("delete ")) //keyword for deleting one or more models
             {
-                if (input.Length > 13 && input[..13] == "delete model[") //allows the removal of a single object
+                if (input.StartsWith("delete model[")) //allows the removal of a single object
                 {
-                    int index;
-                    bool succeeded = int.TryParse(input[13..input.IndexOf(']')], out index); //finds the index of the model
-                    if (succeeded && index < COREMain.scenes[COREMain.selectedScene].models.Count) //only continue if the index is found and its within range
+                    try
                     {
-                        try
-                        {
-                            COREMain.scenes[COREMain.selectedScene].models[index].Dispose();
-                            WriteLine($"Deleted model {index}");
-                            COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
-                        }
+                        int index = Readers.GetOneIntWithRegEx(input);
+                        COREMain.scenes[COREMain.selectedScene].models[index].Dispose();
+                        WriteLine($"Deleted model {index}");
+                        COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                     }
-                    else
-                        WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
-                }
-                else if (input.Length > 13 && input[..13] == "delete models") //allows the removal of multiple objects at once with array-like indexing ([1..4] to delete the second model till the 4th for example)
-                {
-                    bool succeeded = int.TryParse(input[14..input.IndexOf('.')], out int index1); //gets the value if the first index
-                    int index2;
-                    bool succeeded2 = int.TryParse(input[(input.IndexOf("..") + 2)..input.IndexOf(']')], out index2); //gets the value if the second index by looking for a value between '..' and ']' in [VALUE..VALUE]
-                    if (succeeded && succeeded2) //only continue if both indexes are found
+                    catch (IndexOutOfRangeException)
                     {
+                        WriteLine($"Couldn't delete model {input[13..input.IndexOf(']')]}");
+                    }
+                }
+                else if (input.StartsWith("delete models")) //allows the removal of multiple objects at once with array-like indexing ([1..4] to delete the second model till the 4th for example)
+                {
+                    try
+                    {
+                        int index1 = Readers.GetOneIntWithRegEx(input[..(input.IndexOf("..") + 1)]);
+                        int index2 = Readers.GetOneIntWithRegEx(input[input.IndexOf("..")..]);
                         for (int i = index1; i <= index2; i++) //iterate through every index between the found indexes
                         {
-                            try
-                            {
-                                if (i == index1)
-                                    WriteLine($"Deleted model {i}"); //simple way of showing which models are deleted
-                                else
-                                    Write($"..{i}");
-                                COREMain.scenes[COREMain.selectedScene].models[i].Dispose();
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                WriteLine($"Couldn't delete model {i}");
-                            }
-                            COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                            if (i == index1)
+                                WriteLine($"Deleted model {i}"); //simple way of showing which models are deleted
+                            else
+                                Write($"..{i}");
+                            COREMain.scenes[COREMain.selectedScene].models[i].Dispose();
                         }
+                        COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                     }
-                    else
-                        WriteLine($"Couldn't delete models {index1} through {index2}");
+                    catch (IndexOutOfRangeException)
+                    {
+                        WriteLine($"Couldn't delete given models");
+                    }
                 }
             }
 
             //load
-            else if (input.Length > 5 && input[..5] == "load ") //keyword for loading in a file with given path
+            else if (input.StartsWith("load ")) //keyword for loading in a file with given path
             {
                 if (input.Length > 12 && input[5..9] == "dir ")
                 {
@@ -627,16 +564,16 @@ namespace CORERenderer.GUI
             }
 
             //get
-            else if (input.Length > 4 && input[..4] == "get ") //keyword for displaying variable values
+            else if (input.StartsWith("get ")) //keyword for displaying variable values
             {
                 switch (input[4..])
                 {
                     case "model count":
-                        WriteLine($"{COREMain.scenes[COREMain.selectedScene].models.Count}");
+                        WriteLine($"{COREMain.CurrentScene.models.Count}");
                         break;
                     case "submodel count":
                         int count = 0;
-                        foreach (Model model in COREMain.scenes[COREMain.selectedScene].models)
+                        foreach (Model model in COREMain.CurrentScene.models)
                             count += model.submodels.Count;
                         WriteLine($"{count}");
                         break;
@@ -647,26 +584,15 @@ namespace CORERenderer.GUI
             }
 
             //set
-            else if (input.Length > 4 && input[..4] == "set ") //keyword for displaying variable values
+            else if (input.StartsWith("set ")) //keyword for displaying variable values
             {
                 if (input[5..].IndexOf(' ') + 5 == -1)
                     return;
                 switch (input[4..(input[5..].IndexOf(' ') + 5)])
                 {
                     case "useRenderDistance":
-                        if (input.Contains("true"))
-                        {
-                            Submodel.useRenderDistance = true;
-                            WriteLine($"Set variable to true");
-                        }
-                            
-                        else if (input.Contains("false"))
-                        {
-                            Submodel.useRenderDistance = false;
-                            WriteLine($"Set variable to false");
-                        }
-                        else
-                            WriteLine("Couldn't find a bool value");
+                        Submodel.useRenderDistance = input.Contains("true");
+                        WriteLine($"Set variable to {Submodel.useRenderDistance}");
                         break;
                     case "renderDistance":
                         ChangeValue(ref Submodel.renderDistance, input[18..]);
@@ -685,26 +611,21 @@ namespace CORERenderer.GUI
                 {
                     if (input.Contains("model["))
                     {
-                        int indexOfSymbol = input.IndexOf(']'); //better performance
-                        bool succeeded = int.TryParse(input[(input.IndexOf('[') + 1)..indexOfSymbol], out int modelIndex);
-                        if (!succeeded)
-                        {
-                            WriteError($"Couldn't find model index in {input}");
-                            return;
-                        }
+                        int indexOfSymbol = input.IndexOf(']');
+                        int modelIndex = Readers.GetOneIntWithRegEx(input[..indexOfSymbol]);
+
                         Model model = COREMain.CurrentScene.models[modelIndex];
                         
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[(indexOfSymbol + 1)..]);
-                        if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
+                        if (input.StartsWith("moveto")) //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = location - model.Transform.translation;
-                            model.Transform.translation += distance;
-                            WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
+                            model.Transform.translation  = location;
+                            WriteLine($"Moved model to {location}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
                             model.Transform.translation += location;
-                            WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
+                            WriteLine($"Moved model with {location}");
                         }
                     }
                     else if (input.Contains("models"))
@@ -712,34 +633,33 @@ namespace CORERenderer.GUI
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            Vector3 distance = location - COREMain.CurrentScene.models[0].Transform.translation;
                             foreach (Model model in COREMain.CurrentScene.models)
-                                model.Transform.translation += distance;
-                            WriteLine($"Moved model to {location.x}, {location.y}, {location.z}");
+                                model.Transform.translation += location;
+                            WriteLine($"Moved model to {location}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
                             foreach (Model model in COREMain.CurrentScene.models)
                                     model.Transform.translation += location;
-                            WriteLine($"Moved model with {location.x}, {location.y}, {location.z}");
+                            WriteLine($"Moved model with {location}");
                         }
                     }
                     
                 }
-                catch (IndexOutOfRangeException)
+                catch (System.Exception)
                 {
-                    WriteError("Given index is out of range");
+                    WriteError("Given index is invalid");
                     return;
                 }
             }
 
-            else if (input.Length > 13 && input == "disable arrows")
+            else if (input == "disable arrows")
             {
                 Arrows.disableArrows = true;
                 WriteLine("Disabled arrows");
             }
 
-            else if (input.Length > 13 && input == "enable arrows")
+            else if (input == "enable arrows")
             {
                 Arrows.disableArrows = false;
                 WriteLine("Enabled arrows");
@@ -761,10 +681,7 @@ namespace CORERenderer.GUI
             }
                 
             else if (input == "wipe") //wipes the console clean
-            {
                 Wipe();
-                WriteLine($"COREConsole/{currentContext} > ");
-            }
             else
                 WriteError($"Couldn't parse console command \"{input}\"");
         }
@@ -779,6 +696,55 @@ namespace CORERenderer.GUI
             }
             else
                 WriteError($"Couldn't parse float {input[4..]}");
+        }
+
+        private void Restart()
+        {
+            if (COREMain.LoadFilePath == null)
+                Process.Start("CORERenderer.exe");
+            else
+                Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+            GenerateCacheFile(COREMain.pathRenderer);
+            Environment.Exit(1);
+        }
+
+        private void ChangeShaders(string input)
+        {
+            if (input.ToLower().Contains("pathtracing"))
+            {
+                Rendering.shaderConfig = ShaderType.PathTracing;
+                COREMain.GenerateConfig();
+                if (COREMain.LoadFilePath == null)
+                    Process.Start("CORERenderer.exe");
+                else
+                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                GenerateCacheFile(COREMain.pathRenderer);
+                Environment.Exit(1);
+            }
+            else if (input.ToLower().Contains("lighting"))
+            {
+                Rendering.shaderConfig = ShaderType.Lighting;
+                COREMain.GenerateConfig();
+                if (COREMain.LoadFilePath == null)
+                    Process.Start("CORERenderer.exe");
+                else
+                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                GenerateCacheFile(COREMain.pathRenderer);
+                Environment.Exit(1);
+            }
+            else if (input.ToLower().Contains("fullbright"))
+            {
+                Rendering.shaderConfig = ShaderType.FullBright;
+                COREMain.GenerateConfig();
+                if (COREMain.LoadFilePath == null)
+                    Process.Start("CORERenderer.exe");
+                else
+                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
+                GenerateCacheFile(COREMain.pathRenderer);
+                Environment.Exit(1);
+            }
+            else
+                WriteError("Couldn't find shader type");
         }
 
         public void LoadCacheFile(string dirPath)

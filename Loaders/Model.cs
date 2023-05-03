@@ -36,6 +36,8 @@ namespace CORERenderer.Loaders
         public string AmountOfVertices { get { string value = totalAmountOfVertices / 1000 >= 1 ? $"{MathF.Round(totalAmountOfVertices / 1000):N0}k" : $"{totalAmountOfVertices}"; return value; } }
 
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
+
+        public bool CanBeCulled { get { return !transform.BoundingBox.IsInFrustum(COREMain.CurrentScene.camera.Frustum, transform); } }
         #endregion
 
         public List<Submodel> submodels = new();
@@ -64,6 +66,7 @@ namespace CORERenderer.Loaders
 
         public Model(string path)
         {
+            ID = COREMain.NewAvaibleID;
             type = COREMain.SetRenderMode(path);
 
             if (type == RenderMode.ObjFile)
@@ -79,6 +82,7 @@ namespace CORERenderer.Loaders
         
         public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
+            ID = COREMain.NewAvaibleID;
             type = COREMain.SetRenderMode(path);
 
             Name = Path.GetFileName(path)[..^4];
@@ -110,7 +114,7 @@ namespace CORERenderer.Loaders
             }
         }
 
-        public Model() { }
+        public Model() { ID = COREMain.NewAvaibleID; }
 
         private void GenerateImage(string path)
         {

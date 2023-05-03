@@ -176,7 +176,7 @@ namespace CORERenderer.Loaders
             return returnValue;
         }
 
-        private static int GetOneIntWithRegEx(string line)
+        public static int GetOneIntWithRegEx(string line)
         {
             int returnValue = 0;
             MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");

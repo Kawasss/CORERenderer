@@ -28,6 +28,13 @@ namespace COREMath
             z = value;
         }
 
+        public Vector3(Vector3 v)
+        {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+        }
+
         public Vector3(string x, string y, string z)
         {
             bool sX = float.TryParse(x, NumberStyles.Any, CultureInfo.InvariantCulture, out this.x);
@@ -77,6 +84,7 @@ namespace COREMath
         public static Vector3 UnitVectorZ { get { return new(0, 0, 1); } }
 
         public float Length { get { return MathC.GetLengthOf(this); } }
+        public Vector3 Normalized { get { return MathC.Normalize(this); } }
 
         public override string ToString()
         {

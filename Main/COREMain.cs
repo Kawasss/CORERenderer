@@ -33,6 +33,7 @@ namespace CORERenderer.Main
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
         public static int GetCurrentObjFromScene { get => scenes[selectedScene].currentObj; }
         public static int FrameCount { get { return totalFrameCount; } }
+        public const int NoIDSelected = 0x00FFFF;
 
         public static int refreshRate = 0;
 
@@ -375,7 +376,7 @@ namespace CORERenderer.Main
                                     modelInformation.Render();
                                     modelInformation.RenderModelInformation();
 
-                                    modelList.RenderModelList(CurrentScene.models);
+                                    //modelList.RenderModelList(CurrentScene.models);
 
                                     sceneManager.Render();
                                 }
@@ -590,7 +591,7 @@ namespace CORERenderer.Main
             }
             debugText.RenderText($"CPU usage: {CPUUsage}%", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 5), 0.7f, new(1, 0), new(1, 1, 1)); 
             debugText.RenderText($"Framecount: {totalFrameCount}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 0), new(1, 1, 1));
-            debugText.RenderText($"Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 0), new(1, 1, 1));
+            debugText.RenderText($"FPS: {(int)(1 / timeSinceLastFrame)} Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 0), new(1, 1, 1));
 
             debugText.RenderText($"Camera position: {MathC.Round(CurrentScene.camera.position, 2)}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 10), 0.7f, new(1, 0), new(1, 1, 1));
             debugText.RenderText($"Camera front: {MathC.Round(CurrentScene.camera.front, 2)}", -(monitorWidth / 2) + viewportX, -(monitorHeight / 2) + viewportY + renderHeight - debugText.characterHeight * (results.Length + 11), 0.7f, new(1, 0), new(1, 1, 1));
@@ -670,12 +671,6 @@ namespace CORERenderer.Main
         {
             bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
-            /*List<string> readFiles = new(), mtllibs = new();
-            List<List<List<float>>> allVertices = new();
-            List<List<List<uint>>> allIndices = new();
-            List<List<Vector3>> allOffsets = new();
-            List<List<string>> mtlnames = new();
-            List<Model> models = scenes[selectedScene].models;*/
             List<ModelInfo> localVersion = new();
             Task.Run(() =>
             {
@@ -691,19 +686,12 @@ namespace CORERenderer.Main
                         else
                         {
                             localVersion.Add(new(file, dir + '\\' + mtllib, mtlNames, vertices, indices, offsets, extents, center));
-                            //allVertices.Add(vertices);
-                            //allIndices.Add(indices);
-                            //allOffsets.Add(offsets);
-                            //mtllibs.Add(dir + '\\' + mtllib);
-                            //mtlnames.Add(mtlNames);
                         }
                     }
                 });
                 loaded = true;
                 if (loaded)
-                    //for (int i = 0; i < readFiles.Count; i++)
-                        //localVersion.Add(new(readFiles[i], mtllibs[i], mtlnames[i], allVertices[i], allIndices[i], allOffsets[i]));
-                dirLoadedModels = localVersion;
+                    dirLoadedModels = localVersion;
             });
         }
 
@@ -742,9 +730,12 @@ namespace CORERenderer.Main
             //read color id of mouse position
             byte[] data = new byte[4];
             glReadPixels((int)mousePosX, (int)(monitorHeight - mousePosY), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            //convert color id to single int for uses
-            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
+            //convert color id to single int for uses, only change the id if the current one isnt being used (i.e being moved rotated or scaled
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press && Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Press && !arrows.isBeingUsed)
                 selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
+            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Press && selectedID < 9)
+                selectedID = NoIDSelected;
+                
         }
 
         //zoom in or out

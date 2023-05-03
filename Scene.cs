@@ -56,6 +56,22 @@ namespace CORERenderer
 
         public override void RenderEveryFrame(float delta)
         {
+            if (shaderConfig == ShaderType.PathTracing)
+            {
+                GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
+                GenericShaders.GenericLighting.SetInt("isReflective", 0);
+                GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
+                GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
+                GenericShaders.GenericLighting.SetVector3("lights.position", new(0, 1, 1));
+            }
+            else if (shaderConfig == ShaderType.Lighting)
+            {
+                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("front", CurrentScene.camera.front);
+                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", CurrentScene.camera.position);
+            }
+
             RenderAllModels(models);
         }
 
@@ -77,25 +93,9 @@ namespace CORERenderer
 
             if (loaded && models[^1].terminate)
             {
-                console.WriteError($"Couldn't create model: {models[^1].error}");
+                console.WriteError($"Terminating model {models.Count - 1}: {models[^1].error}");
                 models.RemoveAt(models.Count - 1);
             }
-
-            if (shaderConfig == ShaderType.PathTracing)
-            {
-                GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
-                GenericShaders.GenericLighting.SetInt("isReflective", 0);
-                GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
-                GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
-                GenericShaders.GenericLighting.SetVector3("lights.position", new(0, 1, 1));
-            }
-            else if (shaderConfig == ShaderType.Lighting)
-            {
-                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", CurrentScene.camera.position);
-            }
-
 
             if (Glfw.GetKey(window, Keys.Escape) == InputState.Press && Glfw.GetKey(window, Keys.LeftShift) == InputState.Press)
             {

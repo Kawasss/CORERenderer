@@ -34,6 +34,7 @@ namespace CORERenderer.GUI
         public bool wantsToMoveXAxis = false, wantsToMoveZAxis = false, wantsToMoveYAxis = false;
         public bool wantsToScaleXAxis = false, wantsToScaleYAxis = false, wantsToScaleZAxis = false;
         public bool wantsToRotateXAxis = false, wantsToRotateYAxis = false, wantsToRotateZAxis = false;
+        public bool isBeingUsed = false;
 
         public static bool disableArrows = false;
 
@@ -71,10 +72,9 @@ namespace CORERenderer.GUI
 
             shader.Use();
 
-            Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) /* MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale)*/ * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz);
+            Matrix model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) * 0.2f);
 
             shader.SetVector3("color", 0, 1, 0);
 
@@ -165,7 +165,7 @@ namespace CORERenderer.GUI
             Matrix model = Matrix.IdentityMatrix;
 
             //model matrix to place the arrows at the coordinates of the selected object, model * place of object * normalized size (to make the arrows always the same size)
-            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) /* MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) / maxScale)*/ * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz);
+            model *= MathC.GetRotationMatrix(COREMain.CurrentModel.Transform.rotation) * MathC.GetTranslationMatrix((new Vector4(COREMain.CurrentModel.Transform.BoundingBox.center, 1) * COREMain.CurrentModel.Transform.ModelMatrix).xyz) * MathC.GetScalingMatrix(MathC.GetLengthOf(COREMain.CurrentScene.camera.position - COREMain.CurrentModel.Transform.translation) * 0.2f);
 
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
@@ -305,6 +305,8 @@ namespace CORERenderer.GUI
                 else if (Glfw.GetMouseButton(COREMain.window, MouseButton.Left) != InputState.Press)
                     wantsToRotateYAxis = false;
             }
+
+            isBeingUsed = wantsToScaleXAxis || wantsToScaleYAxis || wantsToScaleZAxis || wantsToRotateXAxis || wantsToRotateYAxis || wantsToRotateZAxis || wantsToMoveXAxis || wantsToMoveYAxis || wantsToMoveZAxis;
         }
     }
 }

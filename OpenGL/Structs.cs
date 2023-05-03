@@ -66,9 +66,12 @@ namespace CORERenderer.OpenGL
     {
         public Vector3 center = Vector3.Zero;
         public Vector3 extents = Vector3.Zero;
+        public Vector3 min = Vector3.Zero, max = Vector3.Zero;
 
         public AABB(Vector3 min, Vector3 max)
         {
+            this.min = min;
+            this.max = max;
             this.center = (min + max) * 0.5f;
             this.extents = max - center;
         }
@@ -77,15 +80,31 @@ namespace CORERenderer.OpenGL
         {
             this.center = center;
             this.extents = new(iI, iJ, iK);
+
+            this.max = extents + center;
+            this.min = 2 * center - max;
         }
 
-        public bool IsInForwardPlane(Plane plane) //really isnt necessary????
+        public bool IsInForwardPlane(Plane plane)
         {
             float r = extents.x * MathC.Abs(plane.normal.x) + extents.y * MathC.Abs(plane.normal.y) + extents.z * MathC.Abs(plane.normal.z);
             return -r <= plane.GetDistanceToPlane(center);
         }
 
         public bool IsInFrustum(Frustum frustum, Transform transform)
+        {
+            AABB aabb = GetNewAABB(transform);
+
+            return
+                aabb.IsInForwardPlane(frustum.leftFace) &&
+                aabb.IsInForwardPlane(frustum.rightFace) &&
+                aabb.IsInForwardPlane(frustum.topFace) &&
+                aabb.IsInForwardPlane(frustum.bottomFace) &&
+                aabb.IsInForwardPlane(frustum.nearFace) &&
+                aabb.IsInForwardPlane(frustum.farFace);
+        }
+
+        public AABB GetNewAABB(Transform transform)
         {
             Vector3 globalCenter = (new Vector4(center, 1) * transform.ModelMatrix).xyz;
             Vector3 right = transform.Right * extents.x;
@@ -96,15 +115,7 @@ namespace CORERenderer.OpenGL
             float Ij = MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorY, right)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorY, up)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorY, forward));
             float Ik = MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, right)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, up)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, forward));
 
-            AABB aabb = new(globalCenter, Ii, Ij, Ik);
-
-            return
-                aabb.IsInForwardPlane(frustum.leftFace) &&
-                aabb.IsInForwardPlane(frustum.rightFace) &&
-                aabb.IsInForwardPlane(frustum.topFace) &&
-                aabb.IsInForwardPlane(frustum.bottomFace) &&
-                aabb.IsInForwardPlane(frustum.nearFace) &&
-                aabb.IsInForwardPlane(frustum.farFace);
+            return new(globalCenter, Ii, Ij, Ik);
         }
     }
 

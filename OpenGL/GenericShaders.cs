@@ -735,6 +735,7 @@ namespace CORERenderer.OpenGL
             uniform Material material;
 
             uniform vec3 viewPos;
+            uniform vec3 front;
             uniform float distanceObject;
             uniform float transparency;
             uniform int allowAlpha;

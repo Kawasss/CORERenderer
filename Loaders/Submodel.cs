@@ -30,7 +30,7 @@ namespace CORERenderer.Loaders
 
         public uint VBO, VAO;
 
-        public int ID = COREMain.NewAvaibleID;
+        public int ID;
         private Vector3 IDColor;
 
         private string name = "PLACEHOLDER";
@@ -113,6 +113,7 @@ namespace CORERenderer.Loaders
 
             GenerateBuffers();
 
+            ID = parent.ID;
             IDColor = COREMain.GenerateIDColor(ID);
 
             shader.SetInt("material.Texture", GL_TEXTURE0);
@@ -137,19 +138,17 @@ namespace CORERenderer.Loaders
                 SetShaderValues();
 
                 glBindVertexArray(VAO);
-                unsafe
-                {
-                    if (!cullFaces)
-                        glDisable(GL_CULL_FACE);
+                    
+                if (!cullFaces)
+                    glDisable(GL_CULL_FACE);
 
-                    RenderColorVersion();
+                RenderColorVersion();
 
-                    if (COREMain.renderToIDFramebuffer && renderIDVersion)
-                        RenderIDVersion();
+                if (COREMain.renderToIDFramebuffer && renderIDVersion)
+                    RenderIDVersion();
 
-                    if (!cullFaces)
-                        glEnable(GL_CULL_FACE);
-                }
+                if (!cullFaces)
+                    glEnable(GL_CULL_FACE);
             }
         }
 
@@ -171,11 +170,6 @@ namespace CORERenderer.Loaders
             IDShader.SetMatrix("model", parent.Transform.ModelMatrix);
 
             glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
-
-            if (!highlighted)
-                highlighted = COREMain.selectedID == ID;
-            else if (highlighted && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
-                highlighted = false;
 
             COREMain.renderFramebuffer.Bind();
         }

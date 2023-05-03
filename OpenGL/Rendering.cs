@@ -194,10 +194,6 @@ namespace CORERenderer.OpenGL
         public static void RenderAllModels(List<Model> models)
         {
             int modelsFrustumCulled = 0;
-            ConcurrentBag<int> indexesOfCulledModels = new();
-            lock(indexesOfCulledModels)
-            Parallel.For(0, models.Count, i => { if (!models[i].Transform.BoundingBox.IsInFrustum(camera.Frustum, models[i].Transform)) indexesOfCulledModels.Add(i); });
-
             int currentDrawCalls = drawCalls;
             Stopwatch sw = new();
 
@@ -218,7 +214,8 @@ namespace CORERenderer.OpenGL
             {
                 if (models[i] == null)
                     continue;
-                if (indexesOfCulledModels.Contains(i))
+
+                if (models[i].CanBeCulled)
                 {
                     modelsFrustumCulled++;
                     continue;

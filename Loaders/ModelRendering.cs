@@ -9,8 +9,6 @@ namespace CORERenderer.Loaders
     {
         public void Render()
         {
-            highlighted = COREMain.selectedID == ID;
-
             if (type == RenderMode.ObjFile || type == RenderMode.STLFile || type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 RenderModel();
 
@@ -27,17 +25,18 @@ namespace CORERenderer.Loaders
                 submodels[i].renderLines = renderLines;
 
                 if (submodels[i].highlighted)
-                {
-                    this.highlighted = true;
                     selectedSubmodel = i;
-                }
 
                 if (submodels[i].isTranslucent)
                 {
                     translucentSubmodels.Add(submodels[i]);
                     continue;
                 }
-
+                if (MathC.Distance(COREMain.CurrentScene.camera.position, transform.translation) <= 10)
+                {
+                    translucentSubmodels.Add(submodels[i]);
+                    continue;
+                }
                 submodels[i].Render();
             }
         }
