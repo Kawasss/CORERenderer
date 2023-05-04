@@ -37,6 +37,20 @@ namespace CORERenderer.OpenGL
             camera = currentCamera;
         }
 
+        public static float[] GenerateQuadVerticesWithUV(int x, int y, int width, int height)
+        {
+            return new float[]
+            {
+                x, y + height,         0, 1,
+                x, y,                  0, 0,
+                x + width, y, 1, 0,
+
+                x, y + height,         0, 1,
+                x + width, y, 1, 0,
+                x + width, y + height, 1, 1
+            };
+        }
+
         /// <summary>
         /// best to not use when drawing many lines since it will use a lot of draw calls
         /// </summary>

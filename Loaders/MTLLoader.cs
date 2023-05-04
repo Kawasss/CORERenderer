@@ -131,26 +131,26 @@ namespace CORERenderer.Loaders
                                 switch (n[0..6])
                                 {
                                     case "map_Kd":
-                                        if (!n.Contains("  "))
-                                            allTextures.Add($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");//material.Texture = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        if (File.Exists($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}"))
+                                            allTextures.Add($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}");//material.Texture = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                         else
                                             allTextures.Add("default");//material.Texture = 0;
                                         break;
                                     case "map_d ":
-                                        if (!n.Contains("  "))
-                                            allDiffuse.Add($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");//material.DiffuseMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        if (File.Exists($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}"))
+                                            allDiffuse.Add($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}");//material.DiffuseMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                         else
                                             allDiffuse.Add("default");//material.DiffuseMap = 0;
                                         break;
                                     case "map_Ks":
-                                        if (!n.Contains("  "))
-                                            allSpecular.Add($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");//material.SpecularMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        if (File.Exists($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}"))
+                                            allSpecular.Add($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}");//material.SpecularMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                         else
                                             allSpecular.Add("default");//material.SpecularMap = 1;
                                         break;
                                     case "map_Bu":
-                                        if (!n.Contains("  "))
-                                            allNormal.Add($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");//material.NormalMap = Globals.FindSRGBTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
+                                        if (File.Exists($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}"))
+                                            allNormal.Add($"{Path.GetDirectoryName(path)}\\{n[(n.LastIndexOf(' ') + 1)..Length(n)]}");//material.NormalMap = Globals.FindSRGBTexture($"{Path.GetDirectoryName(path)}\\{n[(n.IndexOf(' ') + 1)..Length(n)]}");
                                         else
                                             allNormal.Add("default");//material.NormalMap = 3;
                                         break;

@@ -5,6 +5,7 @@ using COREMath;
 using CORERenderer.shaders;
 using StbiSharp;
 using CORERenderer.OpenGL;
+using System;
 
 namespace CORERenderer.textures
 {
@@ -156,6 +157,24 @@ namespace CORERenderer.textures
             {
                 glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
             }
+        }
+
+        private uint VAO, VBO;
+        public void RenderAs2DImage(int x, int y)
+        {
+            if (VBO == 0)
+            {
+                Rendering.GenerateFilledBuffer(out VBO, out VAO, Rendering.GenerateQuadVerticesWithUV(x, y, (int)((float)width * (float)(200f / width)), (int)((float)height * (float)(200f / height)))); //may cause images to appear stretched or shrunk
+                int vertexLocation = GenericShaders.Image2D.GetAttribLocation("vertex");
+                unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
+                glEnableVertexAttribArray((uint)vertexLocation);
+            }
+
+            GenericShaders.Image2D.SetInt("Texture", GL_TEXTURE0);
+            this.Use(GL_TEXTURE0);
+
+            glBindVertexArray(VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, 6);
         }
 
         public static unsafe void WriteAsPNG(string destination, uint textureHandle, int width, int height)
