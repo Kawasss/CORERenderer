@@ -93,54 +93,81 @@ namespace CORERenderer.Loaders
             Vector3 ambient = GetVector3(fs);
 
             //retrieve all materials
-            RetrieveTextureNode(fs, out Vector3 diffuseStrength, out byte[] diffusePNGData);
-            Texture difTex = GenerateTextureFromData(diffusePNGData);
-            Globals.usedTextures.Add(difTex);
-            int difIndex = Globals.usedTextures.Count - 1;
+            int difIndex = 0;
+            if (!RetrieveTextureNode(fs, out Vector3 diffuseStrength, out byte[] diffusePNGData))
+            {
+                Texture difTex = GenerateTextureFromData(diffusePNGData);
+                Globals.usedTextures.Add(difTex);
+                difIndex = Globals.usedTextures.Count - 1;
+            }
 
-            RetrieveTextureNode(fs, out Vector3 specularStrength, out byte[] specularPNGData);
-            Texture specTex = GenerateTextureFromData(specularPNGData);
-            Globals.usedTextures.Add(specTex);
-            int specIndex = Globals.usedTextures.Count - 1;
+            int specIndex = 1;
+            if (!RetrieveTextureNode(fs, out Vector3 specularStrength, out byte[] specularPNGData))
+            {
+                Texture specTex = GenerateTextureFromData(specularPNGData);
+                Globals.usedTextures.Add(specTex);
+                specIndex = Globals.usedTextures.Count - 1;
+            }
 
-            RetrieveTextureNode(fs, out byte[] normalPNGData);
-            Texture normTex = GenerateTextureFromData(normalPNGData);
-            Globals.usedTextures.Add(normTex);
-            int normIndex = Globals.usedTextures.Count - 1;
+            int normIndex = 3;
+            if (!RetrieveTextureNode(fs, out byte[] normalPNGData))
+            {
+                Texture normTex = GenerateTextureFromData(normalPNGData);
+                Globals.usedTextures.Add(normTex);
+                normIndex = Globals.usedTextures.Count - 1;
+            }
 
             return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difIndex, DiffuseMap = difIndex, SpecularMap = specIndex, NormalMap = normIndex };
         }
 
+        private static int amountOfTexturesCreated = 0;
+
         private static Texture GenerateTextureFromData(byte[] imageData) //its incredible slow to create and delete a file
         {
+            amountOfTexturesCreated++;
             string dir = Path.GetTempPath();
-            using (FileStream fs = File.Create($"{dir}diffuseHolder.png"))
+            using (FileStream fs = File.Create($"{dir}diffuseHolder{amountOfTexturesCreated}.png"))
             using (StreamWriter sw = new(fs))
             {
                 sw.BaseStream.Write(imageData);
             }
-            Texture tex = Texture.ReadFromFile($"{dir}diffuseHolder.png");
-            File.Delete($"{dir}diffuseHolder.png");
+            Texture tex = Globals.usedTextures[Globals.FindTexture($"{dir}diffuseHolder{amountOfTexturesCreated}.png")];
+            File.Delete($"{dir}diffuseHolder{amountOfTexturesCreated}.png");
             return tex;
         }
 
-        private static void RetrieveTextureNode(FileStream fs, out Vector3 textureStrength, out byte[] imageData)
+        private static bool RetrieveTextureNode(FileStream fs, out Vector3 textureStrength, out byte[] imageData)
         {
+            if (GetBool(fs)) //is default material{
+            {
+                textureStrength = Vector3.Zero;
+                imageData = Array.Empty<byte>();
+                return true;
+            }
+                
             textureStrength = GetVector3(fs);
             int length = GetInt(fs);
             imageData = new byte[length];
 
             for (int i = 0; i < length; i++)
                 imageData[i] = (byte)fs.ReadByte();
+            return false;
         }
 
-        private static void RetrieveTextureNode(FileStream fs, out byte[] imageData)
+        private static bool RetrieveTextureNode(FileStream fs, out byte[] imageData)
         {
+            if (GetBool(fs)) //is default material{
+            {
+                imageData = Array.Empty<byte>();
+                return true;
+            }
+
             int length = GetInt(fs);
             imageData = new byte[length];
 
             for (int i = 0; i < length; i++)
                 imageData[i] = (byte)fs.ReadByte();
+            return false;
         }
 
         private static List<float> RetrieveVertices(FileStream fs, int amountVertices)

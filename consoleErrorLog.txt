@@ -1,2 +1,0 @@
-Couldn't parse scene command "B0A11.obj:"
-Couldn't parse scene command "goto camera => set speed 10"

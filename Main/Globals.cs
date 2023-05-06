@@ -104,6 +104,12 @@ namespace CORERenderer.Main
         /// <returns>returns index of a texture if its already being used, otherwise adds texture and returns its position</returns>
         public static int FindTexture(string path)
         {
+            if (!File.Exists(path))
+            {
+                COREMain.console.WriteError($"File at {path} not found, returning default texture.");
+                return 0;
+            }
+
             for (int i = 0; i < usedTextures.Count; i++)
                 if (usedTextures[i].path == path)
                 {

@@ -105,6 +105,8 @@ namespace CORERenderer.Fonts
 
             int indexOfTrue = text.IndexOf("True");
             int indexOfFalse = text.IndexOf("False");
+            int indexOfOK = text.IndexOf("OK");
+            int indexOfBAD = text.IndexOf("BAD");
 
             for (int i = 0; i < text.Length; i++)
             {
@@ -116,9 +118,9 @@ namespace CORERenderer.Fonts
                     x += (ch.advance >> 6) * scale;
                     continue;
                 }
-                if (IsColorWhite(color) && indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3))
+                if (IsColorWhite(color) && (indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3)) || (indexOfOK != -1 && (i == indexOfOK || i == indexOfOK + 1)))
                     shader.SetVector3("textColor", new(0, 1, 0));
-                else if (IsColorWhite(color) && indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4))
+                else if (IsColorWhite(color) && (indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4)) || (indexOfBAD != -1 && (i == indexOfBAD || i == indexOfBAD + 1 || i == indexOfBAD + 2)))
                     shader.SetVector3("textColor", new(1, 0, 0));
                 else if (drawWithHighlights && IsCharUsedNumerical(text, i))
                     shader.SetVector3("textColor", new(0.78f, 0.89f, 0.45f));

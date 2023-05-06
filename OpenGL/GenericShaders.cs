@@ -25,7 +25,7 @@ namespace CORERenderer.OpenGL
             if (shaderConfig == ShaderType.PathTracing)
                 GenericLightingShader = new(defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
             else if (shaderConfig == ShaderType.Lighting)
-                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText);
+                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText, normalGeomText);
             else if (shaderConfig == ShaderType.FullBright)
                 GenericLightingShader = new(defaultVertexShaderText, fullBrightFragText);
             solidColorQuadShader = new(quadVertText, quadFragText);
@@ -47,10 +47,13 @@ namespace CORERenderer.OpenGL
             uniform Material material;
 
             in vec2 TexCoords;
+            uniform float transparency;
 
             void main()
             {
                 FragColor = texture(material.diffuse, TexCoords);
+                if (transparency != 0)
+                FragColor.a = transparency;
                 if (FragColor.a < 0.1)
                     discard;
             }
@@ -91,6 +94,47 @@ namespace CORERenderer.OpenGL
             void main()
             {
                 FragColor = vec4(overrideColor, 1);
+            }
+            """;
+
+        private static string normalGeomText =
+            """
+            #version 430 core
+            layout(triangles) in;
+            layout(triangle_strip, max_vertices = 3) out;
+
+            in VS_OUT
+            {
+            	vec3 position;
+            	vec3 normal;
+            	vec3 fragPos;
+            	vec2 texCoords;
+            } gs_in[];
+
+            out vec3 FragPos;
+            out vec2 TexCoords;
+
+            out vec3 Normal;
+
+            void main()
+            {
+            	FragPos = gs_in[0].fragPos;
+            	TexCoords = gs_in[0].texCoords;
+
+            	vec3 p = cross(gs_in[1].position - gs_in[0].position, gs_in[2].position - gs_in[1].position);
+            	Normal = p;
+
+            	gl_Position = gl_in[0].gl_Position;
+            	EmitVertex();
+            	gl_Position = gl_in[1].gl_Position;
+            	FragPos = gs_in[1].fragPos;
+            	TexCoords = gs_in[1].texCoords;
+            	EmitVertex();
+            	gl_Position = gl_in[2].gl_Position;
+            	FragPos = gs_in[2].fragPos;
+            	TexCoords = gs_in[2].texCoords;
+            	EmitVertex();
+            	EndPrimitive();
             }
             """;
 
@@ -683,25 +727,27 @@ namespace CORERenderer.OpenGL
             {
             	vec3 position;
             	vec3 normal;
+                vec3 fragPos;
+                vec2 texCoords;
             } vs_out;
 
             out mat4 Model;
 
             uniform mat4 model;
-            out vec2 TexCoords;
-            out vec3 FragPos;
             out vec3 Normal;
+            out vec2 TexCoords;
 
             void main() 
             {
-            	FragPos = (vec4(aPos, 1.0) * model).xyz;
+            	vs_out.fragPos = (vec4(aPos, 1.0) * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
             	vs_out.normal = mat3(transpose(inverse(model))) * aNormal;
-            	TexCoords = aTexCoords;
+            	vs_out.texCoords = aTexCoords;
             	Model = model;
-            	vs_out.position = FragPos;
+            	vs_out.position = vs_out.fragPos;
+                TexCoords = aTexCoords;
 
-            	gl_Position = vec4(FragPos, 1) * view * projection;
+            	gl_Position = vec4(vs_out.fragPos, 1) * view * projection;
             }
             """;
 
@@ -764,11 +810,26 @@ namespace CORERenderer.OpenGL
                 return normalize(TBN * tangentNormal);
             }
 
+            mat3 GetTBN()
+            {
+                vec3 tangentNormal = texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0;
+            
+                vec3 Q1  = dFdx(FragPos);
+                vec3 Q2  = dFdy(FragPos);
+                vec2 st1 = dFdx(TexCoords);
+                vec2 st2 = dFdy(TexCoords);
+            
+                vec3 N   = normalize(Normal);
+                vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+                vec3 B  = -normalize(cross(N, T));
+                return transpose(mat3(T, B, N));
+            }
+
             void main()
             {
             	vec4 fullColor = texture(material.Texture, TexCoords);
-            	if (fullColor.a < 0.1)
-            		discard;
+            	//if (fullColor.a < 0.1)
+            	//	discard;
 
             	vec3 color = fullColor.rgb;
 
@@ -776,21 +837,29 @@ namespace CORERenderer.OpenGL
                 	vec3 ambient = .2 * color;
 
             	// diffuse
-                	vec3 lightDir = normalize(pointLights[0].position - FragPos);
-                	vec3 normal = normalize(Normal);//getNormalFromMap();
-                	float diff = max(dot(lightDir, normal), 0.0);
-                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
+                	vec3 lightDir = normalize(GetTBN() * (pointLights[0].position - FragPos));
+                	vec3 normal = normalize(texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0);//getNormalFromMap();
+                	/*float diff = max(dot(lightDir, normal), 0.0);
+                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));*/
 
             	// specular
-                	vec3 viewDir = normalize(viewPos - FragPos);
+                	vec3 viewDir = normalize(GetTBN() * (viewPos - FragPos));
                 	vec3 reflectDir = reflect(-lightDir, normal);
-                	vec3 halfwayDir = normalize(lightDir + viewDir);
-            	float spec = pow(max(dot(normal, halfwayDir), 0), 32);
-                	vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
-            	if (allowAlpha == 1 && transparency != 0)
+                	//vec3 halfwayDir = normalize(GetTBN() * (lightDir + viewDir));
+            	    float spec = pow(max(dot(viewDir, reflectDir), 0), 32);//float spec = pow(max(dot(normal, halfwayDir), 0), 1);
+                	//vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
+
+                    vec4 i = vec4(.8) * max(dot(lightDir, normal), 0);
+                    vec4 diffuse = clamp(i, 0, 1);
+                    FragColor = fullColor * (diffuse + vec4(spec) + vec4(.1));
+                    if (transparency != 0)
+                    FragColor.a = transparency;
+                    else
+                    FragColor.a = 1;
+            	/*if (allowAlpha == 1 && transparency != 0)
             		FragColor = vec4(ambient + diffuse + specular, transparency);
             	else
-            		FragColor = vec4(ambient + diffuse + specular, 1.0);
+            		FragColor = vec4(ambient + diffuse + specular, 1.0);*/
             	if (overrideColor != vec3(0, 0, 0))
             		FragColor = vec4(overrideColor, fullColor.a);
             }

@@ -41,26 +41,28 @@ namespace CORERenderer.Loaders
         {
             WriteMaterialInfo(sw, material);
             
-            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.Texture]); //writes the diffuse map
-            WriteTextureNode(sw, material.Specular, Globals.usedTextures[material.SpecularMap]); //writes the specular map
-            WriteTextureNode(sw, Globals.usedTextures[material.NormalMap]); //writes the normal map
+            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.Texture], material.Texture == 0); //writes the diffuse map
+            WriteTextureNode(sw, material.Specular, Globals.usedTextures[material.SpecularMap], material.SpecularMap == 1); //writes the specular map
+            WriteTextureNode(sw, Globals.usedTextures[material.NormalMap], material.NormalMap == 3); //writes the normal map
         }
 
-        private static void WriteTextureNode(StreamWriter sw, Vector3 strength, Texture texture)
+        private static void WriteTextureNode(StreamWriter sw, Vector3 strength, Texture texture, bool isDefault)
         {
             byte[] data = texture.FileContent;
             byte[] length = BitConverter.GetBytes(data.Length);
 
+            sw.BaseStream.Write(BitConverter.GetBytes(isDefault));
             sw.BaseStream.Write(strength.Bytes);
             sw.BaseStream.Write(length);
             sw.BaseStream.Write(data);
         }
 
-        private static void WriteTextureNode(StreamWriter sw, Texture texture)
+        private static void WriteTextureNode(StreamWriter sw, Texture texture, bool isDefault)
         {
             byte[] data = texture.FileContent;
             byte[] length = BitConverter.GetBytes(data.Length);
 
+            sw.BaseStream.Write(BitConverter.GetBytes(isDefault));
             sw.BaseStream.Write(length);
             sw.BaseStream.Write(data);
         }

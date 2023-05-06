@@ -133,17 +133,32 @@ namespace CORERenderer.GUI
                     continue;
                 COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
-                string suffix = i == lines.Count - 1 ? "|" : ""; //the | indicates the cursor. Only the last string has this
+                string suffix = i == lines.Count - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
 
-                quad.Write(printResult + suffix, 0, Height - lineOffset, 0.7f, color);
+                if (lines[i].Contains("COREConsole/") || i == lines.LastIndexOf(lines[i]))
+                    quad.Write(printResult + suffix, 0, Height - lineOffset, 0.7f, color);
             }
             COREMain.debugText.drawWithHighlights = original;
         }
 
+        private Dictionary<string, int> amountOfAppearancesLine = new();
+
         private void WriteLineF(string text)
         {
+            if (!amountOfAppearancesLine.ContainsKey(text) && lines.Count - maxLines > 0)
+                indexOfFirstLineToRender++;
+
+            if (amountOfAppearancesLine.ContainsKey(text) && !text.Contains("COREConsole/"))
+            {
+                int index = amountOfAppearancesLine[text];
+                amountOfAppearancesLine.Remove(text);
+                amountOfAppearancesLine.Add(text, index + 1);
+                lines.RemoveAt(lines.IndexOf(text));
+            }
+            else if (!text.Contains("COREConsole/"))
+                amountOfAppearancesLine.Add(text, 0);
+
             changed = true; //tells the console render everything again (could be optimised better by only rendering the newly added sentence / letters instead of every (already existing) sentence)
-            indexOfFirstLineToRender = lines.Count - maxLines > 0 || indexOfFirstLineToRender < lines.Count - maxLines ? indexOfFirstLineToRender + 1 : indexOfFirstLineToRender;
 
             lines.Add(text);
         }
@@ -297,16 +312,18 @@ namespace CORERenderer.GUI
             using (StreamReader sr = new(bs))
                 for (string n = sr.ReadLine(); n != null; n = sr.ReadLine(), i++) //terribly written
                 {
-                    if (i == 3)
+                    if (i == 2)
                         WriteLine($"{n}         CORE Renderer {COREMain.VERSION}");
-                    else if (i == 4)
+                    else if (i == 3)
                         WriteLine($"{n}         CORE Math {MathC.VERSION}");
-                    else if (i == 6)
+                    else if (i == 5)
                         WriteLine($"{n}         GPU: {COREMain.GPU}");
-                    else if (i == 7)
+                    else if (i == 6)
                         WriteLine($"{n}         OpenGL {OpenGL.GL.glGetString(OpenGL.GL.GL_VERSION)}");
-                    else if (i == 8)
+                    else if (i == 7)
                         WriteLine($"{n}         GLSL {OpenGL.GL.glGetString(OpenGL.GL.GL_SHADING_LANGUAGE_VERSION)}");
+                    else if (i == 9)
+                        WriteLine($"{n}         {lines.Count - 9} messages were logged before this menu");
                     else if (i == 10)
                         WriteLine($"{n}         Active for {Math.Round(Glfw.Time)} seconds");
                     else if (i == 11)

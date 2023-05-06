@@ -74,32 +74,38 @@ Each also has their own default value (from top to bottom):
 diffuse node:
 The structure of a diffuse node is as following:
 
+1  byte - isDefault : bool
 12 bytes - strength : vector3
 4  bytes - length : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
+if "isDefault" it means that it relies on the engines default texture and no data about this node will follow after
 Strength has a default value of 0.5 at every axis.
 
 
 specular node:
 The structure of a specular node is as following:
 
+1  byte - isDefault : bool
 12 bytes - strength : vector3
 4  bytes - length : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
+if "isDefault" it means that it relies on the engines default texture and no data about this node will follow after
 Strength has a default value of 1 at every axis.
 
 
 normal node:
 The structure of a normal node is as following:
 
+1  byte - isDefault : bool
 4  bytes - length : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
+if "isDefault" it means that it relies on the engines default texture and no data about this node will follow after
 
 todo:
 add support for .hdr files
