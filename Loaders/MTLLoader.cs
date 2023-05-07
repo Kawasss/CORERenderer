@@ -64,7 +64,7 @@ namespace CORERenderer.Loaders
             List<string> allDiffuse = new();
             List<string> allSpecular = new();
             List<string> allNormal = new();
-            Task task = Task.Run(() =>
+            Job task = new(() =>
             {
                 using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (BufferedStream bs = new(fs))
@@ -178,6 +178,7 @@ namespace CORERenderer.Loaders
                         allNormal.Add("default");
                 }
             });
+            task.Start();
             task.Wait();
             for (int i = 0; i < tempMtl.Count; i++)
             {

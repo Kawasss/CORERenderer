@@ -63,7 +63,8 @@ namespace CORERenderer.textures
             {
                 stream.CopyTo(memoryStream);
 
-                Task task = Task.Run(() => { image = Stbi.LoadFromMemory(memoryStream, 4); imageWidth = image.Width; imageHeight = image.Height; imageData = image.Data.ToArray(); } );
+                Job task = new(() => { image = Stbi.LoadFromMemory(memoryStream, 4); imageWidth = image.Width; imageHeight = image.Height; imageData = image.Data.ToArray(); } );
+                task.Start();
                 task.Wait();
 
                 glTexImage2D(Image2DTarget.Texture2D, 0, mode, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);

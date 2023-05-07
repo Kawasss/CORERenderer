@@ -72,6 +72,7 @@ namespace CORERenderer.Main
         public static bool renderEntireDir = false;
         public static bool allowAlphaOverride = true;
         public static bool isCompiledForWindows = false;
+        public static bool newFrame = false;
 
         public static bool keyIsPressed = false, mouseIsPressed = false, scrollWheelMoved = false;
         public static bool clearedGUI = false;
@@ -185,7 +186,7 @@ namespace CORERenderer.Main
 
                 int debugWidth = (int)debugText.GetStringWidth("Ticks spent depth sorting: timeSpentDepthSorting", 0.7f);
                 Graph renderingTicks = new(0, debugWidth, (int)(debugText.characterHeight * 2), viewportX - (int)(debugWidth * 0.045f), (int)(debugHolder.Height - debugText.characterHeight * 12));
-                Graph debugFSGraph = new(0, debugWidth, (int)(debugText.characterHeight * 2), (int)(monitorWidth * 0.5f - debugWidth * 1.00f), (int)(debugHolder.Height - debugText.characterHeight * 6));
+                Graph debugFSGraph = new(0, debugWidth, (int)(debugText.characterHeight * 2), (int)(monitorWidth * 0.5f - debugWidth * 1.00f), (int)(debugHolder.Height - debugText.characterHeight * 7));
                 debugFSGraph.showValues = false;
                 renderingTicks.showValues = false;
 
@@ -281,8 +282,8 @@ namespace CORERenderer.Main
                 #endregion
 
                 previousTime = Glfw.Time;
-                using (Process process = Process.GetCurrentProcess())
-                    previousCPU = process.TotalProcessorTime;
+                Process CPUProcess = Process.GetCurrentProcess();
+                previousCPU = CPUProcess.TotalProcessorTime;
 
                 Glfw.SetScrollCallback(window, ScrollCallback);
                 Glfw.SetFramebufferSizeCallback(window, FramebufferSizeCallBack);
@@ -342,12 +343,13 @@ namespace CORERenderer.Main
 
                 sceneManager.Render();
                 #endregion
-                
+
                 //render loop
                 while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
                 {
                     try
                     {
+                        newFrame = false;
                         timeSinceLastFrame = Glfw.Time - timeSinceLastFrame2;
                         timeSinceLastFrame2 = Glfw.Time;
 
@@ -554,6 +556,7 @@ namespace CORERenderer.Main
                         scrollWheelMovedAmount = 0;
                         totalFrameCount++;
                         appIsHealthy = true;
+                        newFrame = true;
                     }
                     catch (System.Exception err)
                     {
@@ -601,27 +604,29 @@ namespace CORERenderer.Main
             debugHolder.Write($"Camera front: {MathC.Round(CurrentScene.camera.front, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 1, 1));
             debugHolder.Write($"Selected scene: {selectedScene}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 1, 1));
 
-            string msg = $"CPU usage: {CPUUsage}%";
+            string msg = $"Threads used: {Job.usedThreads + 1}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight, 0.7f, new(1, 1, 1));
-            msg = $"Framecount: {totalFrameCount}";
+            msg = $"CPU usage: {CPUUsage}%";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 2, 0.7f, new(1, 1, 1));
-            msg = $"Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms";
+            msg = $"Framecount: {totalFrameCount}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 3, 0.7f, new(1, 1, 1));
-            msg = $"FPS: {(int)(1 / timeSinceLastFrame)}";
+            msg = $"Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 4, 0.7f, new(1, 1, 1));
+            msg = $"FPS: {(int)(1 / timeSinceLastFrame)}";
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 5, 0.7f, new(1, 1, 1));
             msg = $"Errors caught: {errorsCaught}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 7, 0.7f, new(1, 1, 1));
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 8, 0.7f, new(1, 1, 1));
             string status = appIsHealthy ? "OK" : "BAD";
             msg = $"App status: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 8, 0.7f, new(1, 1, 1));
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 9, 0.7f, new(1, 1, 1));
             status = keyIsPressed ? pressedKey.ToString() : mouseIsPressed ? pressedButton.ToString() : "None";
             msg = $"Input callback: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 10, 0.7f, new(1, 1, 1));
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 11, 0.7f, new(1, 1, 1));
             msg = $"Render IDs: {renderToIDFramebuffer}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 12, 0.7f, new(1, 1, 1));
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 13, 0.7f, new(1, 1, 1));
             status = renderToIDFramebuffer ?  1 / timeSinceLastFrame > refreshRate / 2 ? "OK" : "BAD" : "Unknown";
             msg = $"ID rendering performance: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 13, 0.7f, new(1, 1, 1));
+            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 14, 0.7f, new(1, 1, 1));
             debugText.drawWithHighlights = false;
         }
 
@@ -698,9 +703,9 @@ namespace CORERenderer.Main
             bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
             List<ModelInfo> localVersion = new();
-            Task.Run(() =>
+            new Job(() =>
             {
-                Parallel.ForEach(allFiles, file =>
+                Job.ParallelForEach(allFiles, file =>
                 {
                     if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read// && !readFiles.Contains(file)
                     {
@@ -718,7 +723,7 @@ namespace CORERenderer.Main
                 loaded = true;
                 if (loaded)
                     dirLoadedModels = localVersion;
-            });
+            }).Start();
         }
 
         private struct ModelInfo
