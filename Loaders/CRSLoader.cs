@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using System.Transactions;
+using CORERenderer.OpenGL;
 using COREMath;
 using CORERenderer.Main;
 using CORERenderer.textures;
@@ -50,12 +50,12 @@ namespace CORERenderer.Loaders
                                 Material material = RetrieveMaterialNode(fs);
 
                                 models[^1].type = RenderMode.ObjFile;
-                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
+                                models[^1].submodels.Add(new(submodelName, Vertex.GetVertices(vertices), submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
                             }
                             else
                             {
                                 models[^1].type = RenderMode.STLFile;
-                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
+                                models[^1].submodels.Add(new(submodelName, Vertex.GetVertices(vertices), submodelTranslation, submodelScaling, models[^1]));
                             }
                         }
                         models[^1].Transform.BoundingBox = new(min, max);

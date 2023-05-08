@@ -716,6 +716,13 @@ namespace CORERenderer.OpenGL
             layout (location = 0) in vec3 aPos;
             layout (location = 1) in vec3 aNormal;
             layout (location = 2) in vec2 aTexCoords;
+            layout (location = 3) in ivec4 bonesID1;
+            layout (location = 4) in ivec4 bonesID2;
+            layout (location = 5) in vec4 weights1;
+            layout (location = 6) in vec4 weights2;
+
+            #define MAX_BONES 8
+            #define MAX_TOTAL_BONES 128
 
             layout (std140, binding = 0) uniform Matrices
             {
@@ -734,11 +741,29 @@ namespace CORERenderer.OpenGL
             out mat4 Model;
 
             uniform mat4 model;
+            uniform mat4 boneMatrices[MAX_TOTAL_BONES];
             out vec3 Normal;
             out vec2 TexCoords;
 
             void main() 
             {
+                int bonesID[8] = { bonesID1[0], bonesID1[1], bonesID1[2], bonesID1[3], bonesID2[0], bonesID2[1], bonesID2[2], bonesID2[3] };
+                float weights[8] = { weights1[0], weights1[1], weights1[2], weights1[3], weights2[0], weights2[1], weights2[2], weights2[3] };
+                vec4 finalPos = vec4(0);
+                for (int i = 0; i < MAX_BONES; i++)
+                {
+                    if (bonesID[i] == -1)
+                        continue;
+                    if (bonesID[i] >= MAX_TOTAL_BONES)
+                    {
+                        finalPos = vec4(aPos, 1);
+                        break;
+                    }
+                    vec4 localPos = boneMatrices[bonesID[i]] * vec4(aPos, 1);
+                    finalPos += localPos * weights[i];
+                    vec3 localNorm  = mat3(boneMatrices[bonesID[i]]) * aNormal;
+                }
+
             	vs_out.fragPos = (vec4(aPos, 1.0) * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
             	vs_out.normal = mat3(transpose(inverse(model))) * aNormal;

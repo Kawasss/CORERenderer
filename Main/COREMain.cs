@@ -52,7 +52,7 @@ namespace CORERenderer.Main
         public static float mousePosX, mousePosY;
 
         private static float currentFrameTime = 0;
-        public static float FrameTime { get { return currentFrameTime; } }
+        public static float FrameTime { get { return (float)timeSinceLastFrame; } }
 
         //strings
         public static string LoadFilePath = null;
@@ -604,7 +604,7 @@ namespace CORERenderer.Main
             debugHolder.Write($"Camera front: {MathC.Round(CurrentScene.camera.front, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 1, 1));
             debugHolder.Write($"Selected scene: {selectedScene}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 1, 1));
 
-            string msg = $"Threads used: {Job.usedThreads + 1}";
+            string msg = $"Threads reserved: {Job.ReservedThreads + 1}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight, 0.7f, new(1, 1, 1));
             msg = $"CPU usage: {CPUUsage}%";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 2, 0.7f, new(1, 1, 1));
@@ -637,7 +637,7 @@ namespace CORERenderer.Main
             foreach (Model model in CurrentScene.models)
                 for (int i = 0; i < model.Vertices.Count; i++)
                 {
-                    vertices.Add(model.Vertices[i]);
+                    vertices.Add(Vertex.GetFloatList(model.Vertices[i]));
                     offsets.Add(model.Offsets[i]);
                 }
         }
@@ -711,7 +711,7 @@ namespace CORERenderer.Main
                     {
                         //readFiles.Add(file);
 
-                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<float>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib);
+                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<Vertex>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib);
                         if (error != Error.None)
                             console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
                         else
@@ -731,13 +731,13 @@ namespace CORERenderer.Main
             public string path;
             public string mtllib;
             public List<string> mtlNames;
-            public List<List<float>> vertices;
+            public List<List<Vertex>> vertices;
             public List<List<uint>> indices;
             public List<Vector3> offsets;
             public Vector3 extents;
             public Vector3 center;
 
-            public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<float>> vertices, List<List<uint>> indices, List<Vector3> offsets, Vector3 extents, Vector3 center)// List<Material> materials,
+            public ModelInfo(string path, string mtllib, List<string> mtlNames, List<List<Vertex>> vertices, List<List<uint>> indices, List<Vector3> offsets, Vector3 extents, Vector3 center)// List<Material> materials,
             {
                 this.path = path;
                 this.mtllib = mtllib;

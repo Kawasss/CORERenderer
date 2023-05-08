@@ -22,7 +22,7 @@ namespace CORERenderer.Loaders
         /// <summary>
         /// Gives the vertices of the submodels, each submodel is a new list. Translations are not applied to this.
         /// </summary>
-        public List<List<float>> Vertices { get { List<List<float>> value = new(); foreach (Submodel s in submodels) value.Add(s.vertices); return value; } } //adds the vertices from the submodels into one list
+        public List<List<Vertex>> Vertices { get { List<List<Vertex>> value = new(); foreach (Submodel s in submodels) value.Add(s.vertices); return value; } } //adds the vertices from the submodels into one list
 
         public List<Material> Materials { get { List<Material> value = new(); foreach (Submodel s in submodels) value.Add(s.material); return value; } } //adds the materials from the submodels into one list
 
@@ -80,7 +80,7 @@ namespace CORERenderer.Loaders
                 GenerateStl(path);
         }
         
-        public Model(string path, List<List<float>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
+        public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
             ID = COREMain.NewAvaibleID;
             type = COREMain.SetRenderMode(path);
@@ -138,7 +138,7 @@ namespace CORERenderer.Loaders
             Vector3 center = (min + max) * 0.5f;
             Vector3 extents = max - center;
             this.transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
-            submodels.Add(new(Name, iVertices.ToList(), Vector3.Zero, this, material));
+            submodels.Add(new(Name, Vertex.GetVertices(iVertices.ToList()), Vector3.Zero, this, material));
             submodels[^1].cullFaces = true;
         }
 
@@ -170,7 +170,7 @@ namespace CORERenderer.Loaders
                 return;
             }
 
-            submodels.Add(new(Path.GetFileNameWithoutExtension(path), localVertices, offset, new(1, 1, 1), this));
+            submodels.Add(new(Path.GetFileNameWithoutExtension(path), Vertex.GetVertices(localVertices), offset, new(1, 1, 1), this));
 
             COREMain.console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
             COREMain.console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
@@ -191,7 +191,7 @@ namespace CORERenderer.Loaders
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<float>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out Vector3 center, out Vector3 extents, out mtllib);
+            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<Vertex>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out Vector3 center, out Vector3 extents, out mtllib);
             double readOBJFile = Glfw.Time - startedReading;
 
             if (loaded != Error.None)

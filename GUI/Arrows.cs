@@ -43,7 +43,8 @@ namespace CORERenderer.GUI
             rotation = new($"{COREMain.pathRenderer}\\OBJs\\triangle.stl");
             rotation.submodels[0].renderIDVersion = false;
 
-            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out vertices, out indices, out _, out _, out _, out _);
+            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out List<List<Vertex>> lVertices, out indices, out _, out _, out _, out _);
+            vertices = Vertex.GetFloatList(lVertices);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
 

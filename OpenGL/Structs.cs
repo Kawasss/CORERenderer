@@ -8,6 +8,80 @@ using static CORERenderer.OpenGL.Rendering;
 
 namespace CORERenderer.OpenGL
 {
+    public struct Vertex
+    {
+        public float x = 0;
+        public float y = 0;
+        public float z = 0;
+
+        public float uvX = 0;
+        public float uvY = 0;
+
+        public float normalX = 0;
+        public float normalY = 0;
+        public float normalZ = 0;
+
+        public int[] boneIDs = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
+        public float[] boneWeights = new float[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        public Vertex() { }
+
+        public static List<List<float>> GetFloatList(List<List<Vertex>> v2)
+        {
+            List<List<float>> list = new();
+            for (int i = 0; i < v2.Count; i++)
+                list.Add(GetFloatList(v2[i]));
+            return list;
+        }
+
+        /// <summary>
+        /// !!THIS MAY NOT INCLUDE CORRECT BONES
+        /// </summary>
+        /// <param name="v2"></param>
+        /// <returns></returns>
+        public static List<float> GetFloatList(List<Vertex> v2)
+        {
+            List<float> list = new();
+            for (int i = 0; i < v2.Count; i++)
+            {
+                list.Add(v2[i].x);
+                list.Add(v2[i].y);
+                list.Add(v2[i].z);
+
+                list.Add(v2[i].uvX);
+                list.Add(v2[i].uvY);
+
+                list.Add(v2[i].normalX);
+                list.Add(v2[i].normalY);
+                list.Add(v2[i].normalZ);
+
+                foreach (int ID in v2[i].boneIDs)
+                    list.Add(ID);
+                foreach (float weight in v2[i].boneWeights)
+                    list.Add(weight);
+            }
+            return list;
+        }
+
+        public static List<List<Vertex>> GetVertices(List<List<float>> l)
+        {
+            List<List<Vertex>> l2 = new();
+            foreach (List<float> l3 in l)
+                l2.Add(GetVertices(l3));
+            return l2;
+        }
+
+        public static List<Vertex> GetVertices(List<float> l)
+        {
+            List<Vertex> v = new();
+            for (int i = 0; i < l.Count; i += 8)
+            {
+                v.Add(new() { x = l[i], y = l[i + 1], z = l[i + 2], uvX = l[i + 3], uvY = l[i + 4], normalX = l[i + 5], normalY = l[i + 6], normalZ = l[i + 7] });
+            }
+            return v;
+        }
+    }
+
     public struct Plane
     {
         public Vector3 normal = Vector3.UnitVectorY;

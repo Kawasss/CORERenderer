@@ -119,17 +119,33 @@ namespace CORERenderer.shaders
         public void ActivateGenericAttributes()
         {
             int vertexLocation = this.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0); }
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)0); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
             //UV texture coordinates
             vertexLocation = this.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float))); }
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(3 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
             //normal coordinates
             vertexLocation = this.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(5 * sizeof(float))); }
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(5 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            vertexLocation = this.GetAttribLocation("boneIDs1");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(5 * sizeof(float))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            vertexLocation = this.GetAttribLocation("boneIDs2");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float) + 4 * sizeof(int))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            vertexLocation = this.GetAttribLocation("weights1");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float) + 8 * sizeof(int))); }
+            glEnableVertexAttribArray((uint)vertexLocation);
+
+            vertexLocation = this.GetAttribLocation("weights2");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 22 * sizeof(float) + 8 * sizeof(int), (void*)(12 * sizeof(float) + 8 * sizeof(int))); }
             glEnableVertexAttribArray((uint)vertexLocation);
         }
 

@@ -135,6 +135,27 @@ namespace CORERenderer.OpenGL
             TotalAmountOfTransferredBytes = vertices.Length * sizeof(float);
         }
 
+
+        /// <summary>
+        /// Generates a buffer with the given vertices, does not active the vertex attribute arrays however.
+        /// </summary>
+        /// <param name="VBO"></param>
+        /// <param name="VAO"></param>
+        /// <param name="vertices"></param>
+        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Vertex[] vertices)
+        {
+            VBO = glGenBuffer();
+            glBindBuffer(BufferTarget.ArrayBuffer, VBO);
+
+            VAO = glGenVertexArray();
+            glBindVertexArray(VAO);
+
+            float[] nVertices = Vertex.GetFloatList(vertices.ToList()).ToArray();
+
+            glBufferData(GL_ARRAY_BUFFER, nVertices.Length * sizeof(float), nVertices, GL_STATIC_DRAW);
+
+            TotalAmountOfTransferredBytes = vertices.Length * sizeof(float);
+        }
         public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Matrix[] matrices)
         {
             VBO = glGenBuffer();

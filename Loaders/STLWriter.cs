@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
+﻿using CORERenderer.OpenGL;
 using System.Text;
 
 namespace CORERenderer.Loaders
@@ -15,9 +14,9 @@ namespace CORERenderer.Loaders
         public static void GenerateSTL(string directoryPath, string header, Model model) //generates an .stl file according to the official format (80 bytes header, 4 bytes for triangle amount, 50 bytes for each face (12 for normal, 36 for vertices and 2 for attributes)
         {
             if (model.type == Main.RenderMode.ObjFile)
-                new Job(() => GenerateSTL(directoryPath, model.Name, header, model.Vertices, model.Offsets)).Start();
+                new Job(() => GenerateSTL(directoryPath, model.Name, header, Vertex.GetFloatList(model.Vertices), model.Offsets)).Start();
             else if (model.type == Main.RenderMode.STLFile)
-                new Job(() => GenerateSTL(directoryPath, model.Name, header, model.Vertices[0])).Start();
+                new Job(() => GenerateSTL(directoryPath, model.Name, header, Vertex.GetFloatList(model.Vertices[0]))).Start();
         }
 
         /// <summary>

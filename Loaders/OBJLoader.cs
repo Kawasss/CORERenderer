@@ -1,11 +1,12 @@
 ﻿using COREMath;
+using CORERenderer.OpenGL;
 using CORERenderer.Main;
 
 namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static Error LoadOBJ(string path, out List<string> mtlNames, out List<List<float>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib)
+        public static Error LoadOBJ(string path, out List<string> mtlNames, out List<List<Vertex>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib)
         {
             extents = Vector3.Zero;
             center = Vector3.Zero;
@@ -203,7 +204,8 @@ namespace CORERenderer.Loaders
                                 Vector3 averageNormal = totalSumOfNormals / polygons.Count;
                                 foreach (Vertex polygon in polygons)
                                 {
-                                    outVertices[i].Add(polygon.x);
+                                    outVertices[i].Add(polygon);
+                                    /*outVertices[i].Add(polygon.x);
                                     outVertices[i].Add(polygon.y);
                                     outVertices[i].Add(polygon.z);
 
@@ -212,7 +214,7 @@ namespace CORERenderer.Loaders
 
                                     outVertices[i].Add(averageNormal.x);
                                     outVertices[i].Add(averageNormal.y);
-                                    outVertices[i].Add(averageNormal.z);
+                                    outVertices[i].Add(averageNormal.z);*/
                                 }
                                 //a triangle, square and circles indices are all structured differently so it has to be checked what kind of shape it is
                                 if (local3.Count == 3) //triangle
@@ -257,29 +259,6 @@ namespace CORERenderer.Loaders
             COREMain.console.WriteDebug($"finished reading {filename}");
 
             return Error.None;
-        }
-
-        private struct Vertex
-        {
-            public float x;
-            public float y;
-            public float z;
-            public float uvX;
-            public float uvY;
-            public float normalX;
-            public float normalY;
-            public float normalZ;
-            public Vertex()
-            {
-                x = 0;
-                y = 0;
-                z = 0;
-                uvX = 0;
-                uvY = 0;
-                normalX = 0;
-                normalY = 0;
-                normalZ = 0;
-            }
         }
     }
 }

@@ -1,9 +1,0 @@
-Error occured at 12:36:02 : 
-    System.ArgumentException: Type 'System.Action' cannot be marshaled as an unmanaged structure; no meaningful size or offset can be computed.
-   at System.Runtime.InteropServices.Marshal.SizeOfHelper(Type t, Boolean throwIfNotMarshalable)
-   at System.Runtime.InteropServices.Marshal.SizeOf[T](T structure)
-   at CORERenderer.Job.Start() in C:\Users\wveen\source\repos\CORERenderer\Job.cs:line 35
-   at CORERenderer.textures.Texture.ReadFromColorFile(Boolean flip, Int32 mode, String imagePath) in C:\Users\wveen\source\repos\CORERenderer\textures\Texture.cs:line 67
-   at CORERenderer.textures.Texture.ReadFromFile(String imagePath) in C:\Users\wveen\source\repos\CORERenderer\textures\Texture.cs:line 103
-   at CORERenderer.GUI.SplashScreen..ctor() in C:\Users\wveen\source\repos\CORERenderer\GUI\SplashScreen.cs:line 82
-   at CORERenderer.Main.COREMain.Main(String[] args) in C:\Users\wveen\source\repos\CORERenderer\Main\COREMain.cs:line 137

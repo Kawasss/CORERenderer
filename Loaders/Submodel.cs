@@ -19,7 +19,7 @@ namespace CORERenderer.Loaders
 
         public Model parent = null;
 
-        public readonly List<float> vertices;
+        public readonly List<Vertex> vertices;
 
         public int NumberOfVertices { get { return vertices.Count / 8; } }
 
@@ -39,7 +39,7 @@ namespace CORERenderer.Loaders
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         #region constructors
-        public Submodel(string name, List<float> vertices, List<uint> indices, Material material)
+        public Submodel(string name, List<Vertex> vertices, List<uint> indices, Material material)
         {
             this.Name = name;
             this.vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
@@ -49,7 +49,7 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<float> vertices, Vector3 offset, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Model parent, Material material)
         {
             this.Name = name;
             this.vertices = vertices;
@@ -61,7 +61,7 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Model parent)
+        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Model parent)
         {
             this.Name = name;
             this.vertices = vertices;
@@ -78,7 +78,7 @@ namespace CORERenderer.Loaders
             material.Texture = 2;
         }
 
-        public Submodel(string name, List<float> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
         {
             this.Name = name;
             this.vertices = vertices;
@@ -91,7 +91,7 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<float> vertices, List<uint> indices, Vector3 translation, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, List<uint> indices, Vector3 translation, Model parent, Material material)
         {
             this.Name = name;
             this.vertices = ConvertIndices(vertices, indices);
@@ -155,9 +155,9 @@ namespace CORERenderer.Loaders
         private void RenderColorVersion()
         {
             if (renderLines)
-                glDrawArrays(PrimitiveType.Lines, 0, vertices.Count / 8);
+                glDrawArrays(PrimitiveType.Lines, 0, vertices.Count);
             else
-                glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+                glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
         }
 
         private void RenderIDVersion()
@@ -169,7 +169,7 @@ namespace CORERenderer.Loaders
             IDShader.SetVector3("color", IDColor);
             IDShader.SetMatrix("model", parent.Transform.ModelMatrix);
 
-            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
 
             COREMain.renderFramebuffer.Bind();
         }
@@ -192,16 +192,12 @@ namespace CORERenderer.Loaders
             usedTextures[material.NormalMap].Use(GL_TEXTURE3);
         }
 
-        public static List<float> ConvertIndices(List<float> vertices, List<uint> indices)
+        public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<uint> indices)
         {
-            List<float> result = new();
+            List<Vertex> result = new();
             
             foreach (uint Indice in indices)
-            {
-                uint indice = Indice * 8;
-                for (int i = 0; i < 8; i++)
-                    result.Add(vertices[(int)indice + i]);
-            }
+                result.Add(vertices[(int)Indice]);
 
             return result;
         }

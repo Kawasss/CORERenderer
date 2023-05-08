@@ -1,6 +1,7 @@
 ﻿using CORERenderer.Main;
 using CORERenderer.textures;
 using COREMath;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer.Loaders
 {
@@ -30,8 +31,20 @@ namespace CORERenderer.Loaders
         {
             WriteSubmodelInfo(sw, submodel);
 
-            foreach (float value in submodel.vertices)
-                sw.BaseStream.Write(BitConverter.GetBytes(value));
+            foreach (Vertex value in submodel.vertices)
+            {
+                sw.BaseStream.Write(BitConverter.GetBytes(value.x));
+                sw.BaseStream.Write(BitConverter.GetBytes(value.y));
+                sw.BaseStream.Write(BitConverter.GetBytes(value.z));
+
+                sw.BaseStream.Write(BitConverter.GetBytes(value.uvX));
+                sw.BaseStream.Write(BitConverter.GetBytes(value.uvY));
+
+                sw.BaseStream.Write(BitConverter.GetBytes(value.normalX));
+                sw.BaseStream.Write(BitConverter.GetBytes(value.normalY));
+                sw.BaseStream.Write(BitConverter.GetBytes(value.normalZ));
+            }
+                
 
             if (submodel.hasMaterials)
                 WriteMaterialNode(sw, submodel.material);
