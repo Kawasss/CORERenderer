@@ -8,7 +8,7 @@ using static CORERenderer.OpenGL.Rendering;
 
 namespace CORERenderer.OpenGL
 {
-    public struct Vertex
+    public class Vertex //class so that it gets passed by reference
     {
         public float x = 0;
         public float y = 0;
@@ -25,6 +25,17 @@ namespace CORERenderer.OpenGL
         public float[] boneWeights = new float[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
         public Vertex() { }
+
+        public void AddBone(int ID)
+        {
+            for (int i = 0; i < boneIDs.Length; i++)
+                if (boneIDs[i] == -1)
+                {
+                    boneIDs[i] = ID;
+                    for  (int j = 0; j < boneWeights.Length; j++)
+                        boneWeights[j] = 1 / (i + 1);
+                }
+        }
 
         public static List<List<float>> GetFloatList(List<List<Vertex>> v2)
         {

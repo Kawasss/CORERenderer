@@ -56,6 +56,9 @@ namespace CORERenderer
 
         public override void RenderEveryFrame(float delta)
         {
+            for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
+                GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].transform.ModelMatrix);
+
             if (shaderConfig == ShaderType.PathTracing)
             {
                 GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
