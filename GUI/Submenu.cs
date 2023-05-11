@@ -70,7 +70,7 @@ namespace CORERenderer.GUI
 
             if (COREMain.secondPassed && !isAttached)
             {
-                COREMain.console.WriteError("Submenu not attached");
+                Console.WriteError("Submenu not attached");
                 return;
             }
 

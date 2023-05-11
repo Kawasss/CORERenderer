@@ -1,8 +1,5 @@
-﻿using COREMath;
-using CORERenderer.textures;
-using CORERenderer.Main;
-using System.Globalization;
-using System.Diagnostics;
+﻿using CORERenderer.Main;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.Loaders
 {
@@ -44,7 +41,7 @@ namespace CORERenderer.Loaders
                 return Error.FileNotFound;
             }
 
-            COREMain.console.WriteDebug($"Reading {Path.GetFileName(path)} file..");
+            Console.WriteDebug($"Reading {Path.GetFileName(path)} file..");
 
             materials = new();
             List<Material> tempMtl = new();
@@ -191,9 +188,9 @@ namespace CORERenderer.Loaders
             }
             if (unreadableLines.Count > 0)
             {
-                COREMain.console.WriteError($"Couldnt read {unreadableLines.Count} lines:");
+                Console.WriteError($"Couldnt read {unreadableLines.Count} lines:");
                 for (int i = 0; i < unreadableLines.Count; i++)
-                    COREMain.console.WriteError($"    {unreadableLines[i]}");
+                    Console.WriteError($"    {unreadableLines[i]}");
             }
 
             //puts the materials in the correct of first being called

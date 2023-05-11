@@ -202,7 +202,7 @@ namespace CORERenderer.GUI
 
                 if ((!isAttached && COREMain.secondPassed) || (!isAttached && FirstRender))
                 {
-                    COREMain.console.WriteError("TabManager is not attached to a div");
+                    Console.WriteError("TabManager is not attached to a div");
                     FirstRender = false;
                     return;
                 }

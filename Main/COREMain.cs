@@ -1,4 +1,5 @@
 ﻿#region using statements
+using Console = CORERenderer.GUI.Console;
 using COREMath;
 using CORERenderer.Fonts;
 using CORERenderer.GLFW;
@@ -59,7 +60,6 @@ namespace CORERenderer.Main
         public static string GPU = "Not Recognized";
         public const string VERSION = "v0.6";
         public static string pathRenderer;
-        public static List<string> consoleCache = new();
 
         //bools
         public static bool renderGrid = true, renderBackground = true, renderGUI = true, renderIDFramebuffer = false, renderToIDFramebuffer = true; //rendering related options
@@ -93,7 +93,7 @@ namespace CORERenderer.Main
 
         public static SplashScreen splashScreen;
         public static Font debugText;
-        public static COREConsole console = null;
+        public static GUI.Console console = null;
         public static Arrows arrows;
         public static Div modelList;
         public static Submenu menu;
@@ -135,6 +135,8 @@ namespace CORERenderer.Main
                 Glfw.Init();
 
                 splashScreen = new();
+                splashScreen.WriteLine("AAAAAAAAAAAAAAA");
+                Thread.Sleep(1000);
                 refreshRate = splashScreen.refreshRate;
                 //sets the width for the window that shows the 3D space
                 #region Calculates all of the appropriate dimensions
@@ -268,19 +270,6 @@ namespace CORERenderer.Main
                 scenes.Add(new());
                 selectedScene = 0;
 
-                #region Restoring any console commands from the previous session and start up
-                if (File.Exists($"{pathRenderer}\\consoleCache"))
-                foreach (string s in consoleCache)
-                {
-                    if (s.StartsWith("ERROR "))
-                        console.WriteError(s);
-                    else if (s.StartsWith("DEBUG "))
-                        console.WriteDebug(s);
-                    else
-                        console.WriteLine(s);
-                }
-                #endregion
-
                 previousTime = Glfw.Time;
                 Process CPUProcess = Process.GetCurrentProcess();
                 previousCPU = CPUProcess.TotalProcessorTime;
@@ -308,8 +297,8 @@ namespace CORERenderer.Main
 
                 //splashScreen.WriteLine($"Initialised in {Math.Round(Glfw.Time, 1)} seconds");
                 //Thread.Sleep(500); //allows user to read the printed text
-                console.WriteLine($"Initialised in {Glfw.Time} seconds");
-                console.WriteLine("Beginning render loop");
+                Console.WriteLine($"Initialised in {Glfw.Time} seconds");
+                Console.WriteLine("Beginning render loop");
 
                 arrows = new();
                 double timeSinceLastFrame2 = Glfw.Time;
@@ -343,7 +332,6 @@ namespace CORERenderer.Main
 
                 sceneManager.Render();
                 #endregion
-
                 //render loop
                 while (!Glfw.WindowShouldClose(window)) //maybe better to let the render loop run in Rendering.cs
                 {
@@ -474,7 +462,7 @@ namespace CORERenderer.Main
                             if (renderEntireDir)
                             {
                                 if (LoadFilePath == null || args.Length == 0) //if there isnt any directory given, dont load it
-                                    console.WriteError("Can't load directory since one isn't given");
+                                    Console.WriteError("Can't load directory since one isn't given");
                                 else
                                 {
                                     string dir = Path.GetDirectoryName(LoadFilePath);
@@ -560,7 +548,7 @@ namespace CORERenderer.Main
                     }
                     catch (System.Exception err)
                     {
-                        console.WriteError(err);
+                        Console.WriteError(err);
                         errorsCaught++;
                         appIsHealthy = false;
                         //Console.WriteLine(err);
@@ -646,7 +634,7 @@ namespace CORERenderer.Main
         {
             if (!File.Exists($"{pathRenderer}\\config"))
             {
-                consoleCache.Add($"ERROR Couldn't locate config, generating new config");
+                Console.WriteError($"Couldn't locate config, generating new config");
                 GenerateConfig();
                 return;
             }
@@ -659,7 +647,7 @@ namespace CORERenderer.Main
 
                 if (VERSION != text[(text.IndexOf('=') + 1)..])
                 {
-                    consoleCache.Add($"ERROR Config is outdated, generating new config");
+                    Console.WriteError($"Config is outdated, generating new config");
                     GenerateConfig();
                     return;
                 }
@@ -676,11 +664,11 @@ namespace CORERenderer.Main
                 text = sr.ReadLine();
 
                 Camera.cameraSpeed = float.Parse(text[(text.IndexOf('=') + 1)..]);
-                COREConsole.writeDebug = sr.ReadLine().Contains("True");
-                COREConsole.writeError = sr.ReadLine().Contains("True");
+                GUI.Console.writeDebug = sr.ReadLine().Contains("True");
+                GUI.Console.writeError = sr.ReadLine().Contains("True");
                 loadInfoOnstartup = sr.ReadLine().Contains("True");
 
-                consoleCache.Add("DEBUG Loaded config file");
+                Console.WriteDebug("Loaded config file");
             }
         }
 
@@ -691,11 +679,11 @@ namespace CORERenderer.Main
                 sw.WriteLine($"version={VERSION}");
                 sw.WriteLine($"shaders={shaderConfig}");
                 sw.WriteLine($"cameraSpeed={Camera.cameraSpeed}");
-                sw.WriteLine($"writedebug={COREConsole.writeDebug}");
-                sw.WriteLine($"writeerror={COREConsole.writeError}");
+                sw.WriteLine($"writedebug={GUI.Console.writeDebug}");
+                sw.WriteLine($"writeerror={GUI.Console.writeError}");
                 sw.WriteLine($"loadinfo={loadInfoOnstartup}");
             }
-            consoleCache.Add("DEBUG Generated new config");
+            Console.WriteDebug("Generated new config");
         }
 
         public static void LoadDir(string dir)
@@ -713,7 +701,7 @@ namespace CORERenderer.Main
 
                         Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<Vertex>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib);
                         if (error != Error.None)
-                            console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
+                            Console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
                         else
                         {
                             localVersion.Add(new(file, dir + '\\' + mtllib, mtlNames, vertices, indices, offsets, extents, center));

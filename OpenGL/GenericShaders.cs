@@ -749,6 +749,9 @@ namespace CORERenderer.OpenGL
             {
                 int bonesID[8] = { bonesID1[0], bonesID1[1], bonesID1[2], bonesID1[3], bonesID2[0], bonesID2[1], bonesID2[2], bonesID2[3] };
                 float weights[8] = { weights1[0], weights1[1], weights1[2], weights1[3], weights2[0], weights2[1], weights2[2], weights2[3] };
+
+                vec3 pos = (vec4(aPos, 1) * model).xyz;
+
                 vec4 finalPos = vec4(0);
                 for (int i = 0; i < MAX_BONES; i++)
                 {
@@ -759,12 +762,14 @@ namespace CORERenderer.OpenGL
                         finalPos = vec4(aPos, 1);
                         break;
                     }
-                    vec4 localPos = boneMatrices[bonesID[i]] * vec4(aPos, 1);
+                    vec4 localPos = boneMatrices[bonesID[i]] * vec4(pos, 1);
                     finalPos += localPos * weights[i];
                     vec3 localNorm  = mat3(boneMatrices[bonesID[i]]) * aNormal;
                 }
+                if (finalPos == vec4(0))
+                    finalPos = vec4(pos, 1);
 
-            	vs_out.fragPos = (vec4(aPos, 1.0) * model).xyz;
+            	vs_out.fragPos = finalPos.xyz;//(finalPos * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
             	vs_out.normal = mat3(transpose(inverse(model))) * aNormal;
             	vs_out.texCoords = aTexCoords;
@@ -772,7 +777,9 @@ namespace CORERenderer.OpenGL
             	vs_out.position = vs_out.fragPos;
                 TexCoords = aTexCoords;
 
-            	gl_Position = vec4(vs_out.fragPos, 1) * view * projection;
+            	gl_Position = finalPos * view * projection;
+                //if (bonesID[0] == 0)
+                //gl_Position = vec4(aPos, 1) * model * boneMatrices[0] * view * projection;
             }
             """;
 

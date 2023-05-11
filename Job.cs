@@ -1,4 +1,5 @@
 ﻿using CORERenderer.Main;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer
 {
@@ -31,10 +32,7 @@ namespace CORERenderer
 
         public override void Start()
         {
-            if (COREMain.console != null)
-                COREMain.console.WriteDebug($"Starting job with ID {ID} ...");
-            else
-                COREMain.consoleCache.Add($"DEBUG Starting new job...");
+           Console.WriteDebug($"Starting job with ID {ID} ...");
             
             thread = new(Run);
             thread.Start();

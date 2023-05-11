@@ -5,7 +5,7 @@ using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
 using StbiSharp;
 using CORERenderer.OpenGL;
-using System.Runtime.CompilerServices;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.Main
 {
@@ -106,7 +106,7 @@ namespace CORERenderer.Main
         {
             if (!File.Exists(path))
             {
-                COREMain.console.WriteError($"File at {path} not found, returning default texture.");
+                Console.WriteError($"File at {path} not found, returning default texture.");
                 return 0;
             }
 
@@ -114,14 +114,14 @@ namespace CORERenderer.Main
                 if (usedTextures[i].path == path)
                 {
                     if (i > 3)
-                        COREMain.console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
+                        Console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
                     else
-                        COREMain.console.WriteLine($"Using default texture {usedTextures[i].name} ({i})");
+                        Console.WriteLine($"Using default texture {usedTextures[i].name} ({i})");
                     return i;
                 }
             
             usedTextures.Add(Texture.ReadFromFile(path));
-            COREMain.console.WriteLine($"Allocated {FormatSize(usedTextures[^1].width * usedTextures[^1].height * 4)} of VRAM for texture {usedTextures[^1].name} ({usedTextures.Count - 1})");
+            Console.WriteLine($"Allocated {FormatSize(usedTextures[^1].width * usedTextures[^1].height * 4)} of VRAM for texture {usedTextures[^1].name} ({usedTextures.Count - 1})");
             return usedTextures.Count - 1;
         }
 

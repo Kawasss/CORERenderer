@@ -127,7 +127,7 @@ namespace CORERenderer.GUI
             shader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 2
             shader.SetVector3("color", 0, 1, 1);
@@ -135,7 +135,7 @@ namespace CORERenderer.GUI
             shader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 3
             shader.SetVector3("color", 1, 0, 1);
@@ -143,7 +143,7 @@ namespace CORERenderer.GUI
             shader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             glEnable(GL_CULL_FACE);
 
@@ -217,7 +217,7 @@ namespace CORERenderer.GUI
             pickShader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 2
             pickShader.SetVector3("color", rgbs[7]);
@@ -225,7 +225,7 @@ namespace CORERenderer.GUI
             pickShader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 3
             pickShader.SetVector3("color", rgbs[8]);
@@ -233,7 +233,7 @@ namespace CORERenderer.GUI
             pickShader.SetMatrix("model", triangleModel);
 
             glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].vertices.Count / 8);
+            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             glEnable(GL_CULL_FACE);
 

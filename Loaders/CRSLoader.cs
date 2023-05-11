@@ -24,7 +24,6 @@ namespace CORERenderer.Loaders
                         return Error.Outdated;
 
                     int modelCount = GetInt(fs);
-
                     for (int i = 0; i < modelCount; i++)
                     {
                         RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount);
@@ -41,8 +40,8 @@ namespace CORERenderer.Loaders
                         {
                             RetrieveSubmodelNode(fs, out string submodelName, out Vector3 submodelTranslation, out Vector3 submodelScaling, out Vector3 submodelRotation, out bool hasMaterial, out int amountPolygons);
 
-                            int amountVertices = amountPolygons * 3 * 8; //each polygon has 3 vertices, each vertex has 8 components (xyz, uv xy, normal xyz)
-                            List<float> vertices = RetrieveVertices(fs, amountVertices);
+                            int amountVertices = amountPolygons * 3; //a polygon consists of 3 vertices
+                            List<Vertex> vertices = RetrieveVertices(fs, amountVertices);
                             DetermineMinMax(vertices, translation, ref min, ref max);
 
                             if (hasMaterial)
@@ -50,12 +49,12 @@ namespace CORERenderer.Loaders
                                 Material material = RetrieveMaterialNode(fs);
 
                                 models[^1].type = RenderMode.ObjFile;
-                                models[^1].submodels.Add(new(submodelName, Vertex.GetVertices(vertices), submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
+                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
                             }
                             else
                             {
                                 models[^1].type = RenderMode.STLFile;
-                                models[^1].submodels.Add(new(submodelName, Vertex.GetVertices(vertices), submodelTranslation, submodelScaling, models[^1]));
+                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
                             }
                         }
                         models[^1].Transform.BoundingBox = new(min, max);
@@ -71,17 +70,17 @@ namespace CORERenderer.Loaders
             return Error.None;
         }
 
-        private static void DetermineMinMax(List<float> vertices, Vector3 translation, ref Vector3 min, ref Vector3 max)
+        private static void DetermineMinMax(List<Vertex> vertices, Vector3 translation, ref Vector3 min, ref Vector3 max)
         {
-            for (int i = 0; i < vertices.Count; i += 8)
+            for (int i = 0; i < vertices.Count; i++)
             {
-                max.x = vertices[i] > max.x ? vertices[i] : max.x;
-                max.y = vertices[i + 1] > max.y ? vertices[i + 1] : max.y;
-                max.z = vertices[i + 2] > max.z ? vertices[i + 2] : max.z;
+                max.x = vertices[i].x > max.x ? vertices[i].x : max.x;
+                max.y = vertices[i].y > max.y ? vertices[i].y : max.y;
+                max.z = vertices[i].z > max.z ? vertices[i].z : max.z;
 
-                min.x = vertices[i] < min.x ? vertices[i] : min.x;
-                min.y = vertices[i + 1] < min.y ? vertices[i + 1] : min.y;
-                min.z = vertices[i + 2] < min.z ? vertices[i + 2] : min.z;
+                min.x = vertices[i].x < min.x ? vertices[i].x : min.x;
+                min.y = vertices[i].y < min.y ? vertices[i].y : min.y;
+                min.z = vertices[i].z < min.z ? vertices[i].z : min.z;
             }
         }
 
@@ -156,7 +155,7 @@ namespace CORERenderer.Loaders
 
         private static bool RetrieveTextureNode(FileStream fs, out byte[] imageData)
         {
-            if (GetBool(fs)) //is default material{
+            if (GetBool(fs)) //is default material
             {
                 imageData = Array.Empty<byte>();
                 return true;
@@ -170,11 +169,28 @@ namespace CORERenderer.Loaders
             return false;
         }
 
-        private static List<float> RetrieveVertices(FileStream fs, int amountVertices)
+        private static List<Vertex> RetrieveVertices(FileStream fs, int amountVertices)
         {
-            List<float> vertices = new();
+            List<Vertex> vertices = new();
             for (int k = 0; k < amountVertices; k++)
-                vertices.Add(GetFloat(fs));
+            {
+                vertices.Add(new());
+                vertices[k].x = GetFloat(fs);
+                vertices[k].y = GetFloat(fs);
+                vertices[k].z = GetFloat(fs);
+
+                vertices[k].uvX = GetFloat(fs);
+                vertices[k].uvY = GetFloat(fs);
+
+                vertices[k].normalX = GetFloat(fs);
+                vertices[k].normalY = GetFloat(fs);
+                vertices[k].normalZ = GetFloat(fs);
+
+                for (int i = 0; i < 8; i++)
+                    vertices[k].boneIDs[i] = GetInt(fs);
+                for (int i = 0; i < 8; i++)
+                    vertices[k].boneWeights[i] = GetFloat(fs);
+            }
 
             return vertices;
         }

@@ -49,6 +49,8 @@ Vector3 normal (12 bytes)
 	x
 	y
 	z
+32-bit integer array (length 8) attached bone IDs (32 bytes)
+float array (length) 8 weight of the bone, whose ID is at the index in bone IDs as this float (32 bytes)
 
 This means that one vertex takes up 32 bytes (8 floats). One polygon always consists of 3 vertices, so the vertex count is calculated with amount of polygons * 3 * 8.
 multiply this with 4 bytes and you get the total byte size of the mesh.

@@ -132,11 +132,11 @@ namespace CORERenderer.shaders
             unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(5 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            vertexLocation = this.GetAttribLocation("boneIDs1");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(5 * sizeof(float))); }
+            vertexLocation = this.GetAttribLocation("bonesID1");
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
-            vertexLocation = this.GetAttribLocation("boneIDs2");
+            vertexLocation = this.GetAttribLocation("bonesID2");
             unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float) + 4 * sizeof(int))); }
             glEnableVertexAttribArray((uint)vertexLocation);
 
@@ -145,7 +145,7 @@ namespace CORERenderer.shaders
             glEnableVertexAttribArray((uint)vertexLocation);
 
             vertexLocation = this.GetAttribLocation("weights2");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 22 * sizeof(float) + 8 * sizeof(int), (void*)(12 * sizeof(float) + 8 * sizeof(int))); }
+            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(12 * sizeof(float) + 8 * sizeof(int))); }
             glEnableVertexAttribArray((uint)vertexLocation);
         }
 

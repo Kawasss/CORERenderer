@@ -19,9 +19,11 @@ namespace CORERenderer.Loaders
 
         public Model parent = null;
 
-        public readonly List<Vertex> vertices;
+        private List<Vertex> vertices = new();
+        private bool verticesChanged = false;
+        public List<Vertex> Vertices { get { verticesChanged = true; return vertices; } set { verticesChanged = true; vertices = value; } }
 
-        public int NumberOfVertices { get { return vertices.Count / 8; } }
+        public int NumberOfVertices { get { return vertices.Count; } }
 
         public readonly Material material;
 
@@ -42,7 +44,7 @@ namespace CORERenderer.Loaders
         public Submodel(string name, List<Vertex> vertices, List<uint> indices, Material material)
         {
             this.Name = name;
-            this.vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
+            this.Vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
             this.material = material;
             isTranslucent = material.Transparency != 1;
 
@@ -52,7 +54,7 @@ namespace CORERenderer.Loaders
         public Submodel(string name, List<Vertex> vertices, Vector3 offset, Model parent, Material material)
         {
             this.Name = name;
-            this.vertices = vertices;
+            this.Vertices = vertices;
             this.material = material;
             this.translation = offset;
             this.scaling = new(1, 1, 1);
@@ -64,7 +66,7 @@ namespace CORERenderer.Loaders
         public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Model parent)
         {
             this.Name = name;
-            this.vertices = vertices;
+            this.Vertices = vertices;
             this.material = new();
             this.translation = offset;
             this.scaling = scaling;
@@ -81,7 +83,7 @@ namespace CORERenderer.Loaders
         public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
         {
             this.Name = name;
-            this.vertices = vertices;
+            this.Vertices = vertices;
             this.material = material;
             this.translation = offset;
             this.scaling = scaling;
@@ -94,7 +96,7 @@ namespace CORERenderer.Loaders
         public Submodel(string name, List<Vertex> vertices, List<uint> indices, Vector3 translation, Model parent, Material material)
         {
             this.Name = name;
-            this.vertices = ConvertIndices(vertices, indices);
+            this.Vertices = ConvertIndices(vertices, indices);
             this.translation = translation;
             this.parent = parent;
             this.material = material;
@@ -126,8 +128,14 @@ namespace CORERenderer.Loaders
         {
             if (!useRenderDistance || MathC.Distance(COREMain.CurrentScene.camera.position, parent.Transform.translation) < renderDistance)
             {
+                if (verticesChanged)
+                {
+                    GenerateBuffers(); //might be better to do glBufferSubData but dont know if thatll work
+                    verticesChanged = false;
+                }
+                    
                 shader.Use();
-
+                
                 highlighted = COREMain.selectedID == ID;
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -204,7 +212,7 @@ namespace CORERenderer.Loaders
 
         private void GenerateBuffers()
         {
-            GenerateFilledBuffer(out VBO, out VAO, vertices.ToArray());
+            GenerateFilledBuffer(out VBO, out VAO, Vertices.ToArray());
 
             shader.Use();
 

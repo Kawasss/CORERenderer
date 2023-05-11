@@ -1,6 +1,7 @@
 ﻿using COREMath;
 using CORERenderer.OpenGL;
 using CORERenderer.Main;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.Loaders
 {
@@ -58,7 +59,7 @@ namespace CORERenderer.Loaders
 
             bool withTextures = true;
 
-            COREMain.console.WriteDebug($"Reading {filename}:");
+            Console.WriteDebug($"Reading {filename}:");
 
             int aa = 0;
             outVertices = new();
@@ -203,19 +204,7 @@ namespace CORERenderer.Loaders
                                 }
                                 Vector3 averageNormal = totalSumOfNormals / polygons.Count;
                                 foreach (Vertex polygon in polygons)
-                                {
                                     outVertices[i].Add(polygon);
-                                    /*outVertices[i].Add(polygon.x);
-                                    outVertices[i].Add(polygon.y);
-                                    outVertices[i].Add(polygon.z);
-
-                                    outVertices[i].Add(polygon.uvX);
-                                    outVertices[i].Add(polygon.uvY);
-
-                                    outVertices[i].Add(averageNormal.x);
-                                    outVertices[i].Add(averageNormal.y);
-                                    outVertices[i].Add(averageNormal.z);*/
-                                }
                                 //a triangle, square and circles indices are all structured differently so it has to be checked what kind of shape it is
                                 if (local3.Count == 3) //triangle
                                 {
@@ -254,9 +243,9 @@ namespace CORERenderer.Loaders
             extents = max - center;
 
             if (unreadableLines.Count > 0)
-                COREMain.console.WriteError($" Couldn't read {unreadableLines.Count} lines in {filename}");
+                Console.WriteError($" Couldn't read {unreadableLines.Count} lines in {filename}");
 
-            COREMain.console.WriteDebug($"finished reading {filename}");
+            Console.WriteDebug($"finished reading {filename}");
 
             return Error.None;
         }

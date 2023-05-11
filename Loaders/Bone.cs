@@ -1,5 +1,6 @@
 ﻿using COREMath;
 using CORERenderer.OpenGL;
+using CORERenderer.Main;
 
 namespace CORERenderer.Loaders
 {
@@ -9,16 +10,20 @@ namespace CORERenderer.Loaders
     public class Bone
     {
         public static List<Bone> bones = new();
-
-        public Dictionary<Vector3, float> bonesWeightOnVertex = new();
         public Transform transform;
         private int boneID;
+        private Line line = null;
+        private Vector3 top = Vector3.UnitVectorY;
+        public Vector3 bottom = Vector3.Zero;
         
-        public Bone(Vector3 position, Vector3 scaling, Vector3 rotation)
+        public Bone(Vector3 positionBottom, Vector3 positionTop, Vector3 scaling, Vector3 rotation)
         {
-            transform = new(position, rotation, scaling, Vector3.Zero, position);
+            Vector3 average = (positionTop + positionBottom) / 2;
+            transform = new(positionBottom, rotation, scaling, new(.1f, MathC.Abs((average.y - positionBottom.y) / 2), .1f), average);
+            top = positionTop;
+            bottom = positionBottom;
             bones.Add(this);
-            boneID = bones.IndexOf(this);
+            boneID = bones.Count - 1;
         }
 
         /// <summary>
@@ -29,8 +34,24 @@ namespace CORERenderer.Loaders
         {
             foreach (List<Vertex> l1 in model.Vertices)
                 foreach (Vertex v in l1)
-                    if (MathC.Distance(this.transform.translation, new Vector3(v.x, v.y, v.z)) <= 0.1f)
+                    if (transform.BoundingBox.CollidsWith((new Vector4(v.x, v.y, v.z, 1) * model.Transform.ModelMatrix).xyz))
+                    {
+                        Console.WriteLine("collision");
                         v.AddBone(boneID);
+                    }
+        }
+
+        public void Render()
+        {
+            line ??= new(bottom, top, new(1, 1, 1));
+            Line.lineWidth = 1;
+            line.model = transform.ModelMatrix;
+            line.Render();
+        }
+
+        public void DebugUpdate()
+        {
+            this.transform.rotation.x += 1;
         }
     }
 }

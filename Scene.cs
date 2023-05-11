@@ -9,6 +9,7 @@ using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer
 {
@@ -17,7 +18,7 @@ namespace CORERenderer
         public Camera camera;
 
         public List<Model> models;
-        public List<Light> allLights;
+        public List<Light> lights;
 
         public bool loaded = false;
 
@@ -25,10 +26,12 @@ namespace CORERenderer
 
         private Vector2 lastPos = null;
 
+        private Bone bone; //debug
+
         public override void OnLoad(string[] args)
         {
             models = new();
-            allLights = new();
+            lights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
 
             if (args.Length != 0)
@@ -49,13 +52,21 @@ namespace CORERenderer
             for (int i = 0; i < models.Count; i++)
                 if (models[i].terminate)
                 {
-                    console.WriteError($"Deleting terminated model {i}: {models[i].error}");
+                    Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
+
+            //debug
+            if (models.Count == 0)
+                models.Add(Model.Cube);
+            bone = new(new(.1f, 1, 0), new(.1f, 0, 0), new(1, 1, 1), new(0, 0, 0));
+            bone.ApplyWeightsToVertices(models[^1]);
         }
 
         public override void RenderEveryFrame(float delta)
         {
+            bone.DebugUpdate();
+            bone.Render();
             for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
                 GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].transform.ModelMatrix);
 
@@ -96,7 +107,7 @@ namespace CORERenderer
 
             if (loaded && models[^1].terminate)
             {
-                console.WriteError($"Terminating model {models.Count - 1}: {models[^1].error}");
+                Console.WriteError($"Terminating model {models.Count - 1}: {models[^1].error}");
                 models.RemoveAt(models.Count - 1);
             }
 
@@ -125,30 +136,30 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (arrows.wantsToRotateYAxis && loaded)
-                        CurrentModel.Transform.rotation.y -= deltaX / 30;
+                        bone.transform.rotation.y -= deltaX / 30;
                     if (arrows.wantsToRotateXAxis && loaded)
-                        CurrentModel.Transform.rotation.x += (deltaY + deltaX) / 30;
+                        bone.transform.rotation.x += (deltaY + deltaX) / 30;
                     if (arrows.wantsToRotateZAxis && loaded)
-                        CurrentModel.Transform.rotation.z += (deltaY + deltaX) / 30;
+                        bone.transform.rotation.z += (deltaY + deltaX) / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                        CurrentModel.Transform.translation.y += deltaY / 150;
+                        bone.transform.translation.y += deltaY / 150;
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        CurrentModel.Transform.translation.x -= deltaX / 150;
+                        bone.transform.translation.x -= deltaX / 150;
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        CurrentModel.Transform.translation.z += -deltaX / 150;
+                        bone.transform.translation.z += -deltaX / 150;
 
 
                     if (arrows.wantsToScaleYAxis && loaded)
-                        CurrentModel.Transform.scale.y -= deltaY / 200;
+                        bone.transform.scale.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
-                        CurrentModel.Transform.scale.x += deltaX / 200;
+                        bone.transform.scale.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        CurrentModel.Transform.scale.z += (deltaX + deltaY) / 400;
+                        bone.transform.scale.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

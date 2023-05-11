@@ -11,6 +11,7 @@ using CORERenderer.Main;
 using StbiSharp;
 using CORERenderer.Fonts;
 using CORERenderer.OpenGL;
+using System.Drawing;
 
 namespace CORERenderer.GUI
 {
@@ -92,6 +93,7 @@ namespace CORERenderer.GUI
             splashScreenTexture.Use(GL_TEXTURE0);
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
+            
             Glfw.SwapBuffers(window);
         }
 
@@ -101,7 +103,8 @@ namespace CORERenderer.GUI
         public void WriteLine(string text, Vector3 color)
         {
             Glfw.MakeContextCurrent(window);
-
+            Import(Glfw.GetProcAddress);
+            
             glBindVertexArray(vao);
 
             shader.Use();
@@ -110,8 +113,8 @@ namespace CORERenderer.GUI
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
 
-            font.RenderText(text, 0, -84, 0.75f, new Vector2(1, 0), color);
-
+            font.RenderText(text, 0, height - font.characterHeight, 1f, new Vector2(1, 0), color);
+            
             Glfw.SwapBuffers(window);
 
             Glfw.MakeContextCurrent(COREMain.window);

@@ -7,6 +7,7 @@ using CORERenderer.GLFW;
 using CORERenderer.OpenGL;
 using CORERenderer.textures;
 using CORERenderer.shaders;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.Loaders
 {
@@ -22,7 +23,7 @@ namespace CORERenderer.Loaders
         /// <summary>
         /// Gives the vertices of the submodels, each submodel is a new list. Translations are not applied to this.
         /// </summary>
-        public List<List<Vertex>> Vertices { get { List<List<Vertex>> value = new(); foreach (Submodel s in submodels) value.Add(s.vertices); return value; } } //adds the vertices from the submodels into one list
+        public List<List<Vertex>> Vertices { get { List<List<Vertex>> value = new(); foreach (Submodel s in submodels) value.Add(s.Vertices); return value; } } //adds the vertices from the submodels into one list
 
         public List<Material> Materials { get { List<Material> value = new(); foreach (Submodel s in submodels) value.Add(s.material); return value; } } //adds the materials from the submodels into one list
 
@@ -100,7 +101,7 @@ namespace CORERenderer.Loaders
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    COREMain.console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {COREMain.CurrentScene.models.Count} \"{Name}\"");
+                    Console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {COREMain.CurrentScene.models.Count} \"{Name}\"");
                     amountOfFailures++;
                     continue;
                 }
@@ -172,8 +173,8 @@ namespace CORERenderer.Loaders
 
             submodels.Add(new(Path.GetFileNameWithoutExtension(path), Vertex.GetVertices(localVertices), offset, new(1, 1, 1), this));
 
-            COREMain.console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
+            Console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
+            Console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
             float[] vertexData = localVertices.ToArray();
             unsafe
             { //transfer the vertex data to the compute shader
@@ -229,9 +230,9 @@ namespace CORERenderer.Loaders
             submodels[0].highlighted = true;
             selectedSubmodel = 0;
 
-            COREMain.console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
-            COREMain.console.WriteDebug($"Amount of vertices: {AmountOfVertices}");
+            Console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
+            Console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
+            Console.WriteDebug($"Amount of vertices: {AmountOfVertices}");
         }
 
         private void SortSubmodelsByDepth()

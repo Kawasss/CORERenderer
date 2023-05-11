@@ -24,17 +24,35 @@ namespace CORERenderer.OpenGL
         public int[] boneIDs = new int[8] { -1, -1, -1, -1, -1, -1, -1, -1 };
         public float[] boneWeights = new float[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        public Vertex() { }
+        private int addedBones = 0;
+
+        public Vertex(float x, float y, float z, float uvX, float uvY, float normalX, float normalY, float normalZ, int[] boneIDs, float[] boneWeights)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.uvX = uvX;
+            this.uvY = uvY;
+            this.normalX = normalX;
+            this.normalY = normalY;
+            this.normalZ = normalZ;
+            this.boneIDs = boneIDs;
+            this.boneWeights = boneWeights;
+        }
+
+        public Vertex() 
+        {
+        }
 
         public void AddBone(int ID)
         {
-            for (int i = 0; i < boneIDs.Length; i++)
-                if (boneIDs[i] == -1)
-                {
-                    boneIDs[i] = ID;
-                    for  (int j = 0; j < boneWeights.Length; j++)
-                        boneWeights[j] = 1 / (i + 1);
-                }
+            //boneIDs[addedBones] = ID;
+            //for (int i = 0; i <= addedBones; i++)
+            //    boneWeights[i] = 1 / (addedBones + 1);
+            //addedBones++;
+            //debug
+            boneIDs[0] = 0;
+            boneWeights[0] = 1;
         }
 
         public static List<List<float>> GetFloatList(List<List<Vertex>> v2)
@@ -168,6 +186,11 @@ namespace CORERenderer.OpenGL
 
             this.max = extents + center;
             this.min = 2 * center - max;
+        }
+
+        public bool CollidsWith(Vector3 point)
+        {
+            return point.x >= min.x && point.x <= max.x && point.y >= min.y && point.y <= max.y && point.z >= min.z && point.z <= max.z;
         }
 
         public bool IsInForwardPlane(Plane plane)

@@ -31,7 +31,7 @@ namespace CORERenderer.Loaders
         {
             WriteSubmodelInfo(sw, submodel);
 
-            foreach (Vertex value in submodel.vertices)
+            foreach (Vertex value in submodel.Vertices)
             {
                 sw.BaseStream.Write(BitConverter.GetBytes(value.x));
                 sw.BaseStream.Write(BitConverter.GetBytes(value.y));
@@ -43,6 +43,11 @@ namespace CORERenderer.Loaders
                 sw.BaseStream.Write(BitConverter.GetBytes(value.normalX));
                 sw.BaseStream.Write(BitConverter.GetBytes(value.normalY));
                 sw.BaseStream.Write(BitConverter.GetBytes(value.normalZ));
+
+                for (int i = 0; i < 8; i++)
+                    sw.BaseStream.Write(BitConverter.GetBytes(value.boneIDs[i]));
+                for (int i = 0; i < 8; i++)
+                    sw.BaseStream.Write(BitConverter.GetBytes(value.boneWeights[i]));
             }
                 
 

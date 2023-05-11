@@ -5,7 +5,7 @@ using COREMath;
 using CORERenderer.shaders;
 using StbiSharp;
 using CORERenderer.OpenGL;
-using System;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.textures
 {
@@ -52,7 +52,7 @@ namespace CORERenderer.textures
 
             if (!File.Exists(imagePath))
             {
-                COREMain.console.WriteError($"Couldn't find given texture at {imagePath}, using default texture");
+                Console.WriteError($"Couldn't find given texture at {imagePath}, using default texture");
                 imagePath = $"{COREMain.pathRenderer}\\textures\\placeholder.png";
             }
             StbiImage image;
