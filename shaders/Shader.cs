@@ -125,28 +125,10 @@ namespace CORERenderer.shaders
                 string allDeclarations = vertexShaderText[..vertexShaderText.IndexOf("void main()")];
 
                 string[] declarations = allDeclarations.Split(new string[] { ";" }, StringSplitOptions.None);
-                
+
                 for (int i = 0; i < declarations.Length; i++)
                     if (declarations[i].ToLower().Contains("in "))
-                    {
-                        string[] parsedDeclaration = declarations[i].Split(new string[] { " " }, StringSplitOptions.TrimEntries);
-                        attributes.Add(new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]));
-
-                        if (attributes[^1].location != -1)
-                            continue;
-
-                        string trimmedText = string.Concat(declarations[i].Where(c => c != ' '));
-                        if (trimmedText.Contains("location="))
-                        {
-                            int index = trimmedText.IndexOf("location=") + 9;
-                            Attribute g = new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]);
-                            
-                            g.location = int.Parse(trimmedText[index..trimmedText.IndexOf(')')]);
-                            attributes[^1] = g;
-                            continue;
-                        }
-                        Console.WriteError($"Unknown location ({attributes[^1].location}) for variable {attributes[^1].name} ({declarations[i]})");  
-                    }
+                        ParseAttribute(declarations[i]);
             }
             catch (Exception err)
             {
@@ -154,6 +136,27 @@ namespace CORERenderer.shaders
                 attributes.Clear();
                 return;
             }
+        }
+
+        private void ParseAttribute(string declaration)
+        {
+            string[] parsedDeclaration = declaration.Split(new string[] { " " }, StringSplitOptions.TrimEntries);
+            attributes.Add(new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]));
+
+            if (attributes[^1].location != -1)
+                return;
+
+            string trimmedText = string.Concat(declaration.Where(c => c != ' '));
+            if (trimmedText.Contains("location="))
+            {
+                int index = trimmedText.IndexOf("location=") + 9;
+                Attribute g = new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]);
+
+                g.location = int.Parse(trimmedText[index..trimmedText.IndexOf(')')]);
+                attributes[^1] = g;
+                return;
+            }
+            Console.WriteError($"Unknown location ({attributes[^1].location}) for variable {attributes[^1].name} ({declaration})");
         }
 
         private struct Attribute
