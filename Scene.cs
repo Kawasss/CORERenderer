@@ -26,7 +26,9 @@ namespace CORERenderer
 
         private Vector2 lastPos = null;
 
-        private Bone bone; //debug
+        private List<Bone> bone = new(); //debug
+        private int currentBone = -1;
+        public Bone CurrentBone { get => bone[currentBone]; }
 
         public override void OnLoad(string[] args)
         {
@@ -59,16 +61,20 @@ namespace CORERenderer
             //debug
             if (models.Count == 0)
                 models.Add(Model.Cube);
-            bone = new(new(.1f, 1, 0), new(.1f, 0, 0), new(1, 1, 1), new(0, 0, 0));
-            bone.ApplyWeightsToVertices(models[^1]);
+            models.Add(Model.Cube);
+            
+            bone.Add(new(new(.2f, 0, 0), new(.2f, 2, 0), new(1, 1, 1), new(0, 0, 0)));
+            models[^1].Transform = bone[0].transform;
+            currentBone = 0;
+            bone[0].ApplyWeightsToVertices(models[^1]);
         }
 
         public override void RenderEveryFrame(float delta)
         {
-            bone.DebugUpdate();
-            bone.Render();
+            CurrentBone.DebugUpdate();
+            CurrentBone.Render();
             for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
-                GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].transform.ModelMatrix);
+                GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].ModelMatrix);
 
             if (shaderConfig == ShaderType.PathTracing)
             {
@@ -81,7 +87,7 @@ namespace CORERenderer
             }
             else if (shaderConfig == ShaderType.Lighting)
             {
-                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
+                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position - Vector3.UnitVectorY);
                 GenericShaders.GenericLighting.SetVector3("front", CurrentScene.camera.front);
                 GenericShaders.GenericLighting.SetVector3("pointLights[0].position", CurrentScene.camera.position);
             }
@@ -136,30 +142,30 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (arrows.wantsToRotateYAxis && loaded)
-                        bone.transform.rotation.y -= deltaX / 30;
+                        CurrentBone.transform.rotation.y -= deltaX / 30;
                     if (arrows.wantsToRotateXAxis && loaded)
-                        bone.transform.rotation.x += (deltaY + deltaX) / 30;
+                        CurrentBone.transform.rotation.x += (deltaY + deltaX) / 30;
                     if (arrows.wantsToRotateZAxis && loaded)
-                        bone.transform.rotation.z += (deltaY + deltaX) / 30;
+                        CurrentBone.transform.rotation.z += (deltaY + deltaX) / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                        bone.transform.translation.y += deltaY / 150;
+                        CurrentBone.transform.translation.y += deltaY / 150;
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        bone.transform.translation.x -= deltaX / 150;
+                        CurrentBone.transform.translation.x -= deltaX / 150;
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        bone.transform.translation.z += -deltaX / 150;
+                        CurrentBone.transform.translation.z += -deltaX / 150;
 
 
                     if (arrows.wantsToScaleYAxis && loaded)
-                        bone.transform.scale.y -= deltaY / 200;
+                        CurrentBone.transform.scale.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
-                        bone.transform.scale.x += deltaX / 200;
+                        CurrentBone.transform.scale.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        bone.transform.scale.z += (deltaX + deltaY) / 400;
+                        CurrentBone.transform.scale.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)

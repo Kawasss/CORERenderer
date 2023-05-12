@@ -15,25 +15,24 @@ namespace CORERenderer.GUI
     public class Console
     {
         public static bool writeDebug = false, writeError = true;
-        private bool canWriteToLog;
-        private string logLocation;
 
         private Div quad;
 
         private int maxLines = 0;
-        private int indexOfFirstLineToRender = 0, previousIOFLTR = 0;
+        private static int indexOfFirstLineToRender = 0, previousIOFLTR = 0;
 
         //if this needs to be optimised make it reuse the previous frames as a texture so the previous lines dont have to reprinted, saving draw calls
         private static List<string> lines = new();
         private string LastLine { get { return lines[^1]; } set { lines[^1] = value; } }
         private string CurrentContext { get { return $"COREConsole/{currentContext} > "; } }
         private List<string> allCommands = new();
+        private static Dictionary<string, int> amountOfAppearancesLine = new();
 
-        private int Width;
-        private int Height;
-        private int x, y;
+        private int Width, Height, x, y;
 
-        public bool changed = true;
+        public static bool changed = true;
+        private static bool canWriteToLog = false;
+        private static string logLocation;
 
         public bool isInFocus = false;
 
@@ -57,11 +56,15 @@ namespace CORERenderer.GUI
             maxLines = height / (int)(COREMain.debugText.characterHeight * 0.7f + 2);
         }
 
+        private int previousLineCount = 0;
         public void Update()
         {
             changed = changed ? changed : indexOfFirstLineToRender != previousIOFLTR; //only change changed if it isnt already true
             
             isInFocus = isInFocus ? COREMain.CheckAABBCollision(x, y, Width, Height) : COREMain.CheckAABBCollisionWithClick(x, y, Width, Height); //if the console is already in focus just check if the cursor is still in the console, otherwise check if the console is clicked on to make it in focus
+
+            if (previousLineCount < lines.Count)
+                indexOfFirstLineToRender = lines.Count - maxLines;
 
             if (isInFocus)
             {
@@ -69,44 +72,56 @@ namespace CORERenderer.GUI
                 indexOfFirstLineToRender = indexOfFirstLineToRender >= 0 ? indexOfFirstLineToRender : 0; //IOFLTR cannot be smaller 0, since that would result in an index out of range error. otherwise apply the desired direction
                 changed = COREMain.scrollWheelMovedAmount != 0;
 
-                //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
-                if (Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press && !LastLine.EndsWith(CurrentContext) && !isPressedPrevious)
-                {
-                    LastLine = LastLine[..^1]; //replace the current version with a version of itself with the last char missing
-                    changed = true;
-                }
+                CheckIfKeyNeedsToBeDeleted();
 
-                if (Glfw.Time - previousTime > 0.06)
-                {
-                    previousTime = Glfw.Time;
-                    if (!LastLine.StartsWith(CurrentContext) && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
-                        WriteLine(CurrentContext);
+                CheckForCommands();
 
-                    if (Glfw.GetKey(COREMain.window, Keys.Enter) == InputState.Press && !LastLine.EndsWith(CurrentContext))
-                        ParseInput(LastLine[(LastLine.IndexOf(CurrentContext) + CurrentContext.Length)..]);
-                }
-                if (COREMain.keyIsPressed)
-                {
-                    char letter;
-                    try //catches exceptions in case the pressed key isnt the key to char dictionary
-                    {
-                        letter = Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)COREMain.pressedKey] : Globals.keyCharBinding[(int)COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
-                        if (letter != LastLine[^1] || Glfw.Time - previousTime2 > 0.15)
-                        {
-                            Write($"{letter}"); //adds letter to the last line of text
-                            previousTime2 = Glfw.Time;
-                        }
-                    }
-                    catch (System.Exception) //catches the error thrown if the pressed key isnt in the key char lut
-                    {
-                    }
-                }
-                isPressedPrevious = Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press;
+                CheckForUserInput();
             }
             previousIOFLTR = indexOfFirstLineToRender;
+            previousLineCount = lines.Count;
         }
 
-        public void Wipe()
+        private void CheckForCommands()
+        {
+            if (Glfw.Time - previousTime > 0.06)
+            {
+                previousTime = Glfw.Time;
+                if (!LastLine.StartsWith(CurrentContext) && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
+                    WriteLine(CurrentContext);
+
+                if (Glfw.GetKey(COREMain.window, Keys.Enter) == InputState.Press && !LastLine.EndsWith(CurrentContext))
+                    ParseInput(LastLine[(LastLine.IndexOf(CurrentContext) + CurrentContext.Length)..]);
+            }
+        }
+
+        private void CheckForUserInput()
+        {
+            if (!COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)COREMain.pressedKey))
+            {
+                isPressedPrevious = Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press;
+                return;
+            }
+                
+            char letter = Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)COREMain.pressedKey] : Globals.keyCharBinding[(int)COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
+            if (letter != LastLine[^1] || Glfw.Time - previousTime2 > 0.15)
+            {
+                Write($"{letter}"); //adds letter to the last line of text
+                previousTime2 = Glfw.Time;
+            }
+        }
+
+        private void CheckIfKeyNeedsToBeDeleted()
+        {
+            //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
+            if (Glfw.GetKey(COREMain.window, Keys.Backspace) != InputState.Press || LastLine.EndsWith(CurrentContext) || isPressedPrevious)
+                return;
+
+            LastLine = LastLine[..^1]; //replace the current version with a version of itself with the last char missing
+            changed = true;
+        }
+
+        public static void Wipe()
         {
             lines = new();
             indexOfFirstLineToRender = 0;
@@ -131,21 +146,32 @@ namespace CORERenderer.GUI
             {
                 if (lines[i] == null)
                     continue;
+
                 COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
-                string suffix = i == lines.Count - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
 
-                if (lines[i].Contains("COREConsole/") || i == lines.LastIndexOf(lines[i]))
-                    quad.Write(printResult + suffix, 0, Height - lineOffset, 0.7f, color);
+                string[] allText = SeperateByLength(printResult);
+
+                for (int j = 0; j < allText.Length; j++)
+                {
+                    if (j > 0)
+                    {
+                        lineOffset += sum;
+                        max--;
+                    }
+                        
+                    string suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
+
+                    if (lines[i].Contains("COREConsole/") || i == lines.LastIndexOf(lines[i]))
+                        quad.Write(allText[j] + suffix, 0, Height - lineOffset, 0.7f, color);
+                }
             }
             COREMain.debugText.drawWithHighlights = original;
         }
 
-        private Dictionary<string, int> amountOfAppearancesLine = new();
-
-        private void WriteLineF(string text)
+        private static void WriteLineF(string text)
         {
-            if (!amountOfAppearancesLine.ContainsKey(text) && lines.Count - maxLines > 0)
+            if (!amountOfAppearancesLine.ContainsKey(text))
                 indexOfFirstLineToRender++;
 
             if (amountOfAppearancesLine.ContainsKey(text) && !text.Contains("COREConsole/"))
@@ -165,56 +191,31 @@ namespace CORERenderer.GUI
 
         public static void WriteLine(object value)
         {
-            bool containsToString = true;
-            try
-            {
-                string test = value.ToString();
-            }
-            catch (System.Exception)
-            {
-                WriteError($"Couldn't get value of variable {nameof(value)}");
-                return;
-            }
+            string end = value.ToString();
+            string[] allResults = new string[] { end };
 
-            if (containsToString)
-            {
-                string end = value.ToString();
-                string[] allResults = new string[] { end };
+            if (end.Contains('\n'))
+                allResults = SeperateByNewLines(end);
 
-                if (end.Contains('\n'))
-                    allResults = SeperateByNewLines(end);
-                
-                foreach (string s in allResults)
-                {
-                    string[] finals = SeperateByLength(s); //check if any string is too long to fit in the console
-                    foreach (string s2 in finals)
-                        lines.Add(s2);
-                }
-            }
-            else
-                WriteError($"Couldn't get value of variable {nameof(value)}");
+            foreach (string s in allResults)
+                WriteLineF(s);
         }
 
         public static string[] SeperateByNewLines(string end)
         {
             string prefix = GetPrefix(end); //decides if the base string is an error or debug by checking if it starts with its prefix
 
-            List<int> newLineIndexes = new();
-            for (int i = end.IndexOf('\n'); i != -1; i = end.IndexOf('\n', i + 1))
-                newLineIndexes.Add(i);
-
-            string[] seperatedLines = new string[newLineIndexes.Count + 1];
-            for (int i = 0; i < newLineIndexes.Count; i++)
-                seperatedLines[i] = i > 0 ? prefix + end[(newLineIndexes[i - 1] + 1)..newLineIndexes[i]] : end[..newLineIndexes[i]]; //the first string is seperated from the beginning to the first \n, like ..indexOf(\n). this needs to be done seperately, because it otherwise usees an index of -1 aka index of out range error (beginning of string index = 0, 0 - 1 = -1) 
-            seperatedLines[^1] = newLineIndexes[^1] != end.Length - 1 && newLineIndexes[^1] != -1 ? prefix + end[(newLineIndexes[^1] + 1)..] : "";
+            string[] seperatedLines = end.Split(new string[] {Environment.NewLine}, StringSplitOptions.None);
+            for (int i = 1; i < seperatedLines.Length; i++)
+                seperatedLines[i] = prefix + seperatedLines[i];
             
             return seperatedLines;
         }
 
-        private static string[] SeperateByLength(string end)
+        private string[] SeperateByLength(string end)
         {
             float textWidth = COREMain.debugText.GetStringWidth(end, 0.7f);
-            float tooBigPercentage = textWidth / 40;
+            float tooBigPercentage = textWidth / Width;
             if (tooBigPercentage < 1)
                 return new string[] { end };
 
@@ -233,7 +234,7 @@ namespace CORERenderer.GUI
 
         private static string GetPrefix(string end) => end.StartsWith("DEBUG ") ? "DEBUG " : end.StartsWith("ERROR ") ? "ERROR " : "";
 
-        public void WriteLine() => WriteLine("");
+        public static void WriteLine() => WriteLine("");
 
         public void Write(string text)
         {
@@ -247,6 +248,13 @@ namespace CORERenderer.GUI
         {
             if (writeError)
                 WriteLine("ERROR " + err);
+
+            if (canWriteToLog)
+            {
+                using (FileStream fs = new(logLocation, FileMode.Append))
+                using (StreamWriter sw = new(fs))
+                    sw.WriteLine(err);
+            }
         }
 
         public static void WriteDebug(string debug)
@@ -286,7 +294,7 @@ namespace CORERenderer.GUI
             }
         }
 
-        public void GenerateConsoleErrorLog(string path)
+        public static void GenerateConsoleErrorLog(string path)
         {
             FileStream fs = File.Create($"{path}\\consoleErrorLog.txt");
             fs.Close();
@@ -334,8 +342,9 @@ namespace CORERenderer.GUI
                     else
                         WriteLine(n);
                 }
+            WriteLine();
             WriteLine($"COREConsole/{currentContext} > ");
-            indexOfFirstLineToRender += 2;
+            //indexOfFirstLineToRender += 2;
         }
 
         private enum Context
@@ -344,7 +353,6 @@ namespace CORERenderer.GUI
             Camera,
             Console
         }
-
 
         public void ParseInput(string input)
         {

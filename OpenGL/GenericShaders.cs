@@ -4,17 +4,18 @@ namespace CORERenderer.OpenGL
 {
     public class GenericShaders : Rendering
     {
-        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader;
+        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader;
 
-        public static Shader Image2D { get { return image2DShader; } }
-        public static Shader Light { get { return lightingShader; } }
-        public static Shader Background { get { return backgroundShader; } }
-        public static Shader Grid { get { return gridShader; } }
-        public static Shader GenericLighting { get { return GenericLightingShader; } }
-        public static Shader Quad { get { return solidColorQuadShader; } }
-        public static Shader Arrow { get { return arrowShader; } }
-        public static Shader IDPicking { get { return pickShader; } }
-        public static Shader Framebuffer { get { return framebufferShader; } }
+        public static Shader Image2D { get => image2DShader; }
+        public static Shader Light { get => lightingShader; }
+        public static Shader Background { get => backgroundShader; }
+        public static Shader Grid { get => gridShader; }
+        public static Shader GenericLighting { get => GenericLightingShader; }
+        public static Shader Quad { get => solidColorQuadShader; }
+        public static Shader Arrow { get => arrowShader; }
+        public static Shader IDPicking { get => pickShader; }
+        public static Shader Framebuffer { get => framebufferShader; }
+        public static Shader BonelessPickShader { get => bonelessPickShader; }
 
         internal static void SetShaders()
         {
@@ -32,6 +33,7 @@ namespace CORERenderer.OpenGL
             arrowShader = new(arrowVertText, arrowFragText);
             pickShader = new(defaultVertexShaderText, quadFragText);
             framebufferShader = new(defaultFrameBufferVertText, defaultFrameBufferFragText);
+            bonelessPickShader = new(pickVertexShader, arrowFragText);
         }
 
         //default shader source codes here
@@ -122,7 +124,7 @@ namespace CORERenderer.OpenGL
             	TexCoords = gs_in[0].texCoords;
 
             	vec3 p = cross(gs_in[1].position - gs_in[0].position, gs_in[2].position - gs_in[1].position);
-            	Normal = p;
+            	Normal = gs_in[0].normal;
 
             	gl_Position = gl_in[0].gl_Position;
             	EmitVertex();
@@ -710,6 +712,27 @@ namespace CORERenderer.OpenGL
             }
             """;
 
+        private static string pickVertexShader =
+            """
+            #version 430 core
+            layout (location = 0) in vec3 aPos;
+            layout (location = 1) in vec3 aNormal;
+            layout (location = 2) in vec2 aTexCoords;
+
+            layout (std140, binding = 0) uniform Matrices
+            {
+            	mat4 projection;
+            	mat4 view;
+            };
+
+            uniform mat4 model;
+
+            void main()
+            {
+                gl_Position = vec4(aPos, 1) * model * view * projection;
+            }
+            """;
+
         private static string defaultVertexShaderText =
             """
             #version 430 core
@@ -750,7 +773,7 @@ namespace CORERenderer.OpenGL
                 int bonesID[8] = { bonesID1[0], bonesID1[1], bonesID1[2], bonesID1[3], bonesID2[0], bonesID2[1], bonesID2[2], bonesID2[3] };
                 float weights[8] = { weights1[0], weights1[1], weights1[2], weights1[3], weights2[0], weights2[1], weights2[2], weights2[3] };
 
-                vec3 pos = (vec4(aPos, 1) * model).xyz;
+                vec4 pos = (vec4(aPos, 1) * model);
 
                 vec4 finalPos = vec4(0);
                 for (int i = 0; i < MAX_BONES; i++)
@@ -762,12 +785,12 @@ namespace CORERenderer.OpenGL
                         finalPos = vec4(aPos, 1);
                         break;
                     }
-                    vec4 localPos = boneMatrices[bonesID[i]] * vec4(pos, 1);
+                    vec4 localPos = boneMatrices[bonesID[i]] * pos;
                     finalPos += localPos * weights[i];
                     vec3 localNorm  = mat3(boneMatrices[bonesID[i]]) * aNormal;
                 }
                 if (finalPos == vec4(0))
-                    finalPos = vec4(pos, 1);
+                    finalPos = pos;
 
             	vs_out.fragPos = finalPos.xyz;//(finalPos * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
@@ -779,7 +802,7 @@ namespace CORERenderer.OpenGL
 
             	gl_Position = finalPos * view * projection;
                 //if (bonesID[0] == 0)
-                //gl_Position = vec4(aPos, 1) * model * boneMatrices[0] * view * projection;
+                //gl_Position = vec4(aPos, 1) * boneMatrices[0] * view * projection;
             }
             """;
 
@@ -835,7 +858,7 @@ namespace CORERenderer.OpenGL
                 vec2 st2 = dFdy(TexCoords);
 
                 vec3 N   = normalize(Normal);
-                vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+                vec3 T  = normalize(Q1*st2.t + Q2*st1.t);
                 vec3 B  = -normalize(cross(N, T));
                 mat3 TBN = transpose(mat3(T, B, N));
 
@@ -860,8 +883,8 @@ namespace CORERenderer.OpenGL
             void main()
             {
             	vec4 fullColor = texture(material.Texture, TexCoords);
-            	//if (fullColor.a < 0.1)
-            	//	discard;
+            	if (fullColor.a < 0.1)
+            		discard;
 
             	vec3 color = fullColor.rgb;
 
@@ -869,31 +892,25 @@ namespace CORERenderer.OpenGL
                 	vec3 ambient = .2 * color;
 
             	// diffuse
-                	vec3 lightDir = normalize(GetTBN() * (pointLights[0].position - FragPos));
-                	vec3 normal = normalize(texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0);//getNormalFromMap();
-                	/*float diff = max(dot(lightDir, normal), 0.0);
-                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));*/
+                	vec3 lightDir = normalize((pointLights[0].position - FragPos));
+                	vec3 normal = getNormalFromMap();
+                	float diff = max(dot(lightDir, normal), 0.0);
+                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
 
             	// specular
-                	vec3 viewDir = normalize(GetTBN() * (viewPos - FragPos));
+                	vec3 viewDir = normalize((viewPos - FragPos));
                 	vec3 reflectDir = reflect(-lightDir, normal);
-                	//vec3 halfwayDir = normalize(GetTBN() * (lightDir + viewDir));
-            	    float spec = pow(max(dot(viewDir, reflectDir), 0), 32);//float spec = pow(max(dot(normal, halfwayDir), 0), 1);
-                	//vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
+                	vec3 halfwayDir = normalize((lightDir + viewDir));
+            	    float spec = pow(max(dot(viewDir, reflectDir), 0), 1);//float spec = pow(max(dot(normal, halfwayDir), 0), 1);
+                	vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
 
-                    vec4 i = vec4(.8) * max(dot(lightDir, normal), 0);
-                    vec4 diffuse = clamp(i, 0, 1);
-                    FragColor = fullColor * (diffuse + vec4(spec) + vec4(.1));
-                    if (transparency != 0)
-                    FragColor.a = transparency;
-                    else
-                    FragColor.a = 1;
-            	/*if (allowAlpha == 1 && transparency != 0)
+            	if (allowAlpha == 1 && transparency != 0)
             		FragColor = vec4(ambient + diffuse + specular, transparency);
             	else
-            		FragColor = vec4(ambient + diffuse + specular, 1.0);*/
+            		FragColor = vec4(ambient + diffuse + specular, 1.0);
             	if (overrideColor != vec3(0, 0, 0))
             		FragColor = vec4(overrideColor, fullColor.a);
+                    //FragColor = vec4(texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0, 1);
             }
             """;
     }

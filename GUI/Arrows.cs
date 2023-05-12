@@ -154,6 +154,8 @@ namespace CORERenderer.GUI
             previousID = COREMain.selectedID;
         }
 
+        private Shader alternatePickShader = GenericShaders.BonelessPickShader;
+
         private void RenderIDVersion()
         {
             COREMain.IDFramebuffer.Bind();
@@ -171,25 +173,25 @@ namespace CORERenderer.GUI
             glBindVertexArray(VAO);
             for (int i = 0; i < 3; i++)
             {
-                pickShader.Use();
-                Matrix local = model;
+                alternatePickShader.Use();
+                Matrix local = Matrix.IdentityMatrix * model;
                 if (i == 0)
                 {
-                    pickShader.SetVector3("color", rgbs[0]);
+                    alternatePickShader.SetVector3("color", rgbs[0]);
                     local *= MathC.GetRotationXMatrix(90);
                 }
                 if (i == 1)
                 {
-                    pickShader.SetVector3("color", rgbs[1]);
+                    alternatePickShader.SetVector3("color", rgbs[1]);
                     local *= MathC.GetRotationYMatrix(-90);
                 }
                 else if (i == 2)
                 {
-                    pickShader.SetVector3("color", rgbs[2]);
+                    alternatePickShader.SetVector3("color", rgbs[2]);
                     local *= MathC.GetRotationYMatrix(180);
                 }
 
-                pickShader.SetMatrix("model", local);
+                alternatePickShader.SetMatrix("model", local);
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
             pickShader.SetVector3("color", rgbs[3]);

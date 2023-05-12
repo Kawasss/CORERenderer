@@ -63,7 +63,7 @@ namespace CORERenderer.Loaders
         private HDRTexture hdr = null;
 
         private Transform transform = new();
-        public Transform Transform { get { return transform; } }
+        public Transform Transform { get { return transform; } set { transform = value; } } //!!REMOVE SET WHEN DONE DEBUGGING
 
         public Model(string path)
         {

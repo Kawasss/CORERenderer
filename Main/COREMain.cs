@@ -182,9 +182,6 @@ namespace CORERenderer.Main
                 Div submodelList = new((int)(monitorWidth * 0.117f),(int)(monitorHeight * 0.974f - 25),(int)(monitorWidth * 0.004f),(int)(monitorHeight * 0.004f));
                 Div modelInformation = new((int)(monitorWidth * 0.117f), (int)(monitorHeight * 0.974f - 25), (int)(monitorWidth * 0.879f),(int)(monitorHeight * 0.004f));
                 Div debugHolder = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25), viewportX, (int)(monitorHeight * 0.004f));
-                //Graph graph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25), viewportX, (int)(monitorHeight * 0.004f));
-                //Graph frametimeGraph = new(0, (int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.224f - 25),viewportX, (int)(monitorHeight * 0.004f));
-                //Graph drawCallsPerFrameGraph = new(0,(int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.224f - 25),viewportX,(int)(monitorHeight * 0.004f));
 
                 int debugWidth = (int)debugText.GetStringWidth("Ticks spent depth sorting: timeSpentDepthSorting", 0.7f);
                 Graph renderingTicks = new(0, debugWidth, (int)(debugText.characterHeight * 2), viewportX - (int)(debugWidth * 0.045f), (int)(debugHolder.Height - debugText.characterHeight * 12));
@@ -193,10 +190,9 @@ namespace CORERenderer.Main
                 renderingTicks.showValues = false;
 
                 console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
-                console.GenerateConsoleErrorLog(pathRenderer);
+                Console.GenerateConsoleErrorLog(pathRenderer);
 
                 TabManager tab = new(new string[] { "Models", "Submodels" });
-                //TabManager graphManager = new(new string[] { "FT", "CPU %", "DCPF" });
                 TabManager sceneManager = new("Scene");
 
                 Button button = new("Scene", 5, monitorHeight - 25);
@@ -205,9 +201,6 @@ namespace CORERenderer.Main
                 
                 tab.AttachTo(modelList);
                 tab.AttachTo(submodelList);
-                //graphManager.AttachTo(frametimeGraph);
-                //graphManager.AttachTo(graph);
-                //graphManager.AttachTo(drawCallsPerFrameGraph);
                 menu.AttachTo(ref button);
                 button.OnClick(menu.Render);
                 menu.SetBool("Render Grid", renderGrid);
@@ -356,12 +349,6 @@ namespace CORERenderer.Main
                                 button.Render();
                                 saveAsImage.Render();
 
-                                //graph.Update((float)CPUUsage); //update even without any input because the data always changes
-                                //graph.MaxValue = 100;
-
-                                //drawCallsPerFrameGraph.Update(drawCallsPerFrame);
-
-                                //frametimeGraph.Update(currentFrameTime * 1000);
                                 console.Update();
                                 if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
                                 {
@@ -391,7 +378,6 @@ namespace CORERenderer.Main
                             glDisable(GL_CULL_FACE);
                             ShowRenderStatistics(debugHolder);
 
-                            //graphManager.Render();
                             tb.CheckForUpdate(mousePosX, mousePosY);
 
 
