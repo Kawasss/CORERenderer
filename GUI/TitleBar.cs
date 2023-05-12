@@ -42,18 +42,14 @@ namespace CORERenderer.GUI
                 width, height, 1, 0
             };
 
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateAttributes();
 
             shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
             shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
             GenerateFilledBuffer(out VBOC, out VAOC, crossVertices);
 
-            vertexLocation = shaderC.GetAttribLocation("vertex");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shaderC.ActivateAttributes();
 
             shader.Use();
             shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));

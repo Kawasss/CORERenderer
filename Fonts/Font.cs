@@ -81,9 +81,7 @@ namespace CORERenderer.Fonts
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
 
-            int vertexLocation = shader.GetAttribLocation("vertex");
-            glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateAttributes();
 
             shader.Use();
             shader.SetInt("Texture", GL_TEXTURE0);

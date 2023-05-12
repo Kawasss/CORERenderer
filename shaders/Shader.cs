@@ -1,8 +1,8 @@
-﻿using GLFW;
-using static CORERenderer.OpenGL.GL;
+﻿using static CORERenderer.OpenGL.GL;
 using COREMath;
-using CORERenderer.Main;
 using CORERenderer.OpenGL;
+using System.Text.RegularExpressions;
+using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.shaders
 {
@@ -17,6 +17,7 @@ namespace CORERenderer.shaders
         public int byteSize = 0;
 
         private Dictionary<string, int> uniformLocations = new();
+        private List<Attribute> attributes = new();
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -46,6 +47,8 @@ namespace CORERenderer.shaders
             glDetachShader(Handle, fragmentShader);
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
+
+            SetAttributes(vertexShaderSource);
         }
 
         public Shader(string vertexPath, string fragmentPath, string geometryPath)
@@ -83,6 +86,8 @@ namespace CORERenderer.shaders
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             glDeleteShader(geometryShader);
+
+            SetAttributes(vertexShaderSource);
         }
 
         private static void compileShader(uint shader)
@@ -113,40 +118,107 @@ namespace CORERenderer.shaders
             Rendering.shaderByteSize += pname[0];
         }
 
-        /// <summary>
-        /// This method assumes that the vertex shader has 3 intakes: vec3 for position coordinates, vec2 for uv coordinates and vec3 for normal coordinates
-        /// </summary>
-        public void ActivateGenericAttributes()
+        private void SetAttributes(string vertexShaderText)
         {
-            int vertexLocation = this.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            try
+            {
+                string allDeclarations = vertexShaderText[..vertexShaderText.IndexOf("void main()")];
 
-            //UV texture coordinates
-            vertexLocation = this.GetAttribLocation("aTexCoords");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(3 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+                string[] declarations = allDeclarations.Split(new string[] { ";" }, StringSplitOptions.None);
+                
+                for (int i = 0; i < declarations.Length; i++)
+                    if (declarations[i].ToLower().Contains("in "))
+                    {
+                        string[] parsedDeclaration = declarations[i].Split(new string[] { " " }, StringSplitOptions.TrimEntries);
+                        attributes.Add(new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]));
 
-            //normal coordinates
-            vertexLocation = this.GetAttribLocation("aNormal");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(5 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+                        if (attributes[^1].location != -1)
+                            continue;
 
-            vertexLocation = this.GetAttribLocation("bonesID1");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+                        string trimmedText = string.Concat(declarations[i].Where(c => c != ' '));
+                        if (trimmedText.Contains("location="))
+                        {
+                            int index = trimmedText.IndexOf("location=") + 9;
+                            Attribute g = new(this, parsedDeclaration[^1], GLSLTypeLengthTable[parsedDeclaration[^2]]);
+                            
+                            g.location = int.Parse(trimmedText[index..trimmedText.IndexOf(')')]);
+                            attributes[^1] = g;
+                            continue;
+                        }
+                        Console.WriteError($"Unknown location ({attributes[^1].location}) for variable {attributes[^1].name} ({declarations[i]})");  
+                    }
+            }
+            catch (Exception err)
+            {
+                Console.WriteError($"Couldn't parse the attributes: {err}");
+                attributes.Clear();
+                return;
+            }
+        }
 
-            vertexLocation = this.GetAttribLocation("bonesID2");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_INT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float) + 4 * sizeof(int))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+        private struct Attribute
+        {
+            public string name;
+            public int location;
+            public GLSLType type;
 
-            vertexLocation = this.GetAttribLocation("weights1");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(8 * sizeof(float) + 8 * sizeof(int))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            public Attribute(string name, GLSLType glslType, int location)
+            {
+                this.name = name;
+                this.location = location;
+                this.type = glslType;
+            }
 
-            vertexLocation = this.GetAttribLocation("weights2");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 16 * sizeof(float) + 8 * sizeof(int), (void*)(12 * sizeof(float) + 8 * sizeof(int))); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            public Attribute(Shader shader, string name, GLSLType glslType)
+            {
+                this.name = name;
+                this.location = shader.GetAttribLocation(name);
+                this.type = glslType;
+            }
+        }
+        private struct GLSLType
+        {
+            public int elements;
+            public int sizeInBytes;
+            public int type;
+            
+            public GLSLType(int elements, int sizeInBytesOfSingleElement, int type)
+            {
+                this.elements = elements;
+                this.sizeInBytes = sizeInBytesOfSingleElement * elements;
+                this.type = type;
+            }
+        }
+        private static Dictionary<string, GLSLType> GLSLTypeLengthTable = new()
+        {
+            {"bool", new(1, sizeof(bool), GL_BOOL)}, {"int", new(1, sizeof(int), GL_INT)},  {"uint", new(1, sizeof(uint), GL_UNSIGNED_INT)}, {"float", new(1, sizeof(float), GL_FLOAT)}, {"double", new(1, sizeof(double), GL_DOUBLE)},
+            {"vec2", new(2, sizeof(float), GL_FLOAT) }, {"vec3", new(3, sizeof(float), GL_FLOAT) }, {"vec4", new(4, sizeof(float), GL_FLOAT) }, {"ivec2", new(2, sizeof(int), GL_INT) }, {"ivec3", new(3, sizeof(int), GL_INT) }, {"ivec4", new(4, sizeof(int), GL_INT) },
+            {"bvec2", new(2, sizeof(bool), GL_BOOL) }, {"bvec3", new(3, sizeof(bool), GL_BOOL) }, {"bvec4", new(4, sizeof(bool), GL_BOOL) }, {"uvec2", new(2, sizeof(uint), GL_UNSIGNED_INT) }, {"uvec3", new(3, sizeof(uint), GL_UNSIGNED_INT) }, {"uvec4", new(4, sizeof(uint), GL_UNSIGNED_INT) },
+            {"dvec2", new(2, sizeof(double), GL_DOUBLE) }, {"dvec3", new(3, sizeof(double), GL_DOUBLE) }, {"dvec4", new(4, sizeof(double), GL_DOUBLE) }
+        };
+
+        /// <summary>
+        /// Activates all of the attributes found when the shader was created
+        /// </summary>
+        public void ActivateAttributes()
+        {
+            if (attributes.Count < 1)
+            {
+                Console.WriteError($"No attributes found for shader {this.Handle}, refrain from using this method if the shader is bufferless");
+                return;
+            }
+
+            int stride = 0;
+            int pointer = 0;
+            foreach (Attribute attribute in attributes)
+                stride += attribute.type.sizeInBytes;
+            foreach (Attribute attribute in attributes)
+            {
+                unsafe { glVertexAttribPointer((uint)attribute.location, attribute.type.elements, attribute.type.type, false, stride, (void*)pointer); }
+                glEnableVertexAttribArray((uint)attribute.location);
+                //Console.WriteLine($"Actived attribute with location {attribute.location}, size {attribute.type.elements}, type {nameof(attribute.type.type)}, stride {stride}, pointer {pointer}");
+                pointer += attribute.type.sizeInBytes;
+            }
         }
 
         private int GetUniformLocation(string name) //caches the location of uniform variables so they can be found faster, string comparisons arent cheap

@@ -51,44 +51,6 @@ namespace CORERenderer.OpenGL
             };
         }
 
-        /// <summary>
-        /// best to not use when drawing many lines since it will use a lot of draw calls
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <param name="color"></param>
-        public static void RenderLine(Vector3 start, Vector3 end, Vector3 color)
-        {
-            if (lineVBO == 0)
-            {
-                GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 4);
-
-                int vertexLocation = GenericShaders.Quad.GetAttribLocation("aPos");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);
-            }
-
-            GenericShaders.Quad.Use();
-
-            GenericShaders.Quad.SetVector3("color", color);
-            glDrawArrays(PrimitiveType.Lines, 0, 2);
-        }
-
-        /// <summary>
-        /// best to not use when drawing many lines since it will use a lot of draw calls
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        public static void RenderLine(Vector3 start, Vector3 end) => RenderLine(start, end, new Vector3(1, 1, 1));
-
-        /// <summary>
-        /// best to not use when drawing many lines since it will use a lot of draw calls
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        public static void RenderLine(Vector2 start, Vector2 end) => RenderLine(new Vector3(start.x, start.y, 0), new Vector3(end.x, end.y, 0), new Vector3(1, 1, 1));
-        public static void RenderLine(Vector2 start, Vector2 end, Vector3 color) => RenderLine(new Vector3(start.x, start.y, 0), new Vector3(end.x, end.y, 0), color);
-
         public static uint GenerateBufferlessVAO()
         {
             //allows the object to render bufferless

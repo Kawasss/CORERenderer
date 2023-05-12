@@ -268,13 +268,5 @@ namespace CORERenderer.Loaders
                 COREMain.CurrentScene.currentObj = -1;
             terminate = true;
         }
-
-        private void SetUpShader()
-        {
-            shader.ActivateGenericAttributes();
-
-            glBindBuffer(BufferTarget.ArrayBuffer, 0);
-            glBindVertexArray(0);
-        }
     }
 }

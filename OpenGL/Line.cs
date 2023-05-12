@@ -23,13 +23,8 @@ namespace CORERenderer.OpenGL
             float[] buffer = new float[6] { origin.x, origin.y, origin.z, end.x, end.y, end.z };
             GenerateFilledBuffer(out VBO, out VAO, buffer);
 
-            if (shader == null)
-            {
-                shader = new($"{COREMain.pathRenderer}\\shaders\\Line3D.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 3, GL_FLOAT, false, 3 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);
-            }
+            shader ??= new($"{COREMain.pathRenderer}\\shaders\\Line3D.vert", $"{COREMain.pathRenderer}\\shaders\\SolidColor.frag");
+            shader?.ActivateAttributes();
         }
 
         public void Render()

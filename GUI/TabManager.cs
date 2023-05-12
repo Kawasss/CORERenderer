@@ -77,15 +77,11 @@ namespace CORERenderer.GUI
 
             glBindVertexArray(VAO);
 
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateAttributes();
 
             GenerateEmptyBuffer(out plusVBO, out plusVAO, vertices.Length * sizeof(float));
 
-            vertexLocation = plusShader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            plusShader.ActivateAttributes();
 
             shader.Use();
             shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
@@ -128,9 +124,7 @@ namespace CORERenderer.GUI
 
                 glBindVertexArray(VAO);
 
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);
+                shader.ActivateAttributes();
 
                 shader.Use();
                 shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
@@ -175,9 +169,7 @@ namespace CORERenderer.GUI
 
                 glBindVertexArray(VAO);
 
-                int vertexLocation = shader.GetAttribLocation("aPos");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);
+                shader.ActivateAttributes();
 
                 shader.Use();
                 shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));

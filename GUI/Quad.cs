@@ -64,9 +64,7 @@ namespace CORERenderer.GUI
 
             GenerateFilledBuffer(out VBO, out VAO, vertices);
 
-            int vertexLocation = shaderQ.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shaderQ.ActivateAttributes();
 
             objIcon ??= Texture.ReadFromFile(false, $"{COREMain.pathRenderer}\\GUI\\objIcon.png");
             imageIcon ??= Texture.ReadFromFile(false, $"{COREMain.pathRenderer}\\GUI\\imageIcon.png");
@@ -83,9 +81,7 @@ namespace CORERenderer.GUI
                 //tell the gpu how large the buffer has to be
                 glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.Length * 2, (IntPtr)null, GL_DYNAMIC_DRAW);//4 * 6
 
-                vertexLocation = shader.GetAttribLocation("vertex");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);
+                shader.ActivateAttributes();
 
                 shader.Use();
                 shader.SetInt("Texture", GL_TEXTURE0);
@@ -100,9 +96,7 @@ namespace CORERenderer.GUI
 
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * 2, (IntPtr)null, GL_DYNAMIC_DRAW);
 
-            vertexLocation = shaderQ.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateAttributes();
         }
 
         /// <summary>

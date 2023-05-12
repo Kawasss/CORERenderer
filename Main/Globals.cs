@@ -211,13 +211,7 @@ namespace CORERenderer.Main
                 fb.VAO = glGenVertexArray();
                 glBindVertexArray(fb.VAO);
 
-                int vertexLocation = fb.shader.GetAttribLocation("aPos");
-                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)0);
-                glEnableVertexAttribArray((uint)vertexLocation);
-
-                vertexLocation = fb.shader.GetAttribLocation("aTexCoords");
-                glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-                glEnableVertexAttribArray((uint)vertexLocation);
+                fb.shader.ActivateAttributes();
             }
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);

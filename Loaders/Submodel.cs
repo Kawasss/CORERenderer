@@ -121,7 +121,7 @@ namespace CORERenderer.Loaders
             shader.SetInt("material.Texture", GL_TEXTURE0);
             shader.SetInt("material.diffuse", GL_TEXTURE1);
             shader.SetInt("material.specular", GL_TEXTURE2);
-            shader.SetInt("material.normalMap", GL_TEXTURE2);
+            shader.SetInt("material.normalMap", GL_TEXTURE3);
         }
 
         public void Render()
@@ -216,7 +216,7 @@ namespace CORERenderer.Loaders
 
             shader.Use();
 
-            shader.ActivateGenericAttributes();
+            shader.ActivateAttributes();
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);

@@ -58,9 +58,7 @@ namespace CORERenderer.GUI
 
             GenerateEmptyBuffer(out lineVBO, out lineVAO, sizeof(float) * 2 * 2 * pointLocations.Length);
 
-            int vertexLocation = shader.GetAttribLocation("aPos");
-            unsafe { glVertexAttribPointer((uint)vertexLocation, 2, GL_FLOAT, false, 2 * sizeof(float), (void*)0); }
-            glEnableVertexAttribArray((uint)vertexLocation);
+            shader.ActivateAttributes();
         }
 
         public void Update(float value)
@@ -108,8 +106,6 @@ namespace CORERenderer.GUI
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
             glBindVertexArray(lineVAO);
-
-            RenderLine(new COREMath.Vector2(pointLocations[^1], pointValues[^1]), new COREMath.Vector2(pointLocations[0], pointValues[^1]), new COREMath.Vector3(0.7f, 0.7f, 0.7f));
 
             shader.SetVector3("color", color);
             glDrawArrays(OpenGL.PrimitiveType.Lines, 0, pointLocations.Length * 2);

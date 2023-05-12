@@ -16,7 +16,7 @@ namespace CORERenderer.GUI
     {
         private uint VBO, VAO, EBO;
 
-        private List<List<float>> vertices;
+        private List<List<float>> vertices = new();
         private List<List<uint>> indices;
 
         private float maxScale = 0;
@@ -44,13 +44,19 @@ namespace CORERenderer.GUI
             rotation.submodels[0].renderIDVersion = false;
 
             Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out List<List<Vertex>> lVertices, out indices, out _, out _, out _, out _);
-            vertices = Vertex.GetFloatList(lVertices);
+            foreach (Vertex v in lVertices[0])
+            {
+                vertices.Add(new());
+                vertices[0].Add(v.x); vertices[0].Add(v.y); vertices[0].Add(v.z);
+                vertices[0].Add(v.uvX); vertices[0].Add(v.uvY);
+                vertices[0].Add(v.normalX); vertices[0].Add(v.normalY); vertices[0].Add(v.normalZ);
+            }
 
             GenerateFilledBuffer(out VBO, out VAO, vertices[0].ToArray());
 
             shader.Use();
 
-            shader.ActivateGenericAttributes();
+            shader.ActivateAttributes();
 
             GenerateFilledBuffer(out EBO, indices[0].ToArray());
 
