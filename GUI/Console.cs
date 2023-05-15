@@ -53,24 +53,24 @@ namespace CORERenderer.GUI
             this.x = x;
             this.y = y;
 
-            maxLines = height / (int)(COREMain.debugText.characterHeight * 0.7f + 2);
+            maxLines = height / (int)(Main.COREMain.debugText.characterHeight * 0.7f + 2);
         }
 
         private int previousLineCount = 0;
         public void Update()
         {
             changed = changed ? changed : indexOfFirstLineToRender != previousIOFLTR; //only change changed if it isnt already true
-            
-            isInFocus = isInFocus ? COREMain.CheckAABBCollision(x, y, Width, Height) : COREMain.CheckAABBCollisionWithClick(x, y, Width, Height); //if the console is already in focus just check if the cursor is still in the console, otherwise check if the console is clicked on to make it in focus
+
+            isInFocus = isInFocus ? Main.COREMain.CheckAABBCollision(x, y, Width, Height) : Main.COREMain.CheckAABBCollisionWithClick(x, y, Width, Height); //if the console is already in focus just check if the cursor is still in the console, otherwise check if the console is clicked on to make it in focus
 
             if (previousLineCount < lines.Count)
                 indexOfFirstLineToRender = lines.Count - maxLines;
 
             if (isInFocus)
             {
-                indexOfFirstLineToRender -= (int)(COREMain.scrollWheelMovedAmount * 1.5);
+                indexOfFirstLineToRender -= (int)(Main.COREMain.scrollWheelMovedAmount * 1.5);
                 indexOfFirstLineToRender = indexOfFirstLineToRender >= 0 ? indexOfFirstLineToRender : 0; //IOFLTR cannot be smaller 0, since that would result in an index out of range error. otherwise apply the desired direction
-                changed = COREMain.scrollWheelMovedAmount != 0;
+                changed = Main.COREMain.scrollWheelMovedAmount != 0;
 
                 CheckIfKeyNeedsToBeDeleted();
 
@@ -87,23 +87,23 @@ namespace CORERenderer.GUI
             if (Glfw.Time - previousTime > 0.06)
             {
                 previousTime = Glfw.Time;
-                if (!LastLine.StartsWith(CurrentContext) && Glfw.GetMouseButton(COREMain.window, MouseButton.Left) == InputState.Press)
+                if (!LastLine.StartsWith(CurrentContext) && Glfw.GetMouseButton(Main.COREMain.window, MouseButton.Left) == InputState.Press)
                     WriteLine(CurrentContext);
 
-                if (Glfw.GetKey(COREMain.window, Keys.Enter) == InputState.Press && !LastLine.EndsWith(CurrentContext))
+                if (Glfw.GetKey(Main.COREMain.window, Keys.Enter) == InputState.Press && !LastLine.EndsWith(CurrentContext))
                     ParseInput(LastLine[(LastLine.IndexOf(CurrentContext) + CurrentContext.Length)..]);
             }
         }
 
         private void CheckForUserInput()
         {
-            if (!COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)COREMain.pressedKey))
+            if (!Main.COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)Main.COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)Main.COREMain.pressedKey))
             {
-                isPressedPrevious = Glfw.GetKey(COREMain.window, Keys.Backspace) == InputState.Press;
+                isPressedPrevious = Glfw.GetKey(Main.COREMain.window, Keys.Backspace) == InputState.Press;
                 return;
             }
                 
-            char letter = Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)COREMain.pressedKey] : Globals.keyCharBinding[(int)COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
+            char letter = Glfw.GetKey(Main.COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)Main.COREMain.pressedKey] : Globals.keyCharBinding[(int)Main.COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
             if (letter != LastLine[^1] || Glfw.Time - previousTime2 > 0.15)
             {
                 Write($"{letter}"); //adds letter to the last line of text
@@ -114,7 +114,7 @@ namespace CORERenderer.GUI
         private void CheckIfKeyNeedsToBeDeleted()
         {
             //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
-            if (Glfw.GetKey(COREMain.window, Keys.Backspace) != InputState.Press || LastLine.EndsWith(CurrentContext) || isPressedPrevious)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.Backspace) != InputState.Press || LastLine.EndsWith(CurrentContext) || isPressedPrevious)
                 return;
 
             LastLine = LastLine[..^1]; //replace the current version with a version of itself with the last char missing
@@ -137,17 +137,17 @@ namespace CORERenderer.GUI
 
             quad.Render(); //renders background
 
-            int sum = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
+            int sum = (int)(Main.COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
             int lineOffset = sum;
 
-            bool original = COREMain.debugText.drawWithHighlights;
+            bool original = Main.COREMain.debugText.drawWithHighlights;
             int max = indexOfFirstLineToRender + maxLines > lines.Count ? lines.Count : indexOfFirstLineToRender + maxLines; //if there are less lines than the console can show it must only render those lines, otherwise it will try to render lines that dont exist
             for (int i = indexOfFirstLineToRender; i < max; i++, lineOffset += sum)
             {
                 if (lines[i] == null)
                     continue;
 
-                COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
+                Main.COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
 
                 string[] allText = SeperateByLength(printResult);
@@ -160,13 +160,13 @@ namespace CORERenderer.GUI
                         max--;
                     }
                         
-                    string suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
+                    string suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 && COREMain.debugText.GetStringWidth(lines[i] + $" ({amountOfAppearancesLine[lines[i]]})", 0.7f) < Width ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
 
                     if (lines[i].Contains("COREConsole/") || i == lines.LastIndexOf(lines[i]))
                         quad.Write(allText[j] + suffix, 0, Height - lineOffset, 0.7f, color);
                 }
             }
-            COREMain.debugText.drawWithHighlights = original;
+            Main.COREMain.debugText.drawWithHighlights = original;
         }
 
         private static void WriteLineF(string text)
@@ -214,7 +214,7 @@ namespace CORERenderer.GUI
 
         private string[] SeperateByLength(string end)
         {
-            float textWidth = COREMain.debugText.GetStringWidth(end, 0.7f);
+            float textWidth = Main.COREMain.debugText.GetStringWidth(end, 0.7f);
             float tooBigPercentage = textWidth / Width;
             if (tooBigPercentage < 1)
                 return new string[] { end };
@@ -308,17 +308,17 @@ namespace CORERenderer.GUI
         public void ShowInfo()
         {
             int i = 0;
-            using (FileStream fs = File.Open($"{COREMain.pathRenderer}\\logos\\logo.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (FileStream fs = File.Open($"{Main.COREMain.pathRenderer}\\logos\\logo.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new(fs))
             using (StreamReader sr = new(bs))
                 for (string n = sr.ReadLine(); n != null; n = sr.ReadLine(), i++) //terribly written
                 {
                     if (i == 2)
-                        WriteLine($"{n}         CORE Renderer {COREMain.VERSION}");
+                        WriteLine($"{n}         CORE Renderer {Main.COREMain.VERSION}");
                     else if (i == 3)
                         WriteLine($"{n}         CORE Math {MathC.VERSION}");
                     else if (i == 5)
-                        WriteLine($"{n}         GPU: {COREMain.GPU}");
+                        WriteLine($"{n}         GPU: {Main.COREMain.GPU}");
                     else if (i == 6)
                         WriteLine($"{n}         OpenGL {OpenGL.GL.glGetString(OpenGL.GL.GL_VERSION)}");
                     else if (i == 7)
@@ -326,19 +326,19 @@ namespace CORERenderer.GUI
                     else if (i == 9)
                         WriteLine($"{n}         {lines.Count - 9} messages were logged before this menu");
                     else if (i == 10)
-                        WriteLine($"{n}         Active for {Math.Round(Glfw.Time)} seconds");
-                    else if (i == 11)
-                        WriteLine($"{n}         Initialized with {COREMain.LoadFile}");
-                    else if (i == 12 && COREMain.LoadFilePath != null)
-                        WriteLine($"{n}         Initialized from {Path.GetFileName(COREMain.LoadFilePath)}");
-                    else if (i == 12 && COREMain.LoadFilePath == null)
+                        WriteLine($"{n}         Initialized with {Main.COREMain.LoadFile}");
+                    else if (i == 11 && Main.COREMain.LoadFilePath != null)
+                        WriteLine($"{n}         Initialized from {Path.GetFileName(Main.COREMain.LoadFilePath)}");
+                    else if (i == 11 && Main.COREMain.LoadFilePath == null)
                         WriteLine($"{n}         Initialized independently");
-                    else if (i == 14)
+                    else if (i == 13)
                         WriteLine($"{n}         Rendering with {Rendering.shaderConfig} shaders");
+                    else if (i == 14)
+                        WriteLine($"{n}         Rendering with {Main.COREMain.splashScreen.refreshRate} Hz");
                     else if (i == 15)
-                        WriteLine($"{n}         Rendering with {COREMain.splashScreen.refreshRate} Hz");
-                    else if (i ==16)
-                        WriteLine($"{n}         Rendering resolution of {COREMain.monitorWidth}x{COREMain.monitorHeight}");
+                        WriteLine($"{n}         Rendering with {1 / Rendering.TextureQuality}x screen resolution");
+                    else if (i == 16)
+                        WriteLine($"{n}         Rendering resolution of {Main.COREMain.monitorWidth}x{Main.COREMain.monitorHeight}");
                     else
                         WriteLine(n);
                 }
@@ -359,29 +359,29 @@ namespace CORERenderer.GUI
             allCommands.Add(input);
 
             if (input == "exit")
-                Glfw.SetWindowShouldClose(COREMain.window, true);
+                Glfw.SetWindowShouldClose(Main.COREMain.window, true);
 
             else if (input.Contains("save scene as"))
             {
                 string filename = input[14..^4];
-                new Job(() => Writers.GenerateCRS(COREMain.pathRenderer, filename, $"Generated by CORE-Renderer {COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", COREMain.CurrentScene.models.ToArray())).Start();
+                new Job(() => Writers.GenerateCRS(Main.COREMain.pathRenderer, filename, $"Generated by CORE-Renderer {Main.COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", Main.COREMain.CurrentScene.models.ToArray())).Start();
             }
 
             else if (input == "save as stl") //debug
             {
-                COREMain.CurrentScene.currentObj = 0;
-                if (COREMain.CurrentScene.models.Count > 0 && COREMain.GetCurrentObjFromScene != -1)
+                Main.COREMain.CurrentScene.currentObj = 0;
+                if (Main.COREMain.CurrentScene.models.Count > 0 && Main.COREMain.GetCurrentObjFromScene != -1)
                 {
-                    Writers.GenerateSTL(COREMain.pathRenderer, $"Written by CORE-Renderer {COREMain.VERSION}", COREMain.CurrentModel);
-                    WriteDebug($"Generated {COREMain.CurrentModel.Name}.stl");
+                    Writers.GenerateSTL(Main.COREMain.pathRenderer, $"Written by CORE-Renderer {Main.COREMain.VERSION}", Main.COREMain.CurrentModel);
+                    WriteDebug($"Generated {Main.COREMain.CurrentModel.Name}.stl");
                 }
                 else
                     WriteError("There is no model to get data from");
             }
             else if (input == "save all as stl")
             {
-                COREMain.MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets);
-                Writers.GenerateSTL(COREMain.pathRenderer, "test", $"test.stl written by CORE-Renderer {COREMain.VERSION}", vertices, offsets);
+                Main.COREMain.MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets);
+                Writers.GenerateSTL(Main.COREMain.pathRenderer, "test", $"test.stl written by CORE-Renderer {Main.COREMain.VERSION}", vertices, offsets);
             }
 
             else if (input == "goto console") //introducing contexts allows for better grouping of commands and better readability / makes it more expandable
@@ -437,17 +437,23 @@ namespace CORERenderer.GUI
                 {
                     case "speed": WriteLine($"{Camera.cameraSpeed}");
                         break;
-                    case "fov": WriteLine($"{COREMain.CurrentScene.camera.Fov}");
+                    case "fov":
+                        WriteLine($"{COREMain.CurrentScene.camera.Fov}");
                         break;
-                    case "yaw": WriteLine($"{COREMain.CurrentScene.camera.Yaw}");
+                    case "yaw":
+                        WriteLine($"{COREMain.CurrentScene.camera.Yaw}");
                         break;
-                    case "pitch": WriteLine($"{COREMain.CurrentScene.camera.Pitch}");
+                    case "pitch":
+                        WriteLine($"{COREMain.CurrentScene.camera.Pitch}");
                         break;
-                    case "farplane": WriteLine($"{COREMain.CurrentScene.camera.FarPlane}");
+                    case "farplane":
+                        WriteLine($"{COREMain.CurrentScene.camera.FarPlane}");
                         break;
-                    case "nearplane": WriteLine($"{COREMain.CurrentScene.camera.NearPlane}");
+                    case "nearplane":
+                        WriteLine($"{COREMain.CurrentScene.camera.NearPlane}");
                         break;
-                    case "position": WriteLine($"{COREMain.CurrentScene.camera.position}");
+                    case "position":
+                        WriteLine($"{COREMain.CurrentScene.camera.position}");
                         break;
                     default: WriteError($"Unknown variable: \"{input[5..]}\"");
                         break;
@@ -508,9 +514,9 @@ namespace CORERenderer.GUI
                     try
                     {
                         int index = Readers.GetOneIntWithRegEx(input);
-                        COREMain.scenes[COREMain.selectedScene].models[index].Dispose();
+                        Main.COREMain.scenes[Main.COREMain.selectedScene].models[index].Dispose();
                         WriteLine($"Deleted model {index}");
-                        COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                        Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                     }
                     catch (IndexOutOfRangeException)
                     {
@@ -529,9 +535,9 @@ namespace CORERenderer.GUI
                                 WriteLine($"Deleted model {i}"); //simple way of showing which models are deleted
                             else
                                 Write($"..{i}");
-                            COREMain.scenes[COREMain.selectedScene].models[i].Dispose();
+                            Main.COREMain.scenes[Main.COREMain.selectedScene].models[i].Dispose();
                         }
-                        COREMain.scenes[COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                        Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                     }
                     catch (IndexOutOfRangeException)
                     {
@@ -546,19 +552,19 @@ namespace CORERenderer.GUI
                 if (input.Length > 12 && input[5..9] == "dir ")
                 {
                     string dir = input[9..];
-                    if (dir[..4] == "this" && COREMain.LoadFilePath != null) //allows the use of 'this' as an alias for the directory it was opened in
-                        dir = Path.GetDirectoryName(COREMain.LoadFilePath);
-                    else if (dir[..4] == "this" && COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
+                    if (dir[..4] == "this" && Main.COREMain.LoadFilePath != null) //allows the use of 'this' as an alias for the directory it was opened in
+                        dir = Path.GetDirectoryName(Main.COREMain.LoadFilePath);
+                    else if (dir[..4] == "this" && Main.COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
                     {
                         WriteError($"\"{dir}\" isn't valid here");
                         return;
                     }
                     else if (dir[..5] == "$PATH") //allows '$PATH' to be used as an alias for the base of the directory that the .exe is located
-                        dir = COREMain.pathRenderer + dir[5..];
+                        dir = Main.COREMain.pathRenderer + dir[5..];
                     
                     if (Directory.Exists(dir)) //checks if the given directory is valid
                     {
-                        COREMain.LoadDir(dir);
+                        Main.COREMain.LoadDir(dir);
                         WriteLine($"Loaded directory {dir}");
                     }
                     else
@@ -568,10 +574,10 @@ namespace CORERenderer.GUI
                 {
                     string dir = input[5..];
                     if (dir[..5] == "$PATH")
-                        dir = COREMain.pathRenderer + dir[5..];
+                        dir = Main.COREMain.pathRenderer + dir[5..];
                     if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg") //only allows certain file types, in this case .obj and .hdr
                     {
-                        COREMain.scenes[COREMain.selectedScene].models.Add(new(dir));
+                        Main.COREMain.scenes[Main.COREMain.selectedScene].models.Add(new(dir));
                         WriteLine("Loaded file");
                     }
                     else
@@ -587,16 +593,16 @@ namespace CORERenderer.GUI
                 switch (input[4..])
                 {
                     case "model count":
-                        WriteLine($"{COREMain.CurrentScene.models.Count}");
+                        WriteLine($"{Main.COREMain.CurrentScene.models.Count}");
                         break;
                     case "submodel count":
                         int count = 0;
-                        foreach (Model model in COREMain.CurrentScene.models)
+                        foreach (Model model in Main.COREMain.CurrentScene.models)
                             count += model.submodels.Count;
                         WriteLine($"{count}");
                         break;
                     case "draw calls":
-                        WriteLine($"{COREMain.drawCallsPerFrame}");
+                        WriteLine($"{Main.COREMain.drawCallsPerFrame}");
                         break;
                 }
             }
@@ -632,7 +638,7 @@ namespace CORERenderer.GUI
                         int indexOfSymbol = input.IndexOf(']');
                         int modelIndex = Readers.GetOneIntWithRegEx(input[..indexOfSymbol]);
 
-                        Model model = COREMain.CurrentScene.models[modelIndex];
+                        Model model = Main.COREMain.CurrentScene.models[modelIndex];
                         
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[(indexOfSymbol + 1)..]);
                         if (input.StartsWith("moveto")) //sorts for moveto, this value is applied absolutely
@@ -651,13 +657,13 @@ namespace CORERenderer.GUI
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input);
                         if (input[4..6] == "to") //sorts for moveto, this value is applied absolutely
                         {
-                            foreach (Model model in COREMain.CurrentScene.models)
+                            foreach (Model model in Main.COREMain.CurrentScene.models)
                                 model.Transform.translation += location;
                             WriteLine($"Moved model to {location}");
                         }
                         else //sorts for move, this value is applied relatively
                         {
-                            foreach (Model model in COREMain.CurrentScene.models)
+                            foreach (Model model in Main.COREMain.CurrentScene.models)
                                     model.Transform.translation += location;
                             WriteLine($"Moved model with {location}");
                         }
@@ -718,11 +724,11 @@ namespace CORERenderer.GUI
 
         private void Restart()
         {
-            if (COREMain.LoadFilePath == null)
+            if (Main.COREMain.LoadFilePath == null)
                 Process.Start("CORERenderer.exe");
             else
-                Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-            GenerateCacheFile(COREMain.pathRenderer);
+                Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
+            GenerateCacheFile(Main.COREMain.pathRenderer);
             Environment.Exit(1);
         }
 
@@ -731,34 +737,34 @@ namespace CORERenderer.GUI
             if (input.ToLower().Contains("pathtracing"))
             {
                 Rendering.shaderConfig = ShaderType.PathTracing;
-                COREMain.GenerateConfig();
-                if (COREMain.LoadFilePath == null)
+                Main.COREMain.GenerateConfig();
+                if (Main.COREMain.LoadFilePath == null)
                     Process.Start("CORERenderer.exe");
                 else
-                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                GenerateCacheFile(COREMain.pathRenderer);
+                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
+                GenerateCacheFile(Main.COREMain.pathRenderer);
                 Environment.Exit(1);
             }
             else if (input.ToLower().Contains("lighting"))
             {
                 Rendering.shaderConfig = ShaderType.Lighting;
-                COREMain.GenerateConfig();
-                if (COREMain.LoadFilePath == null)
+                Main.COREMain.GenerateConfig();
+                if (Main.COREMain.LoadFilePath == null)
                     Process.Start("CORERenderer.exe");
                 else
-                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                GenerateCacheFile(COREMain.pathRenderer);
+                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
+                GenerateCacheFile(Main.COREMain.pathRenderer);
                 Environment.Exit(1);
             }
             else if (input.ToLower().Contains("fullbright"))
             {
                 Rendering.shaderConfig = ShaderType.FullBright;
-                COREMain.GenerateConfig();
-                if (COREMain.LoadFilePath == null)
+                Main.COREMain.GenerateConfig();
+                if (Main.COREMain.LoadFilePath == null)
                     Process.Start("CORERenderer.exe");
                 else
-                    Process.Start("CORERenderer.exe", COREMain.LoadFilePath);
-                GenerateCacheFile(COREMain.pathRenderer);
+                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
+                GenerateCacheFile(Main.COREMain.pathRenderer);
                 Environment.Exit(1);
             }
             else

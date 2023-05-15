@@ -17,39 +17,6 @@ namespace CORERenderer.Main
         public Vector3 color;
     }
 
-    public struct Cubemap
-    {
-        public uint VAO;
-        public uint textureID;
-        public Shader shader;
-    }
-
-    /// <summary>
-    /// contains all the metadata for one object in the CRS directory
-    /// </summary>
-    public struct ObjectInstance 
-    {
-        public ObjectInstance(string objP, int amountVerticeGroups, int amountIndiceGroups)
-        {
-            objPath = objP;
-            amountOfVerticeGroups = amountVerticeGroups;
-            amountOfIndiceGroups = amountIndiceGroups;
-        }
-        public string objPath;
-        public int amountOfVerticeGroups;
-        public int amountOfIndiceGroups;
-    }
-
-    public struct PBRMaterial
-    {
-        public string Name;
-        public Texture albedoMap;
-        public Texture normalMap;
-        public Texture metallicMap;
-        public Texture roughnessMap;
-        public Texture AOMap;
-    }
-
     /// <summary>
     /// holds all the information for an OpenGL material
     /// </summary>
@@ -68,14 +35,18 @@ namespace CORERenderer.Main
         public int DiffuseMap;
         public int SpecularMap;
         public int NormalMap;
+        public int MetalMap;
+
+        public Vector3 overrideColor = Vector3.Zero;
 
         public Material()
         {
             Name = "placeholder";
             Texture = 0;
-            DiffuseMap = 0;
+            DiffuseMap = 2;
             SpecularMap = 1;
             NormalMap = 3;
+            MetalMap = 4;
 
             OpticalDensity = 1;
             Transparency = 1;
@@ -86,7 +57,7 @@ namespace CORERenderer.Main
             EmissiveCoefficient = Vector3.Zero;
             Illum = 2;
             Shininess = 32;
-
+            overrideColor = Vector3.Zero;
         }
     }
 }

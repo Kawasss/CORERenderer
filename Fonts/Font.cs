@@ -25,7 +25,7 @@ namespace CORERenderer.Fonts
 
         public unsafe Font(uint pixelHeight, string fontPath)
         {
-            shader = new($"{COREMain.pathRenderer}\\shaders\\Font.vert", $"{COREMain.pathRenderer}\\shaders\\Font.frag");
+            shader = new($"{Main.COREMain.pathRenderer}\\shaders\\Font.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Font.frag");
 
             characterHeight = (int)pixelHeight;
 
@@ -84,8 +84,8 @@ namespace CORERenderer.Fonts
             shader.ActivateAttributes();
 
             shader.Use();
-            shader.SetInt("Texture", GL_TEXTURE0);
-            shader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.SetInt("Texture", 0);
+            shader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
         }
 
         public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction) => RenderText(text, x, y, scale, direction, new Vector3(1, 1, 1));

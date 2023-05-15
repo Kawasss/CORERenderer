@@ -98,8 +98,8 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to compile shader {shader}, pname[0] != GL_TRUE");
-                Console.WriteLine(glGetShaderInfoLog(shader));
+                Console.WriteError($"failed to compile shader {shader}, pname[0] != GL_TRUE");
+                Console.WriteError(glGetShaderInfoLog(shader));
             }
         }
 
@@ -111,8 +111,8 @@ namespace CORERenderer.shaders
             bool successful = pname[0] == GL_TRUE;
             if (!successful)
             {
-                Console.WriteLine($"failed to link program {program}, pname[0] != GL_TRUE");
-                Console.WriteLine(glGetProgramInfoLog(program));
+                Console.WriteError($"failed to link program {program}, pname[0] != GL_TRUE");
+                Console.WriteError(glGetProgramInfoLog(program));
             }
             glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, pname);
             Rendering.shaderByteSize += pname[0];
@@ -228,6 +228,18 @@ namespace CORERenderer.shaders
         {
             if (!uniformLocations.ContainsKey(name))
                 uniformLocations.Add(name, glGetUniformLocation(Handle, name));
+
+            if (uniformLocations[name] == -1)
+            {
+                uniformLocations.Remove(name);
+                uniformLocations.Add(name, glGetUniformLocation(Handle, name));
+
+                if (uniformLocations[name] == -1)
+                {
+                    Console.WriteError($"Invalid uniform {name} (location == -1)");
+                    return -1;
+                }
+            }
             return uniformLocations[name];
         }
 
@@ -235,7 +247,9 @@ namespace CORERenderer.shaders
         {
             glUseProgram(Handle);
 
-            int location = GetUniformLocation(name);
+            int location = GetUniformLocation(name + char.MinValue);
+
+            GetError();
             glUniform1i(location, value);
         }
 
@@ -244,6 +258,7 @@ namespace CORERenderer.shaders
             glUseProgram(Handle);
 
             int location = GetUniformLocation(name);
+
             glUniform1i(location, value ? 1 : 0);
         }
 
@@ -252,6 +267,7 @@ namespace CORERenderer.shaders
             glUseProgram(Handle);
 
             int location = GetUniformLocation(name);
+
             glUniform1f(location, value);
         }
 
@@ -272,6 +288,7 @@ namespace CORERenderer.shaders
             glUseProgram(Handle);
 
             int location = GetUniformLocation(name);
+
             glUniform3f(location, v3.x, v3.y, v3.z);
         }
 
@@ -280,6 +297,7 @@ namespace CORERenderer.shaders
             glUseProgram(Handle);
 
             int location = GetUniformLocation(name);
+
             glUniform3f(location, v1, v2, v3);
         }
 

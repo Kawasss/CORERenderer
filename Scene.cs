@@ -57,42 +57,42 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
-
-            //debug
-            if (models.Count == 0)
-                models.Add(Model.Cube);
-            models.Add(Model.Cube);
-            
-            bone.Add(new(new(.2f, 0, 0), new(.2f, 2, 0), new(1, 1, 1), new(0, 0, 0)));
-            models[^1].Transform = bone[0].transform;
-            currentBone = 0;
-            bone[0].ApplyWeightsToVertices(models[^1]);
+            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
+            lights.Add(new() { position = new(1, 2, 1) });
+            camera.position = new(1f, 1f, 1f);
+            camera.front = new(-1, -1, -1);
+            camera.right = MathC.Normalize(MathC.GetCrossProduct(camera.front, Vector3.UnitVectorY));
+            camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));
         }
 
         public override void RenderEveryFrame(float delta)
         {
-            CurrentBone.DebugUpdate();
-            CurrentBone.Render();
-            for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
-                GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].ModelMatrix);
-
-            if (shaderConfig == ShaderType.PathTracing)
+            try
             {
-                GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
-                GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
-                GenericShaders.GenericLighting.SetInt("isReflective", 0);
-                GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
-                GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
-                GenericShaders.GenericLighting.SetVector3("lights.position", new(0, 1, 1));
-            }
-            else if (shaderConfig == ShaderType.Lighting)
-            {
-                GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position - Vector3.UnitVectorY);
-                GenericShaders.GenericLighting.SetVector3("front", CurrentScene.camera.front);
-                GenericShaders.GenericLighting.SetVector3("pointLights[0].position", CurrentScene.camera.position);
-            }
+                for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
+                    GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].ModelMatrix);
 
-            RenderAllModels(models);
+                if (shaderConfig == ShaderType.PathTracing)
+                {
+                    GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
+                    GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
+                    GenericShaders.GenericLighting.SetInt("isReflective", 0);
+                    GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
+                    GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
+                    GenericShaders.GenericLighting.SetVector3("lights.position", new(0, 1, 1));
+                }
+                else if (shaderConfig == ShaderType.Lighting)
+                {
+                    GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
+                    GenericShaders.GenericLighting.SetVector3("lightPos", new(1, 2, 1));
+                    GenericShaders.GenericLighting.SetInt("skybox", 4);
+                }
+                RenderScene(this);
+            }
+            catch (System.Exception err)
+            {
+                Console.WriteError($"Rendering error: {err}");
+            }
         }
 
         public override void EveryFrame(Window window, float delta)
@@ -142,34 +142,34 @@ namespace CORERenderer
                 {
                     //code below is checking if the current is selected and moves, transforms or rotates the object
                     if (arrows.wantsToRotateYAxis && loaded)
-                        CurrentBone.transform.rotation.y -= deltaX / 30;
+                        CurrentModel.Transform.rotation.y -= deltaX / 30;
                     if (arrows.wantsToRotateXAxis && loaded)
-                        CurrentBone.transform.rotation.x += (deltaY + deltaX) / 30;
+                        CurrentModel.Transform.rotation.x += (deltaY + deltaX) / 30;
                     if (arrows.wantsToRotateZAxis && loaded)
-                        CurrentBone.transform.rotation.z += (deltaY + deltaX) / 30;
+                        CurrentModel.Transform.rotation.z += (deltaY + deltaX) / 30;
 
                     if (arrows.wantsToMoveYAxis && loaded)
-                        CurrentBone.transform.translation.y += deltaY / 150;
+                        CurrentModel.Transform.translation.y += deltaY / 150;
 
                     if (arrows.wantsToMoveXAxis && loaded)
-                        CurrentBone.transform.translation.x -= deltaX / 150;
+                        CurrentModel.Transform.translation.x -= deltaX / 150;
 
                     if (arrows.wantsToMoveZAxis && loaded)
-                        CurrentBone.transform.translation.z += -deltaX / 150;
+                        CurrentModel.Transform.translation.z += -deltaX / 150;
 
 
                     if (arrows.wantsToScaleYAxis && loaded)
-                        CurrentBone.transform.scale.y -= deltaY / 200;
+                        CurrentModel.Transform.scale.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
-                        CurrentBone.transform.scale.x += deltaX / 200;
+                        CurrentModel.Transform.scale.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        CurrentBone.transform.scale.z += (deltaX + deltaY) / 400;
+                        CurrentModel.Transform.scale.z += (deltaX + deltaY) / 400;
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)
-                Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
+                Glfw.SetInputMode(CORERenderer.Main.COREMain.window, InputMode.Cursor, (int)CursorMode.Normal);
         }
 
         public static void EnableGLOptions()
@@ -187,6 +187,7 @@ namespace CORERenderer
             glEnable(GL_DEBUG_OUTPUT);
 
             glEnable(GL_CULL_FACE);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
         }

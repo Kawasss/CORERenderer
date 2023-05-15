@@ -25,12 +25,14 @@ namespace CORERenderer.textures
         public int width2D;
         public int height2D;
 
-        private Shader shader = new($"{COREMain.pathRenderer}\\shaders\\HDRCube.vert", $"{COREMain.pathRenderer}\\shaders\\HDRCube.frag");
+        private Shader shader = new($"{Main.COREMain.pathRenderer}\\shaders\\HDRCube.vert", $"{Main.COREMain.pathRenderer}\\shaders\\HDRCube.frag");
 
-        private Shader testShader = new($"{COREMain.pathRenderer}\\shaders\\2DImage.vert", $"{COREMain.pathRenderer}\\shaders\\2DImage.frag");
+        private Shader testShader = new($"{Main.COREMain.pathRenderer}\\shaders\\2DImage.vert", $"{Main.COREMain.pathRenderer}\\shaders\\2DImage.frag");
 
-        public static unsafe HDRTexture ReadFromFile(string imagePath)
+        public static unsafe HDRTexture ReadFromFile(string imagePath, float quality)
         {
+            glDisable(GL_CULL_FACE);
+
             Stbi.SetFlipVerticallyOnLoad(true);
 
             HDRTexture h = new(glGenTexture());
@@ -40,14 +42,6 @@ namespace CORERenderer.textures
                 throw new Exception($"Couldnt find file at {imagePath}");
             }
 
-            h.FBO = glGenFramebuffer();
-            h.RBO = glGenRenderbuffer();
-
-            glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
-            glBindRenderbuffer(GL_RENDERBUFFER, h.RBO);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, h.RBO);
-
             using (FileStream stream = File.OpenRead(imagePath))
             using (MemoryStream memoryStream = new())
             {
@@ -55,6 +49,17 @@ namespace CORERenderer.textures
                 stream.CopyTo(memoryStream);
 
                 image = Stbi.LoadFromMemory(memoryStream, 4);
+
+                h.FBO = glGenFramebuffer();
+                h.RBO = glGenRenderbuffer();
+
+                int qualityWidth = (int)(1024 / quality);// (float)quality);
+                int qualityHeight = (int)(1024 / quality);// (float)quality);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
+                glBindRenderbuffer(GL_RENDERBUFFER, h.RBO);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, qualityWidth, qualityHeight);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, h.RBO);
 
                 h.width2D = image.Width;
                 h.height2D = image.Height;
@@ -90,7 +95,7 @@ namespace CORERenderer.textures
                 glEnableVertexAttribArray((uint)vertexLocation);
 
                 h.testShader.Use();
-                h.testShader.SetInt("Texture", GL_TEXTURE0);
+                h.testShader.SetInt("Texture", 0);
                 h.testShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
 
                 glBindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -112,53 +117,65 @@ namespace CORERenderer.textures
                 List<int> local = new();
                 for (int i = imagePath.IndexOf("\\"); i > -1; i = imagePath.IndexOf("\\", i + 1))
                     local.Add(i);
+            
+                h.envCubeMap = glGenTexture();
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
+                for (int i = 0; i < 6; i++)
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, qualityWidth, qualityHeight, 0, GL_RGB, GL_FLOAT, null);
+
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                Matrix captureProjection = Matrix.CreatePerspectiveFOV(MathC.PiF / 2, 1, 0.01f, 1000);//COREMain.Width / COREMain.Height
+                Matrix[] captureViews =
+                {
+                    MathC.LookAt(new(0, 0, 0), new(1, 0, 0), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(-1, 0, 0), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 1, 0), new(0, 0, 1)),
+                    MathC.LookAt(new(0, 0, 0), new(0, -1, 0), new(0, 0, -1)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 0, 1), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 0, -1), new(0, -1, 0)),
+                };
+
+                h.shader.Use();
+
+                h.shader.SetInt("equirectangularMap", 1);
+                h.shader.SetMatrix("projection", captureProjection);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, h.Handle);
+
+                glViewport(0, 0, qualityWidth, qualityHeight);
+                glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
+
+                for (int i = 0; i < 6; i++)
+                {
+                    h.shader.SetMatrix("view", captureViews[i]);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, h.envCubeMap, 0);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                    Rendering.RenderCube();
+                }
+
+                glEnable(GL_CULL_FACE);
             }
-
-            h.envCubeMap = glGenTexture();
-            glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
-            for (int i = 0; i < 6; i++)
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, null);
-
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            Matrix captureProjection = Matrix.CreatePerspectiveFOV(MathC.PiF / 2, 1, 0.1f, 10);//COREMain.Width / COREMain.Height
-            Matrix[] captureViews =
-            {
-                MathC.LookAt(new(0, 0, 0), new(1, 0, 0), new(0, -1, 0)),
-                MathC.LookAt(new(0, 0, 0), new(-1, 0, 0), new(0, -1, 0)),
-                MathC.LookAt(new(0, 0, 0), new(0, 1, 0), new(0, 0, 1)),
-                MathC.LookAt(new(0, 0, 0), new(0, -1, 0), new(0, 0, -1)),
-                MathC.LookAt(new(0, 0, 0), new(0, 0, 1), new(0, -1, 0)),
-                MathC.LookAt(new(0, 0, 0), new(0, 0, -1), new(0, -1, 0)),
-            };
-
-            h.shader.Use();
-
-            h.shader.SetInt("equirectangularMap", GL_TEXTURE0);
-            h.shader.SetMatrix("projection", captureProjection);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, h.Handle);
-
-            glViewport(0, 0, 512, 512);
-            glBindFramebuffer(GL_FRAMEBUFFER, h.FBO);
-
-            glDisable(GL_CULL_FACE);
-
-            for (int i = 0; i < 6; i++)
-            {
-                h.shader.SetMatrix("view", captureViews[i]);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, h.envCubeMap, 0);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                Rendering.RenderCube();
-            }
-
-            glEnable(GL_CULL_FACE);
             return h;
+        }
+
+        public void Render()
+        {
+            glDisable(GL_CULL_FACE);
+            GenericShaders.Background.Use();
+            GenericShaders.Background.SetInt("environmentMap", 0);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubeMap);
+            glDepthFunc(GL_LEQUAL);
+            glDrawArrays(PrimitiveType.Triangles, 0, 36);
+            glEnable(GL_CULL_FACE);
         }
 
         public void RenderAs2DTexture()

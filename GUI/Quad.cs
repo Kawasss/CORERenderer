@@ -48,8 +48,8 @@ namespace CORERenderer.GUI
             Width = width;
             Height = height;
 
-            bottomX = -(COREMain.monitorWidth / 2) + x;
-            bottomY = -(COREMain.monitorHeight / 2) + y;
+            bottomX = -(Main.COREMain.monitorWidth / 2) + x;
+            bottomY = -(Main.COREMain.monitorHeight / 2) + y;
 
             float[] vertices = new float[]
             {
@@ -66,9 +66,9 @@ namespace CORERenderer.GUI
 
             shaderQ.ActivateAttributes();
 
-            objIcon ??= Texture.ReadFromFile(false, $"{COREMain.pathRenderer}\\GUI\\objIcon.png");
-            imageIcon ??= Texture.ReadFromFile(false, $"{COREMain.pathRenderer}\\GUI\\imageIcon.png");
-            hdrIcon ??= Texture.ReadFromFile(false, $"{COREMain.pathRenderer}\\GUI\\hdrIcon.png");
+            objIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\objIcon.png");
+            imageIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\imageIcon.png");
+            hdrIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\hdrIcon.png");
 
             if (iconVBO == 0)
             {
@@ -84,8 +84,8 @@ namespace CORERenderer.GUI
                 shader.ActivateAttributes();
 
                 shader.Use();
-                shader.SetInt("Texture", GL_TEXTURE0);
-                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+                shader.SetInt("Texture", 0);
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
             }
 
             lineVBO = glGenBuffer();
@@ -110,7 +110,7 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
-            if (onlyUpdateEverySecond && !COREMain.secondPassed)
+            if (onlyUpdateEverySecond && !Main.COREMain.secondPassed)
                 return;
 
             shaderQ.Use();
@@ -128,49 +128,49 @@ namespace CORERenderer.GUI
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(string text, int x, int y, Vector3 color) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0), color);
+        public void Write(string text, int x, int y, Vector3 color) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0), color);
 
         /// <summary>
         /// Writes a string to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(string text, int x, int y, float scale, Vector3 color) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0), color);
+        public void Write(string text, int x, int y, float scale, Vector3 color) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0), color);
 
         /// <summary>
         /// Writes a string to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(string text, int x, int y) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0));
+        public void Write(string text, int x, int y) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0));
 
         /// <summary>
         /// Writes a value to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(Vector3 vector, int x, int y) => COREMain.debugText.RenderText($"{vector.x}  {vector.y}  {vector.z}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
+        public void Write(Vector3 vector, int x, int y) => Main.COREMain.debugText.RenderText($"{vector.x}  {vector.y}  {vector.z}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
 
         /// <summary>
         /// Writes a value to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(Vector2 vector, int x, int y) => COREMain.debugText.RenderText($"{vector.x}  {vector.y}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
+        public void Write(Vector2 vector, int x, int y) => Main.COREMain.debugText.RenderText($"{vector.x}  {vector.y}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
 
         /// <summary>
         /// Writes a string to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(float value, int x, int y) => COREMain.debugText.RenderText($"{value}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
+        public void Write(float value, int x, int y) => Main.COREMain.debugText.RenderText($"{value}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
 
         /// <summary>
         /// Writes a string to a position relative of the quads position
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        public void Write(int value, int x, int y) => COREMain.debugText.RenderText($"{value}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
+        public void Write(int value, int x, int y) => Main.COREMain.debugText.RenderText($"{value}", bottomX + x, bottomY + y, 1, new Vector2(1, 0));
 
         /// <summary>
         /// Writes a string to a position relative of the quads position
@@ -179,12 +179,12 @@ namespace CORERenderer.GUI
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="scale">standard: 1</param>
-        public void Write(string text, int x, int y, float scale) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0));
+        public void Write(string text, int x, int y, float scale) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0));
 
-        public void WriteError(string text, int x, int y) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
+        public void WriteError(string text, int x, int y) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
 
-        public void WriteError(string text, int x, int y, float scale) => COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0), new Vector3(1, 0, 0));
+        public void WriteError(string text, int x, int y, float scale) => Main.COREMain.debugText.RenderText(text, bottomX + x, bottomY + y, scale, new Vector2(1, 0), new Vector3(1, 0, 0));
 
-        public void WriteError(Exception err, int x, int y) => COREMain.debugText.RenderText($"{err}", bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
+        public void WriteError(Exception err, int x, int y) => Main.COREMain.debugText.RenderText($"{err}", bottomX + x, bottomY + y, 1, new Vector2(1, 0), new Vector3(1, 0, 0));
     }
 }

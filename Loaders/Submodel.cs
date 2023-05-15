@@ -14,6 +14,7 @@ namespace CORERenderer.Loaders
     {
         public static bool useRenderDistance = false;
         public static float renderDistance = 100;
+        public static bool renderAllIDs = true;
 
         public Vector3 scaling = new(1, 1, 1), translation = new(0, 0, 0), rotation = new(0, 0, 0);
 
@@ -41,6 +42,36 @@ namespace CORERenderer.Loaders
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         #region constructors
+        public Submodel(string name, List<Vertex> vertices, Material material, Model parent)
+        {
+            this.name = name;
+            this.vertices = vertices;
+            this.material = material;
+            this.parent = parent;
+
+            DefaultSetUp();
+        }
+
+        public Submodel(string name, List<Vertex> vertices, Model parent)
+        {
+            this.name = name;
+            this.vertices = vertices;
+            this.parent = parent;
+            this.material = new();
+            System.Console.WriteLine(vertices.Count);
+            DefaultSetUp();
+        }
+
+        public Submodel(string name, List<Vertex> vertices, List<int> indices, Model parent)
+        {
+            this.name = name;
+            this.vertices = ConvertIndices(vertices, indices);
+            this.material = new();
+            this.parent = parent;
+
+            DefaultSetUp();
+        }
+
         public Submodel(string name, List<Vertex> vertices, List<uint> indices, Material material)
         {
             this.Name = name;
@@ -118,10 +149,12 @@ namespace CORERenderer.Loaders
             ID = parent.ID;
             IDColor = COREMain.GenerateIDColor(ID);
 
-            shader.SetInt("material.Texture", GL_TEXTURE0);
-            shader.SetInt("material.diffuse", GL_TEXTURE1);
-            shader.SetInt("material.specular", GL_TEXTURE2);
-            shader.SetInt("material.normalMap", GL_TEXTURE3);
+            shader.Use();
+            //shader.SetInt("material.Texture", 0);
+            shader.SetInt("diffuseMap", 0);
+            shader.SetInt("specularMap", 1);
+            shader.SetInt("normalMap", 2);
+            shader.SetInt("metalMap", 3);
         }
 
         public void Render()
@@ -133,9 +166,9 @@ namespace CORERenderer.Loaders
                     GenerateBuffers(); //might be better to do glBufferSubData but dont know if thatll work
                     verticesChanged = false;
                 }
-                    
+
                 shader.Use();
-                
+
                 highlighted = COREMain.selectedID == ID;
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -152,7 +185,7 @@ namespace CORERenderer.Loaders
 
                 RenderColorVersion();
 
-                if (COREMain.renderToIDFramebuffer && renderIDVersion)
+                if (COREMain.renderToIDFramebuffer && renderIDVersion && renderAllIDs)
                     RenderIDVersion();
 
                 if (!cullFaces)
@@ -186,6 +219,7 @@ namespace CORERenderer.Loaders
         {
             shader.SetFloat("transparency", material.Transparency);
             shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
+            shader.SetVector3("overrideColor", Vector3.Zero);
 
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
 
@@ -194,10 +228,12 @@ namespace CORERenderer.Loaders
 
         private void UseTextures()
         {
+            shader.Use();
+            //usedTextures[material.Texture].Use(GL_TEXTURE0);
             usedTextures[material.Texture].Use(GL_TEXTURE0);
-            usedTextures[material.DiffuseMap].Use(GL_TEXTURE1);
-            usedTextures[material.SpecularMap].Use(GL_TEXTURE2);
-            usedTextures[material.NormalMap].Use(GL_TEXTURE3);
+            usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
+            usedTextures[material.NormalMap].Use(GL_TEXTURE2);
+            usedTextures[material.MetalMap].Use(GL_TEXTURE3);
         }
 
         public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<uint> indices)
@@ -206,6 +242,15 @@ namespace CORERenderer.Loaders
             
             foreach (uint Indice in indices)
                 result.Add(vertices[(int)Indice]);
+
+            return result;
+        }
+        public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<int> indices)
+        {
+            List<Vertex> result = new();
+
+            foreach (int Indice in indices)
+                result.Add(vertices[Indice]);
 
             return result;
         }

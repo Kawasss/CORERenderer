@@ -2,11 +2,119 @@
 using CORERenderer.OpenGL;
 using CORERenderer.Main;
 using Console = CORERenderer.GUI.Console;
+using Assimp;
+using Material = CORERenderer.Main.Material;
+using Assimp.Configs;
 
 namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
+        public static Error LoadOBJ(string path, out string name, out List<List<Vertex>> vertices, out List<Material> materials, out Vector3 center, out Vector3 extents)
+        {
+            if (!File.Exists(path))
+            {
+                vertices = new();
+                name = "PLACEHOLDER";
+                center = Vector3.Zero;
+                extents = Vector3.Zero;
+                materials = new();
+                return Error.InvalidPath;
+            }
+
+            Assimp.Scene s = GetAssimpScene(path);
+
+            name = Path.GetFileNameWithoutExtension(path);
+
+            vertices = GetBasicSceneData(path, s, out materials, out center, out extents);
+
+            return Error.None;
+        }
+
+        private static List<List<Vertex>> GetBasicSceneData(string path, Assimp.Scene s, out List<Material> materials, out Vector3 center, out Vector3 extents)
+        {
+            List<List<Vertex>> vertices = new();
+            materials = new();
+
+            Vector3 min = Vector3.Zero;
+            Vector3 max = Vector3.Zero;
+
+            for (int i = 0; i < s.MeshCount; i++)
+            {
+                Material material = new();
+                Mesh mesh = s.Meshes[i];
+                vertices.Add(new());
+                foreach (int indice in mesh.GetIndices())
+                {
+                    int uvIndex = 0;
+                    if (s.HasMaterials)
+                        uvIndex = s.Materials[mesh.MaterialIndex].TextureDiffuse.UVIndex;
+
+                    Vector3D aPos = mesh.Vertices[indice];
+                    Vector3 pos = new(aPos.X, aPos.Y, aPos.Z);
+
+                    max.x = pos.x > max.x ? pos.x : max.x;
+                    max.y = pos.y > max.y ? pos.y : max.y;
+                    max.z = pos.z > max.z ? pos.z : max.z;
+
+                    min.x = pos.x < min.x ? pos.x : min.x;
+                    min.y = pos.y < min.y ? pos.y : min.y;
+                    min.z = pos.z < min.z ? pos.z : min.z;
+
+                    Vector3 normal = Vector3.UnitVectorY;
+                    if (mesh.HasNormals)
+                    {
+                        Vector3D aNormal = mesh.Normals[indice];
+                        normal = new(aNormal.X, aNormal.Y, aNormal.Z);
+                    }
+
+                    //Vector3D texCoor = mesh.TextureCoordinateChannels[i][indice];
+                    Vector2 uv = new();
+                    if (mesh.HasTextureCoords(uvIndex))
+                        uv = s.HasMaterials ? new(mesh.TextureCoordinateChannels[uvIndex][indice].X, mesh.TextureCoordinateChannels[uvIndex][indice].Y) : new();
+
+                    vertices[^1].Add(new(pos, uv, normal));
+                }
+
+                if (s.HasMaterials)
+                {
+                    Assimp.Material mat = s.Materials[mesh.MaterialIndex];
+                    if (mat.HasTextureDiffuse)
+                        material.Texture = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDiffuse.FilePath}");
+                    if (mat.HasTextureDiffuse)
+                        material.DiffuseMap = material.Texture;
+                    if (mat.HasTextureSpecular)
+                        material.SpecularMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureSpecular.FilePath}");
+                    if (mat.HasTextureNormal)
+                        material.NormalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureNormal.FilePath}");
+                    if (mat.HasTextureEmissive)
+                        material.MetalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureEmissive.FilePath}");
+
+                    if (mat.HasColorTransparent)
+                    {
+                        material.overrideColor = new(mat.ColorTransparent.R, mat.ColorTransparent.G, mat.ColorTransparent.B);
+                        material.Transparency = mat.Opacity;
+                    }
+
+                    if (mat.HasShininess)
+                        material.Shininess = mat.Shininess;
+                }
+                materials.Add(material);
+            }
+            center = (min + max) * 0.5f;
+            extents = max - center;
+            return vertices;
+        }
+
+        private static Assimp.Scene GetAssimpScene(string path)
+        {
+            AssimpContext context = new();
+            Assimp.Configs.RemoveComponentConfig a = new(ExcludeComponent.Normals);
+            context.SetConfig(a);
+            return context.ImportFile(path,  PostProcessSteps.FixInFacingNormals | PostProcessSteps.RemoveComponent | PostProcessPreset.TargetRealTimeMaximumQuality);
+        }
+
+        [Obsolete("Made redundant by the inclusion of Assimp")]
         public static Error LoadOBJ(string path, out List<string> mtlNames, out List<List<Vertex>> outVertices, out List<List<uint>> outIndices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib)
         {
             extents = Vector3.Zero;

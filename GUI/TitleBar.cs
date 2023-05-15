@@ -13,7 +13,7 @@ namespace CORERenderer.GUI
         private uint VBOC;
         private uint VAOC;
 
-        private Shader shaderC = new($"{COREMain.pathRenderer}\\shaders\\Font.vert", $"{COREMain.pathRenderer}\\shaders\\Cross.frag");
+        private Shader shaderC = new($"{Main.COREMain.pathRenderer}\\shaders\\Font.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Cross.frag");
 
         private bool isSelected = false;
 
@@ -25,10 +25,10 @@ namespace CORERenderer.GUI
 
         public TitleBar()
         {
-            float width = COREMain.Width / 2;
-            float height = COREMain.Height / 2;
+            float width = Main.COREMain.Width / 2;
+            float height = Main.COREMain.Height / 2;
 
-            div = new(COREMain.monitorWidth, 25, 0, COREMain.monitorHeight - 25);
+            div = new(Main.COREMain.monitorWidth, 25, 0, Main.COREMain.monitorHeight - 25);
             div.SetRenderCallBack(render);
 
             float[] crossVertices = new float[]
@@ -44,7 +44,7 @@ namespace CORERenderer.GUI
 
             shader.ActivateAttributes();
 
-            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
             shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
             GenerateFilledBuffer(out VBOC, out VAOC, crossVertices);
@@ -52,15 +52,15 @@ namespace CORERenderer.GUI
             shaderC.ActivateAttributes();
 
             shader.Use();
-            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
             
             shaderC.Use();
 
-            shaderC.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
-            shaderC.SetInt("Texture", GL_TEXTURE0);
+            shaderC.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
+            shaderC.SetInt("Texture", 0);
             shaderC.SetBool("isSelected", isSelected);
 
-            cross = Texture.ReadFromFile($"{COREMain.pathRenderer}\\GUI\\exitCross.png");
+            cross = Texture.ReadFromFile($"{Main.COREMain.pathRenderer}\\GUI\\exitCross.png");
             cross.Use(GL_TEXTURE0);
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -95,10 +95,10 @@ namespace CORERenderer.GUI
                 glDrawArrays(PrimitiveType.Triangles, 0, 6);
             }
             previousState = isSelected;
-            if (COREMain.monitorHeight - mouseY >= COREMain.monitorHeight - 25 && COREMain.monitorHeight - mouseY <= COREMain.monitorHeight && mouseX >= COREMain.monitorWidth - 50 && mouseX <= COREMain.Width)
+            if (Main.COREMain.monitorHeight - mouseY >= Main.COREMain.monitorHeight - 25 && Main.COREMain.monitorHeight - mouseY <= Main.COREMain.monitorHeight && mouseX >= Main.COREMain.monitorWidth - 50 && mouseX <= Main.COREMain.Width)
             {
-                if (Glfw.GetMouseButton(COREMain.window, GLFW.Enums.MouseButton.Left) == GLFW.Enums.InputState.Press)
-                    Glfw.SetWindowShouldClose(COREMain.window, true);
+                if (Glfw.GetMouseButton(Main.COREMain.window, GLFW.Enums.MouseButton.Left) == GLFW.Enums.InputState.Press)
+                    Glfw.SetWindowShouldClose(Main.COREMain.window, true);
 
                 isSelected = true;
                 shaderC.SetBool("isSelected", isSelected);

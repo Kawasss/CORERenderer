@@ -14,54 +14,64 @@ namespace CORERenderer.GUI
 
         public void RenderModelInformation()
         {
-            if (COREMain.GetCurrentObjFromScene == -1)
+            if (Main.COREMain.GetCurrentObjFromScene == -1)
                 return;
 
             int totalOffset = 0;
-            Model model = COREMain.CurrentModel;
+            Model model = Main.COREMain.CurrentModel;
 
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            if (model.hdr != null)
+                return;
+
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write($"Translation: {Math.Round(model.Transform.translation.x, 2)} {Math.Round(model.Transform.translation.y, 2)} {Math.Round(model.Transform.translation.z, 2)}", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write($"Scaling:     {Math.Round(model.Transform.scale.x, 2)} {Math.Round(model.Transform.scale.y, 2)} {Math.Round(model.Transform.scale.z, 2)}", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write($"Rotation:    {Math.Round(model.Transform.rotation.x, 2)} {Math.Round(model.Transform.rotation.y, 2)} {Math.Round(model.Transform.rotation.z, 2)}", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
             Texture textureToDraw = Globals.usedTextures[model.submodels[0].material.Texture];
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write("Texture:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 200;
-            textureToDraw.RenderAs2DImage((int)(COREMain.monitorWidth  / 2 * 0.996f - this.Width * 0.95f), (int)(-COREMain.monitorHeight / 2 + this.Height - totalOffset));
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth  / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
             textureToDraw = Globals.usedTextures[model.submodels[0].material.DiffuseMap];
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write("Diffuse map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 200;
-            textureToDraw.RenderAs2DImage((int)(COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-COREMain.monitorHeight / 2 + this.Height - totalOffset));
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
             textureToDraw = Globals.usedTextures[model.submodels[0].material.SpecularMap];
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write("Specular map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 200;
-            textureToDraw.RenderAs2DImage((int)(COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-COREMain.monitorHeight / 2 + this.Height - totalOffset));
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
             textureToDraw = Globals.usedTextures[model.submodels[0].material.NormalMap];
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write("Normal map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 200;
-            textureToDraw.RenderAs2DImage((int)(COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-COREMain.monitorHeight / 2 + this.Height - totalOffset));
-            totalOffset += (int)(COREMain.debugText.characterHeight * 1.1f);
+            textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
+
+            textureToDraw = Globals.usedTextures[model.submodels[0].material.MetalMap];
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
+            this.Write("metal map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            totalOffset += 200;
+            textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
+            totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
         }
 
         public void RenderModelList(List<Model> models)
         {
             for (int i = 0; i < models.Count; i++)
             {
-                float offset = this.Height - COREMain.debugText.characterHeight * 0.8f * (i + 1);
+                float offset = this.Height - Main.COREMain.debugText.characterHeight * 0.8f * (i + 1);
 
                 if (offset <= 0) //return when the list goes outside the bounds of the div
                     return;

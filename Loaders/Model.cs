@@ -13,9 +13,9 @@ namespace CORERenderer.Loaders
 {
     public partial class Model : Readers
     {
-        public static Model Cube { get { return new($"{COREMain.pathRenderer}\\OBJs\\cube.stl"); } }
-        public static Model Cylinder { get { return new($"{COREMain.pathRenderer}\\OBJs\\cylinder.stl"); } }
-        public static Model Plane { get { return new($"{COREMain.pathRenderer}\\OBJs\\plane.stl"); } }
+        public static Model Cube { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\cube.stl"); } }
+        public static Model Cylinder { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\cylinder.stl"); } }
+        public static Model Plane { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\plane.stl"); } }
 
         public static int totalSSBOSizeUsed = 0;
 
@@ -38,12 +38,12 @@ namespace CORERenderer.Loaders
 
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
-        public bool CanBeCulled { get { return !transform.BoundingBox.IsInFrustum(COREMain.CurrentScene.camera.Frustum, transform); } }
+        public bool CanBeCulled { get { if (hdr != null) return false; return !transform.BoundingBox.IsInFrustum(Main.COREMain.CurrentScene.camera.Frustum, transform); } }
         #endregion
 
         public List<Submodel> submodels = new();
 
-        private readonly Shader shader = GenericShaders.GenericLighting;
+        public Shader shader = GenericShaders.GenericLighting;
 
         public RenderMode type;
         public Error error = Error.None;
@@ -60,31 +60,39 @@ namespace CORERenderer.Loaders
 
         public int selectedSubmodel = 0;
 
-        private HDRTexture hdr = null;
+        public HDRTexture hdr = null;
 
         private Transform transform = new();
         public Transform Transform { get { return transform; } set { transform = value; } } //!!REMOVE SET WHEN DONE DEBUGGING
 
         public Model(string path)
         {
-            ID = COREMain.NewAvaibleID;
-            type = COREMain.SetRenderMode(path);
+            ID = Main.COREMain.NewAvaibleID;
+            type = Main.COREMain.SetRenderMode(path);
 
             if (type == RenderMode.ObjFile)
                 GenerateObj(path);
+
+            else if (type == RenderMode.STLFile)
+                GenerateStl(path);
+
+            else if (type == RenderMode.FBXFile)
+                GenerateFbx(path);
+
             else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 GenerateImage(path);
 
             else if (type == RenderMode.HDRFile && hdr == null)
-                hdr = HDRTexture.ReadFromFile(path);
-            else if (type == RenderMode.STLFile)
-                GenerateStl(path);
+            {
+                hdr = HDRTexture.ReadFromFile(path, Rendering.TextureQuality);
+                transform = new(COREMain.CurrentScene.camera.position, Vector3.Zero, new(1, 1, 1), new(1000, 10000, 1000), COREMain.CurrentScene.camera.position);
+            }
         }
         
         public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
-            ID = COREMain.NewAvaibleID;
-            type = COREMain.SetRenderMode(path);
+            ID = Main.COREMain.NewAvaibleID;
+            type = Main.COREMain.SetRenderMode(path);
 
             Name = Path.GetFileName(path)[..^4];
 
@@ -101,7 +109,7 @@ namespace CORERenderer.Loaders
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    Console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {COREMain.CurrentScene.models.Count} \"{Name}\"");
+                    Console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {Main.COREMain.CurrentScene.models.Count} \"{Name}\"");
                     amountOfFailures++;
                     continue;
                 }
@@ -115,7 +123,92 @@ namespace CORERenderer.Loaders
             }
         }
 
-        public Model() { ID = COREMain.NewAvaibleID; }
+        public Model() { ID = Main.COREMain.NewAvaibleID; }
+
+        private void GenerateFbx(string path)
+        {
+            double startedReading = Glfw.Time;
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<Material> materials, out Vector3 center, out Vector3 extents);
+            double readFBXFile = Glfw.Time - startedReading;
+
+            CheckError(loaded);
+
+            transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
+            for (int i = 0; i < lVertices.Count; i++)
+            {
+                submodels.Add(new(name, lVertices[i], materials[i], this));
+                totalAmountOfVertices += submodels[^1].NumberOfVertices;
+            }
+            Console.WriteDebug($"Read FBX file in {Math.Round(readFBXFile, 2)} seconds");
+
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
+        }
+
+
+        private void GenerateObj(string path)
+        {
+            double startedReading = Glfw.Time;
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<Material> materials, out Vector3 center, out Vector3 extents);
+            double readOBJFile = Glfw.Time - startedReading;
+
+            CheckError(loaded);
+
+            transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
+            for (int i = 0; i < lVertices.Count; i++)
+            {
+                submodels.Add(new(name, lVertices[i], materials[i], this));
+                totalAmountOfVertices += submodels[^1].NumberOfVertices;
+            }
+
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
+
+            Console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
+            Console.WriteDebug($"Amount of vertices: {AmountOfVertices}");
+        }
+
+
+        private void GenerateStl(string path)
+        {
+            double startedReading = Glfw.Time;
+            Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
+            double readSTLFile = Glfw.Time - startedReading;
+
+            Vector3 min = Vector3.Zero, max = Vector3.Zero;
+            for (int i = 0; i < localVertices.Count; i += 8)
+            {
+                max.x = localVertices[i] > max.x ? localVertices[i] : max.x;
+                max.y = localVertices[i + 1] > max.y ? localVertices[i + 1] : max.y;
+                max.z = localVertices[i + 2] > max.z ? localVertices[i + 2] : max.z;
+
+                min.x = localVertices[i] < min.x ? localVertices[i] : min.x;
+                min.y = localVertices[i + 1] < min.y ? localVertices[i + 1] : min.y;
+                min.z = localVertices[i + 2] < min.z ? localVertices[i + 2] : min.z;
+            }
+            Vector3 center = (min + max) * 0.5f;
+            Vector3 extents = max - center;
+            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
+
+            CheckError(loaded);
+
+            submodels.Add(new(Path.GetFileNameWithoutExtension(path), Vertex.GetVertices(localVertices), offset, new(1, 1, 1), this));
+
+            Console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
+            Console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
+            float[] vertexData = localVertices.ToArray();
+            unsafe
+            { //transfer the vertex data to the compute shader
+                glBindBuffer(BufferTarget.ShaderStorageBuffer, Main.COREMain.ssbo);
+                //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
+
+                int size = totalSSBOSizeUsed / sizeof(float) + vertexData.Length;
+                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int), &size);
+
+                glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
+                totalSSBOSizeUsed += vertexData.Length * sizeof(float);
+            }
+        }
 
         private void GenerateImage(string path)
         {
@@ -143,96 +236,13 @@ namespace CORERenderer.Loaders
             submodels[^1].cullFaces = true;
         }
 
-        private void GenerateStl(string path)
+        private void CheckError(Error loaded)
         {
-            double startedReading = Glfw.Time;
-            Error loaded = LoadSTL(path, out name, out List<float> localVertices, out Vector3 offset);
-            double readSTLFile = Glfw.Time - startedReading;
-
-            Vector3 min = Vector3.Zero, max = Vector3.Zero;
-            for (int i = 0; i < localVertices.Count; i += 8)
-            {
-                max.x = localVertices[i] > max.x ? localVertices[i] : max.x;
-                max.y = localVertices[i + 1] > max.y ? localVertices[i + 1] : max.y;
-                max.z = localVertices[i + 2] > max.z ? localVertices[i + 2] : max.z;
-
-                min.x = localVertices[i] < min.x ? localVertices[i] : min.x;
-                min.y = localVertices[i + 1] < min.y ? localVertices[i + 1] : min.y;
-                min.z = localVertices[i + 2]< min.z ? localVertices[i + 2] : min.z;
-            }
-            Vector3 center = (min + max) * 0.5f;
-            Vector3 extents = max - center;
-            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
-
-            if (loaded != Error.None)
-            {
-                this.error = loaded;
-                terminate = true;
+            if (loaded == Error.None)
                 return;
-            }
-
-            submodels.Add(new(Path.GetFileNameWithoutExtension(path), Vertex.GetVertices(localVertices), offset, new(1, 1, 1), this));
-
-            Console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
-            Console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
-            float[] vertexData = localVertices.ToArray();
-            unsafe
-            { //transfer the vertex data to the compute shader
-                glBindBuffer(BufferTarget.ShaderStorageBuffer, COREMain.ssbo);
-                //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
-
-                int size = totalSSBOSizeUsed / sizeof(float) + vertexData.Length;
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int), &size);
-
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
-                totalSSBOSizeUsed += vertexData.Length * sizeof(float);
-            }
-        }
-
-        private void GenerateObj(string path)
-        {
-            double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out List<string> mtlNames, out List<List<Vertex>> lVertices, out List<List<uint>> indices, out List<Vector3> lOffsets, out Vector3 center, out Vector3 extents, out mtllib);
-            double readOBJFile = Glfw.Time - startedReading;
-
-            if (loaded != Error.None)
-            {
-                this.error = loaded;
-                terminate = true;
-                return;
-            }
-
-            Name = Path.GetFileNameWithoutExtension(path);
-
-            startedReading = Glfw.Time;
-
-            //decide to load the default mtl file or not
-            loaded = mtllib != "default" ? LoadMTL($"{Path.GetDirectoryName(path)}\\{mtllib}", mtlNames, out List<Material> materials) : LoadMTL($"{COREMain.pathRenderer}\\Loaders\\default.mtl", mtlNames, out materials);
-
-            double readMTLFile = Glfw.Time - startedReading;
-
-            if (loaded != Error.None)
-            {
-                this.error = loaded;
-                terminate = true;
-                return;
-            }
-
-            this.transform = new(lOffsets[0], Vector3.Zero, new(1, 1, 1), extents, center);
-            for (int i = 0; i <  lVertices.Count; i++)
-            {
-                submodels.Add(new(materials[i].Name, lVertices[i], indices[i], lOffsets[i] - this.Transform.translation, this, materials[i]));
-                totalAmountOfVertices += submodels[^1].NumberOfVertices;
-            }
-
-            //SortSubmodelsByDepth();
-
-            submodels[0].highlighted = true;
-            selectedSubmodel = 0;
-
-            Console.WriteDebug($"Read .obj file in {Math.Round(readOBJFile, 2)} seconds");
-            Console.WriteDebug($"Read .mtl file in {Math.Round(readMTLFile, 2)} seconds");
-            Console.WriteDebug($"Amount of vertices: {AmountOfVertices}");
+            
+            this.error = loaded;
+            terminate = true;
         }
 
         private void SortSubmodelsByDepth()
@@ -264,8 +274,8 @@ namespace CORERenderer.Loaders
 
         public void Dispose()
         {
-            if (COREMain.CurrentScene.currentObj == COREMain.CurrentScene.models.IndexOf(this))
-                COREMain.CurrentScene.currentObj = -1;
+            if (Main.COREMain.CurrentScene.currentObj == Main.COREMain.CurrentScene.models.IndexOf(this))
+                Main.COREMain.CurrentScene.currentObj = -1;
             terminate = true;
         }
     }

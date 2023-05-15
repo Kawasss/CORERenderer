@@ -1,12 +1,6 @@
 ﻿using COREMath;
-using CORERenderer.Fonts;
-using CORERenderer.Loaders;
-using CORERenderer.Main;
-using CORERenderer.shaders;
-using static CORERenderer.OpenGL.GL;
-using static CORERenderer.OpenGL.Rendering;
 
-namespace CORERenderer.OpenGL
+namespace CORERenderer.OpenGL //structs are found here unless they have their own file, like framebuffer and cubemap
 {
     public class Vertex //class so that it gets passed by reference
     {
@@ -38,6 +32,17 @@ namespace CORERenderer.OpenGL
             this.normalZ = normalZ;
             this.boneIDs = boneIDs;
             this.boneWeights = boneWeights;
+        }
+        public Vertex(Vector3 position, Vector2 UV, Vector3 Normal)
+        {
+            x = position.x;
+            y = position.y;
+            z = position.z;
+            uvX = UV.x;
+            uvY = UV.y;
+            normalX = Normal.x;
+            normalY = Normal.y;
+            normalZ = Normal.z;
         }
 
         public Vertex() 
@@ -224,41 +229,6 @@ namespace CORERenderer.OpenGL
             float Ik = MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, right)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, up)) + MathC.Abs(MathC.GetDotProductOf(Vector3.UnitVectorZ, forward));
 
             return new(globalCenter, Ii, Ij, Ik);
-        }
-    }
-
-    public struct Framebuffer
-    {
-        public uint FBO; //FrameBufferObject
-        public uint VAO; //VertexArrayObject
-        public uint Texture;
-        public uint RBO; //RenderBufferObject
-        public Shader shader;
-
-        public int width, height;
-
-        public uint VBO; //VBO isnt really needed, but just in case
-
-        public void Bind() => glBindFramebuffer(this);
-
-        public void RenderFramebuffer()
-        {
-            glBindVertexArray(0);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glDisable(GL_DEPTH_TEST);
-
-            glClearColor(1, 1, 1, 1);
-
-            this.shader.Use();
-
-            glBindVertexArray(this.VAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, this.Texture);
-
-            glDrawArrays(PrimitiveType.Triangles, 0, 6);
         }
     }
 }

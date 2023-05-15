@@ -13,6 +13,8 @@
         JPGImage,
         HDRFile,
         ObjFile,
-        STLFile
+        STLFile,
+        FBXFile,
+        EXRFile
     }
 }

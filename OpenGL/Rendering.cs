@@ -7,13 +7,14 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using CORERenderer.GUI;
 using System.Collections.Concurrent;
+using Assimp;
+using CORERenderer.Fonts;
 
 namespace CORERenderer.OpenGL
 {
     public partial class Rendering : GL
     {
-        private static uint lineVBO;
-        private static uint lineVAO;
+        private static uint vertexArrayObjectGrid;
 
         public static bool cullFaces = true;
         public static bool renderOrthographic = false;
@@ -24,17 +25,275 @@ namespace CORERenderer.OpenGL
 
         private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "   0 are opaque", "Draw calls this frame: 0" };
         public static string[] RenderStatistics { get { return renderStatistics; } }
+
         private static long ticksSpent3DRenderingThisFrame = 0;
         public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
 
-        public static void Init()
+        private static Framebuffer reflectionFramebuffer;
+        private static Cubemap reflectionCubemap;
+
+        /// <summary>
+        /// Gets the rendering quality and sets the rendering quality, whilst simultaniously changing anything that depends on the rendering quality
+        /// </summary>
+        public static float TextureQuality 
+        { get => textureQuality; set
+            { 
+                textureQuality = value;
+            } 
+        }
+        public static float ReflectionQuality
         {
+            get => reflectionQuality; set
+            {//both width because afaik its better to have a perfect cube and not a stretched one
+                reflectionCubemap = GenerateEmptyCubemap((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
+                reflectionFramebuffer = GenerateFramebuffer((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
+            }
+        }
+        private static float reflectionQuality = OpenGL.TextureQuality.Default;
+        private static float textureQuality = OpenGL.ReflectionQuality.Default;
+
+        /// <summary>
+        /// Gets the color used with glClearColor (default is 0.3f, 0.3f, 0.3f, 1), sets the same color
+        /// </summary>
+        public static Vector4 ClearColor { get => clearColor; set => clearColor = value; }
+        private static Vector4 clearColor = new(0.3f, 0.3f, 0.3f, 1);
+
+        public static int[] ViewportDimensions { get => GetViewportDimensions(); }
+
+        private static int renderingWidth, renderingHeight;
+
+        public static void Init(int RenderingWidth, int RenderingHeight)
+        {
+            vertexArrayObjectGrid = GenerateBufferlessVAO();
             GenericShaders.SetShaders();
+            renderingWidth = RenderingWidth;
+            renderingHeight = RenderingHeight;
+            TextureQuality = OpenGL.TextureQuality.Medium;
+            ReflectionQuality = OpenGL.ReflectionQuality.Lowest;
+            reflectionFramebuffer.Bind();
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL);
+
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+            glEnable(GL_DEBUG_OUTPUT);
+
+            glEnable(GL_CULL_FACE);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+            glCullFace(GL_BACK);
+            glFrontFace(GL_CCW);
+
+            SetClearColor(clearColor);
         }
 
         public static void SetCamera(Camera currentCamera)
         {
             camera = currentCamera;
+        }
+
+        private unsafe static void RenderCubemapReflections(List<Model> models, List<Main.Light> lights)
+        {
+            Matrix originalView = camera.ViewMatrix;
+            Vector3 previousCamFront = camera.front;
+            Vector2 originalYawPitch = new(camera.Yaw, camera.Pitch);
+            Vector3 previousUp = camera.up;
+
+            int[] originalViewportDimensions = GetViewportDimensions();
+            int previousFB = GetCurrentFramebufferID();
+            float previousCamAspectRatio = camera.AspectRatio, previousFov = camera.Fov;
+
+            Vector3[] fronts = new Vector3[]
+            {
+                new Vector3( 1,  0,  0),
+                new Vector3(-1,  0,  0),
+                new Vector3( 0,  1,  0),
+                new Vector3( 0, -1,  0),
+                new Vector3( 0,  0,  1),
+                new Vector3( 0,  0,  -1)
+            };
+            Vector3[] ups = new Vector3[]
+            {
+                new(0, -1,  0),
+                new(0, -1,  0),
+                new(0,  0,  1),
+                new(0,  0, -1),
+                new(0, -1,  0),
+                new(0, -1,  0)
+            };
+
+
+            glViewport(0, 0, (int)((float)renderingWidth / (float)reflectionQuality), (int)((float)renderingWidth / (float)reflectionQuality));
+            camera.AspectRatio = 1;
+
+            reflectionFramebuffer.Bind();
+            reflectionCubemap.Use(GL_TEXTURE4);
+            glDepthFunc(GL_LEQUAL);
+            Submodel.renderAllIDs = false;
+            for (int i = 0; i < 6; i++)
+            {
+                //MatrixToUniformBuffer(camera.ProjectionMatrix, 0);
+                //MatrixToUniformBuffer(viewMatrices[i], GL_MAT4_FLOAT_SIZE);
+                camera.front = fronts[i];
+                camera.up = ups[i];
+                camera.right = MathC.Normalize(MathC.GetCrossProduct(fronts[i], Vector3.UnitVectorY));
+                UpdateUniformBuffers();
+
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, reflectionCubemap.textureID, 0);
+
+                glClearColor(.3f, .3f, .3f, 1);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                //RenderLights(lights);
+                RenderAllModels(models);
+                RenderGrid();
+
+                translucentSubmodels.Clear();
+            }
+            Submodel.renderAllIDs = true;
+
+            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
+            glBindFramebuffer((uint)previousFB);
+            glViewport(originalViewportDimensions[0], originalViewportDimensions[1], originalViewportDimensions[2], originalViewportDimensions[3]);
+            camera.Yaw = originalYawPitch.x;
+            camera.Pitch = originalYawPitch.y;
+            camera.AspectRatio = previousCamAspectRatio;
+            camera.front = previousCamFront;
+            camera.up = previousUp;
+            camera.Fov = previousFov;
+            UpdateUniformBuffers();
+        }
+
+        private static Model backgroundModel = null;
+
+        public static List<Submodel> translucentSubmodels = new();
+
+        public static void RenderScene(Scene scene) //experimental but can work
+        {
+            RenderCubemapReflections(scene.models, scene.lights);
+            //RenderLights(scene.lights);
+            RenderAllModels(scene.models);
+            //reflectionCubemap.Render();
+        }
+
+        public static void RenderAllModels(List<Model> models)
+        {
+            if (models.Count == 0)
+                return;
+
+            int modelsFrustumCulled = 0;
+            int currentDrawCalls = drawCalls;
+            Stopwatch sw = new();
+
+            GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
+
+            if (cullFaces)
+                glEnable(GL_CULL_FACE);
+            else
+                glDisable(GL_CULL_FACE);
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            GenericShaders.GenericLighting.Use();
+
+            sw.Start();
+
+            reflectionCubemap.Use(GL_TEXTURE4);
+            for (int i = 0; i < models.Count; i++)
+            {
+                if (models[i] == null)
+                    continue;
+
+                if (models[i].CanBeCulled)
+                {
+                    modelsFrustumCulled++;
+                    //continue;
+                }
+
+                //if (models[i].type != RenderMode.HDRFile)
+                    models[i].Render();
+                //else
+                //    backgroundModel = models[i];
+            }
+            sw.Stop();
+            long timeSpentRenderingOpaque = sw.ElapsedTicks;
+
+            #region depth sorting
+            sw = new();
+            sw.Start();
+            translucentSubmodels = DepthSortSubmodels(translucentSubmodels);
+            sw.Stop();
+            long timeSpentDepthSorting = sw.ElapsedTicks;
+            #endregion
+
+            sw = new();
+            sw.Start();
+            foreach (Submodel model in translucentSubmodels)
+                model.Render();
+            sw.Stop();
+            long timeSpentRenderingTranslucent = sw.ElapsedTicks;
+
+            //backgroundModel?.Render();
+            //backgroundModel = null;
+
+            ticksSpent3DRenderingThisFrame = timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting;
+
+            renderStatistics[0] = $"Ticks spent rendering opaque models: {timeSpentRenderingOpaque}";
+            renderStatistics[1] = $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}";
+            renderStatistics[2] = $"Ticks spent depth sorting: {timeSpentDepthSorting}";
+            renderStatistics[3] = $"Ticks spent overall: {ticksSpent3DRenderingThisFrame}";
+            renderStatistics[4] = $"Total models: {models.Count}, of which {modelsFrustumCulled} are frustum culled";
+            renderStatistics[5] = $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:";
+            renderStatistics[6] = $"   {translucentSubmodels.Count} are translucent";
+            renderStatistics[7] = $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque";
+            renderStatistics[8] = $"Draw calls this frame: {drawCalls - currentDrawCalls}, cull faces: {cullFaces}";
+
+
+            translucentSubmodels = new();
+        }
+
+        private static List<Submodel> DepthSortSubmodels(List<Submodel> submodels)
+        {
+            List<Submodel> returnValue = new();
+            List<float> distances = new();
+            Dictionary<float, Submodel> distanceModelTable = new();
+            foreach (Submodel model in submodels)
+            {
+                float distance = MathC.Distance(camera.position, model.parent.Transform.translation);
+                while (distanceModelTable.ContainsKey(distance))
+                    distance += 0.01f;
+                distances.Add(distance);
+                distanceModelTable.Add(distance, model);
+            }
+
+            float[] distancesArray = distances.ToArray();
+            Array.Sort(distancesArray);
+            Array.Reverse(distancesArray);
+            for (int i = 0; i < distancesArray.Length; i++)
+                returnValue.Add(distanceModelTable[distancesArray[i]]);
+
+            return returnValue;
+        }
+
+        private static unsafe int[] GetViewportDimensions()
+        {
+            int[] vpd = new int[4];
+            fixed (int* pointer = &vpd[0])
+            {
+                glGetIntegerv(GL_VIEWPORT, pointer);
+            }
+            return vpd;
+        }
+
+        public static unsafe int GetCurrentFramebufferID()
+        {
+            int value;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &value);
+            return value;
         }
 
         public static float[] GenerateQuadVerticesWithUV(int x, int y, int width, int height)
@@ -172,113 +431,12 @@ namespace CORERenderer.OpenGL
 
         //try referring to offcenter version with 0, width, height, 0.01, 100
         public static Matrix GetOrthograpicProjectionMatrix(int width, int height) => Matrix.Createorthographic(width, height, -1000f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
-
-        public static void RenderBackground(HDRTexture h)
-        {
-            GenericShaders.Background.Use();
-            GenericShaders.Background.SetInt("environmentMap", GL_TEXTURE0);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, h.envCubeMap);
-
-            glDrawArrays(PrimitiveType.Triangles, 0, 36);
-        }
         
-        private static Model backgroundModel = null;
-
-        public static List<Submodel> translucentSubmodels = new();
-
-        public static void RenderAllModels(List<Model> models)
-        {
-            int modelsFrustumCulled = 0;
-            int currentDrawCalls = drawCalls;
-            Stopwatch sw = new();
-
-            GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
-
-            if (cullFaces)
-                glEnable(GL_CULL_FACE);
-            else 
-                glDisable(GL_CULL_FACE);
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-            GenericShaders.GenericLighting.Use();
-
-            sw.Start();
-
-            for (int i = 0; i < models.Count; i++)
-            {
-                if (models[i] == null)
-                    continue;
-
-                if (models[i].CanBeCulled)
-                {
-                    modelsFrustumCulled++;
-                    continue;
-                }
-                    
-                if (models[i].type != RenderMode.HDRFile)
-                    models[i].Render();
-                else
-                    backgroundModel = models[i];
-            }
-            sw.Stop();
-            long timeSpentRenderingOpaque = sw.ElapsedTicks;
-
-            #region depth sorting
-            sw = new();
-            sw.Start();
-            List<float> distances = new();
-            Dictionary<float, Submodel> distanceModelTable = new();
-            foreach (Submodel model in translucentSubmodels)
-            {
-                float distance = MathC.Distance(COREMain.CurrentScene.camera.position, model.parent.Transform.translation);
-                while (distanceModelTable.ContainsKey(distance))
-                    distance += 0.01f;
-                distances.Add(distance);
-                distanceModelTable.Add(distance, model);
-            }
-
-            float[] distancesArray = distances.ToArray();
-            Array.Sort(distancesArray);
-            Array.Reverse(distancesArray);
-            for (int i = 0; i < distancesArray.Length; i++)
-                translucentSubmodels[i] = distanceModelTable[distancesArray[i]];
-            sw.Stop();
-            long timeSpentDepthSorting = sw.ElapsedTicks;
-            #endregion
-
-            sw = new();
-            sw.Start();
-            foreach (Submodel model in translucentSubmodels)
-                model.Render();
-            sw.Stop();
-            long timeSpentRenderingTranslucent = sw.ElapsedTicks;
-
-            backgroundModel?.Render();
-
-            ticksSpent3DRenderingThisFrame = timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting;
-
-            renderStatistics[0] = $"Ticks spent rendering opaque models: {timeSpentRenderingOpaque}";
-            renderStatistics[1] = $"Ticks spent rendering translucent models: {timeSpentRenderingTranslucent}";
-            renderStatistics[2] = $"Ticks spent depth sorting: {timeSpentDepthSorting}";
-            renderStatistics[3] = $"Ticks spent overall: {ticksSpent3DRenderingThisFrame}";
-            renderStatistics[4] = $"Total models: {models.Count}, of which {modelsFrustumCulled} are frustum culled";
-            renderStatistics[5] = $"Submodels rendered: ~{drawCalls - currentDrawCalls}, of which:";
-            renderStatistics[6] = $"   {translucentSubmodels.Count} are translucent";
-            renderStatistics[7] = $"  ~{drawCalls - currentDrawCalls - translucentSubmodels.Count} are opaque";
-            renderStatistics[8] = $"Draw calls this frame: {drawCalls - currentDrawCalls}, cull faces: {cullFaces}";
-            
-
-            translucentSubmodels = new();
-        }
-
-        public static void RenderLights(List<Light> locations)
+        public static void RenderLights(List<CORERenderer.Main.Light> locations)
         {
             GenericShaders.Light.Use();
 
-            glBindVertexArray(COREMain.vertexArrayObjectLightSource);
+            glBindVertexArray(Main.COREMain.vertexArrayObjectLightSource);
 
             for (int i = 0; i < locations.Count; i++)
             {
@@ -293,28 +451,12 @@ namespace CORERenderer.OpenGL
 
             GenericShaders.Grid.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetScalingMatrix(1000));
 
-            GenericShaders.Grid.SetVector3("playerPos", COREMain.scenes[COREMain.selectedScene].camera.position);
+            GenericShaders.Grid.SetVector3("playerPos", camera.position);
 
             glDisable(GL_CULL_FACE);
-            glBindVertexArray(COREMain.vertexArrayObjectGrid);
+            glBindVertexArray(vertexArrayObjectGrid);
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
             glEnable(GL_CULL_FACE);
-        }
-
-        public static void RenderCubemap(Cubemap cubemap)
-        {
-            glDepthFunc(GL_LEQUAL);
-            cubemap.shader.Use();
-
-            glBindVertexArray(cubemap.VAO);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.textureID);
-
-            glDrawArrays(PrimitiveType.Triangles, 0, 36);
-
-            glBindVertexArray(0);
-            glDepthFunc(GL_LESS);
         }
 
         private static uint uboMatrices;
@@ -323,12 +465,12 @@ namespace CORERenderer.OpenGL
         {
             //assigns values to the freed up gpu memory for global uniforms
             glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
-            MatrixToUniformBuffer(camera.GetViewMatrix(), GL_MAT4_FLOAT_SIZE);
-            MatrixToUniformBuffer(camera.GetTranslationlessViewMatrix(), GL_MAT4_FLOAT_SIZE * 2);
+            MatrixToUniformBuffer(camera.ViewMatrix, GL_MAT4_FLOAT_SIZE);
+            MatrixToUniformBuffer(camera.TranslationlessViewMatrix, GL_MAT4_FLOAT_SIZE * 2);
             if (!renderOrthographic)
-                MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+                MatrixToUniformBuffer(camera.ProjectionMatrix, 0);
             else
-                MatrixToUniformBuffer(camera.GetOrthographicProjectionMatrix(), 0);
+                MatrixToUniformBuffer(camera.OrthographicProjectionMatrix, 0);
         }
 
         public unsafe static void SetUniformBuffers()//can be made private if render loop is put here
@@ -343,9 +485,9 @@ namespace CORERenderer.OpenGL
             //assigns values to the freed up gpu memory for global uniforms
             glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             if (!renderOrthographic)
-                MatrixToUniformBuffer(camera.GetProjectionMatrix(), 0);
+                MatrixToUniformBuffer(camera.ProjectionMatrix, 0);
             else
-                MatrixToUniformBuffer(camera.GetOrthographicProjectionMatrix(), 0);
+                MatrixToUniformBuffer(camera.OrthographicProjectionMatrix, 0);
             glBindBuffer(BufferTarget.UniformBuffer, 0);
         }
 
@@ -416,9 +558,10 @@ namespace CORERenderer.OpenGL
                 glEnableVertexAttribArray(0);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
                 glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-                glEnableVertexAttribArray(2);
                 glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+                glEnableVertexAttribArray(2);
+                glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+                
                 glBindBuffer(BufferTarget.ArrayBuffer, 0);
                 glBindVertexArray(0);
             }

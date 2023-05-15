@@ -38,8 +38,8 @@ namespace CORERenderer.GUI
                 changedValue[i] = false;
             }
 
-            width = (int)(COREMain.monitorWidth * 0.075f);
-            height = (COREMain.debugText.characterHeight + 5) * options.Length;
+            width = (int)(Main.COREMain.monitorWidth * 0.075f);
+            height = (Main.COREMain.debugText.characterHeight + 5) * options.Length;
 
         }
 
@@ -68,7 +68,7 @@ namespace CORERenderer.GUI
             if (!isOpen)
                 return;
 
-            if (COREMain.secondPassed && !isAttached)
+            if (Main.COREMain.secondPassed && !isAttached)
             {
                 Console.WriteError("Submenu not attached");
                 return;
@@ -78,10 +78,10 @@ namespace CORERenderer.GUI
             div.Render();
             shader.SetVector3("color", 0.15f, 0.15f, 0.15f);
 
-            int offset = height - (int)(COREMain.debugText.characterHeight * 0.7f) - 3;
-            for (int i = 0; i < list.Length; i++, offset -= (int)(COREMain.debugText.characterHeight * 0.7f) + 3)
+            int offset = height - (int)(Main.COREMain.debugText.characterHeight * 0.7f) - 3;
+            for (int i = 0; i < list.Length; i++, offset -= (int)(Main.COREMain.debugText.characterHeight * 0.7f) + 3)
             {
-                if (COREMain.CheckAABBCollisionWithClick(x, y - (i + 1) * (int)(COREMain.debugText.characterHeight * 0.7f + 3), width, (int)(COREMain.debugText.characterHeight * 0.7f) + 3))
+                if (Main.COREMain.CheckAABBCollisionWithClick(x, y - (i + 1) * (int)(Main.COREMain.debugText.characterHeight * 0.7f + 3), width, (int)(Main.COREMain.debugText.characterHeight * 0.7f) + 3))
                 {
                     if (!isOptionTrue[list[i]] && !changedValue[i])
                     {
@@ -98,26 +98,26 @@ namespace CORERenderer.GUI
                     changedValue[i] = false;
 
                 //hard coded part for assigning false or true because c# doesnt support dynamically changing given variables
-                COREMain.renderGrid = isOptionTrue[list[0]];
-                COREMain.renderBackground = isOptionTrue[list[1]];
-                if (COREMain.scenes[COREMain.selectedScene].currentObj != -1)
+                Main.COREMain.renderGrid = isOptionTrue[list[0]];
+                Main.COREMain.renderBackground = isOptionTrue[list[1]];
+                if (Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj != -1)
                 {
-                    COREMain.CurrentModel.renderLines = isOptionTrue[list[2]];
-                    COREMain.CurrentModel.renderNormals = isOptionTrue[list[3]];
+                    Main.COREMain.CurrentModel.renderLines = isOptionTrue[list[2]];
+                    Main.COREMain.CurrentModel.renderNormals = isOptionTrue[list[3]];
                 }
-                COREMain.renderGUI = isOptionTrue[list[4]];
-                COREMain.renderIDFramebuffer = isOptionTrue[list[5]];
-                COREMain.renderToIDFramebuffer = isOptionTrue[list[6]];
+                Main.COREMain.renderGUI = isOptionTrue[list[4]];
+                Main.COREMain.renderIDFramebuffer = isOptionTrue[list[5]];
+                Main.COREMain.renderToIDFramebuffer = isOptionTrue[list[6]];
                 Rendering.renderOrthographic = isOptionTrue[list[7]];
                 cullFaces = isOptionTrue[list[9]];
                 isOptionTrue[list[11]] = false;
-                COREMain.addCube = isOptionTrue[list[12]];
-                COREMain.addCylinder = isOptionTrue[list[13]];
-                COREMain.renderEntireDir = isOptionTrue[list[15]];
-                COREMain.allowAlphaOverride = isOptionTrue[list[16]];
-                COREMain.useChromAber = isOptionTrue[list[17]];
-                COREMain.useVignette = isOptionTrue[list[18]];
-                COREMain.fullscreen = isOptionTrue[list[19]];
+                Main.COREMain.addCube = isOptionTrue[list[12]];
+                Main.COREMain.addCylinder = isOptionTrue[list[13]];
+                Main.COREMain.renderEntireDir = isOptionTrue[list[15]];
+                Main.COREMain.allowAlphaOverride = isOptionTrue[list[16]];
+                Main.COREMain.useChromAber = isOptionTrue[list[17]];
+                Main.COREMain.useVignette = isOptionTrue[list[18]];
+                Main.COREMain.fullscreen = isOptionTrue[list[19]];
 
                 if (!isOptionTrue[list[i]])
                     div.Write(list[i], 5, offset, 0.7f);

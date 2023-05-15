@@ -13,10 +13,23 @@ namespace CORERenderer.Loaders
         /// <param name="model"></param>
         public static void GenerateSTL(string directoryPath, string header, Model model) //generates an .stl file according to the official format (80 bytes header, 4 bytes for triangle amount, 50 bytes for each face (12 for normal, 36 for vertices and 2 for attributes)
         {
+            List<List<float>> vertices = new();
+            List<List<Vertex>> v = model.Vertices;
+            for (int i = 0; i < v.Count; i++)
+            {
+                vertices.Add(new());
+                for (int j = 0; j < v[i].Count; j++)
+                {
+                    vertices[i].Add(v[i][j].x); vertices[i].Add(v[i][j].y); vertices[i].Add(v[i][j].z);
+                    vertices[i].Add(v[i][j].uvX); vertices[i].Add(v[i][j].uvY);
+                    vertices[i].Add(v[i][j].normalX); vertices[i].Add(v[i][j].normalY); vertices[i].Add(v[i][j].normalZ);
+                }
+            }
+                
             if (model.type == Main.RenderMode.ObjFile)
-                new Job(() => GenerateSTL(directoryPath, model.Name, header, Vertex.GetFloatList(model.Vertices), model.Offsets)).Start();
+                new Job(() => GenerateSTL(directoryPath, model.Name, header, vertices, model.Offsets)).Start();
             else if (model.type == Main.RenderMode.STLFile)
-                new Job(() => GenerateSTL(directoryPath, model.Name, header, Vertex.GetFloatList(model.Vertices[0]))).Start();
+                new Job(() => GenerateSTL(directoryPath, model.Name, header, vertices)).Start();
         }
 
         /// <summary>

@@ -35,7 +35,7 @@ namespace CORERenderer.GUI
 
         public TabManager(string[] nameOfTabs)
         {
-            shader = new($"{COREMain.pathRenderer}\\shaders\\Tab.vert", $"{COREMain.pathRenderer}\\shaders\\Tab.frag");
+            shader = new($"{Main.COREMain.pathRenderer}\\shaders\\Tab.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Tab.frag");
             names = nameOfTabs;
         }
 
@@ -45,8 +45,8 @@ namespace CORERenderer.GUI
         /// <param name="name"></param>
         public TabManager(string name)
         {
-            shader = new($"{COREMain.pathRenderer}\\shaders\\Tab.vert", $"{COREMain.pathRenderer}\\shaders\\Tab.frag");
-            plusShader = new($"{COREMain.pathRenderer}\\shaders\\Tab.vert", $"{COREMain.pathRenderer}\\shaders\\Tab.frag");
+            shader = new($"{Main.COREMain.pathRenderer}\\shaders\\Tab.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Tab.frag");
+            plusShader = new($"{Main.COREMain.pathRenderer}\\shaders\\Tab.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Tab.frag");
 
             type = attachedToType.RenderWindow;
 
@@ -56,21 +56,21 @@ namespace CORERenderer.GUI
             names = new string[1] { name };
             amountAttached++;
 
-            bottomX = COREMain.viewportX;
-            bottomY = COREMain.viewportY + COREMain.renderHeight;
+            bottomX = Main.COREMain.viewportX;
+            bottomY = Main.COREMain.viewportY + Main.COREMain.renderHeight;
 
-            float localX = -COREMain.monitorWidth / 2 + bottomX;
-            float localY = -COREMain.monitorHeight / 2 + COREMain.viewportY;
+            float localX = -Main.COREMain.monitorWidth / 2 + bottomX;
+            float localY = -Main.COREMain.monitorHeight / 2 + Main.COREMain.viewportY;
 
             float[] vertices = new float[]
             {
-                localX, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f,
-                localX, localY + COREMain.renderHeight,
-                localX + COREMain.monitorWidth * 0.034f, localY + COREMain.renderHeight,
+                localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
+                localX, localY + Main.COREMain.renderHeight,
+                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight,
 
-                localX, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f,
-                localX + COREMain.monitorWidth * 0.034f, localY + COREMain.renderHeight,
-                localX + COREMain.monitorWidth * 0.034f, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f
+                localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
+                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight,
+                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f
             };
 
             GenerateFilledBuffer(out VBO, out VAO, vertices);
@@ -84,10 +84,10 @@ namespace CORERenderer.GUI
             plusShader.ActivateAttributes();
 
             shader.Use();
-            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
 
             plusShader.Use();
-            plusShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+            plusShader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
 
             isAttached = true;
         }
@@ -106,18 +106,18 @@ namespace CORERenderer.GUI
                 tabDivBinding.Add(names[0], div);
                 amountAttached++;
 
-                bottomX = COREMain.monitorWidth / 2 + tabDivBinding[names[0]].bottomX;
-                bottomY = COREMain.monitorHeight / 2 + tabDivBinding[names[0]].bottomY + tabDivBinding[names[0]].Height;
+                bottomX = Main.COREMain.monitorWidth / 2 + tabDivBinding[names[0]].bottomX;
+                bottomY = Main.COREMain.monitorHeight / 2 + tabDivBinding[names[0]].bottomY + tabDivBinding[names[0]].Height;
 
                 float[] vertices = new float[]
                 {
-                    div.bottomX, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f,
+                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
                     div.bottomX, div.bottomY + div.Height,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
 
-                    div.bottomX, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f
+                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f
                 };
 
                 GenerateFilledBuffer(out VBO, out VAO, vertices);
@@ -127,7 +127,7 @@ namespace CORERenderer.GUI
                 shader.ActivateAttributes();
 
                 shader.Use();
-                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
 
                 isAttached = true;
                 return;
@@ -151,18 +151,18 @@ namespace CORERenderer.GUI
                 tabDivBinding.Add(names[0], div);
                 amountAttached++;
 
-                bottomX = COREMain.monitorWidth / 2 + tabDivBinding[names[0]].bottomX;
-                bottomY = COREMain.monitorHeight / 2 + tabDivBinding[names[0]].bottomY + tabDivBinding[names[0]].Height;
+                bottomX = Main.COREMain.monitorWidth / 2 + tabDivBinding[names[0]].bottomX;
+                bottomY = Main.COREMain.monitorHeight / 2 + tabDivBinding[names[0]].bottomY + tabDivBinding[names[0]].Height;
 
                 float[] vertices = new float[]
                 {
-                    div.bottomX, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f,
+                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
                     div.bottomX, div.bottomY + div.Height,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
 
-                    div.bottomX, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
-                    div.bottomX + COREMain.monitorWidth * 0.034f, div.bottomY + div.Height + COREMain.monitorHeight * 0.018f
+                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
+                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f
                 };
 
                 GenerateFilledBuffer(out VBO, out VAO, vertices);
@@ -172,7 +172,7 @@ namespace CORERenderer.GUI
                 shader.ActivateAttributes();
 
                 shader.Use();
-                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(COREMain.Width, COREMain.Height));
+                shader.SetMatrix("projection", GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
 
                 isAttached = true;
                 return;
@@ -192,7 +192,7 @@ namespace CORERenderer.GUI
             {
                 Div selectedDiv = tabDivBinding[names[selectedDivIndex]];
 
-                if ((!isAttached && COREMain.secondPassed) || (!isAttached && FirstRender))
+                if ((!isAttached && Main.COREMain.secondPassed) || (!isAttached && FirstRender))
                 {
                     Console.WriteError("TabManager is not attached to a div");
                     FirstRender = false;
@@ -205,7 +205,7 @@ namespace CORERenderer.GUI
                 {
                     shader.Use();
 
-                    shader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * COREMain.monitorWidth * 0.034f, 0, 0)));
+                    shader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * Main.COREMain.monitorWidth * 0.034f, 0, 0)));
 
                     if (i >= tabDivBinding.Count)
                         shader.SetBool("notImplemented", true);
@@ -220,15 +220,15 @@ namespace CORERenderer.GUI
                     shader.SetBool("selected", false);
                     shader.SetBool("notImplemented", false);
 
-                    selectedDiv.Write(names[i], (int)(i * COREMain.monitorWidth * 0.034f + 5), selectedDiv.Height + 5, 0.83f);
+                    selectedDiv.Write(names[i], (int)(i * Main.COREMain.monitorWidth * 0.034f + 5), selectedDiv.Height + 5, 0.83f);
                 }
             }
             else
             {
-                if (amountAttached < COREMain.scenes.Count)
+                if (amountAttached < Main.COREMain.scenes.Count)
                 {   //makes sure the + is always at the end whilst updating the tabs
                     tabDivBinding.Remove("+");
-                    while (amountAttached < COREMain.scenes.Count)
+                    while (amountAttached < Main.COREMain.scenes.Count)
                     {
                         tabDivBinding.Add($"{names[0]} {amountAttached + 1}", null);
                         amountAttached++;
@@ -236,41 +236,41 @@ namespace CORERenderer.GUI
                     tabDivBinding.Add("+", null);
                     
                 }
-                for (int i = 0; i <= COREMain.scenes.Count; i++)
+                for (int i = 0; i <= Main.COREMain.scenes.Count; i++)
                 {
                     shader.Use();
 
-                    if (i != COREMain.scenes.Count)
-                        shader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * COREMain.monitorWidth * 0.034f, 0, 0)));
+                    if (i != Main.COREMain.scenes.Count)
+                        shader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * Main.COREMain.monitorWidth * 0.034f, 0, 0)));
                     else
                     {
                         plusShader.Use();
 
-                        float localX = -COREMain.monitorWidth / 2 + bottomX;
-                        float localY = -COREMain.monitorHeight / 2 + COREMain.viewportY;
+                        float localX = -Main.COREMain.monitorWidth / 2 + bottomX;
+                        float localY = -Main.COREMain.monitorHeight / 2 + Main.COREMain.viewportY;
 
                         float[] vertices = new float[]
                         {
-                            localX, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f,
-                            localX, localY + COREMain.renderHeight,
-                            localX + COREMain.monitorWidth * 0.01f, localY + COREMain.renderHeight,
+                            localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
+                            localX, localY + Main.COREMain.renderHeight,
+                            localX + Main.COREMain.monitorWidth * 0.01f, localY + Main.COREMain.renderHeight,
 
-                            localX, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f,
-                            localX + COREMain.monitorWidth * 0.01f, localY + COREMain.renderHeight,
-                            localX + COREMain.monitorWidth * 0.01f, localY + COREMain.renderHeight + COREMain.monitorHeight * 0.018f
+                            localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
+                            localX + Main.COREMain.monitorWidth * 0.01f, localY + Main.COREMain.renderHeight,
+                            localX + Main.COREMain.monitorWidth * 0.01f, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f
                         };
 
                         glBindBuffer(BufferTarget.ArrayBuffer, plusVBO);
                         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.Length * sizeof(float), vertices);
                         glBindBuffer(BufferTarget.ArrayBuffer, 0);
 
-                        plusShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * COREMain.monitorWidth * 0.034f, 0, 0)));//new(0.471f, 1, 1, COREMain.monitorWidth * 0.034f * i, 0, 0));// * MathC.GetScalingMatrix(0.471f, 1, 1)
-                        
+                        plusShader.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(new Vector3(i * Main.COREMain.monitorWidth * 0.034f, 0, 0)));//new(0.471f, 1, 1, COREMain.monitorWidth * 0.034f * i, 0, 0));// * MathC.GetScalingMatrix(0.471f, 1, 1)
+
                         plusShader.SetBool("selected", false);
                         glBindVertexArray(plusVAO);
                         glDrawArrays(PrimitiveType.Triangles, 0, 6);
 
-                        COREMain.debugText.RenderText($"+", -COREMain.monitorWidth * 0.5f + bottomX + (int)(i * COREMain.monitorWidth * 0.034f + 5), -COREMain.monitorHeight * 0.5f + bottomY + COREMain.debugText.characterHeight * 0.83f / 2, 0.83f, new Vector2(1, 0));
+                        Main.COREMain.debugText.RenderText($"+", -Main.COREMain.monitorWidth * 0.5f + bottomX + (int)(i * Main.COREMain.monitorWidth * 0.034f + 5), -Main.COREMain.monitorHeight * 0.5f + bottomY + Main.COREMain.debugText.characterHeight * 0.83f / 2, 0.83f, new Vector2(1, 0));
                         return;
                     }
 
@@ -285,11 +285,11 @@ namespace CORERenderer.GUI
                     shader.SetBool("selected", false);
                     shader.SetBool("notImplemented", false);
 
-                    COREMain.debugText.RenderText($"{names[0]} {i + 1}", -COREMain.monitorWidth * 0.5f + bottomX + (int)(i * COREMain.monitorWidth * 0.034f + 5), -COREMain.monitorHeight * 0.5f + bottomY + 5, 0.83f, new Vector2(1, 0));
+                    Main.COREMain.debugText.RenderText($"{names[0]} {i + 1}", -Main.COREMain.monitorWidth * 0.5f + bottomX + (int)(i * Main.COREMain.monitorWidth * 0.034f + 5), -Main.COREMain.monitorHeight * 0.5f + bottomY + 5, 0.83f, new Vector2(1, 0));
 
-                    
-                        
-                    COREMain.selectedScene = selectedDivIndex;
+
+
+                    Main.COREMain.selectedScene = selectedDivIndex;
                 }
             }
         }
@@ -299,13 +299,13 @@ namespace CORERenderer.GUI
         private void CheckCollision()
         {
             for (int i = 0; i < tabDivBinding.Count; i++)
-                if (COREMain.CheckAABBCollisionWithClick((int)bottomX, (int)bottomY, (int)((i + 1) * COREMain.monitorWidth * 0.034f), (int)(COREMain.monitorHeight * 0.018f)))
+                if (Main.COREMain.CheckAABBCollisionWithClick((int)bottomX, (int)bottomY, (int)((i + 1) * Main.COREMain.monitorWidth * 0.034f), (int)(Main.COREMain.monitorHeight * 0.018f)))
                 {
                     selectedDivIndex = i;
                     if (type == attachedToType.RenderWindow && selectedDivIndex == tabDivBinding.Count - 1)
                     {
-                        COREMain.scenes.Add(new());
-                        COREMain.scenes[^1].OnLoad(Array.Empty<string>());
+                        Main.COREMain.scenes.Add(new());
+                        Main.COREMain.scenes[^1].OnLoad(Array.Empty<string>());
                     }
                     return;
                 }

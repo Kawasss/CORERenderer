@@ -69,7 +69,7 @@ namespace CORERenderer
             get => MathC.RadToDeg(pitch);
             set
             {
-                float angle = MathC.Clamp(value, -89, 89);
+                float angle = MathC.Clamp(value, -90, 90);
                 pitch = MathC.DegToRad(angle);
                 UpdateVectors();
             }
@@ -95,6 +95,22 @@ namespace CORERenderer
             }
         }
 
+        public Matrix TranslationlessViewMatrix
+        {
+            get
+            {
+                Matrix temp = MathC.LookAt(position, position + front, up);
+                temp.matrix4x4[3, 3] = 0;
+                return temp;
+            }
+        }
+
+        public Matrix ProjectionMatrix { get => Matrix.CreatePerspectiveFOV(fov, AspectRatio, nearPlane, farPlane); }
+
+        public Matrix OrthographicProjectionMatrix { get => Matrix.CreateOrthographicOffCenter(-Main.COREMain.Width / 9, Main.COREMain.Width / 9, -Main.COREMain.Height / 9, Main.COREMain.Height / 9, -farPlane, farPlane); }
+
+        public Matrix ViewMatrix { get => MathC.LookAt(position, position + front, up); }
+
         private Frustum GenerateFrustum()
         {
             Frustum frustum;
@@ -110,36 +126,6 @@ namespace CORERenderer
             frustum.bottomFace = new(position, MathC.GetCrossProduct(positionFarPlane + up * halfWidth, right));
 
             return frustum;
-        }
-
-        public void SetPosition(float x, float y, float z)
-        {
-            position = new Vector3(x, y, z);
-        }
-
-        public Matrix GetProjectionMatrix()
-        {
-            return Matrix.CreatePerspectiveFOV(fov, AspectRatio, nearPlane, farPlane);
-        }
-
-        public Matrix GetOrthographicProjectionMatrix()
-        {
-            return Matrix.CreateOrthographicOffCenter(-COREMain.Width / 9, COREMain.Width / 9, -COREMain.Height / 9, COREMain.Height / 9, -farPlane, farPlane);
-        }
-
-        public Matrix GetViewMatrix()
-        {
-            return MathC.LookAt(position, position + front, up);
-        }
-
-        public Matrix GetTranslationlessViewMatrix()
-        {
-            Matrix temp = MathC.LookAt(position, position + front, up);
-            Matrix newtemp = new(new float[4, 4] { {temp.matrix4x4[0,0], temp.matrix4x4[0, 1], temp.matrix4x4[0, 2], 0 },
-                                                   {temp.matrix4x4[1,0], temp.matrix4x4[1, 1], temp.matrix4x4[1, 2], 0 },
-                                                   {temp.matrix4x4[2,0], temp.matrix4x4[2, 1], temp.matrix4x4[2, 2], 0 },
-                                                   {0                  , 0                   , 0                   , 0 }});
-            return newtemp;
         }
 
         private void UpdateVectors()
@@ -165,24 +151,24 @@ namespace CORERenderer
 
         public void UpdatePosition(float mousePosX, float mousePosY, float delta)
         {
-            Glfw.SetInputMode(COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
+            Glfw.SetInputMode(Main.COREMain.window, InputMode.Cursor, (int)CursorMode.Disabled);
 
-            if (Glfw.GetKey(COREMain.window, Keys.W) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.W) == InputState.Press)
                 position += front * (cameraSpeed * delta);
 
-            if (Glfw.GetKey(COREMain.window, Keys.S) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.S) == InputState.Press)
                 position -= front * (cameraSpeed * delta);
 
-            if (Glfw.GetKey(COREMain.window, Keys.A) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.A) == InputState.Press)
                 position -= right * (cameraSpeed * delta);
 
-            if (Glfw.GetKey(COREMain.window, Keys.D) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.D) == InputState.Press)
                 position += right * (cameraSpeed * delta);
 
-            if (Glfw.GetKey(COREMain.window, Keys.Space) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.Space) == InputState.Press)
                 position += up * (cameraSpeed * delta);
 
-            if (Glfw.GetKey(COREMain.window, Keys.LeftShift) == InputState.Press)
+            if (Glfw.GetKey(Main.COREMain.window, Keys.LeftShift) == InputState.Press)
                 position -= up * (cameraSpeed * delta);
             
             //rotating the camera with mouse movement

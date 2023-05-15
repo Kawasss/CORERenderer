@@ -1,4 +1,6 @@
-﻿namespace CORERenderer.OpenGL
+﻿using COREMath;
+
+namespace CORERenderer.OpenGL
 {
     public partial class Rendering : GL
     {
@@ -16,6 +18,8 @@
         public static string TotalShaderByteSizeString { get { if (shaderByteSize >= 1000000) return $"{MathF.Round(shaderByteSize * 0.000001f):N0} MB"; else if (shaderByteSize >= 1000) return $"{MathF.Round(shaderByteSize * 0.001f):N0} KB"; else return $"{shaderByteSize}"; } }
 
         public static int drawCalls = 0;
+
+        public static void SetClearColor(Vector4 color) => glClearColor(color.x, color.y, color.z, color.w);
 
         public static void glBindBuffer(BufferTarget target, uint buffer) => GlBindBuffer((int)target, buffer);
 
@@ -36,6 +40,12 @@
         {
             unsafe
             {
+                if (pixels == null)
+                {
+                    GlTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+                    return;
+                }
+
                 fixed (byte* temp = &pixels[0])
                 {
                     IntPtr intptr = new(temp);

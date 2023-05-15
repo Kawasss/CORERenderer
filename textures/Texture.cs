@@ -172,7 +172,7 @@ namespace CORERenderer.textures
                 GenericShaders.Image2D.ActivateAttributes();
             }
 
-            GenericShaders.Image2D.SetInt("Texture", GL_TEXTURE0);
+            GenericShaders.Image2D.SetInt("Texture", 0);
             this.Use(GL_TEXTURE0);
 
             glBindVertexArray(VAO);

@@ -35,8 +35,8 @@ namespace CORERenderer.GUI
             Height = height;
             MaxValue = maxYValue > 0 ? maxYValue : 10;
 
-            bottomX = -(COREMain.monitorWidth / 2) + x;
-            bottomY = -(COREMain.monitorHeight / 2) + y;
+            bottomX = -(Main.COREMain.monitorWidth / 2) + x;
+            bottomY = -(Main.COREMain.monitorHeight / 2) + y;
 
             div = new(width, height, x, y);
             div.SetRenderCallBack(Render); //causes the graph to be rendered when the div is rendered
@@ -63,7 +63,7 @@ namespace CORERenderer.GUI
 
         public void Update(float value)
         {
-            if (COREMain.secondPassed) //makes the graph update only once every second to make it readable
+            if (Main.COREMain.secondPassed) //makes the graph update only once every second to make it readable
                 UpdateConditionless(value);
         }
 
@@ -87,7 +87,7 @@ namespace CORERenderer.GUI
 
         public void Render()
         {
-            if (COREMain.secondPassed)
+            if (Main.COREMain.secondPassed)
                 RenderConditionless();
         }
 
@@ -113,12 +113,12 @@ namespace CORERenderer.GUI
 
             if (showValues)
             {
-                COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
-                COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                Main.COREMain.debugText.RenderText($"{MaxValue}", bottomX, bottomY + Height - Main.COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                Main.COREMain.debugText.RenderText($"{(int)(MaxValue * 0.75f)}", bottomX, bottomY + Height * 0.75f - Main.COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                Main.COREMain.debugText.RenderText($"{(int)(MaxValue * 0.5f)}", bottomX, bottomY + Height * 0.5f - Main.COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
+                Main.COREMain.debugText.RenderText($"{(int)(MaxValue * 0.25f)}", bottomX, bottomY + Height * 0.25f - Main.COREMain.debugText.characterHeight, 1, new COREMath.Vector2(1, 0));
 
-                COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.8f, new COREMath.Vector2(1, 0));
+                Main.COREMain.debugText.RenderText($"{MathF.Round(lastValue, 1)}", bottomX + Width * 0.96f, pointValues[^1] - Height * 0.01f, 0.8f, new COREMath.Vector2(1, 0));
             }
             glBindVertexArray(0);
         }

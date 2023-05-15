@@ -1,10 +1,6 @@
 ﻿using CORERenderer.textures;
-using CORERenderer.shaders;
 using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
-using static CORERenderer.OpenGL.Rendering;
-using StbiSharp;
-using CORERenderer.OpenGL;
 using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.Main
@@ -52,7 +48,9 @@ namespace CORERenderer.Main
             {".jpg", RenderMode.JPGImage},
             {".hdr", RenderMode.HDRFile },
             {".stl", RenderMode.STLFile },
-            {".obj", RenderMode.ObjFile }
+            {".obj", RenderMode.ObjFile },
+            {".fbx", RenderMode.FBXFile },
+            {".exr", RenderMode.EXRFile }
         };
 
         /// <summary>
@@ -93,7 +91,7 @@ namespace CORERenderer.Main
         }
 
         /// <summary>
-        /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. The third is used for solid white and the fourth for the normal map
+        /// All loaded textures, 0 and 1 are always used for the default diffuse and specular texture respectively. 3 is used for solid white and 4 for the normal map, 5 is a black texture. this used for the metal map
         /// </summary>
         public static List<Texture> usedTextures = new();
 
@@ -113,7 +111,7 @@ namespace CORERenderer.Main
             for (int i = 0; i < usedTextures.Count; i++)
                 if (usedTextures[i].path == path)
                 {
-                    if (i > 3)
+                    if (i > 4)
                         Console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
                     else
                         Console.WriteLine($"Using default texture {usedTextures[i].name} ({i})");
@@ -133,90 +131,6 @@ namespace CORERenderer.Main
 
             usedTextures.Add(Texture.ReadFromSRGBFile(path));
             return usedTextures.Count - 1;
-        }
-
-        public static Framebuffer GenerateFramebuffer(int width, int height) => GenerateFramebuffer(0, 0, width, height);
-
-        public static Framebuffer GenerateFramebuffer(int x, int y, int width, int height)
-        {
-            float[] FrameBufferVertices = new float[]
-            {
-                (-width / 2f + x) / width, (-height / 2f + y + height) / height, 0, 1,
-                (-width / 2f + x) / width, (-height / 2f + y) / height,           0, 0,
-                (-width / 2f + x + width) / width, (-height / 2f + y) / height,           1, 0,
-
-                (-width / 2f + x) / width, (-height / 2f + y + height) / height, 0, 1,
-                (-width / 2f + x + width) / width, (-height / 2f + y) / height,           1, 0,
-                (-width / 2f + x + width) / width, (-height / 2f + y + height) / height, 1, 1
-            };
-            FrameBufferVertices[0] *= 2; //ugly
-            FrameBufferVertices[1] *= 2;
-            FrameBufferVertices[4] *= 2;
-            FrameBufferVertices[5] *= 2;
-            FrameBufferVertices[8] *= 2;
-            FrameBufferVertices[9] *= 2;
-
-            FrameBufferVertices[12] *= 2;
-            FrameBufferVertices[13] *= 2;
-            FrameBufferVertices[16] *= 2;
-            FrameBufferVertices[17] *= 2;
-            FrameBufferVertices[20] *= 2;
-            FrameBufferVertices[21] *= 2;
-
-            Framebuffer fb = new();
-            unsafe
-            {
-                fb.width = width;
-                fb.height = height;
-
-                fb.shader = GenericShaders.Framebuffer;//new($"{COREMain.pathRenderer}\\shaders\\FrameBuffer.vert", $"{COREMain.pathRenderer}\\shaders\\FrameBuffer.frag");
-            
-                fb.FBO = glGenFramebuffer();
-                glBindFramebuffer(GL_FRAMEBUFFER, fb.FBO);
-
-                fb.Texture = glGenTexture();
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, fb.Texture);
-
-            
-                glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.Texture, 0);
-                glBindTexture(GL_TEXTURE_2D, 0);
-
-                fb.RBO = glGenRenderbuffer();
-                glBindRenderbuffer(GL_RENDERBUFFER, fb.RBO);
-
-                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-                glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.RBO);
-
-            
-                fb.VBO = glGenBuffer();
-                glBindBuffer(BufferTarget.ArrayBuffer, fb.VBO);
-
-                fixed (float* temp = &FrameBufferVertices[0])
-                {
-                    IntPtr intptr = new(temp);
-                    glBufferData(GL_ARRAY_BUFFER, FrameBufferVertices.Length * sizeof(float), intptr, GL_STATIC_DRAW);
-                }
-
-                fb.VAO = glGenVertexArray();
-                glBindVertexArray(fb.VAO);
-
-                fb.shader.ActivateAttributes();
-            }
-            glBindBuffer(BufferTarget.ArrayBuffer, 0);
-            glBindVertexArray(0);
-
-            return fb;
         }
 
         /// <summary>
@@ -249,76 +163,6 @@ namespace CORERenderer.Main
                 if (delete)
                     glDeleteTexture(usedTextures[Object.Materials[i].SpecularMap].Handle);
             }
-        }
-
-        
-
-        public static unsafe Cubemap GenerateCubemap(string[] faces)
-        {
-            uint cubemapID = glGenTexture();
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
-
-            Stbi.SetFlipVerticallyOnLoad(true);
-
-            for (int i = 0; i < faces.Length; i++)
-            {
-                if (!File.Exists(faces[i]))
-                    throw new Exception($"cubemap failed to load at: {faces[i]}");
-
-                using (FileStream stream = File.OpenRead(faces[i]))
-                using (MemoryStream memoryStream = new())
-                {
-                    StbiImage image = Stbi.LoadFromMemory(memoryStream, 4);
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, image.Width, image.Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.Data);
-                }
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            }
-            Shader cubemapShader = new($"{COREMain.pathRenderer}\\shaders\\cubemap.vert", $"{COREMain.pathRenderer}\\shaders\\cubemap.frag");
-            cubemapShader.SetInt("cubemap", GL_TEXTURE0);
-
-            uint cubemapVAO = glGenVertexArray();
-            glBindVertexArray(cubemapVAO);
-
-            return new Cubemap { textureID = cubemapID, VAO = cubemapVAO, shader = cubemapShader };
-        }
-
-        public static unsafe Cubemap GenerateCubemap(bool addShader, uint cubemapID)
-        {
-            uint cubemapVAO = glGenVertexArray();
-            glBindVertexArray(cubemapVAO);
-
-            if (addShader)
-            {
-                Shader cubemapShader = new($"{COREMain.pathRenderer}\\shaders\\cubemap.vert", $"{COREMain.pathRenderer}\\shaders\\cubemap.frag");
-                cubemapShader.SetInt("cubemap", GL_TEXTURE0);
-
-                return new Cubemap { textureID = cubemapID, VAO = cubemapVAO, shader = cubemapShader };
-            }
-
-            else
-                return new Cubemap { textureID = cubemapID, VAO = cubemapVAO };
-        }
-
-        public static unsafe Cubemap GenerateSkybox(string[] faces)
-        {
-            Cubemap skybox = GenerateCubemap(faces);
-            skybox.shader = new($"{COREMain.pathRenderer}\\shaders\\skybox.vert", $"{COREMain.pathRenderer}\\shaders\\skybox.frag");
-
-            return skybox;
-        }
-
-        public static unsafe Cubemap GenerateSkybox(uint cubemapID)
-        {
-            Cubemap skybox = GenerateCubemap(false, cubemapID);
-            skybox.shader = new($"{COREMain.pathRenderer}\\shaders\\skybox.vert", $"{COREMain.pathRenderer}\\shaders\\skybox.frag");
-            skybox.shader.SetInt("cubemap", GL_TEXTURE0);
-
-            return skybox;
         }
     }
 }

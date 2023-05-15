@@ -44,15 +44,15 @@ namespace CORERenderer.GUI
             width = (int)(VM.Width * 0.27f);
             height = (int)(VM.Height * 0.27f);
 
-            COREMain.monitorWidth = VM.Width;
-            COREMain.monitorHeight = VM.Height;
+            Main.COREMain.monitorWidth = VM.Width;
+            Main.COREMain.monitorHeight = VM.Height;
 
             window = Glfw.CreateWindow(width, height, "", Monitor.None, Window.None);
 
             Glfw.GetWindowPosition(window, out int x, out int y);
             Glfw.SetWindowPosition(window, x + (VM.Width - width) / 2, y + (VM.Height - height) / 2);
 
-            using (FileStream stream = File.OpenRead($"{COREMain.pathRenderer}\\logos\\logo4.png"))
+            using (FileStream stream = File.OpenRead($"{Main.COREMain.pathRenderer}\\logos\\logo4.png"))
             using (MemoryStream memoryStream = new())
             {
                 StbiImage image;
@@ -78,17 +78,17 @@ namespace CORERenderer.GUI
 
             glViewport(0, 0, width, height);
 
-            shader = new($"{COREMain.pathRenderer}\\shaders\\SplashScreen.vert", $"{COREMain.pathRenderer}\\shaders\\SplashScreen.frag");
+            shader = new($"{Main.COREMain.pathRenderer}\\shaders\\SplashScreen.vert", $"{Main.COREMain.pathRenderer}\\shaders\\SplashScreen.frag");
 
-            splashScreenTexture = Texture.ReadFromFile($"{COREMain.pathRenderer}\\textures\\splashscreen.png");
+            splashScreenTexture = Texture.ReadFromFile($"{Main.COREMain.pathRenderer}\\textures\\splashscreen.png");
 
-            font = new(32, $"{COREMain.pathRenderer}\\Fonts\\Orbitron.ttf");
+            font = new(32, $"{Main.COREMain.pathRenderer}\\Fonts\\Orbitron.ttf");
 
             vao = glGenVertexArray();
             glBindVertexArray(vao);
 
             shader.Use();
-            shader.SetInt("Texture", GL_TEXTURE0);
+            shader.SetInt("Texture", 0);
 
             splashScreenTexture.Use(GL_TEXTURE0);
 
@@ -117,7 +117,7 @@ namespace CORERenderer.GUI
             
             Glfw.SwapBuffers(window);
 
-            Glfw.MakeContextCurrent(COREMain.window);
+            Glfw.MakeContextCurrent(Main.COREMain.window);
         }
 
         public void Refresh() => Glfw.SwapBuffers(window);
@@ -128,8 +128,8 @@ namespace CORERenderer.GUI
             glDeleteTexture(splashScreenTexture.Handle);
             glDeleteVertexArray(vao);
             Glfw.DestroyWindow(window);
-            Glfw.RestoreWindow(COREMain.window);
-            Glfw.SetWindowMonitor(COREMain.window, Glfw.PrimaryMonitor, 0, 0, COREMain.monitorWidth, COREMain.monitorHeight, refreshRate);
+            Glfw.RestoreWindow(Main.COREMain.window);
+            Glfw.SetWindowMonitor(Main.COREMain.window, Glfw.PrimaryMonitor, 0, 0, Main.COREMain.monitorWidth, Main.COREMain.monitorHeight, refreshRate);
             GC.Collect();
         }
     }

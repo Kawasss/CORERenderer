@@ -14,7 +14,7 @@ using CORERenderer.shaders;
 using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.GL;
 using static CORERenderer.OpenGL.Rendering;
-using System.Reflection.Metadata.Ecma335;
+using Assimp;
 #endregion
 
 namespace CORERenderer.Main
@@ -40,7 +40,7 @@ namespace CORERenderer.Main
         private static int errorsCaught = 0;
 
         //uints
-        public static uint vertexArrayObjectLightSource, vertexArrayObjectGrid;
+        public static uint vertexArrayObjectLightSource;
 
         //doubles
         private static double previousTime = 0;
@@ -135,8 +135,6 @@ namespace CORERenderer.Main
                 Glfw.Init();
 
                 splashScreen = new();
-                splashScreen.WriteLine("AAAAAAAAAAAAAAA");
-                Thread.Sleep(1000);
                 refreshRate = splashScreen.refreshRate;
                 //sets the width for the window that shows the 3D space
                 #region Calculates all of the appropriate dimensions
@@ -153,14 +151,13 @@ namespace CORERenderer.Main
 
                 SetRenderMode(args);
 
-                vertexArrayObjectLightSource = GenerateBufferlessVAO();
-                vertexArrayObjectGrid = GenerateBufferlessVAO();
-
                 #region Starting other processes
                 Overrides.AlwaysLoad();
+                Rendering.Init(monitorWidth, monitorHeight);
                 LoadConfig();
-                Rendering.Init();
                 #endregion
+
+                vertexArrayObjectLightSource = GenerateBufferlessVAO();
 
                 #region Identifying GPU and their associated shortcomings
                 string GPUString = glGetString(GL_RENDERER);
@@ -276,7 +273,7 @@ namespace CORERenderer.Main
 
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
-
+                arrows = new();
                 scenes[0].OnLoad(args);
 
                 Rendering.SetCamera(CurrentScene.camera);
@@ -292,8 +289,7 @@ namespace CORERenderer.Main
                 //Thread.Sleep(500); //allows user to read the printed text
                 Console.WriteLine($"Initialised in {Glfw.Time} seconds");
                 Console.WriteLine("Beginning render loop");
-
-                arrows = new();
+             
                 double timeSinceLastFrame2 = Glfw.Time;
                 #region First time rendering
                 Rendering.UpdateUniformBuffers();
@@ -386,6 +382,7 @@ namespace CORERenderer.Main
                         #endregion
 
                         #region Scene related events
+                        try
                         {
                             if (Scene.IsCursorInFrame(mousePosX, mousePosY))
                                 UpdateCamera(currentFrameTime);
@@ -404,7 +401,7 @@ namespace CORERenderer.Main
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                                 glEnable(GL_DEPTH_TEST);
-                                glClearColor(0.3f, 0.3f, 0.3f, 1);
+                                SetClearColor(ClearColor);
                                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                                 #endregion
 
@@ -457,7 +454,7 @@ namespace CORERenderer.Main
                                 renderEntireDir = false;
                                 menu.SetBool("Load entire directory", false);
                             }
-                            if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
+                            /*if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
                             {
                                 foreach (ModelInfo model in dirLoadedModels)
                                 {
@@ -466,8 +463,12 @@ namespace CORERenderer.Main
                                 }
                                 dirLoadedModels = null;
                                 timeSinceLastFrame2 = Glfw.Time;
-                            }
+                            }*/
                             #endregion
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Console.WriteError($"Scene error: {ex}");
                         }
                         #endregion
 
@@ -525,6 +526,12 @@ namespace CORERenderer.Main
 
                         glViewport(0, 0, monitorWidth, monitorHeight);
                         #endregion
+
+                        int error = GL_NO_ERROR;// GetError();
+                        if (error != GL_NO_ERROR)
+                        {
+                            Console.WriteError($"OpenGL error: ({error})");
+                        }
 
                         scrollWheelMoved = false;
                         scrollWheelMovedAmount = 0;
@@ -609,11 +616,20 @@ namespace CORERenderer.Main
             vertices = new();
             offsets = new();
             foreach (Model model in CurrentScene.models)
-                for (int i = 0; i < model.Vertices.Count; i++)
+            {
+                List<List<Vertex>> lv = model.Vertices;
+                for (int i = 0; i < lv.Count; i++)
                 {
-                    vertices.Add(Vertex.GetFloatList(model.Vertices[i]));
+                    vertices.Add(new());
+                    foreach (Vertex v in lv[i])
+                    {
+                        vertices[^1].Add(v.x); vertices[^1].Add(v.y); vertices[^1].Add(v.z);
+                        vertices[^1].Add(v.uvX); vertices[^1].Add(v.uvY);
+                        vertices[^1].Add(v.normalX); vertices[^1].Add(v.normalY); vertices[^1].Add(v.normalZ);
+                    }
                     offsets.Add(model.Offsets[i]);
                 }
+            }
         }
 
         private static void LoadConfig()
@@ -674,7 +690,7 @@ namespace CORERenderer.Main
 
         public static void LoadDir(string dir)
         {
-            bool loaded = false;
+            /*bool loaded = false;
             string[] allFiles = Directory.GetFiles(dir);
             List<ModelInfo> localVersion = new();
             new Job(() =>
@@ -697,7 +713,11 @@ namespace CORERenderer.Main
                 loaded = true;
                 if (loaded)
                     dirLoadedModels = localVersion;
-            }).Start();
+            }).Start();*/
+            string[] allFiles = Directory.GetFiles(dir);
+            foreach (string file in allFiles)
+                if (file != LoadFilePath && Path.GetExtension(file) == ".obj")
+                    CurrentScene.models.Add(new(file));
         }
 
         private struct ModelInfo

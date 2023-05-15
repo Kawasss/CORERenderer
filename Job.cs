@@ -1,5 +1,4 @@
-﻿using CORERenderer.Main;
-using Console = CORERenderer.GUI.Console;
+﻿using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer
 {
@@ -16,26 +15,39 @@ namespace CORERenderer
     public class Job : Jobs
     {
         private static int reservedThreads = 0;
+        private static int maxThreads = 999;
         public static int ReservedThreads { get => reservedThreads; }
+        public static int MaxThreads { get => maxThreads; set { if (value < 0) Console.WriteLine("The application needs one thread to be active"); else maxThreads = value; } }
 
         public Action action;
         private Thread thread;
         public bool IsFinished { get { return !thread.IsAlive; } }
         public readonly int ID;
+        private bool canRunOnDifferentThread = true;
 
         public Job(Action action)
         {
             this.action = action;
             ID = NewID;
-            reservedThreads++;
+
+            if (reservedThreads + 1 < maxThreads)
+                reservedThreads++;
+            else canRunOnDifferentThread = false;
         }
 
         public override void Start()
         {
-           Console.WriteDebug($"Starting job with ID {ID} ...");
-            
-            thread = new(Run);
-            thread.Start();
+            if (canRunOnDifferentThread)
+            {
+                Console.WriteDebug($"Starting job with ID {ID} ...");
+                thread = new(Run);
+                thread.Start();
+            }
+            else
+            {
+                Console.WriteError("Max threads reached, executing job on main thread...");
+                Run();
+            }
         }
 
         public override void Restart()
@@ -46,14 +58,15 @@ namespace CORERenderer
 
         public override void Wait()
         {
-            thread.Join();
+            if (canRunOnDifferentThread)
+                thread.Join();
         }
 
         private void Run() => action.Invoke();
 
         public static void ParallelForEach<T>(IEnumerable<T> source, Action<T> body)
         {
-            Parallel.ForEach(source, body);;
+            Parallel.ForEach(source, body);
         }
         public static void ParallelFor(int fromInclusive, int toExclusive, Action<int> action)
         {
@@ -62,7 +75,8 @@ namespace CORERenderer
 
         ~Job()
         {
-            reservedThreads--;
+            if (canRunOnDifferentThread)
+                reservedThreads--;
         }
     }
 }

@@ -2,9 +2,9 @@
 
 namespace CORERenderer.OpenGL
 {
-    public class GenericShaders : Rendering
+    public class GenericShaders
     {
-        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader;
+        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader;
 
         public static Shader Image2D { get => image2DShader; }
         public static Shader Light { get => lightingShader; }
@@ -16,6 +16,8 @@ namespace CORERenderer.OpenGL
         public static Shader IDPicking { get => pickShader; }
         public static Shader Framebuffer { get => framebufferShader; }
         public static Shader BonelessPickShader { get => bonelessPickShader; }
+        public static Shader Cubemap { get => cubemapShader; }
+        public static Shader Skybox { get => skyboxShader; }
 
         internal static void SetShaders()
         {
@@ -23,20 +25,179 @@ namespace CORERenderer.OpenGL
             lightingShader = new(lightVertText, lightFragText);
             backgroundShader = new(backgroundVertText, backgroundFragText);
             gridShader = new(gridVertText, gridFragText);
-            if (shaderConfig == ShaderType.PathTracing)
+            if (Rendering.shaderConfig == ShaderType.PathTracing)
                 GenericLightingShader = new(defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
-            else if (shaderConfig == ShaderType.Lighting)
-                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText, normalGeomText);
-            else if (shaderConfig == ShaderType.FullBright)
+            else if (Rendering.shaderConfig == ShaderType.Lighting)
+                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText);
+            else if (Rendering.shaderConfig == ShaderType.FullBright)
                 GenericLightingShader = new(defaultVertexShaderText, fullBrightFragText);
             solidColorQuadShader = new(quadVertText, quadFragText);
             arrowShader = new(arrowVertText, arrowFragText);
             pickShader = new(defaultVertexShaderText, quadFragText);
             framebufferShader = new(defaultFrameBufferVertText, defaultFrameBufferFragText);
             bonelessPickShader = new(pickVertexShader, arrowFragText);
+            cubemapShader = new(cubemapVert, cubemapFrag);
+            skyboxShader = new(skyboxVert, skyboxFrag);
         }
 
         //default shader source codes here
+        private static string skyboxFrag =
+            """
+            #version 430 core
+            out vec4 FragColor;
+
+            in vec3 TexCoords;
+            uniform samplerCube cubemap;
+
+            void main()
+            {
+            	FragColor = texture(cubemap, TexCoords);
+            }
+            """;
+
+        private static string skyboxVert =
+            """
+                        #version 430 core
+
+            out vec3 TexCoords;
+
+            layout (std140, binding = 0) uniform Matrices
+            {
+                mat4 projection;
+                mat4 view;
+                mat4 translationlessView;
+            };
+
+            vec3 coordinates[36] = vec3[](
+            	    vec3(-1.0f,  1.0f, -1.0f),
+                    vec3(-1.0f, -1.0f, -1.0f),
+                    vec3( 1.0f, -1.0f, -1.0f),
+                    vec3( 1.0f, -1.0f, -1.0f),
+                    vec3( 1.0f,  1.0f, -1.0f),
+                    vec3(-1.0f,  1.0f, -1.0f),
+
+                    vec3(-1.0f, -1.0f,  1.0f),
+                    vec3(-1.0f, -1.0f, -1.0f),
+                    vec3(-1.0f,  1.0f, -1.0f),
+                    vec3(-1.0f,  1.0f, -1.0f),
+                    vec3(-1.0f,  1.0f,  1.0f),
+                    vec3(-1.0f, -1.0f,  1.0f),
+
+                    vec3( 1.0f, -1.0f, -1.0f),
+                    vec3( 1.0f, -1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f, -1.0f),
+                    vec3( 1.0f, -1.0f, -1.0f),
+
+                    vec3(-1.0f, -1.0f,  1.0f),
+                    vec3(-1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f, -1.0f,  1.0f),
+                    vec3(-1.0f, -1.0f,  1.0f),
+
+                    vec3(-1.0f,  1.0f, -1.0f),
+                    vec3( 1.0f,  1.0f, -1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3( 1.0f,  1.0f,  1.0f),
+                    vec3(-1.0f,  1.0f,  1.0f),
+                    vec3(-1.0f,  1.0f, -1.0f),
+
+                    vec3(-1.0f, -1.0f, -1.0f),
+                    vec3(-1.0f, -1.0f,  1.0f),
+                    vec3( 1.0f, -1.0f, -1.0f),
+                    vec3( 1.0f, -1.0f, -1.0f),
+                    vec3(-1.0f, -1.0f,  1.0f),
+                    vec3( 1.0f, -1.0f,  1.0f)
+            );
+
+            void main()
+            {
+            	TexCoords = coordinates[gl_VertexID];
+                vec4 temp =  vec4(TexCoords, 1) * translationlessView * projection;
+            	gl_Position = temp.xyww;
+            }
+            """;
+
+        private static string cubemapFrag =
+            """
+            #version 430 core
+            out vec4 FragColor;
+
+            in vec2 texCoords;
+
+            uniform sampler2D environmentMap;
+
+            void main()
+            {    
+                FragColor = texture(environmentMap, texCoords);
+            }
+            """;
+
+        private static string cubemapVert =
+            """
+            #version 430 core
+            layout (std140, binding = 0) uniform Matrices
+            {
+                mat4 projection;
+                mat4 view;
+                mat4 translationlessView;
+            };
+
+            out vec2 texCoords;
+
+            vec3 coordinates[36] = vec3[](
+                    vec3(-1.0,  1.0, -1.0),
+                    vec3(-1.0, -1.0, -1.0),
+                    vec3( 1.0, -1.0, -1.0),
+                    vec3( 1.0, -1.0, -1.0),
+                    vec3( 1.0,  1.0, -1.0),
+                    vec3(-1.0,  1.0, -1.0),
+
+                    vec3(-1.0, -1.0,  1.0),
+                    vec3(-1.0, -1.0, -1.0),
+                    vec3(-1.0,  1.0, -1.0),
+                    vec3(-1.0,  1.0, -1.0),
+                    vec3(-1.0,  1.0,  1.0),
+                    vec3(-1.0, -1.0,  1.0),
+
+                    vec3( 1.0, -1.0, -1.0),
+                    vec3( 1.0, -1.0,  1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3( 1.0,  1.0, -1.0),
+                    vec3( 1.0, -1.0, -1.0),
+
+                    vec3(-1.0, -1.0,  1.0),
+                    vec3(-1.0,  1.0,  1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3( 1.0, -1.0,  1.0),
+                    vec3(-1.0, -1.0,  1.0),
+
+                    vec3(-1.0,  1.0, -1.0),
+                    vec3( 1.0,  1.0, -1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3( 1.0,  1.0,  1.0),
+                    vec3(-1.0,  1.0,  1.0),
+                    vec3(-1.0,  1.0, -1.0),
+
+                    vec3(-1.0, -1.0, -1.0),
+                    vec3(-1.0, -1.0,  1.0),
+                    vec3( 1.0, -1.0, -1.0),
+                    vec3( 1.0, -1.0, -1.0),
+                    vec3(-1.0, -1.0,  1.0),
+                    vec3( 1.0, -1.0,  1.0)
+            );
+
+            void main()
+            {
+                texCoords = coordinates[gl_VertexID].xy;    
+                gl_Position = (vec4(coordinates[gl_VertexID], 1.0) * mat4(mat3(view)) * projection).xyww;
+            }
+            """;
+
         private static string fullBrightFragText =
             """
             #version 430 core
@@ -96,47 +257,6 @@ namespace CORERenderer.OpenGL
             void main()
             {
                 FragColor = vec4(overrideColor, 1);
-            }
-            """;
-
-        private static string normalGeomText =
-            """
-            #version 430 core
-            layout(triangles) in;
-            layout(triangle_strip, max_vertices = 3) out;
-
-            in VS_OUT
-            {
-            	vec3 position;
-            	vec3 normal;
-            	vec3 fragPos;
-            	vec2 texCoords;
-            } gs_in[];
-
-            out vec3 FragPos;
-            out vec2 TexCoords;
-
-            out vec3 Normal;
-
-            void main()
-            {
-            	FragPos = gs_in[0].fragPos;
-            	TexCoords = gs_in[0].texCoords;
-
-            	vec3 p = cross(gs_in[1].position - gs_in[0].position, gs_in[2].position - gs_in[1].position);
-            	Normal = gs_in[0].normal;
-
-            	gl_Position = gl_in[0].gl_Position;
-            	EmitVertex();
-            	gl_Position = gl_in[1].gl_Position;
-            	FragPos = gs_in[1].fragPos;
-            	TexCoords = gs_in[1].texCoords;
-            	EmitVertex();
-            	gl_Position = gl_in[2].gl_Position;
-            	FragPos = gs_in[2].fragPos;
-            	TexCoords = gs_in[2].texCoords;
-            	EmitVertex();
-            	EndPrimitive();
             }
             """;
 
@@ -602,7 +722,7 @@ namespace CORERenderer.OpenGL
             void main()
             {
             	TexCoords = coordinates[gl_VertexID];
-                vec4 temp =  vec4(TexCoords, 1) * translationlessView * projection;
+                vec4 temp =  vec4(TexCoords, 1) * mat4(mat3(view)) * projection;
             	gl_Position = temp.xyww;
             }
             """;
@@ -753,20 +873,13 @@ namespace CORERenderer.OpenGL
             	mat4 view;
             };
 
-            out VS_OUT
-            {
-            	vec3 position;
-            	vec3 normal;
-                vec3 fragPos;
-                vec2 texCoords;
-            } vs_out;
-
             out mat4 Model;
 
             uniform mat4 model;
             uniform mat4 boneMatrices[MAX_TOTAL_BONES];
             out vec3 Normal;
             out vec2 TexCoords;
+            out vec3 FragPos;
 
             void main() 
             {
@@ -792,12 +905,9 @@ namespace CORERenderer.OpenGL
                 if (finalPos == vec4(0))
                     finalPos = pos;
 
-            	vs_out.fragPos = finalPos.xyz;//(finalPos * model).xyz;
+            	FragPos = finalPos.xyz;//(finalPos * model).xyz;
             	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
-            	vs_out.normal = mat3(transpose(inverse(model))) * aNormal;
-            	vs_out.texCoords = aTexCoords;
             	Model = model;
-            	vs_out.position = vs_out.fragPos;
                 TexCoords = aTexCoords;
 
             	gl_Position = finalPos * view * projection;
@@ -811,33 +921,10 @@ namespace CORERenderer.OpenGL
             #version 430 core
             out vec4 FragColor;
 
-            struct PointLight
-            {
-            	vec3 position;
-            	vec3 ambient;
-            	vec3 diffuse;
-            	vec3 specular;
-
-            	float constant;
-            	float linear;
-            	float quadratic;
-            };
-            #define NR_POINTS_LIGHTS 1
-            uniform PointLight pointLights[NR_POINTS_LIGHTS];
-
-            struct Material 
-            {
-            	sampler2D Texture;
-            	sampler2D diffuse;
-            	sampler2D specular;
-            	sampler2D normalMap;
-            	float shininess;
-            };
-            uniform Material material;
+            #define PI 3.14159265359
 
             uniform vec3 viewPos;
-            uniform vec3 front;
-            uniform float distanceObject;
+            uniform vec3 lightPos;
             uniform float transparency;
             uniform int allowAlpha;
             uniform vec3 overrideColor;
@@ -847,10 +934,20 @@ namespace CORERenderer.OpenGL
 
             in vec3 Normal;
             in vec3 FragPos;
+            in mat4 Model;
+
+            uniform sampler2D diffuseMap;
+            uniform sampler2D specularMap;
+            uniform sampler2D normalMap;
+            uniform sampler2D metalMap;
+
+            uniform samplerCube skybox;
 
             vec3 getNormalFromMap()
             {
-                vec3 tangentNormal = texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0;
+                vec3 normalMapColor = texture(normalMap, TexCoords).rgb;
+                //normalMapColor.y = -normalMapColor.y;
+                vec3 tangentNormal = normalMapColor * 2.0 - 1.0;
 
                 vec3 Q1  = dFdx(FragPos);
                 vec3 Q2  = dFdy(FragPos);
@@ -860,57 +957,74 @@ namespace CORERenderer.OpenGL
                 vec3 N   = normalize(Normal);
                 vec3 T  = normalize(Q1*st2.t + Q2*st1.t);
                 vec3 B  = -normalize(cross(N, T));
-                mat3 TBN = transpose(mat3(T, B, N));
+                mat3 TBN = mat3(T, B, N);
 
                 return normalize(TBN * tangentNormal);
             }
-
-            mat3 GetTBN()
+            vec3 FresnelSchlick(float cosTheta, vec3 F0)
             {
-                vec3 tangentNormal = texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0;
-            
-                vec3 Q1  = dFdx(FragPos);
-                vec3 Q2  = dFdy(FragPos);
-                vec2 st1 = dFdx(TexCoords);
-                vec2 st2 = dFdy(TexCoords);
-            
-                vec3 N   = normalize(Normal);
-                vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-                vec3 B  = -normalize(cross(N, T));
-                return transpose(mat3(T, B, N));
+                return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
             }
-
             void main()
             {
-            	vec4 fullColor = texture(material.Texture, TexCoords);
+            	vec4 fullColor = texture(diffuseMap, TexCoords);
             	if (fullColor.a < 0.1)
             		discard;
+                    if (overrideColor != vec3(0))
+                    {
+                        vec3 lightDir = normalize((lightPos - FragPos));
+                        vec3 normal = getNormalFromMap();
+                        vec3 viewDir = normalize((viewPos - FragPos));
+                	    //vec3 reflectDir = reflect(-lightDir, normal);
+                	    vec3 halfwayDir = normalize((lightDir + viewDir));
+            	        float spec = pow(max(dot(normal, halfwayDir), 0), 225);//float spec = pow(max(dot(normal, halfwayDir), 0), 1);
+                	    vec3 specular = vec3(.3) * spec * texture(specularMap, TexCoords).rgb; // assuming bright white light color
 
-            	vec3 color = fullColor.rgb;
+                        FragColor = vec4(specular, transparency);
+                        return;
+                    }
+
+            	vec3 color = pow(texture(diffuseMap, TexCoords).rgb, vec3(2.2));
+                float metallic = texture(metalMap, TexCoords).r;
+
+                vec3 ViewPos = (vec4(viewPos, 1)).xyz;
+                vec3 normal = getNormalFromMap();
+
+                //metalness (test)
+                vec3 I = normalize(FragPos - viewPos);
+                vec3 R = reflect(I, normalize(normal));//refract(I, normal, 1.00 / 1.52);
+            
+                vec3 reflection = texture(skybox, R).rgb;
+                float strength = (reflection.r + reflection.g + reflection.b) / 3;
+                vec3 reflectiveness = metallic * reflection * vec3(1);
 
             	// ambient
-                	vec3 ambient = .2 * color;
+                float ambientStrength = length(normalize(reflection));
+                vec3 ambient = color * strength;
 
             	// diffuse
-                	vec3 lightDir = normalize((pointLights[0].position - FragPos));
-                	vec3 normal = getNormalFromMap();
-                	float diff = max(dot(lightDir, normal), 0.0);
-                	vec3 diffuse = vec3(.8) * diff * pow(texture(material.diffuse, TexCoords).rgb, vec3(2.2));
+                float distance = distance(lightPos, FragPos);
+                float attenuation = 1.0 / (distance * distance);
+                vec3 lightDir = normalize((lightPos - FragPos));
+                
+                float diff = max(dot(lightDir, normal), 0.0);// * attenuation;
+                vec3 diffuse = diff * pow(texture(diffuseMap, TexCoords).rgb, vec3(2.2));
 
             	// specular
-                	vec3 viewDir = normalize((viewPos - FragPos));
-                	vec3 reflectDir = reflect(-lightDir, normal);
-                	vec3 halfwayDir = normalize((lightDir + viewDir));
-            	    float spec = pow(max(dot(viewDir, reflectDir), 0), 1);//float spec = pow(max(dot(normal, halfwayDir), 0), 1);
-                	vec3 specular = vec3(1) * spec * texture(material.specular, TexCoords).rgb; // assuming bright white light color
+                
+                vec3 viewDir = normalize((viewPos - FragPos));
+                //vec3 reflectDir = reflect(-lightDir, normal);
+                vec3 halfwayDir = normalize((lightDir + viewDir));
+            	float spec = pow(max(dot(normal, halfwayDir), 0), metallic * 255);//vec3 spec = FresnelSchlick(max(dot(normal, halfwayDir), 0), F0);//
+                vec3 specular = vec3(.4) * spec * texture(specularMap, TexCoords).rgb; // assuming bright white light color
 
             	if (allowAlpha == 1 && transparency != 0)
-            		FragColor = vec4(ambient + diffuse + specular, transparency);
+            		FragColor = vec4((ambient + diffuse + specular) * reflectiveness, transparency);//
             	else
-            		FragColor = vec4(ambient + diffuse + specular, 1.0);
-            	if (overrideColor != vec3(0, 0, 0))
-            		FragColor = vec4(overrideColor, fullColor.a);
-                    //FragColor = vec4(texture(material.normalMap, TexCoords).xyz * 2.0 - 1.0, 1);
+            		FragColor = vec4(ambient + diffuse + specular, 1.0);//
+            //vec3 I = normalize(FragPos - viewPos);
+            //vec3 R = reflect(I, normalize(normal));
+            //FragColor = vec4(texture(skybox, R).rgb, 1.0);
             }
             """;
     }

@@ -28,8 +28,8 @@ namespace CORERenderer.GUI
             x = X;
             y = Y;
 
-            width = Name.Length * (int)(COREMain.debugText.characterHeight);
-            height = (int)(COREMain.debugText.characterHeight);
+            width = Name.Length * (int)(Main.COREMain.debugText.characterHeight);
+            height = (int)(Main.COREMain.debugText.characterHeight);
         }
 
         public void OnClick(Action action)
@@ -43,7 +43,7 @@ namespace CORERenderer.GUI
 
             if (firstRender)
             {
-                COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
                 Submenu.isOpen = false;
                 firstRender = false;
                 return;
@@ -51,13 +51,13 @@ namespace CORERenderer.GUI
 
             if (!isPressed && changed)// && changed //button wont show if it isnt pressed in its optimised state
             {
-                COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
                 Submenu.isOpen = false;
             }
 
             else if (isPressed && changed)
             {
-                COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
+                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
                 Submenu.isOpen = true;
             }
             if (isPressed)
@@ -68,13 +68,13 @@ namespace CORERenderer.GUI
         {
             if (!isPressed)// && changed //button wont show if it isnt pressed in its optimised state
             {
-                COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
                 Submenu.isOpen = false;
             }
 
             else if (isPressed)
             {
-                COREMain.debugText.RenderText(name, -(COREMain.monitorWidth / 2) + x, -(COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
+                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
                 Submenu.isOpen = true;
             }
             if (isPressed)
@@ -86,11 +86,11 @@ namespace CORERenderer.GUI
             bool previousState = isPressed;
             changed = true;
             if (attachedSubmenu == null)
-                isPressed = !isPressed && COREMain.CheckAABBCollisionWithClick(x, y, width, height);
+                isPressed = !isPressed && Main.COREMain.CheckAABBCollisionWithClick(x, y, width, height);
             else if (isPressed) //is not pressed if cursor is outside button hitbox and submenu hitbox
-                isPressed = COREMain.CheckAABBCollision(x, y, width, height) || COREMain.CheckAABBCollision(attachedSubmenu.x, attachedSubmenu.y - attachedSubmenu.height, attachedSubmenu.width, attachedSubmenu.height);
+                isPressed = Main.COREMain.CheckAABBCollision(x, y, width, height) || Main.COREMain.CheckAABBCollision(attachedSubmenu.x, attachedSubmenu.y - attachedSubmenu.height, attachedSubmenu.width, attachedSubmenu.height);
             else if (!isPressed)
-                isPressed = COREMain.CheckAABBCollisionWithClick(x, y, width, height);// || COREMain.CheckAABBCollision(attachedSubmenu.x, attachedSubmenu.y - attachedSubmenu.height, attachedSubmenu.width, attachedSubmenu.height);
+                isPressed = Main.COREMain.CheckAABBCollisionWithClick(x, y, width, height);// || COREMain.CheckAABBCollision(attachedSubmenu.x, attachedSubmenu.y - attachedSubmenu.height, attachedSubmenu.width, attachedSubmenu.height);
 
             changed = !(previousState == isPressed);
         }
