@@ -65,11 +65,12 @@ namespace CORERenderer.OpenGL
         public static void Init(int RenderingWidth, int RenderingHeight)
         {
             vertexArrayObjectGrid = GenerateBufferlessVAO();
+            glBindVertexArray(0);
             GenericShaders.SetShaders();
             renderingWidth = RenderingWidth;
             renderingHeight = RenderingHeight;
-            TextureQuality = OpenGL.TextureQuality.Medium;
-            ReflectionQuality = OpenGL.ReflectionQuality.Lowest;
+            TextureQuality = OpenGL.TextureQuality.Default;
+            ReflectionQuality = OpenGL.ReflectionQuality.Medium;
             reflectionFramebuffer.Bind();
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -84,7 +85,7 @@ namespace CORERenderer.OpenGL
             glEnable(GL_DEBUG_OUTPUT);
 
             glEnable(GL_CULL_FACE);
-            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+            //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
 
@@ -126,32 +127,32 @@ namespace CORERenderer.OpenGL
                 new(0, -1,  0)
             };
 
-
             glViewport(0, 0, (int)((float)renderingWidth / (float)reflectionQuality), (int)((float)renderingWidth / (float)reflectionQuality));
             camera.AspectRatio = 1;
 
             reflectionFramebuffer.Bind();
-            reflectionCubemap.Use(GL_TEXTURE4);
+            reflectionCubemap.Use(GL_TEXTURE6);
             glDepthFunc(GL_LEQUAL);
             Submodel.renderAllIDs = false;
             for (int i = 0; i < 6; i++)
             {
-                //MatrixToUniformBuffer(camera.ProjectionMatrix, 0);
-                //MatrixToUniformBuffer(viewMatrices[i], GL_MAT4_FLOAT_SIZE);
-                camera.front = fronts[i];
-                camera.up = ups[i];
+                camera.front = fronts[i].Normalized;
+                camera.up = ups[i].Normalized;
                 camera.right = MathC.Normalize(MathC.GetCrossProduct(fronts[i], Vector3.UnitVectorY));
+                
+                //camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, fronts[i]));
                 UpdateUniformBuffers();
 
+                reflectionCubemap.Use(GL_TEXTURE6);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, reflectionCubemap.textureID, 0);
-
-                glClearColor(.3f, .3f, .3f, 1);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 //RenderLights(lights);
-                RenderAllModels(models);
+                //RenderAllModels(models);
+                foreach (Model model in models)
+                    model.Render();
                 RenderGrid();
-
+                
                 translucentSubmodels.Clear();
             }
             Submodel.renderAllIDs = true;
@@ -211,7 +212,7 @@ namespace CORERenderer.OpenGL
                 if (models[i].CanBeCulled)
                 {
                     modelsFrustumCulled++;
-                    //continue;
+                    continue;
                 }
 
                 //if (models[i].type != RenderMode.HDRFile)

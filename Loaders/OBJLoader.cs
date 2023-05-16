@@ -89,6 +89,13 @@ namespace CORERenderer.Loaders
                         material.NormalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureNormal.FilePath}");
                     if (mat.HasTextureEmissive)
                         material.MetalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureEmissive.FilePath}");
+                    if (mat.HasTextureAmbient)
+                        material.aoMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureAmbient.FilePath}");
+                    if(mat.HasTextureDisplacement)
+                    {
+                        material.displacementMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDisplacement.FilePath}");
+                        System.Console.WriteLine("found");
+                    }
 
                     if (mat.HasColorTransparent)
                     {

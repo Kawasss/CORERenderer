@@ -36,6 +36,8 @@ namespace CORERenderer.Main
         public int SpecularMap;
         public int NormalMap;
         public int MetalMap;
+        public int aoMap;
+        public int displacementMap;
 
         public Vector3 overrideColor = Vector3.Zero;
 
@@ -47,6 +49,8 @@ namespace CORERenderer.Main
             SpecularMap = 1;
             NormalMap = 3;
             MetalMap = 4;
+            aoMap = 2;
+            displacementMap = 2;
 
             OpticalDensity = 1;
             Transparency = 1;

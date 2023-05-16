@@ -57,10 +57,10 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
-            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
+            models.Add(new($"{pathRenderer}\\OBJs\\highres.hdr"));
             lights.Add(new() { position = new(1, 2, 1) });
-            camera.position = new(1f, 1f, 1f);
-            camera.front = new(-1, -1, -1);
+            camera.position = new(-2f, 0.1f, 0f);
+            camera.front = new(1, 0, 0);
             camera.right = MathC.Normalize(MathC.GetCrossProduct(camera.front, Vector3.UnitVectorY));
             camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));
         }
@@ -85,7 +85,7 @@ namespace CORERenderer
                 {
                     GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
                     GenericShaders.GenericLighting.SetVector3("lightPos", new(1, 2, 1));
-                    GenericShaders.GenericLighting.SetInt("skybox", 4);
+                    GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 RenderScene(this);
             }
@@ -187,7 +187,7 @@ namespace CORERenderer
             glEnable(GL_DEBUG_OUTPUT);
 
             glEnable(GL_CULL_FACE);
-            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+            //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
         }

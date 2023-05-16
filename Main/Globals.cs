@@ -2,6 +2,7 @@
 using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
 using Console = CORERenderer.GUI.Console;
+using CORERenderer.OpenGL;
 
 namespace CORERenderer.Main
 {

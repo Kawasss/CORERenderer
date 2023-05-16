@@ -6,16 +6,18 @@ using CORERenderer.shaders;
 using StbiSharp;
 using CORERenderer.OpenGL;
 using Console = CORERenderer.GUI.Console;
+using System.Reflection.Metadata;
 
 namespace CORERenderer.textures
 {
     public class Texture
     {
-        public readonly uint Handle;
+        public uint Handle;
         public string path;
         public string name;
         public int width;
         public int height;
+        private int mode;
 
         public byte[] FileContent;
         public byte[] Data;// { get { return GetData(); } }
@@ -46,7 +48,7 @@ namespace CORERenderer.textures
             Stbi.SetFlipVerticallyOnLoad(flip);
 
             uint handle = glGenTexture();
-
+            
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, handle);
 
@@ -78,7 +80,30 @@ namespace CORERenderer.textures
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
 
-            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath) };//, Data = image.Data.ToArray() };
+            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath), mode = mode };//, Data = image.Data.ToArray() };
+        }
+
+        public void Downscale(float quality)
+        {
+            if (quality == 1)
+                return;
+
+            int newWidth = (int)(width / quality), newHeight = (int)(height / quality);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, Handle);
+
+            Framebuffer downscaling = GenerateFramebuffer(newWidth, newHeight);
+            downscaling.Bind();
+
+            glViewport(0, 0, newWidth, newHeight);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE0, this.Handle, 0);
+
+            downscaling.shader.Use();
+
+            glBindVertexArray(downscaling.VAO);
+            glDrawArrays(PrimitiveType.Triangles, 0, 6);
+            downscaling.Dispose();
         }
 
         public static Texture GenerateEmptyTexture(int Width, int Height)
@@ -165,10 +190,7 @@ namespace CORERenderer.textures
         {
             if (VBO == 0)
             {
-                Rendering.GenerateFilledBuffer(out VBO, out VAO, Rendering.GenerateQuadVerticesWithUV(x, y, (int)((float)width * (float)(200f / width)), (int)((float)height * (float)(200f / height)))); //may cause images to appear stretched or shrunk
-                /*int vertexLocation = GenericShaders.Image2D.GetAttribLocation("vertex");
-                unsafe { glVertexAttribPointer((uint)vertexLocation, 4, GL_FLOAT, false, 4 * sizeof(float), (void*)0); }
-                glEnableVertexAttribArray((uint)vertexLocation);*/
+                Rendering.GenerateFilledBuffer(out VBO, out VAO, Rendering.GenerateQuadVerticesWithUV(x, y, (int)((float)width * (float)(150f / width)), (int)((float)height * (float)(150f / height)))); //may cause images to appear stretched or shrunk
                 GenericShaders.Image2D.ActivateAttributes();
             }
 

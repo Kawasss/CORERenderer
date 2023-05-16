@@ -37,6 +37,15 @@ namespace CORERenderer.OpenGL
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
         }
+
+        public void Dispose()
+        {
+            glDeleteFramebuffer(FBO);
+            glDeleteVertexArray(VAO);
+            glDeleteTexture(Texture);
+            glDeleteRenderbuffer(RBO);
+            glDeleteBuffer(VBO);
+        }
     }
 
     public partial class Rendering

@@ -155,6 +155,8 @@ namespace CORERenderer.Loaders
             shader.SetInt("specularMap", 1);
             shader.SetInt("normalMap", 2);
             shader.SetInt("metalMap", 3);
+            shader.SetInt("aoMap", 4);
+            shader.SetInt("displacementMap", 5);
         }
 
         public void Render()
@@ -234,6 +236,8 @@ namespace CORERenderer.Loaders
             usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
             usedTextures[material.NormalMap].Use(GL_TEXTURE2);
             usedTextures[material.MetalMap].Use(GL_TEXTURE3);
+            usedTextures[material.aoMap].Use(GL_TEXTURE4);
+            usedTextures[material.aoMap].Use(GL_TEXTURE5);
         }
 
         public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<uint> indices)
