@@ -5,7 +5,6 @@ using static CORERenderer.Main.Globals;
 using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.GLFW;
 using CORERenderer.OpenGL;
-using CORERenderer.textures;
 using CORERenderer.shaders;
 using Console = CORERenderer.GUI.Console;
 
@@ -38,7 +37,7 @@ namespace CORERenderer.Loaders
 
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
-        public bool CanBeCulled { get { if (hdr != null) return false; return !transform.BoundingBox.IsInFrustum(Main.COREMain.CurrentScene.camera.Frustum, transform); } }
+        public bool CanBeCulled { get {return !transform.BoundingBox.IsInFrustum(COREMain.CurrentScene.camera.Frustum, transform); } }
         #endregion
 
         public List<Submodel> submodels = new();
@@ -60,15 +59,13 @@ namespace CORERenderer.Loaders
 
         public int selectedSubmodel = 0;
 
-        public HDRTexture hdr = null;
-
         private Transform transform = new();
         public Transform Transform { get { return transform; } set { transform = value; } } //!!REMOVE SET WHEN DONE DEBUGGING
 
         public Model(string path)
         {
-            ID = Main.COREMain.NewAvaibleID;
-            type = Main.COREMain.SetRenderMode(path);
+            ID = COREMain.NewAvaibleID;
+            type = COREMain.SetRenderMode(path);
 
             if (type == RenderMode.ObjFile)
                 GenerateObj(path);
@@ -81,18 +78,12 @@ namespace CORERenderer.Loaders
 
             else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 GenerateImage(path);
-
-            else if (type == RenderMode.HDRFile && hdr == null)
-            {
-                hdr = HDRTexture.ReadFromFile(path, Rendering.TextureQuality);
-                transform = new(COREMain.CurrentScene.camera.position, Vector3.Zero, new(1, 1, 1), new(1000, 10000, 1000), COREMain.CurrentScene.camera.position);
-            }
         }
         
         public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
-            ID = Main.COREMain.NewAvaibleID;
-            type = Main.COREMain.SetRenderMode(path);
+            ID = COREMain.NewAvaibleID;
+            type = COREMain.SetRenderMode(path);
 
             Name = Path.GetFileName(path)[..^4];
 
@@ -109,7 +100,7 @@ namespace CORERenderer.Loaders
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    Console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {Main.COREMain.CurrentScene.models.Count} \"{Name}\"");
+                    Console.WriteError($"Couldn't create submodel {i} out of {vertices.Count - 1} for model {COREMain.CurrentScene.models.Count} \"{Name}\"");
                     amountOfFailures++;
                     continue;
                 }

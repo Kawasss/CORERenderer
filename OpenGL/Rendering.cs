@@ -45,6 +45,7 @@ namespace CORERenderer.OpenGL
         {
             get => reflectionQuality; set
             {//both width because afaik its better to have a perfect cube and not a stretched one
+                reflectionQuality = value;
                 reflectionCubemap = GenerateEmptyCubemap((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
                 reflectionFramebuffer = GenerateFramebuffer((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
             }
@@ -69,8 +70,8 @@ namespace CORERenderer.OpenGL
             GenericShaders.SetShaders();
             renderingWidth = RenderingWidth;
             renderingHeight = RenderingHeight;
-            TextureQuality = OpenGL.TextureQuality.Default;
-            ReflectionQuality = OpenGL.ReflectionQuality.Medium;
+            TextureQuality = OpenGL.TextureQuality.Low;
+            ReflectionQuality = OpenGL.ReflectionQuality.Low;
             reflectionFramebuffer.Bind();
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -85,7 +86,7 @@ namespace CORERenderer.OpenGL
             glEnable(GL_DEBUG_OUTPUT);
 
             glEnable(GL_CULL_FACE);
-            //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
 
@@ -97,7 +98,7 @@ namespace CORERenderer.OpenGL
             camera = currentCamera;
         }
 
-        private unsafe static void RenderCubemapReflections(List<Model> models, List<Main.Light> lights)
+        private unsafe static void RenderCubemapReflections(List<Model> models, List<Main.Light> lights, HDRTexture skybox)
         {
             Matrix originalView = camera.ViewMatrix;
             Vector3 previousCamFront = camera.front;
@@ -149,9 +150,10 @@ namespace CORERenderer.OpenGL
 
                 //RenderLights(lights);
                 //RenderAllModels(models);
+                RenderGrid();
                 foreach (Model model in models)
                     model.Render();
-                RenderGrid();
+                skybox?.Render();
                 
                 translucentSubmodels.Clear();
             }
@@ -175,17 +177,15 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            RenderCubemapReflections(scene.models, scene.lights);
+            RenderCubemapReflections(scene.models, scene.lights, scene.skybox);
             //RenderLights(scene.lights);
             RenderAllModels(scene.models);
+            scene.skybox?.Render();
             //reflectionCubemap.Render();
         }
 
         public static void RenderAllModels(List<Model> models)
         {
-            if (models.Count == 0)
-                return;
-
             int modelsFrustumCulled = 0;
             int currentDrawCalls = drawCalls;
             Stopwatch sw = new();
@@ -456,7 +456,7 @@ namespace CORERenderer.OpenGL
 
             glDisable(GL_CULL_FACE);
             glBindVertexArray(vertexArrayObjectGrid);
-            glDrawArrays(PrimitiveType.Triangles, 0, 6);
+            //glDrawArrays(PrimitiveType.Triangles, 0, 6);
             glEnable(GL_CULL_FACE);
         }
 

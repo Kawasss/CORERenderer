@@ -1,19 +1,31 @@
-﻿crs file format:
+﻿crs file format v1.1:
 A crs file contains metadata about the scene and a multitude of nodes, detailing the objects in the scene.
-The file always start with a 100 bytes header, which can generally be skipped. After this are 4 bytes, representing a 32-bit integer, showing the model count.
+The file always start with a 100 bytes header, which can generally be skipped. 
+The actual scene starts with a camera node, after which one light node follows.
+After this are 4 bytes, representing a 32-bit integer, showing the model count.
 After this follow the model nodes, the amount specified by the aforementioned 32-bit integer.
 Each model node contains atleast one submodel, although there can be more.
+After the model nodes is a skybox node.
 
+Camera node:
+12 bytes - position : vector3
+4  bytes - pitch	: float
+4  bytes - yaw		: float
+
+The pitch and yaw are both used in degrees. These can be used to calculate the front, right and up of the camera.
+
+Light node:
+12 bytes - psoition	: vector3
 
 Model node:
 The structure of a model node looks like this:
 
-10 bytes - model name : UTF8 string
-12 bytes - position : vector3
-12 bytes - scaling : vector3
-12 bytes - rotation : vector3
+10 bytes - model name		   : UTF8 string
+12 bytes - position			   : vector3
+12 bytes - scaling			   : vector3
+12 bytes - rotation			   : vector3
 4  bytes - amount of submodels : 32-bit integer
-.. bytes - submodel nodes
+.. bytes - submodel nodes	   : node
 
 Models are used as a container for the submodels: it keeps them organized together.
 The amount of submodels is stated by the 4 bytes named "amount of submodels" here.
@@ -24,18 +36,23 @@ There isn't any information regarding the center and extents of the models, thos
 Submodel node:
 The structure of a submodel node looks like this:
 
-10 bytes - model name : UTF8 string
-12 bytes - position : vector3
-12 bytes - scaling : vector3
-12 bytes - rotation : vector3
-1  byte  - has material : bool
+10 bytes - model name		  : UTF8 string
+12 bytes - position			  : vector3
+12 bytes - scaling			  : vector3
+12 bytes - rotation			  : vector3
+1  byte  - has material		  : bool
+1  byte  - has bone(s)		  : bool
 4  bytes - amount of polygons : 32-bit integer
-amount of polygons * 3 * 8 * 4 bytes - all vertices : float
-.. bytes - material node
+.. bytes - all vertices		  : float
+.. bytes - material node	  : node
 
+the amount of vertices can be calculated with amount of polygons * 3 * (8 + has bones(s) ? 16 : 0) * 4. 
+Each polygon has 3 vertices, where each contains 8 or 24 values, depending on the attached bones.
 The bool "has material" states if a submodel has a material attached or if it should use the engines default textures.
 The material node is not present if "has material" is false.
 If materials are attached, they are stated after "all vertices".
+If the mesh has bones attached, has bone(s) is true.
+This bool is added to reduce file size for models that dont have bones applied.
 A vertex is defined as follows:
 
 Vector3 position (12 bytes)
@@ -49,8 +66,9 @@ Vector3 normal (12 bytes)
 	x
 	y
 	z
+if has bone(s) is true:
 32-bit integer array (length 8) attached bone IDs (32 bytes)
-float array (length) 8 weight of the bone, whose ID is at the index in bone IDs as this float (32 bytes)
+float array (length 8) weight of the bone, whose ID is at the index in bone IDs as this float (32 bytes)
 
 This means that one vertex takes up 32 bytes (8 floats). One polygon always consists of 3 vertices, so the vertex count is calculated with amount of polygons * 3 * 8.
 multiply this with 4 bytes and you get the total byte size of the mesh.
@@ -60,25 +78,24 @@ Material node:
 The structure of a material is as following:
 
 10 bytes - material name : UTF8 string
-4  bytes - shininess : float
-4  bytes - transparency : float
-12 bytes - ambient : vector3
-.. bytes - diffuse node
-.. bytes - specular node
-.. bytes - normal node
+4  bytes - shininess	 : float
+4  bytes - transparency  : float
+12 bytes - ambient		 : vector3
+.. bytes - diffuse node  : node
+.. bytes - specular node : node
+.. bytes - normal node	 : node
 
 Each also has their own default value (from top to bottom):
 32
 1
 0.2, 0.2, 0.2
 
-
 diffuse node:
 The structure of a diffuse node is as following:
 
 1  byte - isDefault : bool
 12 bytes - strength : vector3
-4  bytes - length : 32-bit integer
+4  bytes - length   : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
@@ -91,7 +108,7 @@ The structure of a specular node is as following:
 
 1  byte - isDefault : bool
 12 bytes - strength : vector3
-4  bytes - length : 32-bit integer
+4  bytes - length   : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
@@ -103,11 +120,16 @@ normal node:
 The structure of a normal node is as following:
 
 1  byte - isDefault : bool
-4  bytes - length : 32-bit integer
+4  bytes - length   : 32-bit integer
 width * height * 4 bytes - image data
 
 The image data is a dump of the .png or .jpg file content, it must be put through a .png reader before using.
 if "isDefault" it means that it relies on the engines default texture and no data about this node will follow after
 
-todo:
-add support for .hdr files
+Skybox node:
+1  byte - exists : bool
+if exists is true:
+4  btyes - length of raw contents : 32-bit integer
+.. bytes - raw .hdr file contents
+
+The image data is a dump of the .hdr file content, it must be put through a .hdr reader before using.

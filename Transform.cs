@@ -16,7 +16,7 @@ namespace CORERenderer
         public Matrix ModelMatrix { get 
             { 
                 if (previousRotation != rotation || previousScale != scale || previousTranslation != translation)
-                    model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation) * MathC.GetScalingMatrix(this.scale) * MathC.GetTranslationMatrix(this.translation);
+                    model = Matrix.IdentityMatrix * MathC.GetRotationMatrix(this.rotation) * MathC.GetTranslationMatrix(this.translation) * MathC.GetScalingMatrix(this.scale);
                 return model;
             } }
 

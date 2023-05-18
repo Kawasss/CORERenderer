@@ -50,7 +50,7 @@ namespace CORERenderer
             Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\white.png"));//placeholderspecular
             Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\white.png"));
             Globals.usedTextures.Add(Texture.ReadFromSRGBFile($"{pathRenderer}\\OBJs\\normal.png"));//$"{pathRenderer}\\textures\\normal2_1.png"
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\white.png"));//$"{pathRenderer}\\textures\\black.png"
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\black.png"));//$"{pathRenderer}\\textures\\black.png"
         }
 
         /// <summary>

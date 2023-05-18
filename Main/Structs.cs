@@ -50,7 +50,7 @@ namespace CORERenderer.Main
             NormalMap = 3;
             MetalMap = 4;
             aoMap = 2;
-            displacementMap = 2;
+            displacementMap = 4;
 
             OpticalDensity = 1;
             Transparency = 1;

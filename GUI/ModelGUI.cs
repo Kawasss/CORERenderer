@@ -20,9 +20,6 @@ namespace CORERenderer.GUI
             int totalOffset = 0;
             Model model = Main.COREMain.CurrentModel;
 
-            if (model.hdr != null)
-                return;
-
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             this.Write($"Translation: {Math.Round(model.Transform.translation.x, 2)} {Math.Round(model.Transform.translation.y, 2)} {Math.Round(model.Transform.translation.z, 2)}", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);

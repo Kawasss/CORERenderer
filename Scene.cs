@@ -10,6 +10,7 @@ using CORERenderer.GLFW.Enums;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
 using Console = CORERenderer.GUI.Console;
+using CORERenderer.textures;
 
 namespace CORERenderer
 {
@@ -17,8 +18,10 @@ namespace CORERenderer
     {
         public Camera camera;
 
-        public List<Model> models;
-        public List<Light> lights;
+        public List<Model> models = new();
+        public List<Light> lights = new();
+
+        public HDRTexture skybox = null;
 
         public bool loaded = false;
 
@@ -36,19 +39,16 @@ namespace CORERenderer
             lights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
 
-            if (args.Length != 0)
+            if (args.Length != 0 && LoadFile != RenderMode.None && LoadFile != RenderMode.CRSFile)
             {
-                if (LoadFile != RenderMode.CRSFile)
+                if (LoadFile != RenderMode.HDRFile)
                 {
                     loaded = true;
                     models.Add(new(args[0]));
                     currentObj = 0;
                 }
-                else
-                {
-                    Readers.LoadCRS(args[0], out models, out _);
-                    currentObj = models.Count > 0 ? 0 : -1;
-                }
+                else if (LoadFile == RenderMode.HDRFile)
+                    skybox = HDRTexture.ReadFromFile(args[0], Rendering.TextureQuality);
                     
             }
             for (int i = 0; i < models.Count; i++)
@@ -57,10 +57,21 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
-            models.Add(new($"{pathRenderer}\\OBJs\\highres.hdr"));
             lights.Add(new() { position = new(1, 2, 1) });
-            camera.position = new(-2f, 0.1f, 0f);
-            camera.front = new(1, 0, 0);
+            skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
+
+            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
+            models[^1].Transform.translation = new(3, 3, 3);
+
+            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
+            models[^1].Transform.translation = new(2, 1, 0);
+            models[^1].Transform.scale = new(.1f, .1f, .1f);
+
+            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
+
+            lights.Add(new() { position = new(1, 2, 1) });
+            camera.position = new(-1.37f, -0.65f, -1.28f);
+            camera.front = new(.9f, .35f, 0.25f);
             camera.right = MathC.Normalize(MathC.GetCrossProduct(camera.front, Vector3.UnitVectorY));
             camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));
         }

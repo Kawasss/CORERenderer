@@ -83,7 +83,7 @@ namespace CORERenderer.Main
         private static bool appIsHealthy = true;
 
         //enums
-        public static RenderMode LoadFile = RenderMode.CRSFile;
+        public static RenderMode LoadFile = RenderMode.None;
         public static Keys pressedKey;
         public static MouseButton pressedButton;
 
@@ -109,9 +109,6 @@ namespace CORERenderer.Main
         public static Framebuffer IDFramebuffer;
         public static Framebuffer renderFramebuffer;
 
-        private static List<ModelInfo> dirLoadedModels = null;
-
-
         public static uint ssbo;
         public static ComputeShader comp;
         #endregion
@@ -123,6 +120,8 @@ namespace CORERenderer.Main
             #endif
             try //primitive error handling, could be better
             {
+                args = new string[] { "C:\\Users\\wveen\\source\\repos\\CORERenderer\\test2.crs" };
+
                 mainThread = Thread.CurrentThread;
 
                 //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
@@ -274,7 +273,14 @@ namespace CORERenderer.Main
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
                 arrows = new();
+
                 scenes[0].OnLoad(args);
+
+                if (LoadFile == RenderMode.CRSFile)
+                {
+                    Scene local = scenes[0];
+                    Readers.LoadCRS(args[0], ref local, out string _);
+                }
 
                 Rendering.SetCamera(CurrentScene.camera);
                 Rendering.SetUniformBuffers();
@@ -869,6 +875,9 @@ namespace CORERenderer.Main
 
         public static RenderMode SetRenderMode(string arg)
         {
+            if (!RenderModeLookUpTable.ContainsKey(arg[^4..].ToLower()))
+                return RenderMode.None;
+
             return RenderModeLookUpTable[arg[^4..].ToLower()];
         }
 

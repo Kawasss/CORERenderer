@@ -7,6 +7,7 @@
 
     public enum RenderMode
     {
+        None,
         GivenFile,
         CRSFile,
         PNGImage,

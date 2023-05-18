@@ -26,6 +26,8 @@ namespace CORERenderer.Loaders
 
         public int NumberOfVertices { get { return vertices.Count; } }
 
+        public bool HasBones { get { for (int i = 0; i < vertices.Count; i++) if (vertices[i].hasBones) return true; return false; } } //inefficient
+
         public readonly Material material;
 
         private Shader shader = GenericShaders.GenericLighting;

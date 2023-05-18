@@ -11,12 +11,7 @@ namespace CORERenderer.Loaders
         {
             if (type == RenderMode.ObjFile || type == RenderMode.STLFile || type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 RenderModel();
-
-            else if (type == RenderMode.HDRFile)
-                hdr.Render();
         }
-
-        public void RenderBackground() => hdr.Render();
 
         private unsafe void RenderModel()
         {
@@ -32,7 +27,7 @@ namespace CORERenderer.Loaders
                     translucentSubmodels.Add(submodels[i]);
                     continue;
                 }
-                if (MathC.Distance(Main.COREMain.CurrentScene.camera.position, transform.translation) <= 10)
+                if (MathC.Distance(COREMain.CurrentScene.camera.position, transform.translation) <= 10)
                 {
                     translucentSubmodels.Add(submodels[i]);
                     continue;

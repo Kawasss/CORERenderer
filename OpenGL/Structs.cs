@@ -19,6 +19,7 @@ namespace CORERenderer.OpenGL //structs are found here unless they have their ow
         public float[] boneWeights = new float[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
         private int addedBones = 0;
+        public bool hasBones = false;
 
         public Vertex(float x, float y, float z, float uvX, float uvY, float normalX, float normalY, float normalZ, int[] boneIDs, float[] boneWeights)
         {
@@ -58,6 +59,7 @@ namespace CORERenderer.OpenGL //structs are found here unless they have their ow
             //debug
             boneIDs[0] = 0;
             boneWeights[0] = 1;
+            hasBones = true;
         }
 
         public static List<List<float>> GetFloatList(List<List<Vertex>> v2)

@@ -973,7 +973,7 @@ namespace CORERenderer.OpenGL
             void main()
             {
                 vec3 viewDir = normalize((viewPos - FragPos));
-                vec2 texCoords = ParallaxMapping(TexCoords, viewDir); 
+                vec2 texCoords = TexCoords;//ParallaxMapping(TexCoords, viewDir); 
 
                 if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
                     discard;
@@ -1003,36 +1003,32 @@ namespace CORERenderer.OpenGL
 
                 //metalness (test)
                 vec3 I = normalize(FragPos - viewPos);
-                vec3 R = reflect(I, normalize(normal));//refract(I, normal, 1.00 / 1.52);
+                vec3 R = reflect(I, normalize(normal));//
 
-                vec3 reflection = texture(skybox, R).rgb;
-                float strength = (reflection.r + reflection.g + reflection.b) / 3;
+                vec3 reflection = texture(skybox, R).rgb * texture(aoMap, texCoords).r;
+                float strength = normalize(length(reflection));//(reflection.r + reflection.g + reflection.b) / 3;
                 vec3 reflectiveness = metallic * reflection * vec3(.3);
 
             	// ambient
-                float ambientStrength = length(normalize(reflection));
-                vec3 ambient = color * strength * texture(aoMap, texCoords).r + (reflection * metallic) * vec3(.1);
+                vec3 ambient = color * strength * texture(aoMap, texCoords).r;//(color * strength) * texture(aoMap, texCoords).r;
 
             	// diffuse
                 float distance = distance(lightPos, FragPos);
-                float attenuation = 1.0 / (distance * distance);
+                float attenuation = 1.0 / (distance);
                 vec3 lightDir = normalize((lightPos - FragPos));
 
-                float diff = max(dot(lightDir, normal), 0.0);// * attenuation;
-                vec3 diffuse = diff * pow(texture(diffuseMap, texCoords).rgb, vec3(2.2));
+                float diff = max(dot(lightDir, normal), 0.0) * attenuation;
+                vec3 diffuse = vec3(.7) * diff * pow(texture(diffuseMap, texCoords).rgb, vec3(2.2));
 
             	// specular
-
-
-                //vec3 reflectDir = reflect(-lightDir, normal);
                 vec3 halfwayDir = normalize((lightDir + viewDir));
             	float spec = pow(max(dot(normal, halfwayDir), 0), metallic * 255);//vec3 spec = FresnelSchlick(max(dot(normal, halfwayDir), 0), F0);//
-                vec3 specular = vec3(.4) * spec * texture(specularMap, texCoords).rgb; // assuming bright white light color
+                vec3 specular = vec3(1) * spec * texture(specularMap, texCoords).rgb * reflection;//texture(specularMap, texCoords).rgb * reflection; // assuming bright white light color
 
             	if (allowAlpha == 1 && transparency != 0)
-            		FragColor = vec4((ambient + diffuse + specular), transparency);//
+            		FragColor = vec4(/*ambient + diffuse + specular*/ specular + reflection, transparency);//
             	else
-            		FragColor = vec4(ambient + diffuse + specular, 1.0);//
+            		FragColor = vec4(/*ambient + diffuse + specular*/ specular + reflection, 1.0);//
             //vec3 I = normalize(FragPos - viewPos);
             //vec3 R = reflect(I, normalize(normal));
             //FragColor = vec4(texture(skybox, R).rgb, 1.0);

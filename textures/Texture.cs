@@ -64,7 +64,7 @@ namespace CORERenderer.textures
             using (MemoryStream memoryStream = new())
             {
                 stream.CopyTo(memoryStream);
-
+                System.Console.WriteLine(imagePath);
                 Job task = new(() => { image = Stbi.LoadFromMemory(memoryStream, 4); imageWidth = image.Width; imageHeight = image.Height; imageData = image.Data.ToArray(); } );
                 task.Start();
                 task.Wait();

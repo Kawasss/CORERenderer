@@ -29,18 +29,21 @@ namespace CORERenderer.textures
 
         private Shader testShader = new($"{Main.COREMain.pathRenderer}\\shaders\\2DImage.vert", $"{Main.COREMain.pathRenderer}\\shaders\\2DImage.frag");
 
+        public byte[] data;
+
         public static unsafe HDRTexture ReadFromFile(string imagePath, float quality)
         {
             glDisable(GL_CULL_FACE);
 
             Stbi.SetFlipVerticallyOnLoad(true);
 
-            HDRTexture h = new(glGenTexture());
-
             if (!File.Exists(imagePath))
             {
                 throw new Exception($"Couldnt find file at {imagePath}");
             }
+
+            HDRTexture h = new(glGenTexture());
+            h.data = File.ReadAllBytes(imagePath);
 
             using (FileStream stream = File.OpenRead(imagePath))
             using (MemoryStream memoryStream = new())
@@ -106,7 +109,7 @@ namespace CORERenderer.textures
                 float[] data = new float[image.Data.Length];
                 for (int i = 0; i < data.Length; i++)
                     data[i] = image.Data[i];
-
+                
                 glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGB, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
 
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
