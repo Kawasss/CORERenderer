@@ -158,7 +158,7 @@ namespace CORERenderer.Loaders
         private static Texture GenerateTextureFromData(byte[] imageData) //its incredible slow to create and delete a file
         {
             amountOfTexturesCreated++;
-            string dir = Path.GetTempPath();
+            string dir = $"{COREMain.pathRenderer}\\TextureCache\\";
             using (FileStream fs = File.Create($"{dir}diffuseHolder{amountOfTexturesCreated}.png"))
             using (StreamWriter sw = new(fs))
             {

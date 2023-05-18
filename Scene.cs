@@ -29,9 +29,7 @@ namespace CORERenderer
 
         private Vector2 lastPos = null;
 
-        private List<Bone> bone = new(); //debug
-        private int currentBone = -1;
-        public Bone CurrentBone { get => bone[currentBone]; }
+        public PBRSphere sphere = null;
 
         public override void OnLoad(string[] args)
         {
@@ -41,7 +39,7 @@ namespace CORERenderer
 
             if (args.Length != 0 && LoadFile != RenderMode.None && LoadFile != RenderMode.CRSFile)
             {
-                if (LoadFile != RenderMode.HDRFile)
+                if (LoadFile != RenderMode.HDRFile && LoadFile != RenderMode.CPBRFile)
                 {
                     loaded = true;
                     models.Add(new(args[0]));
@@ -49,6 +47,8 @@ namespace CORERenderer
                 }
                 else if (LoadFile == RenderMode.HDRFile)
                     skybox = HDRTexture.ReadFromFile(args[0], Rendering.TextureQuality);
+                else if (LoadFile == RenderMode.CPBRFile)
+                    sphere = new(Readers.LoadCPBR(args[0]));
                     
             }
             for (int i = 0; i < models.Count; i++)
@@ -58,7 +58,7 @@ namespace CORERenderer
                     models.RemoveAt(i);
                 }
             lights.Add(new() { position = new(1, 2, 1) });
-            skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
+            /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
             models[^1].Transform.translation = new(3, 3, 3);
@@ -73,7 +73,7 @@ namespace CORERenderer
             camera.position = new(-1.37f, -0.65f, -1.28f);
             camera.front = new(.9f, .35f, 0.25f);
             camera.right = MathC.Normalize(MathC.GetCrossProduct(camera.front, Vector3.UnitVectorY));
-            camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));
+            camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));*/
         }
 
         public override void RenderEveryFrame(float delta)
@@ -98,6 +98,7 @@ namespace CORERenderer
                     GenericShaders.GenericLighting.SetVector3("lightPos", new(1, 2, 1));
                     GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
+                sphere?.Render();
                 RenderScene(this);
             }
             catch (System.Exception err)

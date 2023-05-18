@@ -51,7 +51,7 @@ namespace CORERenderer.Main
             {".stl", RenderMode.STLFile },
             {".obj", RenderMode.ObjFile },
             {".fbx", RenderMode.FBXFile },
-            {".exr", RenderMode.EXRFile }
+            {".cpbr",RenderMode.CPBRFile}
         };
 
         /// <summary>

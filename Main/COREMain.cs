@@ -120,8 +120,6 @@ namespace CORERenderer.Main
             #endif
             try //primitive error handling, could be better
             {
-                args = new string[] { "C:\\Users\\wveen\\source\\repos\\CORERenderer\\test2.crs" };
-
                 mainThread = Thread.CurrentThread;
 
                 //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
@@ -303,7 +301,6 @@ namespace CORERenderer.Main
                 UpdateCursorLocation();
 
                 gui.Bind();
-                tb.Render();
 
                 glClearColor(0.085f, 0.085f, 0.085f, 1);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -345,9 +342,11 @@ namespace CORERenderer.Main
                         #region GUI related events
                         {
                             gui.Bind();
-                            tb.Render();
+                            tb.CheckForUpdate(mousePosX, mousePosY);
                             if (renderGUI)
                             {
+                                //tb.Render();
+                                
                                 button.Render();
                                 saveAsImage.Render();
 
@@ -379,9 +378,6 @@ namespace CORERenderer.Main
                             debugFSGraph.RenderConditionless();
                             glDisable(GL_CULL_FACE);
                             ShowRenderStatistics(debugHolder);
-
-                            tb.CheckForUpdate(mousePosX, mousePosY);
-
 
                             clearedGUI = false;
                         }
@@ -875,10 +871,12 @@ namespace CORERenderer.Main
 
         public static RenderMode SetRenderMode(string arg)
         {
-            if (!RenderModeLookUpTable.ContainsKey(arg[^4..].ToLower()))
+            string extension = Path.GetExtension(arg);
+            System.Console.WriteLine(extension);
+            if (!RenderModeLookUpTable.ContainsKey(extension))
                 return RenderMode.None;
 
-            return RenderModeLookUpTable[arg[^4..].ToLower()];
+            return RenderModeLookUpTable[extension];
         }
 
         public static void LogError(string msg)

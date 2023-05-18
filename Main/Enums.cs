@@ -16,6 +16,6 @@
         ObjFile,
         STLFile,
         FBXFile,
-        EXRFile
+        CPBRFile
     }
 }

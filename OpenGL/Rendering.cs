@@ -22,6 +22,7 @@ namespace CORERenderer.OpenGL
         public static ShaderType shaderConfig = ShaderType.Lighting;
 
         private static Camera camera = null;
+        public static Camera Camera { get => camera; }
 
         private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "   0 are opaque", "Draw calls this frame: 0" };
         public static string[] RenderStatistics { get { return renderStatistics; } }
@@ -316,6 +317,7 @@ namespace CORERenderer.OpenGL
             //allows the object to render bufferless
             uint VAO = glGenVertexArray();
             glBindVertexArray(VAO);
+            glBindVertexArray(0);
             return VAO;
         }
 
@@ -456,7 +458,7 @@ namespace CORERenderer.OpenGL
 
             glDisable(GL_CULL_FACE);
             glBindVertexArray(vertexArrayObjectGrid);
-            //glDrawArrays(PrimitiveType.Triangles, 0, 6);
+            glDrawArrays(PrimitiveType.Triangles, 0, 6);
             glEnable(GL_CULL_FACE);
         }
 

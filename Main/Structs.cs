@@ -17,6 +17,24 @@ namespace CORERenderer.Main
         public Vector3 color;
     }
 
+    public struct PBRMaterial
+    {
+        public Texture albedo;
+        public Texture normal;
+        public Texture metallic;
+        public Texture roughness;
+        public Texture AO;
+
+        public PBRMaterial(Texture albedo, Texture normal, Texture metallic, Texture roughness, Texture AO)
+        {
+            this.albedo = albedo;
+            this.normal = normal;
+            this.metallic = metallic;
+            this.roughness = roughness;
+            this.AO = AO;
+        }
+    }
+
     /// <summary>
     /// holds all the information for an OpenGL material
     /// </summary>
