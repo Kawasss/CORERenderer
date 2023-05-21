@@ -110,7 +110,7 @@ namespace CORERenderer.Loaders
             hasMaterials = false;
             
             material.Transparency = 1;
-            material.Texture = 2;
+            material.Texture = Globals.usedTextures[2];
         }
 
         public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
@@ -234,12 +234,12 @@ namespace CORERenderer.Loaders
         {
             shader.Use();
             //usedTextures[material.Texture].Use(GL_TEXTURE0);
-            usedTextures[material.Texture].Use(GL_TEXTURE0);
-            usedTextures[material.SpecularMap].Use(GL_TEXTURE1);
-            usedTextures[material.NormalMap].Use(GL_TEXTURE2);
-            usedTextures[material.MetalMap].Use(GL_TEXTURE3);
-            usedTextures[material.aoMap].Use(GL_TEXTURE4);
-            usedTextures[material.aoMap].Use(GL_TEXTURE5);
+            material.Texture.Use(ActiveTexture.Texture0);
+            material.SpecularMap.Use(ActiveTexture.Texture1);
+            material.NormalMap.Use(ActiveTexture.Texture2);
+            material.MetalMap.Use(ActiveTexture.Texture3);
+            material.aoMap.Use(ActiveTexture.Texture4);
+            material.aoMap.Use(ActiveTexture.Texture5);
         }
 
         public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<uint> indices)

@@ -57,7 +57,6 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
-            lights.Add(new() { position = new(1, 2, 1) });
             /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
@@ -95,7 +94,7 @@ namespace CORERenderer
                 else if (shaderConfig == ShaderType.Lighting)
                 {
                     GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
-                    GenericShaders.GenericLighting.SetVector3("lightPos", new(1, 2, 1));
+                    GenericShaders.GenericLighting.SetVector3("lightPos", CurrentScene.camera.position);
                     GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 sphere?.Render();

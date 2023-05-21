@@ -61,7 +61,7 @@ namespace CORERenderer.GUI
             shaderC.SetBool("isSelected", isSelected);
 
             cross = Texture.ReadFromFile($"{Main.COREMain.pathRenderer}\\GUI\\exitCross.png");
-            cross.Use(GL_TEXTURE0);
+            cross.Use(ActiveTexture.Texture0);
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);
             glBindVertexArray(0);
@@ -75,7 +75,7 @@ namespace CORERenderer.GUI
             shaderC.Use();
 
             glBindVertexArray(VAOC);
-            cross.Use(GL_TEXTURE0);
+            cross.Use(ActiveTexture.Texture0);
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
 
         }
@@ -91,7 +91,7 @@ namespace CORERenderer.GUI
                 shaderC.Use();
 
                 glBindVertexArray(VAOC);
-                cross.Use(GL_TEXTURE0);
+                cross.Use(ActiveTexture.Texture0);
                 glDrawArrays(PrimitiveType.Triangles, 0, 6);
             }
             previousState = isSelected;

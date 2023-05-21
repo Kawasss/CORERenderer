@@ -180,10 +180,10 @@ namespace CORERenderer.Loaders
             for (int i = 0; i < tempMtl.Count; i++)
             {
                 Material newMtl = tempMtl[i];
-                newMtl.Texture = allTextures[i] != "default" ? Globals.FindTexture(allTextures[i]) : 0;
-                newMtl.DiffuseMap = allDiffuse[i] != "default" ? Globals.FindTexture(allDiffuse[i]) : 0;
-                newMtl.SpecularMap = allSpecular[i] != "default" ? Globals.FindTexture(allSpecular[i]) : 1;
-                newMtl.NormalMap = allNormal[i] != "default" ? Globals.FindSRGBTexture(allNormal[i]) : 3;
+                newMtl.Texture = allTextures[i] != "default" ? Globals.FindTexture(allTextures[i]) : Globals.usedTextures[0];
+                newMtl.DiffuseMap = allDiffuse[i] != "default" ? Globals.FindTexture(allDiffuse[i]) : Globals.usedTextures[0];
+                newMtl.SpecularMap = allSpecular[i] != "default" ? Globals.FindTexture(allSpecular[i]) : Globals.usedTextures[1];
+                newMtl.NormalMap = allNormal[i] != "default" ? Globals.FindSRGBTexture(allNormal[i]) : Globals.usedTextures[3];
                 tempMtl[i] = newMtl;
             }
             if (unreadableLines.Count > 0)

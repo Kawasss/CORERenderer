@@ -95,9 +95,9 @@ namespace CORERenderer.Loaders
         {
             WriteMaterialInfo(sw, material);
             
-            WriteTextureNode(sw, material.Diffuse, Globals.usedTextures[material.Texture], material.Texture == 0); //writes the diffuse map
-            WriteTextureNode(sw, material.Specular, Globals.usedTextures[material.SpecularMap], material.SpecularMap == 1); //writes the specular map
-            WriteTextureNode(sw, Globals.usedTextures[material.NormalMap], material.NormalMap == 3); //writes the normal map
+            WriteTextureNode(sw, material.Diffuse, material.Texture, material.Texture == Globals.usedTextures[0]); //writes the diffuse map
+            WriteTextureNode(sw, material.Specular, material.SpecularMap, material.SpecularMap == Globals.usedTextures[1]); //writes the specular map
+            WriteTextureNode(sw, material.NormalMap, material.NormalMap == Globals.usedTextures[3]); //writes the normal map
         }
 
         private static void WriteTextureNode(StreamWriter sw, Vector3 strength, Texture texture, bool isDefault)

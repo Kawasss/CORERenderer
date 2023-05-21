@@ -126,31 +126,28 @@ namespace CORERenderer.Loaders
             Vector3 ambient = GetVector3(fs);
 
             //retrieve all materials
-            int difIndex = 0;
+            Texture difTex = Globals.usedTextures[0];
             if (!RetrieveTextureNode(fs, out Vector3 diffuseStrength, out byte[] diffusePNGData))
             {
-                Texture difTex = GenerateTextureFromData(diffusePNGData);
+                difTex = GenerateTextureFromData(diffusePNGData);
                 Globals.usedTextures.Add(difTex);
-                difIndex = Globals.usedTextures.Count - 1;
             }
 
-            int specIndex = 1;
+            Texture specIndex = Globals.usedTextures[1];
             if (!RetrieveTextureNode(fs, out Vector3 specularStrength, out byte[] specularPNGData))
             {
                 Texture specTex = GenerateTextureFromData(specularPNGData);
                 Globals.usedTextures.Add(specTex);
-                specIndex = Globals.usedTextures.Count - 1;
             }
 
-            int normIndex = 3;
+            Texture normIndex = Globals.usedTextures[3];
             if (!RetrieveTextureNode(fs, out byte[] normalPNGData))
             {
                 Texture normTex = GenerateTextureFromData(normalPNGData);
                 Globals.usedTextures.Add(normTex);
-                normIndex = Globals.usedTextures.Count - 1;
             }
 
-            return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difIndex, DiffuseMap = difIndex, SpecularMap = specIndex, NormalMap = normIndex };
+            return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difTex, DiffuseMap = difTex, SpecularMap = specIndex, NormalMap = normIndex };
         }
 
         private static int amountOfTexturesCreated = 0;
@@ -164,7 +161,7 @@ namespace CORERenderer.Loaders
             {
                 sw.BaseStream.Write(imageData);
             }
-            Texture tex = Globals.usedTextures[Globals.FindTexture($"{dir}diffuseHolder{amountOfTexturesCreated}.png")];
+            Texture tex = Globals.FindTexture($"{dir}diffuseHolder{amountOfTexturesCreated}.png");
             File.Delete($"{dir}diffuseHolder{amountOfTexturesCreated}.png");
             return tex;
         }

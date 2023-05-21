@@ -101,12 +101,12 @@ namespace CORERenderer.Main
         /// </summary>
         /// <param name="path"></param>
         /// <returns>returns index of a texture if its already being used, otherwise adds texture and returns its position</returns>
-        public static int FindTexture(string path)
+        public static Texture FindTexture(string path)
         {
             if (!File.Exists(path))
             {
                 Console.WriteError($"File at {path} not found, returning default texture.");
-                return 0;
+                return usedTextures[0];
             }
 
             for (int i = 0; i < usedTextures.Count; i++)
@@ -116,22 +116,22 @@ namespace CORERenderer.Main
                         Console.WriteLine($"Reusing texture {usedTextures[i].name} ({i})");
                     else
                         Console.WriteLine($"Using default texture {usedTextures[i].name} ({i})");
-                    return i;
+                    return usedTextures[i];
                 }
             
             usedTextures.Add(Texture.ReadFromFile(path));
             Console.WriteLine($"Allocated {FormatSize(usedTextures[^1].width * usedTextures[^1].height * 4)} of VRAM for texture {usedTextures[^1].name} ({usedTextures.Count - 1})");
-            return usedTextures.Count - 1;
+            return usedTextures[^1];
         }
 
-        public static int FindSRGBTexture(string path)
+        public static Texture FindSRGBTexture(string path)
         {
             for (int i = 0; i < usedTextures.Count; i++)
                 if (usedTextures[i].path == path)
-                    return i;
+                    return usedTextures[i];
 
             usedTextures.Add(Texture.ReadFromSRGBFile(path));
-            return usedTextures.Count - 1;
+            return usedTextures[^1];
         }
 
         /// <summary>
@@ -148,21 +148,21 @@ namespace CORERenderer.Main
                     if (Object.Materials[i].Texture == COREMain.CurrentScene.models[i].Materials[i].Texture)
                         delete = false;
                 if (delete)
-                    glDeleteTexture(usedTextures[Object.Materials[i].Texture].Handle);
+                    glDeleteTexture(Object.Materials[i].Texture.Handle);
 
                 delete = true;
                 for (int j = 0; j < COREMain.CurrentScene.models.Count; j++)
                     if (Object.Materials[i].DiffuseMap == COREMain.CurrentScene.models[j].Materials[i].DiffuseMap)
                         delete = false;
                 if (delete)
-                    glDeleteTexture(usedTextures[Object.Materials[i].DiffuseMap].Handle);
+                    glDeleteTexture(Object.Materials[i].DiffuseMap.Handle);
 
                 delete = true;
                 for (int j = 0; j < COREMain.CurrentScene.models.Count; j++)
                     if (Object.Materials[i].SpecularMap == COREMain.CurrentScene.models[j].Materials[i].SpecularMap)
                         delete = false;
                 if (delete)
-                    glDeleteTexture(usedTextures[Object.Materials[i].SpecularMap].Handle);
+                    glDeleteTexture(Object.Materials[i].SpecularMap.Handle);
             }
         }
     }

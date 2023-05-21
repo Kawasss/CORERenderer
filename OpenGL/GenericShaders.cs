@@ -123,7 +123,7 @@ namespace CORERenderer.OpenGL
                 FragColor = vec4(1.0, 0.0, 1.0, 1.0);
             }  
             """;
-
+        //stolen from learnopengl btw
         private static string PBRFragText =
             """
             #version 430 core
@@ -144,16 +144,52 @@ namespace CORERenderer.OpenGL
             uniform sampler2D metallicMap;
             uniform sampler2D roughnessMap;
             uniform sampler2D aoMap;
+            uniform sampler2D heightMap;
 
             const float PI = 3.14159265359;
+            #define heightScale 0.1
+
+            vec2 ParallaxOcclusionMapping( sampler2D depthMap, vec2 uv, vec2 displacement, float pivot ) {
+            	const float layerDepth = 1.0 / float(8);
+            	float currentLayerDepth = 0.0;
+
+            	vec2 deltaUv = displacement / float(8);
+            	vec2 currentUv = uv + pivot * displacement;
+            	float currentDepth = texture2D( depthMap, currentUv ).r;
+
+            	for( int i = 0; i < 8; i++ ) {
+            		if( currentLayerDepth > currentDepth )
+            			break;
+
+            		currentUv -= deltaUv;
+            		currentDepth = texture2D( depthMap, currentUv ).r;
+            		currentLayerDepth += layerDepth;
+            	}
+
+            	vec2 prevUv = currentUv + deltaUv;
+            	float endDepth = currentDepth - currentLayerDepth;
+            	float startDepth =
+            		texture2D( depthMap, prevUv ).r - currentLayerDepth + layerDepth;
+
+            	float w = endDepth / ( endDepth - startDepth );
+
+            	return mix( currentUv, prevUv, w );
+            }
+
+
+            vec2 ParallaxOcclusionMapping( sampler2D depthMap, vec2 uv, vec2 displacement ) {
+            	return ParallaxOcclusionMapping( depthMap, uv, displacement, 0.0 );
+            }
+            
+
             // ----------------------------------------------------------------------------
             // Easy trick to get tangent-normals to world-space to keep PBR code simplified.
             // Don't worry if you don't get what's going on; you generally want to do normal 
             // mapping the usual way for performance anyways; I do plan make a note of this 
             // technique somewhere later in the normal mapping tutorial.
-            vec3 getNormalFromMap()
+            vec3 getNormalFromMap(vec2 texCoords)
             {
-                vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;
+                vec3 tangentNormal = texture(normalMap, texCoords).xyz * 2.0 - 1.0;
 
                 vec3 Q1  = dFdx(FragPos);
                 vec3 Q2  = dFdy(FragPos);
@@ -210,12 +246,16 @@ namespace CORERenderer.OpenGL
             // ----------------------------------------------------------------------------
             void main()
             {		
-                vec3 albedo     = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));
-                float metallic  = texture(metallicMap, TexCoords).r;
-                float roughness = texture(roughnessMap, TexCoords).r;
-                float ao        = texture(aoMap, TexCoords).r;
+                vec2 texCoords = ParallaxOcclusionMapping(heightMap, TexCoords, normalize(FragPos - viewPos).xy * .001);
+                if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+                    discard;
 
-                vec3 N = getNormalFromMap();
+                vec3 albedo     = pow(texture(albedoMap, texCoords).rgb, vec3(2.2));
+                float metallic  = texture(metallicMap, texCoords).r;
+                float roughness = texture(roughnessMap, texCoords).r;
+                float ao        = texture(aoMap, texCoords).r;
+
+                vec3 N = getNormalFromMap(texCoords);
                 vec3 V = normalize(viewPos - FragPos);
 
                 // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -1262,7 +1302,7 @@ namespace CORERenderer.OpenGL
                 vec3 specular = vec3(1) * spec * texture(specularMap, texCoords).rgb * reflection;//texture(specularMap, texCoords).rgb * reflection; // assuming bright white light color
 
             	if (allowAlpha == 1 && transparency != 0)
-            		FragColor = vec4(/*ambient + diffuse + specular*/ specular + reflection, transparency);//
+            		FragColor = vec4(vec3(1), transparency);//
             	else
             		FragColor = vec4(/*ambient + diffuse + specular*/ specular + reflection, 1.0);//
             //vec3 I = normalize(FragPos - viewPos);

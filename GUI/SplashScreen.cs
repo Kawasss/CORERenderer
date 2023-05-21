@@ -90,7 +90,7 @@ namespace CORERenderer.GUI
             shader.Use();
             shader.SetInt("Texture", 0);
 
-            splashScreenTexture.Use(GL_TEXTURE0);
+            splashScreenTexture.Use(ActiveTexture.Texture0);
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
             
@@ -109,7 +109,7 @@ namespace CORERenderer.GUI
 
             shader.Use();
 
-            splashScreenTexture.Use(GL_TEXTURE0);
+            splashScreenTexture.Use(ActiveTexture.Texture0);
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
 

@@ -33,10 +33,7 @@ namespace CORERenderer.Loaders
             shader.SetInt("metallicMap", 2);
             shader.SetInt("roughnessMap", 3);
             shader.SetInt("aoMap", 4);
-
-            GenericShaders.NormalVisualisation.Use();
-
-            GenericShaders.NormalVisualisation.ActivateAttributes();
+            shader.SetInt("heightMap", 5);
         }
 
         public void Render()
@@ -50,17 +47,14 @@ namespace CORERenderer.Loaders
             shader.SetVector3("lightPos", new(1, 2, 1));
             shader.SetMatrix("model", Matrix.IdentityMatrix);
 
-            material.albedo.Use(GL_TEXTURE0);
-            material.normal.Use(GL_TEXTURE1);
-            material.metallic.Use(GL_TEXTURE2);
-            material.roughness.Use(GL_TEXTURE3);
-            material.AO.Use(GL_TEXTURE4);
+            material.albedo.Use(ActiveTexture.Texture0);
+            material.normal.Use(ActiveTexture.Texture1);
+            material.metallic.Use(ActiveTexture.Texture2);
+            material.roughness.Use(ActiveTexture.Texture3);
+            material.AO.Use(ActiveTexture.Texture4);
+            material.height.Use(ActiveTexture.Texture5);
 
             glBindVertexArray(VAO);
-            Rendering.glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
-
-            GenericShaders.NormalVisualisation.Use();
-            GenericShaders.NormalVisualisation.SetMatrix("model", Matrix.IdentityMatrix);
             Rendering.glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
         }
     }

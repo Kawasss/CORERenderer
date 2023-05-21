@@ -243,6 +243,15 @@ namespace CORERenderer.shaders
             return uniformLocations[name];
         }
 
+        public void SetSampler(string name, ActiveTexture texture) => SetInt(name, ATToInt[texture]);
+
+        //seems dumb but GL_TEXTURE0 etc isnt 0 but another value
+        private Dictionary<ActiveTexture, int> ATToInt = new() { { ActiveTexture.Texture0, 0}, { ActiveTexture.Texture1, 1 }, { ActiveTexture.Texture2, 2 }, { ActiveTexture.Texture3, 3 }, { ActiveTexture.Texture4, 4 }, { ActiveTexture.Texture5, 5 },
+        { ActiveTexture.Texture6, 6}, { ActiveTexture.Texture7, 7}, { ActiveTexture.Texture8, 8}, { ActiveTexture.Texture9, 9}, { ActiveTexture.Texture10, 10}, { ActiveTexture.Texture11, 11}, { ActiveTexture.Texture12, 12}, { ActiveTexture.Texture13, 13},
+        { ActiveTexture.Texture14, 14}, { ActiveTexture.Texture15, 15}, { ActiveTexture.Texture16, 16}, { ActiveTexture.Texture17, 17}, { ActiveTexture.Texture18, 18}, { ActiveTexture.Texture19, 19}, { ActiveTexture.Texture20, 20}, { ActiveTexture.Texture21, 21},
+        { ActiveTexture.Texture22, 22}, { ActiveTexture.Texture23, 23}, { ActiveTexture.Texture24, 24}, { ActiveTexture.Texture25, 25}, { ActiveTexture.Texture26, 26}, { ActiveTexture.Texture27, 27}, { ActiveTexture.Texture28, 28}, { ActiveTexture.Texture29, 29},
+        { ActiveTexture.Texture30, 30}, { ActiveTexture.Texture31, 31} };
+
         public void SetInt(string name, int value)
         {
             glUseProgram(Handle);

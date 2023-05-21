@@ -153,15 +153,15 @@ namespace CORERenderer.textures
             Handle = newHandle;
         }
 
-        public void Use(int texture)
+        public void Use(ActiveTexture texture)
         {
-            glActiveTexture(texture);
+            glActiveTexture((int)texture);
             glBindTexture(GL_TEXTURE_2D, Handle);
         }
 
         private unsafe byte[] GetData()
         {
-            this.Use(GL_TEXTURE0);
+            this.Use(ActiveTexture.Texture0);
 
             int textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
             int textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
@@ -174,7 +174,7 @@ namespace CORERenderer.textures
         }
         public unsafe void GetData(out byte[] pixels, out int textureWidth, out int textureHeight)
         {
-            this.Use(GL_TEXTURE0);
+            this.Use(ActiveTexture.Texture0);
 
             textureWidth = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH);
             textureHeight = glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT);
@@ -195,7 +195,7 @@ namespace CORERenderer.textures
             }
 
             GenericShaders.Image2D.SetInt("Texture", 0);
-            this.Use(GL_TEXTURE0);
+            this.Use(ActiveTexture.Texture0);
 
             glBindVertexArray(VAO);
             glDrawArrays(PrimitiveType.Triangles, 0, 6);

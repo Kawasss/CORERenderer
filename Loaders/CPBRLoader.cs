@@ -14,8 +14,9 @@ namespace CORERenderer.Loaders
                 Texture metallic = GetTexture(fs);
                 Texture roughness = GetTexture(fs);
                 Texture AO = GetTexture(fs);
+                Texture height = GetTexture(fs);
 
-                return new(albedo, normal, metallic, roughness, AO);
+                return new(albedo, normal, metallic, roughness, AO, height);
             }
         }
 
@@ -27,7 +28,6 @@ namespace CORERenderer.Loaders
             byte[] data = new byte[length];
             for (int i = 0; i < length; i++)
                 data[i] = (byte)fs.ReadByte();
-            System.Console.WriteLine(2);
             holder++;
             return GenerateTextureFromData($"texture{holder}", data);
         }
@@ -40,7 +40,7 @@ namespace CORERenderer.Loaders
             {
                 sw.BaseStream.Write(imageData);
             }
-            Texture tex = Globals.usedTextures[Globals.FindTexture($"{dir}{name}.png")];
+            Texture tex = Globals.FindTexture($"{dir}{name}.png");
             File.Delete($"{dir}{name}.png");
             return tex;
         }

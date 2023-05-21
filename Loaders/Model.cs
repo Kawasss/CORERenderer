@@ -205,8 +205,8 @@ namespace CORERenderer.Loaders
         {
             Name = Path.GetFileNameWithoutExtension(path);
             Material material = new() { Texture = FindTexture(path) };
-            float width = usedTextures[material.Texture].width * 0.01f;
-            float height = usedTextures[material.Texture].height * 0.01f;
+            float width = material.Texture.width * 0.01f;
+            float height = material.Texture.height * 0.01f;
 
             float[] iVertices = new float[48]
             {

@@ -455,6 +455,7 @@ namespace COREMath
                 {
                     end += matrix4x4[i, j] + " ";
                 }
+                end += '\n';
             }
             return end;
         }

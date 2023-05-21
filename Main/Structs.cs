@@ -24,14 +24,16 @@ namespace CORERenderer.Main
         public Texture metallic;
         public Texture roughness;
         public Texture AO;
+        public Texture height;
 
-        public PBRMaterial(Texture albedo, Texture normal, Texture metallic, Texture roughness, Texture AO)
+        public PBRMaterial(Texture albedo, Texture normal, Texture metallic, Texture roughness, Texture AO, Texture height)
         {
             this.albedo = albedo;
             this.normal = normal;
             this.metallic = metallic;
             this.roughness = roughness;
             this.AO = AO;
+            this.height = height;
         }
     }
 
@@ -49,26 +51,26 @@ namespace CORERenderer.Main
         public float OpticalDensity;
         public int Illum;
         public float Transparency;
-        public int Texture;
-        public int DiffuseMap;
-        public int SpecularMap;
-        public int NormalMap;
-        public int MetalMap;
-        public int aoMap;
-        public int displacementMap;
+        public Texture Texture;
+        public Texture DiffuseMap;
+        public Texture SpecularMap;
+        public Texture NormalMap;
+        public Texture MetalMap;
+        public Texture aoMap;
+        public Texture displacementMap;
 
         public Vector3 overrideColor = Vector3.Zero;
 
         public Material()
         {
             Name = "placeholder";
-            Texture = 0;
-            DiffuseMap = 2;
-            SpecularMap = 1;
-            NormalMap = 3;
-            MetalMap = 4;
-            aoMap = 2;
-            displacementMap = 4;
+            Texture = Globals.usedTextures[0];
+            DiffuseMap = Globals.usedTextures[2];
+            SpecularMap = Globals.usedTextures[1];
+            NormalMap = Globals.usedTextures[3];
+            MetalMap = Globals.usedTextures[4];
+            aoMap = Globals.usedTextures[2];
+            displacementMap = Globals.usedTextures[4];
 
             OpticalDensity = 1;
             Transparency = 1;
