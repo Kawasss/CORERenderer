@@ -24,7 +24,7 @@ namespace CORERenderer.Loaders
         /// </summary>
         public List<List<Vertex>> Vertices { get { List<List<Vertex>> value = new(); foreach (Submodel s in submodels) value.Add(s.Vertices); return value; } } //adds the vertices from the submodels into one list
 
-        public List<Material> Materials { get { List<Material> value = new(); foreach (Submodel s in submodels) value.Add(s.material); return value; } } //adds the materials from the submodels into one list
+        public List<PBRMaterial> Materials { get { List<PBRMaterial> value = new(); foreach (Submodel s in submodels) value.Add(s.material); return value; } } //adds the materials from the submodels into one list
 
         /// <summary>
         /// Gives the current translations of all of the submodels
@@ -80,7 +80,7 @@ namespace CORERenderer.Loaders
                 GenerateImage(path);
         }
         
-        public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<Material> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
+        public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<PBRMaterial> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
             ID = COREMain.NewAvaibleID;
             type = COREMain.SetRenderMode(path);
@@ -95,7 +95,7 @@ namespace CORERenderer.Loaders
             {
                 try
                 {
-                    submodels.Add(new(materials[i].Name, vertices[i], indices[i], offsets[i] - this.Transform.translation, this, materials[i]));
+                    submodels.Add(new(this.name, vertices[i], indices[i], offsets[i] - this.Transform.translation, this, materials[i]));
                     totalAmountOfVertices += submodels[^1].NumberOfVertices;
                 }
                 catch (ArgumentOutOfRangeException)
@@ -119,7 +119,7 @@ namespace CORERenderer.Loaders
         private void GenerateFbx(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<Material> materials, out Vector3 center, out Vector3 extents);
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents);
             double readFBXFile = Glfw.Time - startedReading;
 
             CheckError(loaded);
@@ -140,7 +140,7 @@ namespace CORERenderer.Loaders
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<Material> materials, out Vector3 center, out Vector3 extents);
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents);
             double readOBJFile = Glfw.Time - startedReading;
 
             CheckError(loaded);
@@ -204,9 +204,9 @@ namespace CORERenderer.Loaders
         private void GenerateImage(string path)
         {
             Name = Path.GetFileNameWithoutExtension(path);
-            Material material = new() { Texture = FindTexture(path) };
-            float width = material.Texture.width * 0.01f;
-            float height = material.Texture.height * 0.01f;
+            PBRMaterial material = new() { albedo = FindTexture(path) };
+            float width = material.albedo.width * 0.01f;
+            float height = material.albedo.height * 0.01f;
 
             float[] iVertices = new float[48]
             {

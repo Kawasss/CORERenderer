@@ -1,4 +1,4 @@
-﻿using CORERenderer.Main;
+﻿using CORERenderer.OpenGL;
 using COREMath;
 
 namespace CORERenderer.GUI
@@ -8,6 +8,7 @@ namespace CORERenderer.GUI
         private string name;
 
         public int x, y;
+        private float renderX, renderY;
 
         public int width, height;
 
@@ -30,6 +31,9 @@ namespace CORERenderer.GUI
 
             width = Name.Length * (int)(Main.COREMain.debugText.characterHeight);
             height = (int)(Main.COREMain.debugText.characterHeight);
+
+            renderX = -(Main.COREMain.monitorWidth / 2) + x;
+            renderY = -(Main.COREMain.monitorHeight / 2) + y + 4;
         }
 
         public void OnClick(Action action)
@@ -43,7 +47,7 @@ namespace CORERenderer.GUI
 
             if (firstRender)
             {
-                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, renderX, renderY, 1, Color.White);
                 Submenu.isOpen = false;
                 firstRender = false;
                 return;
@@ -51,13 +55,13 @@ namespace CORERenderer.GUI
 
             if (!isPressed && changed)// && changed //button wont show if it isnt pressed in its optimised state
             {
-                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, renderX, renderY, 1, Color.White);
                 Submenu.isOpen = false;
             }
 
             else if (isPressed && changed)
             {
-                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
+                Main.COREMain.debugText.RenderText(name, renderX, renderY, 1, new Vector3(1, 0, 1));
                 Submenu.isOpen = true;
             }
             if (isPressed)
@@ -66,15 +70,15 @@ namespace CORERenderer.GUI
 
         public void RenderStatic()
         {
-            if (!isPressed)// && changed //button wont show if it isnt pressed in its optimised state
+            if (!isPressed)
             {
-                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 1, 1));
+                Main.COREMain.debugText.RenderText(name, renderX, renderY, 1, Color.White);
                 Submenu.isOpen = false;
             }
 
             else if (isPressed)
             {
-                Main.COREMain.debugText.RenderText(name, -(Main.COREMain.monitorWidth / 2) + x, -(Main.COREMain.monitorHeight / 2) + y + 4, 1, new Vector2(1, 0), new Vector3(1, 0, 1));
+                Main.COREMain.debugText.RenderText(name, renderX, renderY, 1, new Vector3(1, 0, 1));
                 Submenu.isOpen = true;
             }
             if (isPressed)

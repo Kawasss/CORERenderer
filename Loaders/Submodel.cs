@@ -28,9 +28,9 @@ namespace CORERenderer.Loaders
 
         public bool HasBones { get { for (int i = 0; i < vertices.Count; i++) if (vertices[i].hasBones) return true; return false; } } //inefficient
 
-        public readonly Material material;
+        public PBRMaterial material;
 
-        private Shader shader = GenericShaders.GenericLighting;
+        private Shader shader = GenericShaders.PBR;
         private Shader IDShader = GenericShaders.IDPicking;
 
         public VertexBuffer vbo;
@@ -44,7 +44,7 @@ namespace CORERenderer.Loaders
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         #region constructors
-        public Submodel(string name, List<Vertex> vertices, Material material, Model parent)
+        public Submodel(string name, List<Vertex> vertices, PBRMaterial material, Model parent)
         {
             this.name = name;
             this.vertices = vertices;
@@ -74,17 +74,16 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<Vertex> vertices, List<uint> indices, Material material)
+        public Submodel(string name, List<Vertex> vertices, List<uint> indices, PBRMaterial material)
         {
             this.Name = name;
             this.Vertices = ConvertIndices(vertices, indices); //the choice is made to merge the vertices and indices so that its easier to work with file formats that dont use indices 
             this.material = material;
-            isTranslucent = material.Transparency != 1;
 
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Model parent, PBRMaterial material)
         {
             this.Name = name;
             this.Vertices = vertices;
@@ -108,12 +107,9 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
             
             hasMaterials = false;
-            
-            material.Transparency = 1;
-            material.Texture = Globals.usedTextures[2];
         }
 
-        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, Vector3 offset, Vector3 scaling, Vector3 rotation, Model parent, PBRMaterial material)
         {
             this.Name = name;
             this.Vertices = vertices;
@@ -126,7 +122,7 @@ namespace CORERenderer.Loaders
             DefaultSetUp();
         }
 
-        public Submodel(string name, List<Vertex> vertices, List<uint> indices, Vector3 translation, Model parent, Material material)
+        public Submodel(string name, List<Vertex> vertices, List<uint> indices, Vector3 translation, Model parent, PBRMaterial material)
         {
             this.Name = name;
             this.Vertices = ConvertIndices(vertices, indices);
@@ -142,7 +138,7 @@ namespace CORERenderer.Loaders
         {
             glLineWidth(1.5f);
 
-            isTranslucent = material.Transparency != 1;
+            isTranslucent = false;
 
             hasMaterials = true;
 
@@ -151,14 +147,17 @@ namespace CORERenderer.Loaders
             ID = parent.ID;
             IDColor = COREMain.GenerateIDColor(ID);
 
+            GenericShaders.Shadow.ActivateAttributes();
+
             shader.Use();
             //shader.SetInt("material.Texture", 0);
-            shader.SetInt("diffuseMap", 0);
-            shader.SetInt("specularMap", 1);
-            shader.SetInt("normalMap", 2);
-            shader.SetInt("metalMap", 3);
+            shader.SetInt("albedoMap", 0);
+            shader.SetInt("normalMap", 1);
+            shader.SetInt("metallicMap", 2);
+            shader.SetInt("roughnessMap", 3);
             shader.SetInt("aoMap", 4);
-            shader.SetInt("displacementMap", 5);
+            shader.SetInt("heightMap", 5);
+            shader.SetInt("shadowMap", 6);
         }
 
         public void Render()
@@ -197,6 +196,15 @@ namespace CORERenderer.Loaders
             }
         }
 
+        public void RenderShadowVersion()
+        {
+            GenericShaders.Shadow.Use();
+
+            GenericShaders.Shadow.SetMatrix("model", parent.Transform.ModelMatrix);
+
+            vbo.Draw(PrimitiveType.Triangles, 0, vertices.Count);
+        }
+
         private void RenderColorVersion()
         {
             if (renderLines)
@@ -205,7 +213,7 @@ namespace CORERenderer.Loaders
                 vbo.Draw(PrimitiveType.Triangles, 0, vertices.Count);
         }
 
-        private void RenderIDVersion()
+        public void RenderIDVersion()
         {
             COREMain.IDFramebuffer.Bind();
 
@@ -221,9 +229,11 @@ namespace CORERenderer.Loaders
 
         private void SetShaderValues()
         {
-            shader.SetFloat("transparency", material.Transparency);
-            shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
-            shader.SetVector3("overrideColor", Vector3.Zero);
+            //shader.SetFloat("transparency", material.Transparency);
+            //shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
+            //shader.SetVector3("overrideColor", Vector3.Zero);
+            shader.SetVector3("viewPos", Rendering.Camera.position);
+            //shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
 
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
 
@@ -234,12 +244,12 @@ namespace CORERenderer.Loaders
         {
             shader.Use();
             
-            material.Texture.Use(ActiveTexture.Texture0);
-            material.SpecularMap.Use(ActiveTexture.Texture1);
-            material.NormalMap.Use(ActiveTexture.Texture2);
-            material.MetalMap.Use(ActiveTexture.Texture3);
-            material.aoMap.Use(ActiveTexture.Texture4);
-            material.aoMap.Use(ActiveTexture.Texture5);
+            material.albedo.Use(ActiveTexture.Texture0);
+            material.normal.Use(ActiveTexture.Texture1);
+            material.metallic.Use(ActiveTexture.Texture2);
+            material.roughness.Use(ActiveTexture.Texture3);
+            material.AO.Use(ActiveTexture.Texture4);
+            material.height.Use(ActiveTexture.Texture5);
         }
 
         public static List<Vertex> ConvertIndices(List<Vertex> vertices, List<uint> indices)

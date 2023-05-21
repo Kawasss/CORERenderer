@@ -91,7 +91,6 @@ namespace CORERenderer.Main
         public static MouseButton pressedButton;
 
         //classes
-        public static List<Light> lights = new();
         public static List<Scene> scenes = new();
 
         public static SplashScreen splashScreen;

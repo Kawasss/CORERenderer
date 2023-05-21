@@ -13,6 +13,18 @@ namespace CORERenderer.Loaders
                 RenderModel();
         }
 
+        public void RenderShadow()
+        {
+            foreach (Submodel submodel in submodels)
+                submodel.RenderShadowVersion();
+        }
+
+        public void RenderID()
+        {
+            foreach (Submodel submodel in submodels)
+                submodel.RenderIDVersion();
+        }
+
         private unsafe void RenderModel()
         {
             for (int i = 0; i < submodels.Count; i++)

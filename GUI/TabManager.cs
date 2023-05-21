@@ -62,16 +62,7 @@ namespace CORERenderer.GUI
             float localX = -Main.COREMain.monitorWidth / 2 + bottomX;
             float localY = -Main.COREMain.monitorHeight / 2 + Main.COREMain.viewportY;
 
-            float[] vertices = new float[]
-            {
-                localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
-                localX, localY + Main.COREMain.renderHeight,
-                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight,
-
-                localX, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f,
-                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight,
-                localX + Main.COREMain.monitorWidth * 0.034f, localY + Main.COREMain.renderHeight + Main.COREMain.monitorHeight * 0.018f
-            };
+            float[] vertices = GenerateQuadVerticesWithoutUV(localX, localY + COREMain.renderHeight, COREMain.monitorWidth * 0.034f, COREMain.monitorHeight * 0.018f);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices);
 
@@ -109,16 +100,7 @@ namespace CORERenderer.GUI
                 bottomX = Main.COREMain.monitorWidth / 2 + tabDivBinding[names[0]].bottomX;
                 bottomY = Main.COREMain.monitorHeight / 2 + tabDivBinding[names[0]].bottomY + tabDivBinding[names[0]].Height;
 
-                float[] vertices = new float[]
-                {
-                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
-                    div.bottomX, div.bottomY + div.Height,
-                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
-
-                    div.bottomX, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f,
-                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height,
-                    div.bottomX + Main.COREMain.monitorWidth * 0.034f, div.bottomY + div.Height + Main.COREMain.monitorHeight * 0.018f
-                };
+                float[] vertices = GenerateQuadVerticesWithoutUV(div.bottomX, div.bottomY + div.Height, COREMain.monitorWidth * 0.034f, COREMain.monitorHeight * 0.018f);
 
                 GenerateFilledBuffer(out VBO, out VAO, vertices);
 

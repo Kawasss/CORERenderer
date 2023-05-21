@@ -51,16 +51,7 @@ namespace CORERenderer.GUI
             bottomX = -(Main.COREMain.monitorWidth / 2) + x;
             bottomY = -(Main.COREMain.monitorHeight / 2) + y;
 
-            float[] vertices = new float[]
-            {
-                bottomX,         bottomY + height,
-                bottomX,         bottomY,
-                bottomX + width, bottomY,
-
-                bottomX,         bottomY + height,
-                bottomX + width, bottomY,
-                bottomX + width, bottomY + height
-            };
+            float[] vertices = GenerateQuadVerticesWithoutUV(bottomX, bottomY, width, height);
 
             GenerateFilledBuffer(out VBO, out VAO, vertices);
 

@@ -19,12 +19,12 @@ namespace CORERenderer.Main
 
     public struct PBRMaterial
     {
-        public Texture albedo;
-        public Texture normal;
-        public Texture metallic;
-        public Texture roughness;
-        public Texture AO;
-        public Texture height;
+        public Texture albedo = Globals.usedTextures[1];
+        public Texture normal = Globals.usedTextures[3];
+        public Texture metallic = Globals.usedTextures[4];
+        public Texture roughness = Globals.usedTextures[1];
+        public Texture AO = Globals.usedTextures[1];
+        public Texture height = Globals.usedTextures[4];
 
         public PBRMaterial(Texture albedo, Texture normal, Texture metallic, Texture roughness, Texture AO, Texture height)
         {
@@ -34,6 +34,16 @@ namespace CORERenderer.Main
             this.roughness = roughness;
             this.AO = AO;
             this.height = height;
+        }
+
+        public PBRMaterial()
+        {
+             albedo = Globals.usedTextures[1];
+             normal = Globals.usedTextures[3];
+             metallic = Globals.usedTextures[4];
+             roughness = Globals.usedTextures[1];
+             AO = Globals.usedTextures[1];
+             height = Globals.usedTextures[4];
         }
     }
 

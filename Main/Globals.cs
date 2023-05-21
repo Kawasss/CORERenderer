@@ -140,30 +140,6 @@ namespace CORERenderer.Main
         /// <param name="Object"></param>
         public static void DeleteUnusedTextures(Model Object)
         {
-            bool delete;
-            for (int i = 0; i < Object.Materials.Count; i++)
-            {
-                delete = true;
-                for (int j = 0; j < COREMain.CurrentScene.models.Count; j++)
-                    if (Object.Materials[i].Texture == COREMain.CurrentScene.models[i].Materials[i].Texture)
-                        delete = false;
-                if (delete)
-                    glDeleteTexture(Object.Materials[i].Texture.Handle);
-
-                delete = true;
-                for (int j = 0; j < COREMain.CurrentScene.models.Count; j++)
-                    if (Object.Materials[i].DiffuseMap == COREMain.CurrentScene.models[j].Materials[i].DiffuseMap)
-                        delete = false;
-                if (delete)
-                    glDeleteTexture(Object.Materials[i].DiffuseMap.Handle);
-
-                delete = true;
-                for (int j = 0; j < COREMain.CurrentScene.models.Count; j++)
-                    if (Object.Materials[i].SpecularMap == COREMain.CurrentScene.models[j].Materials[i].SpecularMap)
-                        delete = false;
-                if (delete)
-                    glDeleteTexture(Object.Materials[i].SpecularMap.Handle);
-            }
         }
     }
 }

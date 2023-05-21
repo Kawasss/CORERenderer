@@ -42,7 +42,7 @@ namespace CORERenderer.GUI
             div.SetRenderCallBack(Render); //causes the graph to be rendered when the div is rendered
             div.onlyUpdateEverySecond = true;
 
-            //more points = more data / accuracy but requires more raw power, right now 5 per row
+            //more points = more data / accuracy but requires more raw power
             List<float> temp = new();
             List<float> temp2 = new();
             List<float> temp3 = new();
@@ -63,7 +63,7 @@ namespace CORERenderer.GUI
 
         public void Update(float value)
         {
-            if (Main.COREMain.secondPassed) //makes the graph update only once every second to make it readable
+            if (COREMain.secondPassed) //makes the graph update only once every second to make it readable
                 UpdateConditionless(value);
         }
 

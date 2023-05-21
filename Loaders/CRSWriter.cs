@@ -91,24 +91,14 @@ namespace CORERenderer.Loaders
                 WriteMaterialNode(sw, submodel.material);
         }
 
-        private static void WriteMaterialNode(StreamWriter sw, Material material)
+        private static void WriteMaterialNode(StreamWriter sw, PBRMaterial material)
         {
-            WriteMaterialInfo(sw, material);
-            
-            WriteTextureNode(sw, material.Diffuse, material.Texture, material.Texture == Globals.usedTextures[0]); //writes the diffuse map
-            WriteTextureNode(sw, material.Specular, material.SpecularMap, material.SpecularMap == Globals.usedTextures[1]); //writes the specular map
-            WriteTextureNode(sw, material.NormalMap, material.NormalMap == Globals.usedTextures[3]); //writes the normal map
-        }
-
-        private static void WriteTextureNode(StreamWriter sw, Vector3 strength, Texture texture, bool isDefault)
-        {
-            byte[] data = texture.FileContent;
-            byte[] length = BitConverter.GetBytes(data.Length);
-
-            sw.BaseStream.Write(BitConverter.GetBytes(isDefault));
-            sw.BaseStream.Write(strength.Bytes);
-            sw.BaseStream.Write(length);
-            sw.BaseStream.Write(data);
+            WriteTextureNode(sw, material.albedo, material.albedo == Globals.usedTextures[1]); //writes the diffuse map
+            WriteTextureNode(sw, material.normal, material.normal == Globals.usedTextures[3]); //writes the normal map
+            WriteTextureNode(sw, material.metallic, material.metallic == Globals.usedTextures[4]); //writes the specular map
+            WriteTextureNode(sw, material.roughness, material.roughness == Globals.usedTextures[1]); //writes the specular map
+            WriteTextureNode(sw, material.AO, material.AO == Globals.usedTextures[1]); //writes the specular map
+            WriteTextureNode(sw, material.height, material.height == Globals.usedTextures[4]); //writes the specular map
         }
 
         private static void WriteTextureNode(StreamWriter sw, Texture texture, bool isDefault)
@@ -117,22 +107,10 @@ namespace CORERenderer.Loaders
             byte[] length = BitConverter.GetBytes(data.Length);
 
             sw.BaseStream.Write(BitConverter.GetBytes(isDefault));
+            if (isDefault)
+                return;
             sw.BaseStream.Write(length);
             sw.BaseStream.Write(data);
-        }
-
-        private static void WriteMaterialInfo(StreamWriter sw, Material material)
-        {
-            byte[] materialName = GenerateHeader(material.Name, 10);
-
-            byte[] shininess = BitConverter.GetBytes(material.Shininess);
-            byte[] transparency = BitConverter.GetBytes(material.Transparency);
-            byte[] ambient = material.Ambient.Bytes;
-
-            sw.BaseStream.Write(materialName);
-            sw.BaseStream.Write(shininess);
-            sw.BaseStream.Write(transparency);
-            sw.BaseStream.Write(ambient);
         }
 
         private static void WriteGeneralInfo(StreamWriter sw, string header, Camera camera, Light light, int modelCount)

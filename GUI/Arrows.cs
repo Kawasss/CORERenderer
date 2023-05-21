@@ -107,21 +107,6 @@ namespace CORERenderer.GUI
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
 
-            /*shader.SetVector3("color", 0, 1, 0);
-            Matrix cubeModel = model * MathC.GetTranslationMatrix(0, 1.1f, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            shader.SetMatrix("model", cubeModel);
-            RenderCube();
-
-            shader.SetVector3("color", 1, 0, 0);
-            cubeModel = model * MathC.GetTranslationMatrix(1.1f, 0, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            shader.SetMatrix("model", cubeModel);
-            RenderCube();
-
-            shader.SetVector3("color", 0, 0, 1);
-            cubeModel = model * MathC.GetTranslationMatrix(0, 0, 1.1f) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            shader.SetMatrix("model", cubeModel);
-            RenderCube();*/
-
             float maxSize = (MathC.GetLengthOf(Main.COREMain.CurrentScene.camera.position - Main.COREMain.CurrentModel.Transform.translation) / maxScale);
 
             //draw the triangles that indicate the rotations
@@ -197,21 +182,6 @@ namespace CORERenderer.GUI
                 alternatePickShader.SetMatrix("model", local);
                 unsafe { glDrawElements(PrimitiveType.Triangles, indices[0].Count, GLType.UnsingedInt, (void*)0); }
             }
-            /*pickShader.SetVector3("color", rgbs[3]);
-            Matrix cubeModel = model * MathC.GetTranslationMatrix(0, 1.1f, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            pickShader.SetMatrix("model", cubeModel);
-            RenderCube();
-
-            pickShader.SetVector3("color", rgbs[4]);
-            cubeModel = model * MathC.GetTranslationMatrix(1.1f, 0, 0) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            pickShader.SetMatrix("model", cubeModel);
-            RenderCube();
-            
-            pickShader.SetVector3("color", rgbs[5]);
-            cubeModel = model * MathC.GetTranslationMatrix(0, 0, 1.1f) * MathC.GetScalingMatrix(0.07f, 0.07f, 0.07f);
-            pickShader.SetMatrix("model", cubeModel);
-            RenderCube();*/
-
             float maxSize = (MathC.GetLengthOf(Main.COREMain.CurrentScene.camera.position - Main.COREMain.CurrentModel.Transform.translation) / maxScale);
 
             //draw the triangles that indicate the rotations

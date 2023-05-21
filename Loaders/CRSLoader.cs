@@ -8,7 +8,7 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public const string CURRENT_VERSION = "v1.1";
+        public const string CURRENT_VERSION = "v1.2";
 
         public static Error LoadCRS(string path, ref Scene scene, out string header)
         {
@@ -52,7 +52,7 @@ namespace CORERenderer.Loaders
 
                             if (hasMaterial)
                             {
-                                Material material = RetrieveMaterialNode(fs);
+                                PBRMaterial material = RetrieveMaterialNode(fs);
 
                                 models[^1].type = RenderMode.ObjFile;
                                 models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
@@ -119,36 +119,52 @@ namespace CORERenderer.Loaders
             }
         }
 
-        private static Material RetrieveMaterialNode(FileStream fs)
+        private static PBRMaterial RetrieveMaterialNode(FileStream fs)
         {
-            string materialName = GetString(fs, 10);
-            float shininess = GetFloat(fs);
-            float transparency = GetFloat(fs);
-            Vector3 ambient = GetVector3(fs);
-
             //retrieve all materials
-            Texture difTex = Globals.usedTextures[0];
-            if (!RetrieveTextureNode(fs, out Vector3 diffuseStrength, out byte[] diffusePNGData))
+            Texture difTex = Globals.usedTextures[1];
+            if (!RetrieveTextureNode(fs, out byte[] diffusePNGData))
             {
                 difTex = GenerateTextureFromData(diffusePNGData);
                 Globals.usedTextures.Add(difTex);
             }
 
-            Texture specIndex = Globals.usedTextures[1];
-            if (!RetrieveTextureNode(fs, out Vector3 specularStrength, out byte[] specularPNGData))
-            {
-                Texture specTex = GenerateTextureFromData(specularPNGData);
-                Globals.usedTextures.Add(specTex);
-            }
-
             Texture normIndex = Globals.usedTextures[3];
             if (!RetrieveTextureNode(fs, out byte[] normalPNGData))
             {
-                Texture normTex = GenerateTextureFromData(normalPNGData);
-                Globals.usedTextures.Add(normTex);
+                normIndex = GenerateTextureFromData(normalPNGData);
+                Globals.usedTextures.Add(normIndex);
             }
 
-            return new() { Name = materialName, Shininess = shininess, Ambient = ambient, Diffuse = diffuseStrength, Specular = specularStrength, Transparency = transparency, Texture = difTex, DiffuseMap = difTex, SpecularMap = specIndex, NormalMap = normIndex };
+            Texture metallicIndex = Globals.usedTextures[4];
+            if (!RetrieveTextureNode(fs, out byte[] specularPNGData))
+            {
+                metallicIndex = GenerateTextureFromData(specularPNGData);
+                Globals.usedTextures.Add(metallicIndex);
+            }
+
+            Texture roughnessIndex = Globals.usedTextures[1];
+            if (!RetrieveTextureNode(fs, out byte[] roughnessPNGData))
+            {
+                roughnessIndex = GenerateTextureFromData(roughnessPNGData);
+                Globals.usedTextures.Add(roughnessIndex);
+            }
+
+            Texture AOIndex = Globals.usedTextures[1];
+            if (!RetrieveTextureNode(fs, out byte[] aoPNGData))
+            {
+                AOIndex = GenerateTextureFromData(aoPNGData);
+                Globals.usedTextures.Add(AOIndex);
+            }
+
+            Texture heightIndex = Globals.usedTextures[4];
+            if (!RetrieveTextureNode(fs, out byte[] heightPNGData))
+            {
+                heightIndex = GenerateTextureFromData(heightPNGData);
+                Globals.usedTextures.Add(heightIndex);
+            }
+
+            return new() { albedo = difTex, normal = normIndex, metallic = metallicIndex, roughness = roughnessIndex, AO = AOIndex, height = heightIndex };
         }
 
         private static int amountOfTexturesCreated = 0;
@@ -167,32 +183,13 @@ namespace CORERenderer.Loaders
             return tex;
         }
 
-        private static bool RetrieveTextureNode(FileStream fs, out Vector3 textureStrength, out byte[] imageData)
+        private static bool RetrieveTextureNode(FileStream fs, out byte[] imageData)
         {
             if (GetBool(fs)) //is default material{
             {
-                textureStrength = Vector3.Zero;
                 imageData = Array.Empty<byte>();
                 return true;
             }
-                
-            textureStrength = GetVector3(fs);
-            int length = GetInt(fs);
-            imageData = new byte[length];
-
-            for (int i = 0; i < length; i++)
-                imageData[i] = (byte)fs.ReadByte();
-            return false;
-        }
-
-        private static bool RetrieveTextureNode(FileStream fs, out byte[] imageData)
-        {
-            if (GetBool(fs)) //is default material
-            {
-                imageData = Array.Empty<byte>();
-                return true;
-            }
-
             int length = GetInt(fs);
             imageData = new byte[length];
 

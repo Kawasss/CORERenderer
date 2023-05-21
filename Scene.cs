@@ -59,6 +59,9 @@ namespace CORERenderer
                     models.RemoveAt(i);
                 }
             lights.Add(new() { position = new(1, 2, 1) });
+            lights.Add(new() { position = new(0, 1, 2) });
+            if (models.Count > 0)
+                models[0].Transform.scale = new(.01f, .01f, .01f);
             /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
@@ -95,9 +98,10 @@ namespace CORERenderer
                 }
                 else if (shaderConfig == ShaderType.Lighting)
                 {
-                    GenericShaders.GenericLighting.SetVector3("viewPos", Rendering.Camera.position);
-                    GenericShaders.GenericLighting.SetVector3("lightPos", Rendering.Camera.position);
-                    GenericShaders.GenericLighting.SetInt("skybox", 6);
+                    GenericShaders.PBR.SetVector3("viewPos", Rendering.Camera.position);
+                    GenericShaders.PBR.SetVector3("lightPos[0]", lights[0].position);
+                    GenericShaders.PBR.SetVector3("lightPos[1]", lights[1].position);
+                    //GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 sphere?.Render();
                 RenderScene(this);

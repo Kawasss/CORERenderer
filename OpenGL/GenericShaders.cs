@@ -4,7 +4,7 @@ namespace CORERenderer.OpenGL
 {
     public class GenericShaders
     {
-        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader, PBRShader, normalVisualisationShader;
+        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader, PBRShader, normalVisualisationShader, shadowShader;
 
         public static Shader Image2D { get => image2DShader; }
         public static Shader Light { get => lightingShader; }
@@ -20,6 +20,7 @@ namespace CORERenderer.OpenGL
         public static Shader Skybox { get => skyboxShader; }
         public static Shader PBR { get => PBRShader; }
         public static Shader NormalVisualisation { get => normalVisualisationShader; }
+        public static Shader Shadow { get => shadowShader; }
 
         internal static void SetShaders()
         {
@@ -42,7 +43,75 @@ namespace CORERenderer.OpenGL
             skyboxShader = new(skyboxVert, skyboxFrag);
             PBRShader = new(defaultVertexShaderText, PBRFragText);
             normalVisualisationShader = new(normalVisVertText, normalVisFragText, normalVisGeomText);
+            shadowShader = new(shadowVertText, shadowFragText, shadowGeomText);
         }
+
+        private static string shadowVertText =
+            """
+            #version 430 core
+            layout (location = 0) in vec3 aPos;
+            layout (location = 1) in vec2 aTexCoords;
+            layout (location = 2) in vec3 aNormal;
+            layout (location = 3) in ivec4 bonesID1;
+            layout (location = 4) in ivec4 bonesID2;
+            layout (location = 5) in vec4 weights1;
+            layout (location = 6) in vec4 weights2;
+
+            uniform mat4 model;
+
+            void main()
+            {
+                gl_Position = vec4(aPos, 1.0) * model;
+            }  
+            """;
+
+        private static string shadowGeomText =
+            """
+            #version 430 core
+            layout (triangles) in;
+            layout (triangle_strip, max_vertices=18) out;
+
+            uniform mat4 shadowMatrices[6];
+            uniform mat4 projection;
+
+            out vec4 FragPos;
+
+            void main()
+            {
+                for(int face = 0; face < 6; face++)
+                {
+                    gl_Layer = face;
+                    for(int i = 0; i < 3; i++)
+                    {
+                        FragPos = gl_in[i].gl_Position;
+                        gl_Position = FragPos * shadowMatrices[face] * projection;
+                        EmitVertex();
+                    }    
+                    EndPrimitive();
+                }
+            }  
+            """;
+
+        private static string shadowFragText =
+            """
+            #version 430 core
+            in vec4 FragPos;
+
+            uniform vec3 lightPos;
+            uniform float farPlane;
+
+            void main()
+            {
+                // get distance between fragment and light source
+                float lightDistance = length(FragPos.xyz - lightPos);
+
+                // map to [0;1] range by dividing by far_plane
+                lightDistance = lightDistance / farPlane;
+
+                // write this as modified depth
+                gl_FragDepth = lightDistance;
+            } 
+            """;
 
         private static string normalVisVertText =
             """
@@ -130,7 +199,9 @@ namespace CORERenderer.OpenGL
             out vec4 FragColor;
 
             uniform vec3 viewPos;
-            uniform vec3 lightPos;
+            uniform vec3 lightPos[2];
+
+            uniform float farPlane;
 
             in vec2 TexCoords;
 
@@ -146,8 +217,20 @@ namespace CORERenderer.OpenGL
             uniform sampler2D aoMap;
             uniform sampler2D heightMap;
 
+            uniform samplerCube shadowMap;
+
             const float PI = 3.14159265359;
             #define heightScale 0.1
+
+            float GetShadow(vec3 FragPos)
+            {
+                vec3 fragToLight = FragPos - lightPos[0];
+                float closestDepth = texture(shadowMap, fragToLight).r;
+                closestDepth *= farPlane;
+                float currentDepth = length(fragToLight);
+                float bias = 0.05;
+                return currentDepth - bias > closestDepth ? 1 : 0;
+            }
 
             vec2 ParallaxOcclusionMapping( sampler2D depthMap, vec2 uv, vec2 displacement, float pivot ) {
             	const float layerDepth = 1.0 / float(8);
@@ -265,12 +348,12 @@ namespace CORERenderer.OpenGL
 
                 // reflectance equation
                 vec3 Lo = vec3(0.0);
-                for(int i = 0; i < 4; ++i) 
+                for(int i = 0; i < 2; ++i) 
                 {
                     // calculate per-light radiance
-                    vec3 L = normalize(lightPos - FragPos);
+                    vec3 L = normalize(lightPos[i] - FragPos);
                     vec3 H = normalize(V + L);
-                    float distance = length(lightPos - FragPos);
+                    float distance = length(lightPos[i] - FragPos);
                     float attenuation = 1.0 / (distance * distance);
                     vec3 radiance = vec3(1) * attenuation;
 
@@ -306,6 +389,7 @@ namespace CORERenderer.OpenGL
                 vec3 ambient = vec3(0.03) * albedo * ao;
 
                 vec3 color = ambient + Lo;
+                //color *= GetShadow(FragPos);
 
                 // HDR tonemapping
                 color = color / (color + vec3(1.0));

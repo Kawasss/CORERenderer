@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security;
+using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace CORERenderer.GUI
@@ -490,6 +491,15 @@ namespace CORERenderer.GUI
         }
         private void HandleSceneCommands(string input)
         {
+            if (input.StartsWith("attach "))
+            {
+                string[] inputs = input.Split(new string[] { " " }, StringSplitOptions.TrimEntries);
+                string path = GetFullPath(inputs[1]);
+                int modelIndex = Readers.GetOneIntWithRegEx(inputs[3]);
+                COREMain.CurrentScene.models[modelIndex].submodels[0].material = Readers.LoadCPBR(path);
+                return;
+            }
+
             //delete
             if (input.StartsWith("delete ")) //keyword for deleting one or more models
             {
@@ -530,10 +540,9 @@ namespace CORERenderer.GUI
             {
                 if (input.Length > 12 && input[5..9] == "dir ")
                 {
-                    string dir = input[9..];
-                    if (dir[..4] == "this" && Main.COREMain.LoadFilePath != null) //allows the use of 'this' as an alias for the directory it was opened in
-                        dir = Path.GetDirectoryName(Main.COREMain.LoadFilePath);
-                    else if (dir[..4] == "this" && Main.COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
+                    string dir = GetFullPath(input[9..]);
+                    
+                    if (dir[..4] == "this" && Main.COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
                     {
                         WriteError($"\"{dir}\" isn't valid here");
                         return;
@@ -551,9 +560,7 @@ namespace CORERenderer.GUI
                 }  
                 else if (input[5..9] != "dir ") //checks if user wants to load in an directory or a single file
                 {
-                    string dir = input[5..];
-                    if (dir[..5] == "$PATH")
-                        dir = Main.COREMain.BaseDirectory + dir[5..];
+                    string dir = GetFullPath(input[5..]);
                     if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg") //only allows certain file types, in this case .obj and .hdr
                     {
                         Main.COREMain.scenes[Main.COREMain.SelectedScene].models.Add(new(dir));
@@ -602,8 +609,8 @@ namespace CORERenderer.GUI
                         WriteLine($"Set variable to {Submodel.renderDistance}");
                         break;
                     case "reflectionQuality":
-                        Rendering.ReflectionQuality = Readers.GetOneFloatWithRegEx(input);
-                        WriteLine($"Set reflection quality to {Rendering.ReflectionQuality}");
+                        Rendering.ShadowQuality = Readers.GetOneFloatWithRegEx(input);
+                        WriteLine($"Set reflection quality to {Rendering.ShadowQuality}");
                         break;
                     case "textureQuality":
                         Rendering.TextureQuality = Readers.GetOneFloatWithRegEx(input);
@@ -787,6 +794,18 @@ namespace CORERenderer.GUI
             foreach (string command in allCommands)
                 if (command != "exit" && !command.Contains("reload") && !command.Contains("set shaders") && !command.Contains("recompile shaders"))
                     sw.WriteLine(command);
+        }
+
+        private static string GetFullPath(string path)
+        {
+            if (COREMain.BaseDirectory == null)
+                return path;
+
+            if (path.Contains("this"))
+                path = path.Replace("this", Path.GetDirectoryName(COREMain.LoadFilePath));
+            else if (path.Contains("$PATH"))
+                path = path.Replace("$PATH", COREMain.BaseDirectory);
+            return path;
         }
     }
 }

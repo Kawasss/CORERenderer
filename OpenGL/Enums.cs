@@ -1,7 +1,17 @@
-﻿using static CORERenderer.OpenGL.GL;
+﻿using COREMath;
+using static CORERenderer.OpenGL.GL;
 
 namespace CORERenderer.OpenGL
 {
+    public static class Color
+    {
+        public static Vector3 White { get => new(1, 1, 1); }
+        public static Vector3 Black { get => Vector3.Zero; }
+        public static Vector3 Red   { get => Vector3.UnitVectorX; }
+        public static Vector3 Green { get => Vector3.UnitVectorY; }
+        public static Vector3 Blue  { get => Vector3.UnitVectorZ; }
+    }
+
     /// <summary>
     /// determines the quality of certain render actions, like textures.
     /// Maximum uses 6 times the given resolution,
@@ -36,7 +46,7 @@ namespace CORERenderer.OpenGL
     /// Minimum uses 1/32 of the given resolution,
     /// Lowest uses 1/128 of the given resolution
     /// </summary>
-    public static class ReflectionQuality
+    public static class ShadowQuality
     {
         public const float Maximum = 0.25f;
         public const float Ultra = 0.5f;

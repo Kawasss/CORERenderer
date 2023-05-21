@@ -88,6 +88,7 @@ namespace CORERenderer.Fonts
             shader.SetMatrix("projection", Rendering.GetOrthograpicProjectionMatrix(Main.COREMain.Width, Main.COREMain.Height));
         }
 
+        public unsafe void RenderText(string text, float x, float y, float scale, Vector3 color) => RenderText(text, x, y, scale, new(0, 1), color);
         public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction) => RenderText(text, x, y, scale, direction, new Vector3(1, 1, 1));
 
         public unsafe void RenderText(string text, float x, float y, float scale, Vector2 direction, Vector3 color)
@@ -96,10 +97,6 @@ namespace CORERenderer.Fonts
 
             glActiveTexture(GL_TEXTURE0);
             glBindVertexArray(VAO);
-
-            //float angle = MathF.Atan2(direction.y, direction.x);
-            //Matrix rotation = MathC.GetRotationZMatrix(MathC.RadToDeg(angle));
-            //Matrix translation = MathC.GetTranslationMatrix(x, y, 0);
 
             int indexOfTrue = text.IndexOf("True");
             int indexOfFalse = text.IndexOf("False");

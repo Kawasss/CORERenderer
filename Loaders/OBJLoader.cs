@@ -10,7 +10,7 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static Error LoadOBJ(string path, out string name, out List<List<Vertex>> vertices, out List<Material> materials, out Vector3 center, out Vector3 extents)
+        public static Error LoadOBJ(string path, out string name, out List<List<Vertex>> vertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents)
         {
             if (!File.Exists(path))
             {
@@ -31,7 +31,7 @@ namespace CORERenderer.Loaders
             return Error.None;
         }
 
-        private static List<List<Vertex>> GetBasicSceneData(string path, Assimp.Scene s, out List<Material> materials, out Vector3 center, out Vector3 extents)
+        private static List<List<Vertex>> GetBasicSceneData(string path, Assimp.Scene s, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents)
         {
             List<List<Vertex>> vertices = new();
             materials = new();
@@ -41,7 +41,7 @@ namespace CORERenderer.Loaders
 
             for (int i = 0; i < s.MeshCount; i++)
             {
-                Material material = new();
+                PBRMaterial material = new();
                 Mesh mesh = s.Meshes[i];
                 vertices.Add(new());
                 foreach (int indice in mesh.GetIndices())
@@ -80,31 +80,20 @@ namespace CORERenderer.Loaders
                 {
                     Assimp.Material mat = s.Materials[mesh.MaterialIndex];
                     if (mat.HasTextureDiffuse)
-                        material.Texture = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDiffuse.FilePath}");
-                    if (mat.HasTextureDiffuse)
-                        material.DiffuseMap = material.Texture;
+                        material.albedo = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDiffuse.FilePath}");
                     if (mat.HasTextureSpecular)
-                        material.SpecularMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureSpecular.FilePath}");
+                        material.roughness = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureSpecular.FilePath}");
                     if (mat.HasTextureNormal)
-                        material.NormalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureNormal.FilePath}");
+                        material.normal = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureNormal.FilePath}");
                     if (mat.HasTextureEmissive)
-                        material.MetalMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureEmissive.FilePath}");
+                        material.metallic = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureEmissive.FilePath}");
                     if (mat.HasTextureAmbient)
-                        material.aoMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureAmbient.FilePath}");
+                        material.AO = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureAmbient.FilePath}");
                     if(mat.HasTextureDisplacement)
                     {
-                        material.displacementMap = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDisplacement.FilePath}");
+                        material.height = Globals.FindTexture($"{Path.GetDirectoryName(path)}\\{mat.TextureDisplacement.FilePath}");
                         System.Console.WriteLine("found");
                     }
-
-                    if (mat.HasColorTransparent)
-                    {
-                        material.overrideColor = new(mat.ColorTransparent.R, mat.ColorTransparent.G, mat.ColorTransparent.B);
-                        material.Transparency = mat.Opacity;
-                    }
-
-                    if (mat.HasShininess)
-                        material.Shininess = mat.Shininess;
                 }
                 materials.Add(material);
             }

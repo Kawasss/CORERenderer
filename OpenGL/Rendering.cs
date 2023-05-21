@@ -28,8 +28,8 @@ namespace CORERenderer.OpenGL
 
         private static long ticksSpent3DRenderingThisFrame = 0;
 
-        private static Framebuffer reflectionFramebuffer;
-        private static Cubemap reflectionCubemap;
+        private static Framebuffer shadowFramebuffer;
+        private static Cubemap shadowCubemap;
 
         /// <summary>
         /// Gets the rendering quality and sets the rendering quality, whilst simultaniously changing anything that depends on the rendering quality
@@ -40,17 +40,22 @@ namespace CORERenderer.OpenGL
                 textureQuality = value;
             } 
         }
-        public static float ReflectionQuality
+        public static float ShadowQuality
         {
-            get => reflectionQuality; set
+            get => shadowQuality; set
             {//both width because afaik its better to have a perfect cube and not a stretched one
-                reflectionQuality = value;
-                reflectionCubemap = GenerateEmptyCubemap((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
-                reflectionFramebuffer = GenerateFramebuffer((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
+                shadowQuality = value;
+                shadowCubemap = GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
+                shadowFramebuffer = GenerateFramebuffer((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
+                shadowFramebuffer.Bind();
+                glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCubemap.textureID, 0);
+                glDrawBuffer(GL_NONE);
+                glReadBuffer(GL_NONE);
+                glBindFramebuffer(0);
             }
         }
-        private static float reflectionQuality = OpenGL.TextureQuality.Default;
-        private static float textureQuality = OpenGL.ReflectionQuality.Default;
+        private static float shadowQuality = OpenGL.TextureQuality.Default;
+        private static float textureQuality = OpenGL.ShadowQuality.Default;
 
         /// <summary>
         /// Gets the color used with glClearColor (default is 0.3f, 0.3f, 0.3f, 1), sets the same color
@@ -70,83 +75,67 @@ namespace CORERenderer.OpenGL
             renderingWidth = RenderingWidth;
             renderingHeight = RenderingHeight;
             TextureQuality = OpenGL.TextureQuality.Default;
-            ReflectionQuality = OpenGL.ReflectionQuality.Default;
-            reflectionFramebuffer.Bind();
+            ShadowQuality = OpenGL.ShadowQuality.Default;
+            shadowFramebuffer.Bind();
             SetClearColor(clearColor);
             camera = new(Vector3.Zero, 1);
         }
 
-        private unsafe static void RenderCubemapReflections(List<Model> models, List<Main.Light> lights, HDRTexture skybox)
+        private unsafe static void RenderShadowCubemap(List<Model> models, List<Main.Light> lights)
         {
-            Matrix originalView = camera.ViewMatrix;
-            Vector3 previousCamFront = camera.front;
-            Vector2 originalYawPitch = new(camera.Yaw, camera.Pitch);
-            Vector3 previousUp = camera.up;
+            if (lights.Count <= 0)
+                return;
 
             int[] originalViewportDimensions = GetViewportDimensions();
             int previousFB = GetCurrentFramebufferID();
-            float previousCamAspectRatio = camera.AspectRatio, previousFov = camera.Fov;
 
-            Vector3[] fronts = new Vector3[]
-            {
-                new Vector3( 1,  0,  0),
-                new Vector3(-1,  0,  0),
-                new Vector3( 0,  1,  0),
-                new Vector3( 0, -1,  0),
-                new Vector3( 0,  0,  1),
-                new Vector3( 0,  0,  -1)
-            };
-            Vector3[] ups = new Vector3[]
-            {
-                new(0, -1,  0),
-                new(0, -1,  0),
-                new(0,  0,  1),
-                new(0,  0, -1),
-                new(0, -1,  0),
-                new(0, -1,  0)
-            };
+            shadowFramebuffer.Bind();
 
-            glViewport(0, 0, (int)((float)renderingWidth / (float)reflectionQuality), (int)((float)renderingWidth / (float)reflectionQuality));
-            camera.AspectRatio = 1;
+            SetShadowValues(lights);
 
-            reflectionFramebuffer.Bind();
-            reflectionCubemap.Use(GL_TEXTURE6);
-            glDepthFunc(GL_LEQUAL);
-            Submodel.renderAllIDs = false;
-            for (int i = 0; i < 6; i++)
-            {
-                camera.front = fronts[i].Normalized;
-                camera.up = ups[i].Normalized;
-                camera.right = MathC.Normalize(MathC.GetCrossProduct(fronts[i], Vector3.UnitVectorY));
-                
-                //camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, fronts[i]));
-                UpdateUniformBuffers();
+            glViewport(0, 0, (int)((float)renderingWidth / (float)shadowQuality), (int)((float)renderingWidth / (float)shadowQuality));
 
-                reflectionCubemap.Use(GL_TEXTURE6);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, reflectionCubemap.textureID, 0);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shadowFramebuffer.Bind();
 
-                //RenderLights(lights);
-                //RenderAllModels(models);
-                RenderGrid();
-                foreach (Model model in models)
-                    model.Render();
-                skybox?.Render();
-                
-                translucentSubmodels.Clear();
-            }
-            Submodel.renderAllIDs = true;
+            RenderShadows(models);
 
-            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             glBindFramebuffer((uint)previousFB);
             glViewport(originalViewportDimensions[0], originalViewportDimensions[1], originalViewportDimensions[2], originalViewportDimensions[3]);
-            camera.Yaw = originalYawPitch.x;
-            camera.Pitch = originalYawPitch.y;
-            camera.AspectRatio = previousCamAspectRatio;
-            camera.front = previousCamFront;
-            camera.up = previousUp;
-            camera.Fov = previousFov;
-            UpdateUniformBuffers();
+        }
+
+        private static void SetShadowValues(List<Light> lights)
+        {
+            glDisable(GL_CULL_FACE);
+
+            float nearPlane = camera.NearPlane;
+            float farPlane = camera.FarPlane;
+            float aspectRatio = renderingWidth / renderingHeight;
+            Matrix shadowProjection = Camera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
+            Matrix[] viewMatrices = new Matrix[]
+            {
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 1,  0,  0), new(0, -1,  0)),
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3(-1,  0,  0), new(0, -1,  0)),
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0,  1,  0), new(0,  0,  1)),
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0, -1,  0), new(0,  0, -1)),
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0,  0,  1), new(0, -1,  0)),
+                MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0,  0, -1), new(0, -1,  0))
+            };
+            GenericShaders.Shadow.Use();
+            for (int i = 0; i < 6; i++)
+                GenericShaders.Shadow.SetMatrix($"shadowMatrices[{i}]", viewMatrices[i]);
+            GenericShaders.Shadow.SetMatrix("projection", shadowProjection);
+            GenericShaders.Shadow.SetVector3("lightPos", lights[0].position);
+            GenericShaders.Shadow.SetFloat("farPlane", farPlane);
+        }
+
+        private static void RenderShadows(List<Model> models)
+        {
+            shadowCubemap.Use(GL_TEXTURE0);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCubemap.textureID, 0);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            foreach (Model model in models)
+                model.RenderShadow();
         }
 
         private static Model backgroundModel = null;
@@ -155,11 +144,12 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            RenderCubemapReflections(scene.models, scene.lights, scene.skybox);
-            //RenderLights(scene.lights);
+            //RenderShadowCubemap(scene.models, scene.lights);
+            RenderLights(scene.lights);
             RenderAllModels(scene.models);
             scene.skybox?.Render();
             //reflectionCubemap.Render();
+            //shadowCubemap.Render();
         }
 
         public static void RenderAllModels(List<Model> models)
@@ -168,7 +158,7 @@ namespace CORERenderer.OpenGL
             int currentDrawCalls = drawCalls;
             Stopwatch sw = new();
 
-            GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
+            //GenericShaders.GenericLighting.SetVector3("viewPos", camera.position);
 
             if (cullFaces)
                 glEnable(GL_CULL_FACE);
@@ -177,11 +167,13 @@ namespace CORERenderer.OpenGL
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            GenericShaders.GenericLighting.Use();
+            GenericShaders.PBR.Use();
 
             sw.Start();
 
-            reflectionCubemap.Use(GL_TEXTURE4);
+            shadowCubemap.Use(GL_TEXTURE6);
+            //GenericShaders.PBR.SetFloat("farPlane", camera.FarPlane);
+
             for (int i = 0; i < models.Count; i++)
             {
                 if (models[i] == null)
@@ -192,11 +184,7 @@ namespace CORERenderer.OpenGL
                     modelsFrustumCulled++;
                     continue;
                 }
-
-                //if (models[i].type != RenderMode.HDRFile)
-                    models[i].Render();
-                //else
-                //    backgroundModel = models[i];
+                models[i].Render();
             }
             sw.Stop();
             long timeSpentRenderingOpaque = sw.ElapsedTicks;
@@ -215,9 +203,6 @@ namespace CORERenderer.OpenGL
                 model.Render();
             sw.Stop();
             long timeSpentRenderingTranslucent = sw.ElapsedTicks;
-
-            //backgroundModel?.Render();
-            //backgroundModel = null;
 
             ticksSpent3DRenderingThisFrame = timeSpentRenderingOpaque + timeSpentRenderingTranslucent + timeSpentDepthSorting;
 

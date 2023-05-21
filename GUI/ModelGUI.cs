@@ -28,44 +28,44 @@ namespace CORERenderer.GUI
             this.Write($"Rotation:    {Math.Round(model.Transform.rotation.x, 2)} {Math.Round(model.Transform.rotation.y, 2)} {Math.Round(model.Transform.rotation.z, 2)}", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
             //shitty
-            Texture textureToDraw = model.submodels[0].material.Texture;
+            Texture textureToDraw = model.submodels[0].material.albedo;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("Texture:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("Albedo:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth  / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
-            textureToDraw = model.submodels[0].material.DiffuseMap;
+            textureToDraw = model.submodels[0].material.roughness;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("Diffuse map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("Roughness:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
-            textureToDraw = model.submodels[0].material.SpecularMap;
+            textureToDraw = model.submodels[0].material.normal;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("Specular map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("Normal:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
-            textureToDraw = model.submodels[0].material.NormalMap;
+            textureToDraw = model.submodels[0].material.metallic;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("Normal map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("metallic:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
-            textureToDraw = model.submodels[0].material.MetalMap;
+            textureToDraw = model.submodels[0].material.AO;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("metal map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("AO:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
 
-            textureToDraw = model.submodels[0].material.aoMap;
+            textureToDraw = model.submodels[0].material.height;
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
-            this.Write("AO map:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
+            this.Write("height:", (int)(this.Width * 0.05f), this.Height - totalOffset, 0.7f);
             totalOffset += 150;
             textureToDraw.RenderAs2DImage((int)(Main.COREMain.monitorWidth / 2 * 0.996f - this.Width * 0.95f), (int)(-Main.COREMain.monitorHeight / 2 + this.Height - totalOffset));
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
