@@ -25,9 +25,9 @@ namespace CORERenderer.textures
         public int width2D;
         public int height2D;
 
-        private Shader shader = new($"{Main.COREMain.pathRenderer}\\shaders\\HDRCube.vert", $"{Main.COREMain.pathRenderer}\\shaders\\HDRCube.frag");
+        private Shader shader = new($"{Main.COREMain.BaseDirectory}\\shaders\\HDRCube.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\HDRCube.frag");
 
-        private Shader testShader = new($"{Main.COREMain.pathRenderer}\\shaders\\2DImage.vert", $"{Main.COREMain.pathRenderer}\\shaders\\2DImage.frag");
+        private Shader testShader = new($"{Main.COREMain.BaseDirectory}\\shaders\\2DImage.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\2DImage.frag");
 
         public byte[] data;
 

@@ -12,9 +12,9 @@ namespace CORERenderer.Loaders
 {
     public partial class Model : Readers
     {
-        public static Model Cube { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\cube.stl"); } }
-        public static Model Cylinder { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\cylinder.stl"); } }
-        public static Model Plane { get { return new($"{Main.COREMain.pathRenderer}\\OBJs\\plane.stl"); } }
+        public static Model Cube { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\cube.stl"); } }
+        public static Model Cylinder { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\cylinder.stl"); } }
+        public static Model Plane { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\plane.stl"); } }
 
         public static int totalSSBOSizeUsed = 0;
 
@@ -37,7 +37,7 @@ namespace CORERenderer.Loaders
 
         public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
 
-        public bool CanBeCulled { get {return !transform.BoundingBox.IsInFrustum(COREMain.CurrentScene.camera.Frustum, transform); } }
+        public bool CanBeCulled { get {return !transform.BoundingBox.IsInFrustum(Rendering.Camera.Frustum, transform); } }
         #endregion
 
         public List<Submodel> submodels = new();

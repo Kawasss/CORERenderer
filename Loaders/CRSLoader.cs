@@ -23,12 +23,13 @@ namespace CORERenderer.Loaders
                     if (!header.Contains(CURRENT_VERSION))
                         return Error.Outdated;
 
-                    scene.camera.position = GetVector3(fs);
-                    scene.camera.Pitch = GetFloat(fs);
-                    scene.camera.Yaw = GetFloat(fs);
+                    Rendering.Camera.position = GetVector3(fs);
+                    Rendering.Camera.Pitch = GetFloat(fs);
+                    Rendering.Camera.Yaw = GetFloat(fs);
                     scene.lights.Add(new() { position = GetVector3(fs) });
 
                     int modelCount = GetInt(fs);
+                    System.Console.WriteLine(modelCount);
                     for (int i = 0; i < modelCount; i++)
                     {
                         RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount);
@@ -155,7 +156,7 @@ namespace CORERenderer.Loaders
         private static Texture GenerateTextureFromData(byte[] imageData) //its incredible slow to create and delete a file
         {
             amountOfTexturesCreated++;
-            string dir = $"{COREMain.pathRenderer}\\TextureCache\\";
+            string dir = $"{COREMain.BaseDirectory}\\TextureCache\\";
             using (FileStream fs = File.Create($"{dir}diffuseHolder{amountOfTexturesCreated}.png"))
             using (StreamWriter sw = new(fs))
             {

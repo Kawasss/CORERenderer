@@ -55,7 +55,7 @@ namespace CORERenderer.textures
             if (!File.Exists(imagePath))
             {
                 Console.WriteError($"Couldn't find given texture at {imagePath}, using default texture");
-                imagePath = $"{COREMain.pathRenderer}\\textures\\placeholder.png";
+                imagePath = $"{COREMain.BaseDirectory}\\textures\\placeholder.png";
             }
             StbiImage image;
             int imageHeight = 0, imageWidth = 0;

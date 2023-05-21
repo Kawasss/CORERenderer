@@ -25,7 +25,7 @@ namespace CORERenderer
 
             Console.WriteLine("Successfully created window");
 
-            using (FileStream stream = File.OpenRead($"{pathRenderer}\\logos\\logo4.png"))
+            using (FileStream stream = File.OpenRead($"{BaseDirectory}\\logos\\logo4.png"))
             using (MemoryStream memoryStream = new())
             {
                 StbiImage image;
@@ -46,11 +46,11 @@ namespace CORERenderer
             Glfw.MakeContextCurrent(window);
             Import(Glfw.GetProcAddress);
             Globals.usedTextures.Clear();
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\placeholder.png"));
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\white.png"));//placeholderspecular
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\white.png"));
-            Globals.usedTextures.Add(Texture.ReadFromSRGBFile($"{pathRenderer}\\OBJs\\normal.png"));//$"{pathRenderer}\\textures\\normal2_1.png"
-            Globals.usedTextures.Add(Texture.ReadFromFile($"{pathRenderer}\\textures\\black.png"));//$"{pathRenderer}\\textures\\black.png"
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\placeholder.png"));
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\white.png"));//placeholderspecular
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\white.png"));
+            Globals.usedTextures.Add(Texture.ReadFromSRGBFile($"{BaseDirectory}\\OBJs\\normal.png"));//$"{pathRenderer}\\textures\\normal2_1.png"
+            Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\black.png"));//$"{pathRenderer}\\textures\\black.png"
         }
 
         /// <summary>

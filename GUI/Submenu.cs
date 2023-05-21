@@ -100,7 +100,7 @@ namespace CORERenderer.GUI
                 //hard coded part for assigning false or true because c# doesnt support dynamically changing given variables
                 Main.COREMain.renderGrid = isOptionTrue[list[0]];
                 Main.COREMain.renderBackground = isOptionTrue[list[1]];
-                if (Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj != -1)
+                if (Main.COREMain.scenes[Main.COREMain.SelectedScene].currentObj != -1)
                 {
                     Main.COREMain.CurrentModel.renderLines = isOptionTrue[list[2]];
                     Main.COREMain.CurrentModel.renderNormals = isOptionTrue[list[3]];

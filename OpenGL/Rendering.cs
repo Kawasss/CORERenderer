@@ -2,18 +2,19 @@
 using CORERenderer.textures;
 using CORERenderer.Main;
 using CORERenderer.Loaders;
-using CORERenderer.GLFW;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using CORERenderer.GUI;
-using System.Collections.Concurrent;
-using Assimp;
-using CORERenderer.Fonts;
 
 namespace CORERenderer.OpenGL
 {
     public partial class Rendering : GL
     {
+        public static int CurrentBoundVAO { get => GetBoundVAO(); }
+        public static int CurrentFramebufferID { get => GetCurrentFramebufferID(); }
+        public static Camera Camera { get => camera; set => camera = value; }
+        public static string[] RenderStatistics { get { return renderStatistics; } }
+        public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
+        public static int[] Viewport { get => GetViewportDimensions(); }
+
         private static uint vertexArrayObjectGrid;
 
         public static bool cullFaces = true;
@@ -22,13 +23,10 @@ namespace CORERenderer.OpenGL
         public static ShaderType shaderConfig = ShaderType.Lighting;
 
         private static Camera camera = null;
-        public static Camera Camera { get => camera; }
 
         private static string[] renderStatistics = new string[9] { "Ticks spent rendering opaque models: 0", "Ticks spent rendering translucent models: 0", "Ticks spent depth sorting: 0", "Ticks spent overall: 0", "Models rendered: 0", "Submodels rendered: 0, of which:", "   0 are translucent", "   0 are opaque", "Draw calls this frame: 0" };
-        public static string[] RenderStatistics { get { return renderStatistics; } }
 
         private static long ticksSpent3DRenderingThisFrame = 0;
-        public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
 
         private static Framebuffer reflectionFramebuffer;
         private static Cubemap reflectionCubemap;
@@ -71,32 +69,11 @@ namespace CORERenderer.OpenGL
             GenericShaders.SetShaders();
             renderingWidth = RenderingWidth;
             renderingHeight = RenderingHeight;
-            TextureQuality = OpenGL.TextureQuality.Low;
-            ReflectionQuality = OpenGL.ReflectionQuality.Low;
+            TextureQuality = OpenGL.TextureQuality.Default;
+            ReflectionQuality = OpenGL.ReflectionQuality.Default;
             reflectionFramebuffer.Bind();
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LEQUAL);
-
-            glEnable(GL_STENCIL_TEST);
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-            glEnable(GL_DEBUG_OUTPUT);
-
-            glEnable(GL_CULL_FACE);
-            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-            glCullFace(GL_BACK);
-            glFrontFace(GL_CCW);
-
             SetClearColor(clearColor);
-        }
-
-        public static void SetCamera(Camera currentCamera)
-        {
-            camera = currentCamera;
+            camera = new(Vector3.Zero, 1);
         }
 
         private unsafe static void RenderCubemapReflections(List<Model> models, List<Main.Light> lights, HDRTexture skybox)
@@ -291,24 +268,45 @@ namespace CORERenderer.OpenGL
             return vpd;
         }
 
-        public static unsafe int GetCurrentFramebufferID()
+        private static unsafe int GetCurrentFramebufferID()
         {
             int value;
             glGetIntegerv(GL_FRAMEBUFFER_BINDING, &value);
             return value;
         }
 
+        private static unsafe int GetBoundVAO()
+        {
+            int value;
+            glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &value);
+            return value;
+        }
+
+        public static float[] GenerateQuadVerticesWithoutUV(float x, float y, float width, float height)
+        {
+            return new float[]
+            {
+                x, y + height,
+                x, y,
+                x + width, y,
+
+                x, y + height,
+                x + width, y,
+                x + width, y + height
+            };
+        }
+
         public static float[] GenerateQuadVerticesWithUV(int x, int y, int width, int height)
         {
             return new float[]
             {
-                x, y + height,         0, 1,
-                x, y,                  0, 0,
-                x + width, y, 1, 0,
+                x,         y + height,         0, 1,
+                x,         y,                  0, 0,
+                x + width, y,                  1, 0,
 
-                x, y + height,         0, 1,
-                x + width, y, 1, 0,
-                x + width, y + height, 1, 1
+                x,         y + height,         0, 1,
+                x + width, y,                  1, 0,
+                x + width, y + height,         1, 1
             };
         }
 
@@ -327,7 +325,8 @@ namespace CORERenderer.OpenGL
         /// <param name="VBO">VBO</param>
         /// <param name="VAO">VAO</param>
         /// <param name="size">size of the buffer in bytes</param>
-        public static void GenerateEmptyBuffer(out uint VBO, out uint VAO, int sizeInBytes)
+        public static void GenerateEmptyBuffer(out uint VBO, out uint VAO, int sizeInBytes) => GenerateEmptyBuffer(Usage.DynamicDraw, out VBO, out VAO, sizeInBytes);
+        public static void GenerateEmptyBuffer(Usage usage, out uint VBO, out uint VAO, int sizeInBytes)
         {
             VBO = glGenBuffer();
             glBindBuffer(BufferTarget.ArrayBuffer, VBO);
@@ -335,7 +334,7 @@ namespace CORERenderer.OpenGL
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
 
-            glBufferData(GL_ARRAY_BUFFER, sizeInBytes, (IntPtr)null, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeInBytes, (IntPtr)null, (int)usage);
 
             TotalAmountOfTransferredBytes = sizeInBytes;
         }
@@ -346,19 +345,19 @@ namespace CORERenderer.OpenGL
         /// <param name="VBO"></param>
         /// <param name="VAO"></param>
         /// <param name="vertices"></param>
-        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, float[] vertices)
+        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, float[] vertices) => GenerateFilledBuffer(Usage.StaticDraw, out VBO, out VAO, vertices);
+        public static void GenerateFilledBuffer(Usage usage, out uint VBO, out uint VAO, float[] vertices)
         {
             VBO = glGenBuffer();
             glBindBuffer(BufferTarget.ArrayBuffer, VBO);
-            
+
             VAO = glGenVertexArray();
             glBindVertexArray(VAO);
 
-            glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), vertices, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, vertices.Length * sizeof(float), vertices, (int)usage);
 
             TotalAmountOfTransferredBytes = vertices.Length * sizeof(float);
         }
-
 
         /// <summary>
         /// Generates a buffer with the given vertices, does not active the vertex attribute arrays however.
@@ -366,7 +365,8 @@ namespace CORERenderer.OpenGL
         /// <param name="VBO"></param>
         /// <param name="VAO"></param>
         /// <param name="vertices"></param>
-        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Vertex[] vertices)
+        public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Vertex[] vertices) => GenerateFilledBuffer(Usage.StaticDraw, out VBO, out VAO, vertices);
+        public static void GenerateFilledBuffer(Usage usage, out uint VBO, out uint VAO, Vertex[] vertices)
         {
             VBO = glGenBuffer();
             glBindBuffer(BufferTarget.ArrayBuffer, VBO);
@@ -376,10 +376,11 @@ namespace CORERenderer.OpenGL
 
             float[] nVertices = Vertex.GetFloatList(vertices.ToList()).ToArray();
 
-            glBufferData(GL_ARRAY_BUFFER, nVertices.Length * sizeof(float), nVertices, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, nVertices.Length * sizeof(float), nVertices, (int)usage);
 
             TotalAmountOfTransferredBytes = vertices.Length * sizeof(float);
         }
+
         public static void GenerateFilledBuffer(out uint VBO, out uint VAO, Matrix[] matrices)
         {
             VBO = glGenBuffer();
@@ -397,7 +398,7 @@ namespace CORERenderer.OpenGL
                 }
             }
 
-            TotalAmountOfTransferredBytes += 16 * matrices.Length * sizeof(float);
+            TotalAmountOfTransferredBytes = 16 * matrices.Length * sizeof(float);
         }
 
         public static void GenerateFilledBuffer(out uint VBO, Matrix[] matrices)

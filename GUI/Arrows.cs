@@ -40,10 +40,10 @@ namespace CORERenderer.GUI
 
         public Arrows()
         {
-            rotation = new($"{Main.COREMain.pathRenderer}\\OBJs\\triangle.stl");
+            rotation = new($"{Main.COREMain.BaseDirectory}\\OBJs\\triangle.stl");
             rotation.submodels[0].renderIDVersion = false;
 
-            Readers.LoadOBJ($"{Main.COREMain.pathRenderer}\\OBJs\\arrow.obj", out _, out List<List<Vertex>> lVertices, out indices, out _, out _, out _, out _);
+            Readers.LoadOBJ($"{Main.COREMain.BaseDirectory}\\OBJs\\arrow.obj", out _, out List<List<Vertex>> lVertices, out indices, out _, out _, out _, out _);
             foreach (Vertex v in lVertices[0])
             {
                 vertices.Add(new());
@@ -63,7 +63,7 @@ namespace CORERenderer.GUI
             for (int i = 0; i < 9; i++)
                 rgbs[i] = Main.COREMain.GenerateIDColor(i);
                 
-            if (Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj == -1)
+            if (Main.COREMain.scenes[Main.COREMain.SelectedScene].currentObj == -1)
                 return;
 
             maxScale = MathC.GetLengthOf(Main.COREMain.CurrentScene.camera.position - Main.COREMain.CurrentModel.Transform.translation) * 0.8f;
@@ -132,24 +132,21 @@ namespace CORERenderer.GUI
             Matrix triangleModel = model * MathC.GetTranslationMatrix(.1f, 0.35f, 0) * MathC.GetScalingMatrix(.1f);
             shader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 2
             shader.SetVector3("color", 0, 1, 1);
             triangleModel = model * MathC.GetTranslationMatrix(0, 0.35f, .15f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationYMatrix(-90);
             shader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 3
             shader.SetVector3("color", 1, 0, 1);
             triangleModel = model * MathC.GetTranslationMatrix(.1f, 0, .3f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationXMatrix(90);
             shader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             glEnable(GL_CULL_FACE);
 
@@ -224,24 +221,21 @@ namespace CORERenderer.GUI
             Matrix triangleModel = model * MathC.GetTranslationMatrix(.1f, 0.35f, 0) * MathC.GetScalingMatrix(.1f);
             pickShader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 2
             pickShader.SetVector3("color", rgbs[7]);
             triangleModel = model * MathC.GetTranslationMatrix(0, 0.35f, .15f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationYMatrix(-90);
             pickShader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             //triangle 3
             pickShader.SetVector3("color", rgbs[8]);
             triangleModel = model * MathC.GetTranslationMatrix(.1f, 0, .3f) * MathC.GetScalingMatrix(.1f) * MathC.GetRotationXMatrix(90);
             pickShader.SetMatrix("model", triangleModel);
 
-            glBindVertexArray(rotation.submodels[0].VAO);
-            glDrawArrays(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
+            rotation.submodels[0].vbo.Draw(PrimitiveType.Triangles, 0, rotation.submodels[0].NumberOfVertices);
 
             glEnable(GL_CULL_FACE);
 

@@ -167,7 +167,7 @@ namespace CORERenderer.Loaders
             return returnValue;
         }
 
-        private static float GetOneFloatWithRegEx(string line)
+        public static float GetOneFloatWithRegEx(string line)
         {
             float returnValue = 0;
             MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");

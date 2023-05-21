@@ -23,7 +23,7 @@ namespace CORERenderer.OpenGL
             float[] buffer = new float[6] { origin.x, origin.y, origin.z, end.x, end.y, end.z };
             GenerateFilledBuffer(out VBO, out VAO, buffer);
 
-            shader ??= new($"{Main.COREMain.pathRenderer}\\shaders\\Line3D.vert", $"{Main.COREMain.pathRenderer}\\shaders\\SolidColor.frag");
+            shader ??= new($"{Main.COREMain.BaseDirectory}\\shaders\\Line3D.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\SolidColor.frag");
             shader?.ActivateAttributes();
         }
 

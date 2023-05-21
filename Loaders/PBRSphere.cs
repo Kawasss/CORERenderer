@@ -19,7 +19,7 @@ namespace CORERenderer.Loaders
         public PBRSphere(PBRMaterial material)
         {
             this.material = material;
-            Readers.LoadOBJ($"{COREMain.pathRenderer}\\OBJs\\sphere.obj", out _, out List<List<Vertex>> vertices, out _, out Vector3 center, out Vector3 extents);
+            Readers.LoadOBJ($"{COREMain.BaseDirectory}\\OBJs\\sphere.obj", out _, out List<List<Vertex>> vertices, out _, out Vector3 center, out Vector3 extents);
             this.transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
             this.vertices = vertices[0];
 
@@ -43,7 +43,7 @@ namespace CORERenderer.Loaders
 
             shader.Use();
 
-            shader.SetVector3("viewPos", COREMain.CurrentScene.camera.position);
+            shader.SetVector3("viewPos", Rendering.Camera.position);
             shader.SetVector3("lightPos", new(1, 2, 1));
             shader.SetMatrix("model", Matrix.IdentityMatrix);
 

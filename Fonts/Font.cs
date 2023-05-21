@@ -25,7 +25,7 @@ namespace CORERenderer.Fonts
 
         public unsafe Font(uint pixelHeight, string fontPath)
         {
-            shader = new($"{Main.COREMain.pathRenderer}\\shaders\\Font.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Font.frag");
+            shader = new($"{Main.COREMain.BaseDirectory}\\shaders\\Font.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\Font.frag");
 
             characterHeight = (int)pixelHeight;
 

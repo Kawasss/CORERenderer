@@ -36,6 +36,7 @@ namespace CORERenderer
             models = new();
             lights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
+            Rendering.Camera = camera;
 
             if (args.Length != 0 && LoadFile != RenderMode.None && LoadFile != RenderMode.CRSFile)
             {
@@ -57,6 +58,7 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
+            lights.Add(new() { position = new(1, 2, 1) });
             /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
@@ -84,8 +86,8 @@ namespace CORERenderer
 
                 if (shaderConfig == ShaderType.PathTracing)
                 {
-                    GenericShaders.GenericLighting.SetVector3("RAY.origin", CurrentScene.camera.position);
-                    GenericShaders.GenericLighting.SetVector3("RAY.direction", CurrentScene.camera.front);
+                    GenericShaders.GenericLighting.SetVector3("RAY.origin", Rendering.Camera.position);
+                    GenericShaders.GenericLighting.SetVector3("RAY.direction", Rendering.Camera.front);
                     GenericShaders.GenericLighting.SetInt("isReflective", 0);
                     GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
                     GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
@@ -93,8 +95,8 @@ namespace CORERenderer
                 }
                 else if (shaderConfig == ShaderType.Lighting)
                 {
-                    GenericShaders.GenericLighting.SetVector3("viewPos", CurrentScene.camera.position);
-                    GenericShaders.GenericLighting.SetVector3("lightPos", CurrentScene.camera.position);
+                    GenericShaders.GenericLighting.SetVector3("viewPos", Rendering.Camera.position);
+                    GenericShaders.GenericLighting.SetVector3("lightPos", Rendering.Camera.position);
                     GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 sphere?.Render();
@@ -147,7 +149,7 @@ namespace CORERenderer
 
             if (IsCursorInFrame(mousePosX, mousePosY))
             {
-                camera.Fov -= (float)scrollWheelMovedAmount * 1.5f;
+                Rendering.Camera.Fov -= (float)scrollWheelMovedAmount * 1.5f;
                 //!!temporary debug movement for obj files !!rewrite
                 if (state2 == InputState.Press && state != InputState.Press)
                 {

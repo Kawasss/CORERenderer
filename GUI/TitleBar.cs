@@ -13,7 +13,7 @@ namespace CORERenderer.GUI
         private uint VBOC;
         private uint VAOC;
 
-        private Shader shaderC = new($"{Main.COREMain.pathRenderer}\\shaders\\Font.vert", $"{Main.COREMain.pathRenderer}\\shaders\\Cross.frag");
+        private Shader shaderC = new($"{Main.COREMain.BaseDirectory}\\shaders\\Font.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\Cross.frag");
 
         private bool isSelected = false;
 
@@ -60,7 +60,7 @@ namespace CORERenderer.GUI
             shaderC.SetInt("Texture", 0);
             shaderC.SetBool("isSelected", isSelected);
 
-            cross = Texture.ReadFromFile($"{Main.COREMain.pathRenderer}\\GUI\\exitCross.png");
+            cross = Texture.ReadFromFile($"{Main.COREMain.BaseDirectory}\\GUI\\exitCross.png");
             cross.Use(ActiveTexture.Texture0);
 
             glBindBuffer(BufferTarget.ArrayBuffer, 0);

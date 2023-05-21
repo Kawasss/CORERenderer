@@ -66,9 +66,9 @@ namespace CORERenderer.GUI
 
             shaderQ.ActivateAttributes();
 
-            objIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\objIcon.png");
-            imageIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\imageIcon.png");
-            hdrIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.pathRenderer}\\GUI\\hdrIcon.png");
+            objIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.BaseDirectory}\\GUI\\objIcon.png");
+            imageIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.BaseDirectory}\\GUI\\imageIcon.png");
+            hdrIcon ??= Texture.ReadFromFile(false, $"{Main.COREMain.BaseDirectory}\\GUI\\hdrIcon.png");
 
             if (iconVBO == 0)
             {

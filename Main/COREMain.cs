@@ -28,7 +28,9 @@ namespace CORERenderer.Main
 
         public static int drawCallsPerSecond = 0, drawCallsPerFrame = 0;
         public static int fps = 0, frameCount = 0, totalFrameCount = 0;
-        public static int selectedScene = 0;
+
+        private static int selectedScene = 0;
+        public static int SelectedScene { get => selectedScene; set { if (value != selectedScene) Rendering.Camera = scenes[value].camera; selectedID = value; } }
 
         public static int selectedID = 0x00FFFF, nextAvaibleID = 9; //white (background) //first 9 IDs are used by Arrows
         public static int NewAvaibleID { get { nextAvaibleID++; return nextAvaibleID - 1; } } //automatically generates a new ID whenever its asked for one
@@ -59,7 +61,8 @@ namespace CORERenderer.Main
         public static string LoadFilePath = null;
         public static string GPU = "Not Recognized";
         public const string VERSION = "v0.6";
-        public static string pathRenderer;
+        public static string BaseDirectory { get => pathRenderer; }
+        private static string pathRenderer;
 
         //bools
         public static bool renderGrid = true, renderBackground = true, renderGUI = true, renderIDFramebuffer = false, renderToIDFramebuffer = true; //rendering related options
@@ -93,13 +96,13 @@ namespace CORERenderer.Main
 
         public static SplashScreen splashScreen;
         public static Font debugText;
-        public static GUI.Console console = null;
+        public static Console console = null;
         public static Arrows arrows;
         public static Div modelList;
         public static Submenu menu;
 
-        public static Model CurrentModel { get => scenes[selectedScene].models[GetCurrentObjFromScene]; }
-        public static Scene CurrentScene { get => scenes[selectedScene]; }
+        public static Model CurrentModel { get => scenes[SelectedScene].models[GetCurrentObjFromScene]; }
+        public static Scene CurrentScene { get => scenes[SelectedScene]; }
 
         private static Thread mainThread;
         public static Thread MainThread { get { return mainThread; } }
@@ -117,7 +120,7 @@ namespace CORERenderer.Main
         {
             #if OS_WINDOWS
                 isCompiledForWindows = true;
-            #endif
+#endif
             try //primitive error handling, could be better
             {
                 mainThread = Thread.CurrentThread;
@@ -126,7 +129,7 @@ namespace CORERenderer.Main
                 string root = AppDomain.CurrentDomain.BaseDirectory;
                 string directory = Path.GetDirectoryName(root);
                 int MathCIndex = directory.IndexOf("CORERenderer");
-                
+
                 pathRenderer = directory.Substring(0, MathCIndex) + "CORERenderer";
                 //-------------------------------------------------------------------------------------------
                 Glfw.Init();
@@ -167,7 +170,7 @@ namespace CORERenderer.Main
                     GPU = "Not Recognized";
                 #endregion
 
-                debugText = new((uint)(monitorHeight * 0.01333), $"{pathRenderer}\\Fonts\\baseFont.ttf");
+                debugText = new((uint)(monitorHeight * 0.01333), $"{BaseDirectory}\\Fonts\\baseFont.ttf");
 
                 #region Initializing the GUI, and setting the appriopriate values
                 TitleBar tb = new();
@@ -184,7 +187,7 @@ namespace CORERenderer.Main
                 renderingTicks.showValues = false;
 
                 console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
-                Console.GenerateConsoleErrorLog(pathRenderer);
+                Console.GenerateConsoleErrorLog(BaseDirectory);
 
                 TabManager tab = new(new string[] { "Models", "Submodels" });
                 TabManager sceneManager = new("Scene");
@@ -202,7 +205,7 @@ namespace CORERenderer.Main
                 menu.SetBool("Render GUI", renderGUI);
                 menu.SetBool("Render IDFramebuffer", renderIDFramebuffer);
                 menu.SetBool("Render to ID framebuffer", renderToIDFramebuffer);
-                menu.SetBool("Render orthographic", Rendering.renderOrthographic);
+                menu.SetBool("Render orthographic", renderOrthographic);
                 menu.SetBool("Cull Faces", cullFaces);
                 menu.SetBool("  Cube", addCube);
                 menu.SetBool("  Cylinder", addCylinder);
@@ -231,7 +234,7 @@ namespace CORERenderer.Main
                 #endregion
 
                 #region Setting up the compute shader for ray-tracing
-                comp = new($"{pathRenderer}\\shaders\\test.comp");
+                comp = new($"{BaseDirectory}\\shaders\\test.comp");
                 Texture texture = Texture.GenerateEmptyTexture(Width, Height);
 
                 comp.Use();
@@ -255,7 +258,7 @@ namespace CORERenderer.Main
 
                 //sets the default scene
                 scenes.Add(new());
-                selectedScene = 0;
+                SelectedScene = 0;
 
                 previousTime = Glfw.Time;
                 Process CPUProcess = Process.GetCurrentProcess();
@@ -280,7 +283,7 @@ namespace CORERenderer.Main
                     Readers.LoadCRS(args[0], ref local, out string _);
                 }
 
-                Rendering.SetCamera(CurrentScene.camera);
+                //Rendering.Camera = CurrentScene.camera;
                 Rendering.SetUniformBuffers();
 
                 glViewport(0, 0, monitorWidth, monitorHeight);
@@ -366,7 +369,7 @@ namespace CORERenderer.Main
                                 console.Render();
                                 
                                 if (saveAsImage.isPressed)
-                                    Texture.WriteAsPNG($"{pathRenderer}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
+                                    Texture.WriteAsPNG($"{BaseDirectory}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
 
                             debugHolder.Render();
@@ -429,7 +432,7 @@ namespace CORERenderer.Main
                                 }
                                 #endregion
 
-                                scenes[selectedScene].RenderEveryFrame(currentFrameTime);
+                                scenes[SelectedScene].RenderEveryFrame(currentFrameTime);
 
                                 if (renderGrid)
                                     RenderGrid();
@@ -456,16 +459,6 @@ namespace CORERenderer.Main
                                 renderEntireDir = false;
                                 menu.SetBool("Load entire directory", false);
                             }
-                            /*if (dirLoadedModels != null) //dirLoadedModels isnt null when all models from a directory are done loading (this needs to be checked because theyre imported via a seperate thread)
-                            {
-                                foreach (ModelInfo model in dirLoadedModels)
-                                {
-                                    Readers.LoadMTL(model.mtllib, model.mtlNames, out List<Material> materials); //has to load the .mtl's here, otherwise it results in black textures, since in the Task.Run from LoadDir() takes in another context, could be fixed by rerouting the opengl calls in LoadMTL to this context instead of doing the calls inisde LoadMTL
-                                    CurrentScene.models.Add(new(model.path, model.vertices, model.indices, materials, model.offsets, model.center, model.extents));
-                                }
-                                dirLoadedModels = null;
-                                timeSinceLastFrame2 = Glfw.Time;
-                            }*/
                             #endregion
                         }
                         catch (System.Exception ex)
@@ -529,12 +522,6 @@ namespace CORERenderer.Main
                         glViewport(0, 0, monitorWidth, monitorHeight);
                         #endregion
 
-                        int error = GL_NO_ERROR;// GetError();
-                        if (error != GL_NO_ERROR)
-                        {
-                            Console.WriteError($"OpenGL error: ({error})");
-                        }
-
                         scrollWheelMoved = false;
                         scrollWheelMovedAmount = 0;
                         totalFrameCount++;
@@ -546,7 +533,6 @@ namespace CORERenderer.Main
                         Console.WriteError(err);
                         errorsCaught++;
                         appIsHealthy = false;
-                        //Console.WriteLine(err);
                     }
                     Glfw.SwapBuffers(window);
                     Glfw.PollEvents();
@@ -583,9 +569,9 @@ namespace CORERenderer.Main
                 string result = results[i];
                 debugHolder.Write(result, 0, debugHolder.Height - debugText.characterHeight * (i + 1), 0.7f, new(1, 1, 1));
             }
-            debugHolder.Write($"Camera position: {MathC.Round(CurrentScene.camera.position, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 5), 0.7f, new(1, 1, 1));
-            debugHolder.Write($"Camera front: {MathC.Round(CurrentScene.camera.front, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 1, 1));
-            debugHolder.Write($"Selected scene: {selectedScene}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 1, 1));
+            debugHolder.Write($"Camera position: {MathC.Round(Rendering.Camera.position, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 5), 0.7f, new(1, 1, 1));
+            debugHolder.Write($"Camera front: {MathC.Round(Rendering.Camera.front, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 1, 1));
+            debugHolder.Write($"Selected scene: {SelectedScene}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 1, 1));
 
             string msg = $"Threads reserved: {Job.ReservedThreads + 1}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight, 0.7f, new(1, 1, 1));
@@ -636,14 +622,14 @@ namespace CORERenderer.Main
 
         private static void LoadConfig()
         {
-            if (!File.Exists($"{pathRenderer}\\config"))
+            if (!File.Exists($"{BaseDirectory}\\config"))
             {
                 Console.WriteError($"Couldn't locate config, generating new config");
                 GenerateConfig();
                 return;
             }
 
-            using (FileStream fs = File.Open($"{pathRenderer}\\config", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (FileStream fs = File.Open($"{BaseDirectory}\\config", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new(fs))
             using (StreamReader sr = new(bs))
             {
@@ -678,7 +664,7 @@ namespace CORERenderer.Main
 
         public static void GenerateConfig()
         {
-            using (StreamWriter sw = File.CreateText($"{pathRenderer}\\config"))
+            using (StreamWriter sw = File.CreateText($"{BaseDirectory}\\config"))
             {
                 sw.WriteLine($"version={VERSION}");
                 sw.WriteLine($"shaders={shaderConfig}");
@@ -692,30 +678,6 @@ namespace CORERenderer.Main
 
         public static void LoadDir(string dir)
         {
-            /*bool loaded = false;
-            string[] allFiles = Directory.GetFiles(dir);
-            List<ModelInfo> localVersion = new();
-            new Job(() =>
-            {
-                Job.ParallelForEach(allFiles, file =>
-                {
-                    if (file[^4..].ToLower() == ".obj" && file != LoadFilePath) //loads every obj in given directory except for the one already read// && !readFiles.Contains(file)
-                    {
-                        //readFiles.Add(file);
-
-                        Error error = Readers.LoadOBJ(file, out List<string> mtlNames, out List<List<Vertex>> vertices, out List<List<uint>> indices, out List<Vector3> offsets, out Vector3 center, out Vector3 extents, out string mtllib);
-                        if (error != Error.None)
-                            Console.WriteError($"Couldn't read {Path.GetFileName(file)}: {error}");
-                        else
-                        {
-                            localVersion.Add(new(file, dir + '\\' + mtllib, mtlNames, vertices, indices, offsets, extents, center));
-                        }
-                    }
-                });
-                loaded = true;
-                if (loaded)
-                    dirLoadedModels = localVersion;
-            }).Start();*/
             string[] allFiles = Directory.GetFiles(dir);
             foreach (string file in allFiles)
                 if (file != LoadFilePath && Path.GetExtension(file) == ".obj")
@@ -822,7 +784,7 @@ namespace CORERenderer.Main
             if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
                 return;
 
-            scenes[selectedScene].camera.UpdatePosition(mousePosX, mousePosY, delta);
+            Rendering.Camera.UpdatePosition(mousePosX, mousePosY, delta);
         }
 
         private static void UpdateCursorLocation()
@@ -853,7 +815,7 @@ namespace CORERenderer.Main
             renderWidth = (int)(width * 0.75f);
             renderHeight = (int)(height * 0.727f);
 
-            scenes[selectedScene].camera.AspectRatio = (float)renderWidth / (float)renderHeight;
+            scenes[SelectedScene].camera.AspectRatio = (float)renderWidth / (float)renderHeight;
         }
 
         private static void DeleteAllBuffers()
@@ -881,13 +843,13 @@ namespace CORERenderer.Main
 
         public static void LogError(string msg)
         {
-            if (!File.Exists($"{pathRenderer}\\ErrorLog.txt"))
+            if (!File.Exists($"{BaseDirectory}\\ErrorLog.txt"))
             {
-                FileStream fs =  File.Create($"{pathRenderer}\\ErrorLog.txt");
+                FileStream fs =  File.Create($"{BaseDirectory}\\ErrorLog.txt");
                 fs.Close();
             }
 
-            using StreamWriter sw = File.AppendText($"{pathRenderer}\\ErrorLog.txt");
+            using StreamWriter sw = File.AppendText($"{BaseDirectory}\\ErrorLog.txt");
             sw.WriteLine($"Error occured at {DateTime.Now:h:mm:ss tt}: \n    {msg}");
         }
 

@@ -15,7 +15,7 @@ namespace CORERenderer.Loaders
             using (BufferedStream bs = new(fs))
             using (StreamWriter sw = new(bs))
             {
-                WriteGeneralInfo(sw, header, scene.camera, scene.lights[0], models.Length);
+                WriteGeneralInfo(sw, header, Rendering.Camera, scene.lights[0], models.Length);
 
                 foreach (Model model in models)
                 {

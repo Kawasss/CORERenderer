@@ -194,7 +194,7 @@ namespace CORERenderer.GUI
             string end = value.ToString();
             string[] allResults = new string[] { end };
 
-            if (end.Contains('\n'))
+            if (end.Contains(Environment.NewLine))
                 allResults = SeperateByNewLines(end);
 
             foreach (string s in allResults)
@@ -307,44 +307,28 @@ namespace CORERenderer.GUI
         /// </summary>
         public void ShowInfo()
         {
-            int i = 0;
-            using (FileStream fs = File.Open($"{Main.COREMain.pathRenderer}\\logos\\logo.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (BufferedStream bs = new(fs))
-            using (StreamReader sr = new(bs))
-                for (string n = sr.ReadLine(); n != null; n = sr.ReadLine(), i++) //terribly written
-                {
-                    if (i == 2)
-                        WriteLine($"{n}         CORE Renderer {Main.COREMain.VERSION}");
-                    else if (i == 3)
-                        WriteLine($"{n}         CORE Math {MathC.VERSION}");
-                    else if (i == 5)
-                        WriteLine($"{n}         GPU: {Main.COREMain.GPU}");
-                    else if (i == 6)
-                        WriteLine($"{n}         OpenGL {OpenGL.GL.glGetString(OpenGL.GL.GL_VERSION)}");
-                    else if (i == 7)
-                        WriteLine($"{n}         GLSL {OpenGL.GL.glGetString(OpenGL.GL.GL_SHADING_LANGUAGE_VERSION)}");
-                    else if (i == 9)
-                        WriteLine($"{n}         {lines.Count - 9} messages were logged before this menu");
-                    else if (i == 10)
-                        WriteLine($"{n}         Initialized with {Main.COREMain.LoadFile}");
-                    else if (i == 11 && Main.COREMain.LoadFilePath != null)
-                        WriteLine($"{n}         Initialized from {Path.GetFileName(Main.COREMain.LoadFilePath)}");
-                    else if (i == 11 && Main.COREMain.LoadFilePath == null)
-                        WriteLine($"{n}         Initialized independently");
-                    else if (i == 13)
-                        WriteLine($"{n}         Rendering with {Rendering.shaderConfig} shaders");
-                    else if (i == 14)
-                        WriteLine($"{n}         Rendering with {Main.COREMain.splashScreen.refreshRate} Hz");
-                    else if (i == 15)
-                        WriteLine($"{n}         Rendering with {1 / Rendering.TextureQuality}x screen resolution");
-                    else if (i == 16)
-                        WriteLine($"{n}         Rendering resolution of {Main.COREMain.monitorWidth}x{Main.COREMain.monitorHeight}");
-                    else
-                        WriteLine(n);
-                }
+            string initialized = COREMain.LoadFilePath != null ? $"from {Path.GetFileName(Main.COREMain.LoadFilePath)}" : "independently";
+            WriteLine( "                   =                  ");
+            WriteLine( "                 :*%@*.               ");
+            WriteLine($"               :%%%%@@@=                       CORE Renderer {COREMain.VERSION}");
+            WriteLine($"             :+%%%%%@@@@@*.                    CORE Math {MathC.VERSION}");
+            WriteLine( "           :%%%%%%%#@@@@@@@=          ");
+            WriteLine($"         :+%%%%%%%%#=*%@@@@@@*.                GPU: {COREMain.GPU}");
+            WriteLine($"       :%%%%%%%%%%%#===*@@@@@@@=               OpenGL {GL.glGetString(GL.GL_VERSION)}");
+            WriteLine($"     :+%%%%%%%%%%%%#=====*%@@@@@@*.            GLSL {GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION)}");
+            WriteLine( "   :%%%%%%%%%%%%%%%#=======*@@@@@@@=  ");
+            WriteLine($"  +%%%%%%%%%%%%%%%%#=========*@@@@@@@-         {lines.Count - 9} messages were logged before this menu");
+            WriteLine($"   +###############%========*@@@@@@@=          Initialized with {COREMain.LoadFile}");
+            WriteLine($"    :+#############%======*@@@@@@@=            Initialized from {initialized}");
+            WriteLine( "       +###########%====*@@@@@@@=     ");
+            WriteLine($"        :+#########%==*@@@@@@@=                Rendering with {Rendering.shaderConfig} shaders");
+            WriteLine($"           +#######%*@@@@@@@=                  Rendering with {COREMain.splashScreen.refreshRate} Hz");
+            WriteLine($"            :+#####%@@@@@@=                    Rendering with {1 / Rendering.TextureQuality}x screen resolution");
+            WriteLine($"               +###%@@@@=                      Rendering resolution of {COREMain.monitorWidth}x{COREMain.monitorHeight}");
+            WriteLine( "                :+#%@@=               ");
+            WriteLine( "                  .+-                 ");
             WriteLine();
             WriteLine($"COREConsole/{currentContext} > ");
-            //indexOfFirstLineToRender += 2;
         }
 
         private enum Context
@@ -364,7 +348,7 @@ namespace CORERenderer.GUI
             else if (input.Contains("save scene as"))
             {
                 string filename = input[14..^4];
-                new Job(() => Writers.GenerateCRS(Main.COREMain.pathRenderer, filename, $"Generated by CORE-Renderer {Main.COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", COREMain.CurrentScene)).Start();
+                new Job(() => Writers.GenerateCRS(Main.COREMain.BaseDirectory, filename, $"Generated by CORE-Renderer {Main.COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", COREMain.CurrentScene)).Start();
             }
 
             else if (input == "save as stl") //debug
@@ -372,7 +356,7 @@ namespace CORERenderer.GUI
                 Main.COREMain.CurrentScene.currentObj = 0;
                 if (Main.COREMain.CurrentScene.models.Count > 0 && Main.COREMain.GetCurrentObjFromScene != -1)
                 {
-                    Writers.GenerateSTL(Main.COREMain.pathRenderer, $"Written by CORE-Renderer {Main.COREMain.VERSION}", Main.COREMain.CurrentModel);
+                    Writers.GenerateSTL(Main.COREMain.BaseDirectory, $"Written by CORE-Renderer {Main.COREMain.VERSION}", Main.COREMain.CurrentModel);
                     WriteDebug($"Generated {Main.COREMain.CurrentModel.Name}.stl");
                 }
                 else
@@ -381,7 +365,7 @@ namespace CORERenderer.GUI
             else if (input == "save all as stl")
             {
                 Main.COREMain.MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets);
-                Writers.GenerateSTL(Main.COREMain.pathRenderer, "test", $"test.stl written by CORE-Renderer {Main.COREMain.VERSION}", vertices, offsets);
+                Writers.GenerateSTL(Main.COREMain.BaseDirectory, "test", $"test.stl written by CORE-Renderer {Main.COREMain.VERSION}", vertices, offsets);
             }
 
             else if (input == "goto console") //introducing contexts allows for better grouping of commands and better readability / makes it more expandable
@@ -474,27 +458,27 @@ namespace CORERenderer.GUI
                     case "fov":
                         float result = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result, input[7..]);
-                        COREMain.CurrentScene.camera.Fov = result;
+                        Rendering.Camera.Fov = result;
                         break;
                     case "yaw":
                         float result2 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result2, input[7..]);
-                        COREMain.CurrentScene.camera.Yaw = result2;
+                        Rendering.Camera.Yaw = result2;
                         break;
                     case "pitch":
                         float result3 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result3, input[9..]);
-                        COREMain.CurrentScene.camera.Pitch = result3;
+                        Rendering.Camera.Pitch = result3;
                         break;
                     case "farplane":
                         float result4 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result4, input[12..]);
-                        COREMain.CurrentScene.camera.FarPlane = result4;
+                        Rendering.Camera.FarPlane = result4;
                         break;
                     case "nearplane":
                         float result5 = 0; //hold value here because property cant be used as ref
                         ChangeValue(ref result5, input[13..]);
-                        COREMain.CurrentScene.camera.NearPlane = result5;
+                        Rendering.Camera.NearPlane = result5;
                         break;
                     default:
                         WriteError($"Unknown variable: \"{input[4..input.IndexOf(' ', input.IndexOf(' ') + 1)]}\"");
@@ -514,9 +498,9 @@ namespace CORERenderer.GUI
                     try
                     {
                         int index = Readers.GetOneIntWithRegEx(input);
-                        Main.COREMain.scenes[Main.COREMain.selectedScene].models[index].Dispose();
+                        Main.COREMain.scenes[Main.COREMain.SelectedScene].models[index].Dispose();
                         WriteLine($"Deleted model {index}");
-                        Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                        Main.COREMain.scenes[Main.COREMain.SelectedScene].currentObj = -1; //making no models highlighted to prevent crashes
                     }
                     catch (IndexOutOfRangeException)
                     {
@@ -530,14 +514,9 @@ namespace CORERenderer.GUI
                         int index1 = Readers.GetOneIntWithRegEx(input[..(input.IndexOf("..") + 1)]);
                         int index2 = Readers.GetOneIntWithRegEx(input[input.IndexOf("..")..]);
                         for (int i = index1; i <= index2; i++) //iterate through every index between the found indexes
-                        {
-                            if (i == index1)
-                                WriteLine($"Deleted model {i}"); //simple way of showing which models are deleted
-                            else
-                                Write($"..{i}");
-                            Main.COREMain.scenes[Main.COREMain.selectedScene].models[i].Dispose();
-                        }
-                        Main.COREMain.scenes[Main.COREMain.selectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                            COREMain.scenes[COREMain.SelectedScene].models[i].Dispose();
+                        COREMain.scenes[COREMain.SelectedScene].currentObj = -1; //making no models highlighted to prevent crashes
+                        WriteLine($"Deleted models {index1} through {index2}");
                     }
                     catch (IndexOutOfRangeException)
                     {
@@ -560,7 +539,7 @@ namespace CORERenderer.GUI
                         return;
                     }
                     else if (dir[..5] == "$PATH") //allows '$PATH' to be used as an alias for the base of the directory that the .exe is located
-                        dir = Main.COREMain.pathRenderer + dir[5..];
+                        dir = Main.COREMain.BaseDirectory + dir[5..];
                     
                     if (Directory.Exists(dir)) //checks if the given directory is valid
                     {
@@ -574,10 +553,10 @@ namespace CORERenderer.GUI
                 {
                     string dir = input[5..];
                     if (dir[..5] == "$PATH")
-                        dir = Main.COREMain.pathRenderer + dir[5..];
+                        dir = Main.COREMain.BaseDirectory + dir[5..];
                     if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg") //only allows certain file types, in this case .obj and .hdr
                     {
-                        Main.COREMain.scenes[Main.COREMain.selectedScene].models.Add(new(dir));
+                        Main.COREMain.scenes[Main.COREMain.SelectedScene].models.Add(new(dir));
                         WriteLine("Loaded file");
                     }
                     else
@@ -597,7 +576,7 @@ namespace CORERenderer.GUI
                         break;
                     case "submodel count":
                         int count = 0;
-                        foreach (Model model in Main.COREMain.CurrentScene.models)
+                        foreach (Model model in COREMain.CurrentScene.models)
                             count += model.submodels.Count;
                         WriteLine($"{count}");
                         break;
@@ -622,6 +601,15 @@ namespace CORERenderer.GUI
                         ChangeValue(ref Submodel.renderDistance, input[18..]);
                         WriteLine($"Set variable to {Submodel.renderDistance}");
                         break;
+                    case "reflectionQuality":
+                        Rendering.ReflectionQuality = Readers.GetOneFloatWithRegEx(input);
+                        WriteLine($"Set reflection quality to {Rendering.ReflectionQuality}");
+                        break;
+                    case "textureQuality":
+                        Rendering.TextureQuality = Readers.GetOneFloatWithRegEx(input);
+                        WriteLine($"Set texture quality to {Rendering.TextureQuality}");
+                        break;
+
                     default:
                         WriteError($"Couldn't parse input {input[4..input[5..].IndexOf(' ')]}");
                         break;
@@ -638,12 +626,12 @@ namespace CORERenderer.GUI
                         int indexOfSymbol = input.IndexOf(']');
                         int modelIndex = Readers.GetOneIntWithRegEx(input[..indexOfSymbol]);
 
-                        Model model = Main.COREMain.CurrentScene.models[modelIndex];
+                        Model model = COREMain.CurrentScene.models[modelIndex];
                         
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[(indexOfSymbol + 1)..]);
                         if (input.StartsWith("moveto")) //sorts for moveto, this value is applied absolutely
                         {
-                            model.Transform.translation  = location;
+                            model.Transform.translation = location;
                             WriteLine($"Moved model to {location}");
                         }
                         else //sorts for move, this value is applied relatively
@@ -728,7 +716,7 @@ namespace CORERenderer.GUI
                 Process.Start("CORERenderer.exe");
             else
                 Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-            GenerateCacheFile(Main.COREMain.pathRenderer);
+            GenerateCacheFile(Main.COREMain.BaseDirectory);
             Environment.Exit(1);
         }
 
@@ -742,7 +730,7 @@ namespace CORERenderer.GUI
                     Process.Start("CORERenderer.exe");
                 else
                     Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.pathRenderer);
+                GenerateCacheFile(Main.COREMain.BaseDirectory);
                 Environment.Exit(1);
             }
             else if (input.ToLower().Contains("lighting"))
@@ -753,7 +741,7 @@ namespace CORERenderer.GUI
                     Process.Start("CORERenderer.exe");
                 else
                     Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.pathRenderer);
+                GenerateCacheFile(Main.COREMain.BaseDirectory);
                 Environment.Exit(1);
             }
             else if (input.ToLower().Contains("fullbright"))
@@ -764,7 +752,7 @@ namespace CORERenderer.GUI
                     Process.Start("CORERenderer.exe");
                 else
                     Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.pathRenderer);
+                GenerateCacheFile(Main.COREMain.BaseDirectory);
                 Environment.Exit(1);
             }
             else

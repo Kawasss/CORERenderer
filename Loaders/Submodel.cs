@@ -33,7 +33,7 @@ namespace CORERenderer.Loaders
         private Shader shader = GenericShaders.GenericLighting;
         private Shader IDShader = GenericShaders.IDPicking;
 
-        public uint VBO, VAO;
+        public VertexBuffer vbo;
 
         public int ID;
         private Vector3 IDColor;
@@ -182,7 +182,7 @@ namespace CORERenderer.Loaders
 
                 SetShaderValues();
 
-                glBindVertexArray(VAO);
+                //glBindVertexArray(VAO);
                     
                 if (!cullFaces)
                     glDisable(GL_CULL_FACE);
@@ -200,9 +200,9 @@ namespace CORERenderer.Loaders
         private void RenderColorVersion()
         {
             if (renderLines)
-                glDrawArrays(PrimitiveType.Lines, 0, vertices.Count);
+                vbo.Draw(PrimitiveType.Lines, 0, vertices.Count);
             else
-                glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
+                vbo.Draw(PrimitiveType.Triangles, 0, vertices.Count);
         }
 
         private void RenderIDVersion()
@@ -214,7 +214,7 @@ namespace CORERenderer.Loaders
             IDShader.SetVector3("color", IDColor);
             IDShader.SetMatrix("model", parent.Transform.ModelMatrix);
 
-            glDrawArrays(PrimitiveType.Triangles, 0, vertices.Count);
+            vbo.Draw(PrimitiveType.Triangles, 0, vertices.Count);
 
             COREMain.renderFramebuffer.Bind();
         }
@@ -233,7 +233,7 @@ namespace CORERenderer.Loaders
         private void UseTextures()
         {
             shader.Use();
-            //usedTextures[material.Texture].Use(GL_TEXTURE0);
+            
             material.Texture.Use(ActiveTexture.Texture0);
             material.SpecularMap.Use(ActiveTexture.Texture1);
             material.NormalMap.Use(ActiveTexture.Texture2);
@@ -263,8 +263,7 @@ namespace CORERenderer.Loaders
 
         private void GenerateBuffers()
         {
-            GenerateFilledBuffer(out VBO, out VAO, Vertices.ToArray());
-
+            vbo = new(vertices);
             shader.Use();
 
             shader.ActivateAttributes();
