@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <Folder Include="COREMath\" />
+    <Folder Include="TextureCache\" />
     <Folder Include="Renders\" />
   </ItemGroup>
 

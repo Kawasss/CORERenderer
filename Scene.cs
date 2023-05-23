@@ -60,8 +60,6 @@ namespace CORERenderer
                 }
             lights.Add(new() { position = new(1, 2, 1) });
             lights.Add(new() { position = new(0, 1, 2) });
-            if (models.Count > 0)
-                models[0].Transform.scale = new(.01f, .01f, .01f);
             /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));

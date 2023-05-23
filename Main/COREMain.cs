@@ -155,7 +155,7 @@ namespace CORERenderer.Main
                 Rendering.Init(monitorWidth, monitorHeight);
                 LoadConfig();
                 #endregion
-
+                System.Console.WriteLine(GenericShaders.Log);
                 vertexArrayObjectLightSource = GenerateBufferlessVAO();
 
                 #region Identifying GPU and their associated shortcomings
@@ -368,7 +368,7 @@ namespace CORERenderer.Main
                                 console.Render();
                                 
                                 if (saveAsImage.isPressed)
-                                    Texture.WriteAsPNG($"{BaseDirectory}\\Renders\\test.png", computeShader.Texture, renderFramebuffer.width, renderFramebuffer.height);
+                                    Texture.WriteAsPNG($"{BaseDirectory}\\Renders\\test.png", renderFramebuffer.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
 
                             debugHolder.Render();

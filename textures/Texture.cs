@@ -7,6 +7,9 @@ using StbiSharp;
 using CORERenderer.OpenGL;
 using Console = CORERenderer.GUI.Console;
 using System.Reflection.Metadata;
+using System.Diagnostics;
+using SharpFont;
+using System.Text.Unicode;
 
 namespace CORERenderer.textures
 {
@@ -20,7 +23,25 @@ namespace CORERenderer.textures
         private int mode;
 
         public byte[] FileContent;
-        public byte[] Data;// { get { return GetData(); } }
+        public byte[] Data = Array.Empty<byte>();// { get { return GetData(); } }
+        private int dataSize = 0;
+
+        private long timeToRead = 0;
+        private bool flipped = true;
+
+        public string Log
+        {
+            get =>
+                $"""
+                Read 2D texture {name}:
+                    Path: {path}
+                    Mode: 0x{string.Concat(BitConverter.ToString(BitConverter.GetBytes(mode)).Where(c => c != '-'))}
+                    Read in: {timeToRead} ms
+                    Flipped: {flipped}
+                    Dimensions: {width}x{height}
+                    Data size: {dataSize}
+                """;
+        }
 
         public Texture(string name, int width, int height, byte[] data)
         {
@@ -45,6 +66,9 @@ namespace CORERenderer.textures
 
         private static Texture ReadFromColorFile(bool flip, int mode, string imagePath)
         {
+            Stopwatch timer = new();
+            timer.Start();
+
             Stbi.SetFlipVerticallyOnLoad(flip);
 
             uint handle = glGenTexture();
@@ -64,7 +88,6 @@ namespace CORERenderer.textures
             using (MemoryStream memoryStream = new())
             {
                 stream.CopyTo(memoryStream);
-                System.Console.WriteLine(imagePath);
                 Job task = new(() => { image = Stbi.LoadFromMemory(memoryStream, 4); imageWidth = image.Width; imageHeight = image.Height; imageData = image.Data.ToArray(); } );
                 task.Start();
                 task.Wait();
@@ -79,8 +102,10 @@ namespace CORERenderer.textures
 
                 glGenerateMipmap(GL_TEXTURE_2D);
             }
+            timer.Stop();
+            System.Console.WriteLine($"Read 2D texture {Path.GetFileNameWithoutExtension(imagePath)}:\n    Path: {imagePath}\n    Mode: 0x{string.Concat(BitConverter.ToString(BitConverter.GetBytes(mode)).Where(c => c != '-'))}\n    Read in: {timer.ElapsedMilliseconds} ms\n    Flipped: {flip}\n    Dimensions: {imageWidth}x{imageHeight}\n    Data size: {imageData.Length} bytes\n");
 
-            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath), mode = mode };//, Data = image.Data.ToArray() };
+            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath), mode = mode, flipped = flip, timeToRead = timer.ElapsedMilliseconds, dataSize = imageData.Length };//, Data = image.Data.ToArray() };
         }
 
         public void Downscale(float quality)

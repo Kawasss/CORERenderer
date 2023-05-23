@@ -19,6 +19,8 @@ namespace CORERenderer.OpenGL
 
         public static int drawCalls = 0;
 
+        public static readonly Dictionary<int, string> GLTypeToString = new() { { GL_BOOL, "bool" }, { GL_INT, "int" }, { GL_UNSIGNED_INT, "uint" }, { GL_FLOAT, "float" }, { GL_DOUBLE, "double" } };
+
         public static void SetClearColor(Vector4 color) => glClearColor(color.x, color.y, color.z, color.w);
 
         public static void glBindBuffer(BufferTarget target, uint buffer) => GlBindBuffer((int)target, buffer);

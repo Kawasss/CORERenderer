@@ -184,5 +184,16 @@ namespace CORERenderer.Loaders
                 returnValue = int.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
             return returnValue;
         }
+        public static int[] GetTwoIntsWithRegEx(string line)
+        {
+            int[] returnValue = new int[] {0, 0};
+            MatchCollection matches = Regex.Matches(line, @"([-+]?[0-9]*\.?[0-9]+)");
+            if (matches.Count == 2)
+            {
+                returnValue[0] = int.Parse(matches[0].Groups[1].Value, CultureInfo.InvariantCulture);
+                returnValue[1] = int.Parse(matches[1].Groups[1].Value, CultureInfo.InvariantCulture);
+            }
+            return returnValue;
+        }
     }
 }

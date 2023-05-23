@@ -3,21 +3,59 @@ using COREMath;
 using CORERenderer.OpenGL;
 using System.Text.RegularExpressions;
 using Console = CORERenderer.GUI.Console;
+using System.Diagnostics;
 
 namespace CORERenderer.shaders
 {
     public class Shader
     {
+        public static Dictionary<uint, Shader> HandleShaderPair = new();
+
         public readonly uint Handle;
         public string vertexShaderSource;
         public string fragmentShaderSource;
         public string gridShaderSource;
         public string geometryShaderSource = null;
 
-        public int byteSize = 0;
+        public int SizeInVRAM { get { int[] pname = new int[] { 0 }; glGetProgramiv(Handle, GL_PROGRAM_BINARY_LENGTH, pname); return pname[0]; } }
 
         private Dictionary<string, int> uniformLocations = new();
         private List<Attribute> attributes = new();
+
+        private long vertexCompilationTime = 0;
+        private long fragCompilationTime = 0;
+        private long geomCompilationTime = 0;
+        private bool compiledSuccessfully = false;
+        public bool IsCompiled { get => compiledSuccessfully; }
+
+        private long linkingTime = 0;
+        private bool linkedSuccessfully = false;
+        public long LinkingTime { get => linkingTime; }
+        public bool IsLinked { get => linkedSuccessfully; }
+
+        public string StartLog
+        {
+            get
+            {
+                string geomText = geometryShaderSource != null ? $"{geomCompilationTime} ms" : "N.A.";
+                string attributesS = "";
+                foreach (Attribute a in attributes)
+                    attributesS += $"       {Rendering.GLTypeToString[a.type.type]} {a.name}\n";
+                return $""""
+                Shader {Handle}:
+                    Compiled: {compiledSuccessfully}
+                        vertex compilation: {vertexCompilationTime} ms
+                        fragment compilation: {fragCompilationTime} ms
+                        geometry compilation: {geomText}
+                    Linked: {linkedSuccessfully}
+                        linking: {linkingTime} ms
+                    Size: {SizeInVRAM} bytes
+                    Attributes found: {attributes.Count}
+                {attributesS}
+                """";
+            }
+                
+        }
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -32,15 +70,17 @@ namespace CORERenderer.shaders
             uint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
             glShaderSource(fragmentShader, fragmentShaderSource);
 
-            compileShader(vertexShader);
-            compileShader(fragmentShader);
+            bool vertexCompiled = compileShader(vertexShader, out vertexCompilationTime);
+            bool FragCompiled = compileShader(fragmentShader, out fragCompilationTime);
+
+            compiledSuccessfully = vertexCompiled && FragCompiled;
 
             Handle = glCreateProgram();
 
             glAttachShader(Handle, vertexShader);
             glAttachShader(Handle, fragmentShader);
 
-            linkProgram(Handle);
+            linkedSuccessfully = linkProgram(Handle, out linkingTime);
 
             //removes the shaders
             glDetachShader(Handle, vertexShader);
@@ -49,6 +89,9 @@ namespace CORERenderer.shaders
             glDeleteShader(fragmentShader);
 
             SetAttributes(vertexShaderSource);
+
+            if (!HandleShaderPair.ContainsKey(Handle))
+                HandleShaderPair.Add(Handle, this);
         }
 
         public Shader(string vertexPath, string fragmentPath, string geometryPath)
@@ -68,9 +111,11 @@ namespace CORERenderer.shaders
             uint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
             glShaderSource(geometryShader, geometryShaderSource);
 
-            compileShader(vertexShader);
-            compileShader(fragmentShader);
-            compileShader(geometryShader);
+            bool vertexCompiled = compileShader(vertexShader, out vertexCompilationTime); //compileShader(vertexShader);
+            bool FragCompiled = compileShader(fragmentShader, out fragCompilationTime); //compileShader(fragmentShader);
+            bool geomCompiled = compileShader(geometryShader, out geomCompilationTime); //compileShader(geometryShader);
+
+            compiledSuccessfully = vertexCompiled && FragCompiled && geomCompiled;
 
             Handle = glCreateProgram();
 
@@ -78,7 +123,7 @@ namespace CORERenderer.shaders
             glAttachShader(Handle, fragmentShader);
             glAttachShader(Handle, geometryShader);
 
-            linkProgram(Handle);
+            linkedSuccessfully = linkProgram(Handle, out linkingTime);
 
             glDetachShader(Handle, vertexShader);
             glDetachShader(Handle, fragmentShader);
@@ -88,10 +133,16 @@ namespace CORERenderer.shaders
             glDeleteShader(geometryShader);
 
             SetAttributes(vertexShaderSource);
+
+            if (!HandleShaderPair.ContainsKey(Handle))
+                HandleShaderPair.Add(Handle, this);
         }
 
-        private static void compileShader(uint shader)
+        private static bool compileShader(uint shader, out long time)
         {
+            Stopwatch timer = new();
+            timer.Start();
+
             glCompileShader(shader);
             int[] pname = new int[] { 0 };
             glGetShaderiv(shader, GL_COMPILE_STATUS, pname);
@@ -101,10 +152,17 @@ namespace CORERenderer.shaders
                 Console.WriteError($"failed to compile shader {shader}, pname[0] != GL_TRUE");
                 Console.WriteError(glGetShaderInfoLog(shader));
             }
+            timer.Stop();
+            time = timer.ElapsedMilliseconds;
+
+            return successful;
         }
 
-        private static void linkProgram(uint program)
+        private static bool linkProgram(uint program, out long time)
         {
+            Stopwatch timer = new();
+            timer.Start();
+
             glLinkProgram(program);
             int[] pname = new int[] { 0 };
             glGetProgramiv(program, GL_LINK_STATUS, pname);
@@ -116,6 +174,11 @@ namespace CORERenderer.shaders
             }
             glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, pname);
             Rendering.shaderByteSize += pname[0];
+
+            timer.Stop();
+            time = timer.ElapsedMilliseconds;
+
+            return successful;
         }
 
         private void SetAttributes(string vertexShaderText)

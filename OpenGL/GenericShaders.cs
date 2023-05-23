@@ -22,6 +22,29 @@ namespace CORERenderer.OpenGL
         public static Shader NormalVisualisation { get => normalVisualisationShader; }
         public static Shader Shadow { get => shadowShader; }
 
+        public static string Log
+        {
+            get
+            {
+                string returnString = image2DShader.StartLog;
+                returnString += $"\n{lightingShader.StartLog}";
+                returnString += $"\n{backgroundShader.StartLog}";
+                returnString += $"\n{gridShader.StartLog}";
+                returnString += $"\n{GenericLightingShader.StartLog}";
+                returnString += $"\n{solidColorQuadShader.StartLog}";
+                returnString += $"\n{arrowShader.StartLog}";
+                returnString += $"\n{pickShader.StartLog}";
+                returnString += $"\n{framebufferShader.StartLog}";
+                returnString += $"\n{bonelessPickShader.StartLog}";
+                returnString += $"\n{cubemapShader.StartLog}";
+                returnString += $"\n{skyboxShader.StartLog}";
+                returnString += $"\n{PBRShader.StartLog}";
+                returnString += $"\n{normalVisualisationShader.StartLog}";
+                returnString += $"\n{shadowShader.StartLog}";
+                return returnString;
+            }
+        }
+
         internal static void SetShaders()
         {
             image2DShader = new(image2DVertText, image2DFragText);
