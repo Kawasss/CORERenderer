@@ -32,23 +32,25 @@ namespace CORERenderer.Loaders
         /// </summary>
         public List<Vector3> Offsets { get { List<Vector3> value = new(); value.Add(transform.translation); foreach (Submodel s in submodels) value.Add(s.translation); return value; } } //adds the materials from the submodels into one list
 
-        public Submodel CurrentSubmodel { get { return submodels[selectedSubmodel]; } }
+        public Submodel CurrentSubmodel { get => submodels[selectedSubmodel]; }
 
-        public string AmountOfVertices { get { string value = totalAmountOfVertices / 1000 >= 1 ? $"{MathF.Round(totalAmountOfVertices / 1000):N0}k" : $"{totalAmountOfVertices}"; return value; } }
+        public string AmountOfVertices { get => totalAmountOfVertices / 1000 >= 1 ? $"{MathF.Round(totalAmountOfVertices / 1000):N0}k" : $"{totalAmountOfVertices}"; }
 
-        public string Name { get { return name; } set { name = value.Length > 10 ? value[..10] : value; } }
+        public string Name { get => name; set => name = value.Length > 10 ? value[..10] : value; }
+        public string FullPath { get => path; }
 
-        public bool CanBeCulled { get {return !transform.BoundingBox.IsInFrustum(Rendering.Camera.Frustum, transform); } }
+        public bool CanBeCulled { get => !transform.BoundingBox.IsInFrustum(Rendering.Camera.Frustum, transform); }
         #endregion
 
         public List<Submodel> submodels = new();
 
         public Shader shader = GenericShaders.GenericLighting;
 
-        public RenderMode type;
+        public ModelType type;
         public Error error = Error.None;
 
         private string name = "PLACEHOLDER";
+        private string path = COREMain.BaseDirectory;
         
         public bool highlighted = false, renderLines = false, renderNormals = false, terminate = false;
 
@@ -66,28 +68,28 @@ namespace CORERenderer.Loaders
         public Model(string path)
         {
             ID = COREMain.NewAvaibleID;
-            type = COREMain.SetRenderMode(path);
+            type = COREMain.GetRenderMode(path);
 
-            if (type == RenderMode.ObjFile)
+            if (type == ModelType.ObjFile)
                 GenerateObj(path);
 
-            else if (type == RenderMode.STLFile)
+            else if (type == ModelType.STLFile)
                 GenerateStl(path);
 
-            else if (type == RenderMode.FBXFile)
+            else if (type == ModelType.FBXFile)
                 GenerateFbx(path);
 
-            else if (type == RenderMode.CPBRFile)
+            else if (type == ModelType.CPBRFile)
                 GeneratePBR(path);
 
-            else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage)
+            else if (type == ModelType.JPGImage || type == ModelType.PNGImage)
                 GenerateImage(path);
         }
         
         public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<PBRMaterial> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
             ID = COREMain.NewAvaibleID;
-            type = COREMain.SetRenderMode(path);
+            type = COREMain.GetRenderMode(path);
 
             Name = Path.GetFileName(path)[..^4];
 
@@ -227,8 +229,8 @@ namespace CORERenderer.Loaders
         {
             Name = Path.GetFileNameWithoutExtension(path);
             PBRMaterial material = new() { albedo = FindTexture(path) };
-            float width = material.albedo.width * 0.01f;
-            float height = material.albedo.height * 0.01f;
+            float width = material.albedo.width * 0.002f;
+            float height = material.albedo.height * 0.002f;
 
             float[] iVertices = new float[48]
             {
@@ -285,10 +287,24 @@ namespace CORERenderer.Loaders
             transform = new();
         }
 
+        /// <summary>
+        /// The loads the file at the path of the model at the place of the model
+        /// </summary>
+        public void Reload() => ReloadModel(path, this);
+
+        private static void ReloadModel(string path, Model model)
+        {
+            model.Dispose();
+            model = new(path);
+            model.Reset();
+        }
+
         public void Dispose()
         {
             if (Main.COREMain.CurrentScene.currentObj == Main.COREMain.CurrentScene.models.IndexOf(this))
                 Main.COREMain.CurrentScene.currentObj = -1;
+            foreach (Submodel submodel in submodels)
+                submodel.Dispose();
             terminate = true;
         }
     }

@@ -26,9 +26,9 @@ namespace CORERenderer.Loaders
                 }
             }
                 
-            if (model.type == Main.RenderMode.ObjFile)
+            if (model.type == Main.ModelType.ObjFile)
                 new Job(() => GenerateSTL(directoryPath, model.Name, header, vertices, model.Offsets)).Start();
-            else if (model.type == Main.RenderMode.STLFile)
+            else if (model.type == Main.ModelType.STLFile)
                 new Job(() => GenerateSTL(directoryPath, model.Name, header, vertices)).Start();
         }
 

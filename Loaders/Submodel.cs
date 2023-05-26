@@ -302,5 +302,11 @@ namespace CORERenderer.Loaders
             rotation.y = Math.Max(0, rotation.y);
             rotation.z = Math.Max(0, rotation.z);
         }
+
+        public void Dispose()
+        {
+            vbo.Dispose();
+            //should also dispose of the materials (if they arent being used by other models) but thats not that important since vram isnt a main concern
+        }
     }
 }

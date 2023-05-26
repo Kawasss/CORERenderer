@@ -15,6 +15,16 @@ namespace CORERenderer.Main
     {
         public Vector3 position;
         public Vector3 color;
+
+        public void SetPosition(Vector3 v)
+        {
+            position = v;
+        }
+
+        public void SetColor(Vector3 v)
+        {
+            color = v;
+        }
     }
 
     public struct PBRMaterial

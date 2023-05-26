@@ -1,4 +1,4 @@
-﻿using CORERenderer.OpenGL;
+﻿using Console = CORERenderer.GUI.Console;
 
 namespace CORERenderer.OpenGL
 {
@@ -80,6 +80,13 @@ namespace CORERenderer.OpenGL
         {
             Bind();
             Rendering.glDrawArrays(type, first, amount);
+        }
+
+        public void Dispose()
+        {
+            GL.glDeleteVertexArray(VAO);
+            GL.glDeleteBuffer(VBO);
+            Console.WriteLine($"Freeing {size} bytes of VRAM");
         }
     }
 }

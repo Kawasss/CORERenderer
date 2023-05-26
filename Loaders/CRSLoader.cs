@@ -54,12 +54,12 @@ namespace CORERenderer.Loaders
                             {
                                 PBRMaterial material = RetrieveMaterialNode(fs);
 
-                                models[^1].type = RenderMode.ObjFile;
+                                models[^1].type = ModelType.ObjFile;
                                 models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
                             }
                             else
                             {
-                                models[^1].type = RenderMode.STLFile;
+                                models[^1].type = ModelType.STLFile;
                                 models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
                             }
                         }

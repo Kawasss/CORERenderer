@@ -36,17 +36,17 @@ namespace CORERenderer
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
             Rendering.Camera = camera;
 
-            if (args.Length != 0 && LoadFile != RenderMode.None && LoadFile != RenderMode.CRSFile)
+            if (args.Length != 0 && LoadFile != ModelType.None && LoadFile != ModelType.CRSFile)
             {
-                if (LoadFile != RenderMode.HDRFile && LoadFile != RenderMode.CPBRFile)
+                if (LoadFile != ModelType.HDRFile && LoadFile != ModelType.CPBRFile)
                 {
                     loaded = true;
                     models.Add(new(args[0]));
                     currentObj = 0;
                 }
-                else if (LoadFile == RenderMode.HDRFile)
+                else if (LoadFile == ModelType.HDRFile)
                     skybox = Skybox.ReadFromFile(args[0], Rendering.TextureQuality);
-                else if (LoadFile == RenderMode.CPBRFile)
+                else if (LoadFile == ModelType.CPBRFile)
                 {
                     models.Add(Model.Sphere);
                     models[^1].submodels[0].material = Readers.LoadCPBR(args[0]);

@@ -427,7 +427,7 @@ namespace CORERenderer.OpenGL
                     vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
                     vec3 numerator    = NDF * G * F; 
-                    float denominator = 3.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+                    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
                     vec3 specular = numerator / denominator;
 
                     vec3 kS = F;
@@ -452,7 +452,7 @@ namespace CORERenderer.OpenGL
                 vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
                 vec3 numerator    = NDF * G * F; 
-                float denominator = 3.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+                float denominator = 2.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
                 vec3 specular = numerator / denominator;
 
                 // kS is equal to Fresnel
@@ -470,13 +470,13 @@ namespace CORERenderer.OpenGL
                 float NdotL = max(dot(N, L), 0.0);        
             
                 // add to outgoing radiance Lo
-                Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+                //Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
 
                 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
                 // ambient lighting (note that the next IBL tutorial will replace 
                 // this ambient lighting with environment lighting).
-                vec3 ambient = (vec3(0.03) * albedo + GetGuassianBlur(roughness, V, N) * vec3(.1) * F) * ao;
+                vec3 ambient = (vec3(0.03) * albedo/* + GetGuassianBlur(roughness, V, N) * vec3(.1) * F*/) * ao;
 
                 vec3 color = ambient + Lo;
                 //color *= GetShadow(FragPos);
@@ -655,20 +655,16 @@ namespace CORERenderer.OpenGL
             #version 430 core
             out vec4 FragColor;
 
-            struct Material
-            {
-                sampler2D diffuse;
-            };
-            uniform Material material;
+            uniform sampler2D albedoMap;
 
             in vec2 TexCoords;
             uniform float transparency;
 
             void main()
             {
-                FragColor = texture(material.diffuse, TexCoords);
+                FragColor = texture(albedoMap, TexCoords);
                 if (transparency != 0)
-                FragColor.a = transparency;
+                    FragColor.a = transparency;
                 if (FragColor.a < 0.1)
                     discard;
             }

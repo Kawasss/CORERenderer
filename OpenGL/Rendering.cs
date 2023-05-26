@@ -213,12 +213,12 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            RenderReflections(scene.models, scene.lights, scene.skybox);
+            //RenderReflections(scene.models, scene.lights, scene.skybox);
             if (renderLights)
                 RenderLights(camera, scene.lights);
             RenderAllModels(scene.models);
             //shadowCubemap.Render();
-            scene.skybox?.Render();
+            //scene.skybox?.Render();
         }
 
         public static void RenderAllModels(List<Model> models)
@@ -504,7 +504,6 @@ namespace CORERenderer.OpenGL
 
                 if (lightTransform.boundingBox.IsInFrustum(camera.Frustum, lightTransform))
                 {
-                    Console.WriteLine(1);
                     GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
                     glDrawArrays(PrimitiveType.Triangles, 0, 36);
                 }

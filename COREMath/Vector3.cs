@@ -6,9 +6,9 @@ namespace COREMath
 {
     public class Vector3
     {
-        public float x;
-        public float y;
-        public float z;
+        public float x = 0;
+        public float y = 0;
+        public float z = 0;
 
         public float[] xyz = new float[3];
 

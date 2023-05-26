@@ -3,6 +3,7 @@ using CORERenderer.Loaders;
 using static CORERenderer.OpenGL.GL;
 using Console = CORERenderer.GUI.Console;
 using CORERenderer.OpenGL;
+using CORERenderer.GLFW.Enums;
 
 namespace CORERenderer.Main
 {
@@ -42,17 +43,19 @@ namespace CORERenderer.Main
         /// <summary>
         /// Look up table for all supported render modes, needs to . at the beginning to work
         /// </summary>
-        public readonly static Dictionary<string, RenderMode> RenderModeLookUpTable = new()
+        public readonly static Dictionary<string, ModelType> RenderModeLookUpTable = new()
         {
-            {".crs", RenderMode.CRSFile },
-            {".png", RenderMode.PNGImage},
-            {".jpg", RenderMode.JPGImage},
-            {".hdr", RenderMode.HDRFile },
-            {".stl", RenderMode.STLFile },
-            {".obj", RenderMode.ObjFile },
-            {".fbx", RenderMode.FBXFile },
-            {".cpbr",RenderMode.CPBRFile}
+            {".crs", ModelType.CRSFile },
+            {".png", ModelType.PNGImage},
+            {".jpg", ModelType.JPGImage},
+            {".hdr", ModelType.HDRFile },
+            {".stl", ModelType.STLFile },
+            {".obj", ModelType.ObjFile },
+            {".fbx", ModelType.FBXFile },
+            {".cpbr",ModelType.CPBRFile}
         };
+
+        public static char PressedLetter {  get => COREMain.KeyIsPressed(Keys.LeftShift) ? keyShiftCharBinding[(int)COREMain.pressedKey] : keyCharBinding[(int)COREMain.pressedKey]; }
 
         /// <summary>
         /// Formats a given amount of bytes in KB, MB or GB

@@ -86,7 +86,7 @@ namespace CORERenderer.Main
         public static bool appIsHealthy = true;
 
         //enums
-        public static RenderMode LoadFile = RenderMode.None;
+        public static ModelType LoadFile = ModelType.None;
         public static Keys pressedKey;
         public static MouseButton pressedButton;
 
@@ -100,7 +100,7 @@ namespace CORERenderer.Main
         public static Div modelList;
         public static Submenu menu;
 
-        public static Model CurrentModel { get => scenes[SelectedScene].models[GetCurrentObjFromScene]; }
+        public static Model CurrentModel { get { if (CurrentScene.currentObj == -1 && CurrentScene.models.Count > 0) CurrentScene.currentObj = CurrentScene.models.Count - 1; return CurrentScene.models[GetCurrentObjFromScene]; } }
         public static Scene CurrentScene { get => scenes[SelectedScene]; }
 
         private static Thread mainThread;
@@ -119,7 +119,7 @@ namespace CORERenderer.Main
         {
             #if OS_WINDOWS
                 isCompiledForWindows = true;
-#endif
+            #endif
             try //primitive error handling, could be better
             {
                 mainThread = Thread.CurrentThread;
@@ -127,7 +127,7 @@ namespace CORERenderer.Main
                 //get the root folder of the renderer by removing the .exe folders from the path (\bin\Debug\...)
                 string root = AppDomain.CurrentDomain.BaseDirectory;
                 string directory = Path.GetDirectoryName(root);
-                int MathCIndex = directory.IndexOf("CORERenderer");
+                int MathCIndex = directory.LastIndexOf("CORERenderer");
 
                 pathRenderer = directory.Substring(0, MathCIndex) + "CORERenderer";
                 //-------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ namespace CORERenderer.Main
 
                 scenes[0].OnLoad(args);
 
-                if (LoadFile == RenderMode.CRSFile)
+                if (LoadFile == ModelType.CRSFile)
                 {
                     Scene local = scenes[0];
                     Readers.LoadCRS(args[0], ref local, out string _);
@@ -543,6 +543,24 @@ namespace CORERenderer.Main
             return 0;
         }
 
+        public static bool KeyIsPressed(Keys key) => Glfw.GetKey(window, key) == InputState.Press;
+        public static bool MouseButtonIsPressed(MouseButton button) => Glfw.GetMouseButton(window, button) == InputState.Press;
+
+        public static void RestartWithoutArgsWithConfig() => Restart(true, false);
+        public static void RestartWithArgsAndConfig() => Restart(true, true);
+        public static void Restart(bool regenerateConfig, bool withArgs)
+        {
+            if (regenerateConfig)
+                GenerateConfig();
+
+            if (LoadFilePath == null || !withArgs)
+                Process.Start("CORERenderer.exe");
+            else
+                Process.Start("CORERenderer.exe", LoadFilePath);
+
+            Environment.Exit(1);
+        }
+
         public static void MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets)
         {
             vertices = new();
@@ -771,16 +789,16 @@ namespace CORERenderer.Main
             if (arg.Length <= 0)
                 return;
 
-            LoadFile = SetRenderMode(arg[0]);
+            LoadFile = GetRenderMode(arg[0]);
             LoadFilePath = arg[0];
         }
 
-        public static RenderMode SetRenderMode(string arg)
+        public static ModelType GetRenderMode(string arg)
         {
             string extension = Path.GetExtension(arg);
-            System.Console.WriteLine(extension);
+            //System.Console.WriteLine(extension);
             if (!RenderModeLookUpTable.ContainsKey(extension))
-                return RenderMode.None;
+                return ModelType.None;
 
             return RenderModeLookUpTable[extension];
         }

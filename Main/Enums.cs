@@ -5,7 +5,7 @@
         RustedIron
     }
 
-    public enum RenderMode
+    public enum ModelType
     {
         None,
         GivenFile,

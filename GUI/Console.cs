@@ -4,8 +4,10 @@ using CORERenderer.GLFW.Enums;
 using CORERenderer.Loaders;
 using CORERenderer.Main;
 using CORERenderer.OpenGL;
+using CORERenderer.textures;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Security;
 using System.Xml.Linq;
@@ -13,40 +15,41 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace CORERenderer.GUI
 {
-    public class Console
+    public partial class Console
     {
+        #region public
         public static int[] ConsoleDimensionsWithDebugmenu { get => new int[] { (int)(COREMain.monitorWidth * 0.496 - COREMain.monitorWidth * 0.125f), (int)(COREMain.monitorHeight * 0.242f - 25), COREMain.monitorWidth - COREMain.viewportX - (int)(COREMain.monitorWidth * 0.496 - COREMain.monitorWidth * 0.125f), (int)(COREMain.monitorHeight * 0.004f) }; }
         public static int[] ConsoleDimensionsWithoutDebugmenu { get => new int[] { COREMain.renderWidth, (int)(COREMain.monitorHeight * 0.242f - 25), COREMain.viewportX, (int)(COREMain.monitorHeight * 0.004f) }; }
+        public bool IsInFocus { get => IsInFocus; }
 
-        public static bool writeDebug = false, writeError = true;
+        public static bool writeDebug = false, writeError = true, changed = true;
+        #endregion
+        #region private
+        private        string LastLine { get { return lines[^1]; } set { lines[^1] = value; } }
+        private        string CurrentContext { get { return $"COREConsole/{currentContext} > "; } }
 
-        private Div quad;
-
-        private int maxLines = 0;
         private static int indexOfFirstLineToRender = 0, previousIOFLTR = 0;
+        private        int Width, Height, x, y, maxLines = 0;
 
-        //if this needs to be optimised make it reuse the previous frames as a texture so the previous lines dont have to reprinted, saving draw calls
-        private static List<string> lines = new();
-        private string LastLine { get { return lines[^1]; } set { lines[^1] = value; } }
-        private string CurrentContext { get { return $"COREConsole/{currentContext} > "; } }
-        private List<string> allCommands = new();
-        private static Dictionary<string, int> amountOfAppearancesLine = new();
+        private        double previousTime = 0, previousTime2 = 0;
 
-        private int Width, Height, x, y;
-
-        public static bool changed = true;
         private static bool canWriteToLog = false;
+        private        bool isInFocus = false, isPressedPrevious = false;
+
         private static string logLocation;
 
-        public bool isInFocus = false;
+        private static Dictionary<string, int> amountOfAppearancesLine = new();
+        private static Dictionary<string, ShaderType> shaderTypeLUT = new() { { "pathtracing", ShaderType.PathTracing }, { "lighting", ShaderType.Lighting }, { "fullbright", ShaderType.FullBright } };
+        private static Dictionary<string, Context> contextLUT = new() { { "scene", Context.Scene }, { "camera", Context.Camera }, { "console", Context.Console } };
+        private        Dictionary<string, Model> BasicShapeLUT = new() { { "cube", Model.Cube }, { "cylinder", Model.Cylinder }, { "plane", Model.Plane }, { "sphere", Model.Sphere } }; //cant be static because opengl calls in model constructor
+        private static List<string> lines = new();
+        
+        private        List<string> allCommands = new();
+        private        Div quad;
 
         private Context currentContext = Context.Console;
-
-        private double previousTime = 0;
-        private double previousTime2 = 0;
-
-        private bool isPressedPrevious = false;
-
+        #endregion
+        //if this needs to be optimised make it reuse the previous frames as a texture so the previous lines dont have to reprinted, saving draw calls
         public Console(int width, int height, int x, int y)
         {
             quad = new(width, height, x, y);
@@ -65,56 +68,58 @@ namespace CORERenderer.GUI
         {
             changed = changed ? changed : indexOfFirstLineToRender != previousIOFLTR; //only change changed if it isnt already true
 
-            isInFocus = isInFocus ? Main.COREMain.CheckAABBCollision(x, y, Width, Height) : Main.COREMain.CheckAABBCollisionWithClick(x, y, Width, Height); //if the console is already in focus just check if the cursor is still in the console, otherwise check if the console is clicked on to make it in focus
+            isInFocus = isInFocus ? COREMain.CheckAABBCollision(x, y, Width, Height) : COREMain.CheckAABBCollisionWithClick(x, y, Width, Height); //if the console is already in focus just check if the cursor is still in the console, otherwise check if the console is clicked on to make it in focus
 
             if (previousLineCount < lines.Count)
                 indexOfFirstLineToRender = lines.Count - maxLines;
 
-            if (isInFocus)
+            if (!isInFocus)
             {
-                indexOfFirstLineToRender -= (int)(Main.COREMain.scrollWheelMovedAmount * 1.5);
-                indexOfFirstLineToRender = indexOfFirstLineToRender >= 0 ? indexOfFirstLineToRender : 0; //IOFLTR cannot be smaller 0, since that would result in an index out of range error. otherwise apply the desired direction
-                changed = Main.COREMain.scrollWheelMovedAmount != 0;
-
-                CheckIfKeyNeedsToBeDeleted();
-
-                CheckForCommands();
-
-                CheckForUserInput();
+                previousIOFLTR = indexOfFirstLineToRender;
+                previousLineCount = lines.Count;
+                return;
             }
-            previousIOFLTR = indexOfFirstLineToRender;
-            previousLineCount = lines.Count;
+
+            indexOfFirstLineToRender -= (int)(Main.COREMain.scrollWheelMovedAmount * 1.5);
+            indexOfFirstLineToRender = indexOfFirstLineToRender >= 0 ? indexOfFirstLineToRender : 0; //IOFLTR cannot be smaller 0, since that would result in an index out of range error. otherwise apply the desired direction
+            changed = Main.COREMain.scrollWheelMovedAmount != 0;
+
+            CheckIfKeyNeedsToBeDeleted();
+
+            CheckForCommands();
+
+            CheckForUserInput();
         }
 
         private void CheckForCommands()
         {
-            if (Glfw.Time - previousTime > 0.06)
-            {
-                previousTime = Glfw.Time;
-                if (!LastLine.StartsWith(CurrentContext) && Glfw.GetMouseButton(Main.COREMain.window, MouseButton.Left) == InputState.Press)
-                    WriteLine(CurrentContext);
+            if (Glfw.Time - previousTime < 0.06)
+                return;
+                
+            previousTime = Glfw.Time;
+            if (COREMain.MouseButtonIsPressed(MouseButton.Left) && !LastLine.StartsWith(CurrentContext))
+                WriteLine(CurrentContext);
 
-                if (Glfw.GetKey(Main.COREMain.window, Keys.Enter) == InputState.Press && !LastLine.EndsWith(CurrentContext))
-                    ParseInput(LastLine[(LastLine.IndexOf(CurrentContext) + CurrentContext.Length)..]);
-            }
+            if (COREMain.KeyIsPressed(Keys.Enter) && !LastLine.EndsWith(CurrentContext))
+                ParseInput(LastLine[(LastLine.IndexOf(CurrentContext) + CurrentContext.Length)..]);
         }
 
         private void CheckForUserInput()
         {
-            if (Glfw.GetKey(COREMain.window, Keys.Up) == InputState.Press && lines[^1] != $"COREConsole/{currentContext} > {allCommands[^1]}")
+            if (COREMain.KeyIsPressed(Keys.Up) && lines[^1] != $"{CurrentContext}{allCommands[^1]}")
             {
-                lines[^1] = $"COREConsole/{currentContext} > {allCommands[^1]}";
+                lines[^1] = $"{CurrentContext}{allCommands[^1]}";
                 changed = true;
                 return;
             }
 
-            if (!Main.COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)Main.COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)Main.COREMain.pressedKey))
+            if (!COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)COREMain.pressedKey))
             {
                 isPressedPrevious = Glfw.GetKey(Main.COREMain.window, Keys.Backspace) == InputState.Press;
                 return;
             }
-            
-            char letter = Glfw.GetKey(Main.COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)Main.COREMain.pressedKey] : Globals.keyCharBinding[(int)Main.COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
+
+            char letter = Globals.PressedLetter; //if shift is pressed use the appropriate version of that key
             if (letter != LastLine[^1] || Glfw.Time - previousTime2 > 0.15)
             {
                 Write($"{letter}"); //adds letter to the last line of text
@@ -125,7 +130,7 @@ namespace CORERenderer.GUI
         private void CheckIfKeyNeedsToBeDeleted()
         {
             //deletes the last char of the input, unless it reached "> " indicating the begin of the input. It only deletes one char per press, if it didnt have a limit the entire input would be gone within a few milliseconds since it updates every frame
-            if (Glfw.GetKey(Main.COREMain.window, Keys.Backspace) != InputState.Press || LastLine.EndsWith(CurrentContext) || isPressedPrevious)
+            if (!COREMain.KeyIsPressed(Keys.Backspace) || LastLine.EndsWith(CurrentContext) || isPressedPrevious)
                 return;
 
             LastLine = LastLine[..^1]; //replace the current version with a version of itself with the last char missing
@@ -148,17 +153,17 @@ namespace CORERenderer.GUI
 
             quad.Render(); //renders background
 
-            int sum = (int)(Main.COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
+            int sum = (int)(COREMain.debugText.characterHeight * 0.7f + 2); //rounding to an int makes it always render on top of a single pixel, instead of dividing into over multiple, which causes uglier looking letters //better to calculate here than every loop to save wasted performance
             int lineOffset = sum;
 
-            bool original = Main.COREMain.debugText.drawWithHighlights;
+            bool original = COREMain.debugText.drawWithHighlights;
             int max = indexOfFirstLineToRender + maxLines > lines.Count ? lines.Count : indexOfFirstLineToRender + maxLines; //if there are less lines than the console can show it must only render those lines, otherwise it will try to render lines that dont exist
             for (int i = indexOfFirstLineToRender; i < max; i++, lineOffset += sum)
             {
                 if (lines[i] == null)
                     continue;
 
-                Main.COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
+                COREMain.debugText.drawWithHighlights = !lines[i].Contains('@') && !lines[i].StartsWith("ERROR ") && !lines[i].StartsWith("DEBUG ");
                 Vector3 color = GetColorFromPrefix(lines[i], out string printResult);
 
                 string[] allText = SeperateByLength(printResult);
@@ -179,7 +184,7 @@ namespace CORERenderer.GUI
                         quad.Write(allText[j] + suffix, 0, Height - lineOffset, 0.7f, color);
                 }
             }
-            Main.COREMain.debugText.drawWithHighlights = original;
+            COREMain.debugText.drawWithHighlights = original;
         }
 
         private static void WriteLineF(bool removeIfDuplicate, string text)
@@ -231,7 +236,7 @@ namespace CORERenderer.GUI
 
         private string[] SeperateByLength(string end)
         {
-            float textWidth = Main.COREMain.debugText.GetStringWidth(end, 0.7f);
+            float textWidth = COREMain.debugText.GetStringWidth(end, 0.7f);
             float tooBigPercentage = textWidth / Width;
             if (tooBigPercentage < 1)
                 return new string[] { end };
@@ -266,12 +271,12 @@ namespace CORERenderer.GUI
             if (writeError)
                 WriteLine("ERROR " + err);
 
-            if (canWriteToLog)
-            {
-                using (FileStream fs = new(logLocation, FileMode.Append))
-                using (StreamWriter sw = new(fs))
-                    sw.WriteLine(err);
-            }
+            if (!canWriteToLog)
+                return;
+
+            using FileStream fs = new(logLocation, FileMode.Append);
+            using StreamWriter sw = new(fs);
+            sw.WriteLine(err);
         }
 
         public static void WriteDebug(string debug)
@@ -291,7 +296,7 @@ namespace CORERenderer.GUI
 
         public void RenderStatic() => Render();
 
-        private Vector3 GetColorFromPrefix(string s, out string trimmedString)
+        private static Vector3 GetColorFromPrefix(string s, out string trimmedString)
         {
             if (s.StartsWith("ERROR "))
             {
@@ -324,7 +329,7 @@ namespace CORERenderer.GUI
         /// </summary>
         public void ShowInfo()
         {
-            string initialized = COREMain.LoadFilePath != null ? $"from {Path.GetFileName(Main.COREMain.LoadFilePath)}" : "independently";
+            string initialized = COREMain.LoadFilePath != null ? $"from {Path.GetFileName(COREMain.LoadFilePath)}" : "independently";
             WriteLine( "                   =                  ");
             WriteLine( "                 :*%@*.               ");
             WriteLine($"               :%%%%@@@=                       CORE Renderer {COREMain.VERSION}");
@@ -354,7 +359,6 @@ namespace CORERenderer.GUI
             Camera,
             Console
         }
-        private static Dictionary<string, Context> contextFinder = new() { { "scene", Context.Scene }, { "camera", Context.Camera }, { "console", Context.Console } };
 
         public void ParseInput(string input)
         {
@@ -365,27 +369,31 @@ namespace CORERenderer.GUI
                 string[] inputs = input.Split(new string[] { " " }, StringSplitOptions.TrimEntries);
 
                 if (input == "exit")
-                    Glfw.SetWindowShouldClose(Main.COREMain.window, true);
+                    Glfw.SetWindowShouldClose(COREMain.window, true);
 
                 else if (inputs[0] == "save")
                 {
                     if (inputs[1] == "scene")
                     {
                         string filename = Path.GetFileNameWithoutExtension(inputs[3]);
-                        new Job(() => Writers.GenerateCRS(Main.COREMain.BaseDirectory, filename, $"Generated by CORE-Renderer {Main.COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", COREMain.CurrentScene)).Start();
+                        Writers.GenerateCRS(COREMain.BaseDirectory, filename, $"Generated by CORE-Renderer {COREMain.VERSION}, CRW {Readers.CURRENT_VERSION}", COREMain.CurrentScene);
+                        WriteLine($"Finished generating {filename}.crs in {COREMain.BaseDirectory}");
                     }
-                    else if (inputs[1] == "all")
+                    else if (inputs[1].Contains("model"))
                     {
-                        Main.COREMain.MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets);
-                        Writers.GenerateSTL(Main.COREMain.BaseDirectory, "test", $"test.stl written by CORE-Renderer {Main.COREMain.VERSION}", vertices, offsets);
+                        if (inputs[1] == "currentModel" && COREMain.GetCurrentObjFromScene == -1)
+                        {
+                            WriteError("Couldn't get the current model since no model is set as current: there are no models or none are selected");
+                            return;
+                        }
+                        Writers.GenerateSTL(COREMain.BaseDirectory, $"Written by CORE-Renderer {Main.COREMain.VERSION}", GetModel(inputs[1]));
                     }
                     else if (inputs[1] == "as")
                     {
-                        Main.COREMain.CurrentScene.currentObj = 0;
-                        if (Main.COREMain.CurrentScene.models.Count > 0 && Main.COREMain.GetCurrentObjFromScene != -1)
+                        if (COREMain.CurrentScene.models.Count > 0 && Main.COREMain.GetCurrentObjFromScene != -1)
                         {
-                            Writers.GenerateSTL(Main.COREMain.BaseDirectory, $"Written by CORE-Renderer {Main.COREMain.VERSION}", Main.COREMain.CurrentModel);
-                            WriteDebug($"Generated {Main.COREMain.CurrentModel.Name}.stl");
+                            Writers.GenerateSTL(COREMain.BaseDirectory, $"Written by CORE-Renderer {Main.COREMain.VERSION}", COREMain.CurrentModel);
+                            WriteDebug($"Generated {COREMain.CurrentModel.Name}.stl");
                         }
                         else
                             WriteError("There is no model to get data from");
@@ -396,21 +404,16 @@ namespace CORERenderer.GUI
                     currentContext = GetScene(inputs[1]);
 
                 else if (inputs[0] == "goto" && inputs[2] == "->")
-                {
-                    Context arg = GetScene(inputs[1]);
-                    List<string> contextInput = new();
-                    for (int i = 3; i < inputs.Length; i++)
-                        contextInput.Add(inputs[i]);
-                    HandleCommand(arg, contextInput.ToArray());
-                }
+                    HandleCommand(inputs[1], inputs[3..]); //maybe 4?
+
                 else if (input == "reload config")
-                    Restart();
+                    COREMain.RestartWithArgsAndConfig();
 
                 else if (input.Contains("set shaders"))
                     ChangeShaders(input);
 
                 else if (input == "recompile shaders")
-                    Restart();
+                    COREMain.RestartWithArgsAndConfig();
 
                 else HandleContextCommand(input);
 
@@ -423,10 +426,7 @@ namespace CORERenderer.GUI
             WriteLine($"COREConsole/{currentContext} > ");
         }
 
-        private static Context GetScene(string input)
-        {
-            return contextFinder[input];
-        }
+        private static Context GetScene(string input) => contextLUT[input];
 
         private void HandleCommand(string context, string[] input) => HandleCommand(GetScene(context), input);
 
@@ -455,245 +455,114 @@ namespace CORERenderer.GUI
         private void HandleCameraCommands(string[] input)
         { //every if statement checks the length of the input first, because if it tries the check the contents if the input like input[..4] == "get " it could throw an error if the input isnt 4 chars long (out of range). This is also prevented later on by using try { } catch (OutOfRangeException) { }
             if (input[0] == "get") //keyword for displaying variable values
-            {
-                switch (input[1]) 
-                {
-                    case "speed": WriteLine($"{Camera.cameraSpeed}");
-                        break;
-                    case "fov":
-                        WriteLine($"{COREMain.CurrentScene.camera.Fov}");
-                        break;
-                    case "yaw":
-                        WriteLine($"{COREMain.CurrentScene.camera.Yaw}");
-                        break;
-                    case "pitch":
-                        WriteLine($"{COREMain.CurrentScene.camera.Pitch}");
-                        break;
-                    case "farplane":
-                        WriteLine($"{COREMain.CurrentScene.camera.FarPlane}");
-                        break;
-                    case "nearplane":
-                        WriteLine($"{COREMain.CurrentScene.camera.NearPlane}");
-                        break;
-                    case "position":
-                        WriteLine($"{COREMain.CurrentScene.camera.position}");
-                        break;
-                    default: WriteError($"Unknown variable: \"{input[5..]}\"");
-                        break;
-                }
-            }
+                CameraGetCommand(input);
             else if (input[0] == "set") //keyword for changing the value of variables
-            {
-                switch (input[1])
-                {
-                    case "speed":
-                        ChangeValue(ref Camera.cameraSpeed, input[2]);
-                        break;
-                    case "fov":
-                        float result = 0; //hold value here because property cant be used as ref
-                        ChangeValue(ref result, input[2]);
-                        Rendering.Camera.Fov = result;
-                        break;
-                    case "yaw":
-                        float result2 = 0; //hold value here because property cant be used as ref
-                        ChangeValue(ref result2, input[2]);
-                        Rendering.Camera.Yaw = result2;
-                        break;
-                    case "pitch":
-                        float result3 = 0; //hold value here because property cant be used as ref
-                        ChangeValue(ref result3, input[2]);
-                        Rendering.Camera.Pitch = result3;
-                        break;
-                    case "farplane":
-                        float result4 = 0; //hold value here because property cant be used as ref
-                        ChangeValue(ref result4, input[2]);
-                        Rendering.Camera.FarPlane = result4;
-                        break;
-                    case "nearplane":
-                        float result5 = 0; //hold value here because property cant be used as ref
-                        ChangeValue(ref result5, input[2]);
-                        Rendering.Camera.NearPlane = result5;
-                        break;
-                    default:
-                        WriteError($"Unknown variable: \"{input[1]}\"");
-                        break;
-                }
-            }
+                CameraSetCommand(input);
             else
                 WriteError($"Couldn't parse camera command \"{input}\"");
         }
 
-        private Dictionary<string, Model> BasicShapeTable = new() { { "cube", Model.Cube }, { "cylinder", Model.Cylinder }, { "plane", Model.Plane }, { "sphere", Model.Sphere } };
         private void HandleSceneCommands(string[] input)
         {
             if (input[0] == "attach")
             {
                 string path = GetFullPath(input[1]);
-                int[] modelIndex = Readers.GetTwoIntsWithRegEx(input[3]);
-                COREMain.CurrentScene.models[modelIndex[0]].submodels[modelIndex[1]].material = Readers.LoadCPBR(path);
+
+                if (input[1].EndsWith("\\cpbr")) //if the given value is cpbr load the first cpbr found
+                    foreach (string file in Directory.GetFiles(path[..^4]))
+                        if (Path.GetExtension(file) == ".cpbr")
+                        {
+                            path = file;
+                            break;
+                        }
+                if (COREMain.GetCurrentObjFromScene == -1) //avoiding unnecessary index out of range error
+                {
+                    WriteError($"Can't attach {Path.GetFileName(path)} to a model since there are no models");
+                    return;
+                }
+                Submodel submodelToAttachTo = COREMain.CurrentModel.submodels[0]; //its possible to only say "attach pathtocpbr", if so itll attach to current model
+
+                if (input.Length > 2) //if the command is "attach pathtocpbr to submodel" itll get the submodels location and use that instead of the current model
+                {
+                    int[] modelIndex = Readers.GetTwoIntsWithRegEx(input[3]);
+                    submodelToAttachTo = COREMain.CurrentScene.models[modelIndex[0]].submodels[modelIndex[1]];
+                }
+                submodelToAttachTo.material = Readers.LoadCPBR(path);
                 return;
             }
 
             //delete
             if (input[0] == "delete") //keyword for deleting one or more models
             {
-                if (input[1].StartsWith("model[")) //allows the removal of a single object
+                if (!input[1].StartsWith("models") && !input[1].StartsWith("lights"))
                 {
-                    try
+                    WriteError($"Invalid argument after \"delete\": {input[1]} is not recognized");
+                    return;
+                }
+                try
+                {
+                    if (input[1].StartsWith("models") && input[1].Contains("..")) //.. indicates multiple entries
+                    {
+                        Model[] models = GetModels(input[1]);
+                        for (int i = 0; i < models.Length; i++)
+                            models[i].Dispose();
+                        WriteLine($"Deleted models {COREMain.CurrentScene.models.IndexOf(models[0])} through {COREMain.CurrentScene.models.IndexOf(models[^1])}, totalling {models.Length} models");
+                    }
+
+                    else if (input[1].StartsWith("models")) //allows the removal of a single object
+                    {
+                        try
+                        {
+                            int index = Readers.GetOneIntWithRegEx(input[1]);
+                            GetModel(input[1]).Dispose();
+                            WriteLine($"Deleted model {index}");
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            WriteLine($"Couldn't delete model {input[13..input[1].IndexOf(']')]}"); //manually find the index instead of with regex since if no index is given regex wont properly work too
+                        }
+                    }
+                    else if (input[1].StartsWith("lights"))
                     {
                         int index = Readers.GetOneIntWithRegEx(input[1]);
-                        Main.COREMain.scenes[Main.COREMain.SelectedScene].models[index].Dispose();
-                        WriteLine($"Deleted model {index}");
-                        Main.COREMain.scenes[Main.COREMain.SelectedScene].currentObj = -1; //making no models highlighted to prevent crashes
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        WriteLine($"Couldn't delete model {input[13..input[1].IndexOf(']')]}");
+                        COREMain.CurrentScene.lights.RemoveAt(index);
                     }
                 }
-                else if (input[1].StartsWith("models")) //allows the removal of multiple objects at once with array-like indexing ([1..4] to delete the second model till the 4th for example)
+                catch (IndexOutOfRangeException)
                 {
-                    try
-                    {
-                        int index1 = Readers.GetOneIntWithRegEx(input[1][..(input[1].IndexOf("..") + 1)]);
-                        int index2 = Readers.GetOneIntWithRegEx(input[1][input[1].IndexOf("..")..]);
-                        for (int i = index1; i <= index2; i++) //iterate through every index between the found indexes
-                            COREMain.scenes[COREMain.SelectedScene].models[i].Dispose();
-                        COREMain.scenes[COREMain.SelectedScene].currentObj = -1; //making no models highlighted to prevent crashes
-                        WriteLine($"Deleted models {index1} through {index2}");
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        WriteLine($"Couldn't delete given models, a provided index wasn't valid");
-                    }
-                }
-                else if (input[1].StartsWith("lights"))
-                {
-                    int index = Readers.GetOneIntWithRegEx(input[1]);
-                    COREMain.CurrentScene.lights.RemoveAt(index);
+                    WriteError("Couldn't delete given variable(s), one or more indices were out of range. Variables that were deleted before the error can't be restored and no effort will be made to delete any other given variables");
                 }
             }
 
             //load
             else if (input[0] == "load") //keyword for loading in a file with given path
             {
-                if (BasicShapeTable.ContainsKey(input[1]))
-                {
-                    COREMain.CurrentScene.models.Add(BasicShapeTable[input[1]]);
-                    return;
-                }
+                if (BasicShapeLUT.ContainsKey(input[1]))
+                    COREMain.CurrentScene.models.Add(BasicShapeLUT[input[1]]);
 
-                if (input[1] == "dir")
+                else if (input[1] == "dir")
                 {
-                    string dir = GetFullPath(input[2][9..]);
-                    
-                    if (Directory.Exists(dir)) //checks if the given directory is valid
+                    string dir = GetFullPath(input[2]);
+
+                    if (!Directory.Exists(dir)) //checks if the given directory is valid
                     {
-                        Main.COREMain.LoadDir(dir);
-                        WriteLine($"Loaded directory {dir}");
-                    }
-                    else
                         WriteError($"Couldn't find the directory at {dir}");
-                }  
-                else if (input[1] != "dir") //checks if user wants to load in an directory or a single file
+                        return;
+                    }
+
+                    COREMain.LoadDir(dir);
+                    WriteLine($"Loading directory {dir}");
+                }
+                else //checks if user wants to load in an directory or a single file
                 {
                     string dir = GetFullPath(input[1]);
-                    if (File.Exists(dir) && (dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg" || dir[^5..] == ".cpbr")) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
+                    if (!File.Exists(dir) || COREMain.GetRenderMode(dir) != ModelType.None) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
                     {
-                        COREMain.CurrentScene.models.Add(new(dir));
-                        WriteLine("Loaded file");
-                    }
-                    else
                         WriteError($"Invalid file at {dir}");
-                }
-                else
-                    WriteError($"Couldn't find the file at {input[5..]}");
-            }
-
-            //get
-            else if (input[0] == "get") //keyword for displaying variable values
-            {
-                switch (input[1])
-                {
-                    case "model count":
-                        WriteLine($"{Main.COREMain.CurrentScene.models.Count}");
-                        break;
-                    case "submodel count":
-                        int count = 0;
-                        foreach (Model model in COREMain.CurrentScene.models)
-                            count += model.submodels.Count;
-                        WriteLine($"{count}");
-                        break;
-                    case "draw calls":
-                        WriteLine($"{Main.COREMain.drawCallsPerFrame}");
-                        break;
-                    case "shader":
-                        uint handle = uint.Parse(input[2]);
-                        if (input[3] != "log")
-                        {
-                            WriteError($"invalid argument after \"shader {handle}\", this only accepts \"log\"");
-                            return;
-                        }
-                        WriteLine(shaders.Shader.HandleShaderPair[handle].StartLog);
-                        break;
-                    case "texture":
-                        int index = int.Parse(input[2]);
-                        if (input[3] != "log")
-                        {
-                            WriteError($"invalid argument after \"texture {index}\", this only accepts \"log\"");
-                            return;
-                        }
-                        WriteLine(Globals.usedTextures[index].Log);
-                        break;
-                }
-            }
-
-            //set
-            else if (input[0] == "set") //keyword for displaying variable values
-            {
-                if (input[1].Contains("lights"))
-                {
-                    if (input[1].Contains("position"))
-                    {
-                        Vector3 pos = new(float.Parse(input[2]), float.Parse(input[3]), float.Parse(input[4]));
-                        Light oldLight = COREMain.CurrentScene.lights[Readers.GetOneIntWithRegEx(input[1])];
-
-                        Light newLight = new() { position = pos, color = oldLight.color };
-                        COREMain.CurrentScene.lights[Readers.GetOneIntWithRegEx(input[1])] = newLight;
+                        return;
                     }
-                    else if (input[1].Contains("color"))
-                    {
-                        Vector3 color = new(float.Parse(input[2]), float.Parse(input[3]), float.Parse(input[4]));
-                        Light oldLight = COREMain.CurrentScene.lights[Readers.GetOneIntWithRegEx(input[1])];
-
-                        Light newLight = new() { position = oldLight.color, color = color };
-                        COREMain.CurrentScene.lights[Readers.GetOneIntWithRegEx(input[1])] = newLight;
-                    }
-                    return;
-                }
-
-                switch (input[1])
-                {
-                    case "useRenderDistance":
-                        Submodel.useRenderDistance = input.Contains("true");
-                        WriteLine($"Set variable to {Submodel.useRenderDistance}");
-                        break;
-                    case "renderDistance":
-                        ChangeValue(ref Submodel.renderDistance, input[2]);
-                        WriteLine($"Set variable to {Submodel.renderDistance}");
-                        break;
-                    case "reflectionQuality":
-                        Rendering.ShadowQuality = Readers.GetOneFloatWithRegEx(input[2]);
-                        WriteLine($"Set reflection quality to {Rendering.ShadowQuality}");
-                        break;
-                    case "textureQuality":
-                        Rendering.TextureQuality = Readers.GetOneFloatWithRegEx(input[2]);
-                        WriteLine($"Set texture quality to {Rendering.TextureQuality}");
-                        break;
-
-                    default:
-                        WriteError($"Couldn't parse input {input[1]}");
-                        break;
+                    COREMain.CurrentScene.models.Add(new(dir));
+                    WriteLine($"Loaded file {Path.GetFileName(dir)} from {Path.GetDirectoryName(dir)}");
                 }
             }
 
@@ -702,42 +571,45 @@ namespace CORERenderer.GUI
             {
                 try
                 {
-                    if (input[1].Contains("model["))
+                    if (input[1].Contains("models["))
                     {
+                        if (input[1].Contains(".."))
+                        {
+                            WriteError("Invalid syntax found: \"..\" can't be used with this command");
+                            return;
+                        }
+
                         int indexOfSymbol = input[1].IndexOf(']');
                         int modelIndex = Readers.GetOneIntWithRegEx(input[1][..indexOfSymbol]);
 
-                        Model model = COREMain.CurrentScene.models[modelIndex];
-                        
+                        Model model = GetModel(input[1]);
+
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[2] + ' ' + input[3] + ' ' + input[4]);
                         if (input[0] == "moveto") //sorts for moveto, this value is applied absolutely
                         {
                             model.Transform.translation = location;
-                            WriteLine($"Moved model to {location}");
+                            WriteLine($"Moved model {modelIndex} to {location}");
+                            return;
                         }
-                        else //sorts for move, this value is applied relatively
-                        {
-                            model.Transform.translation += location;
-                            WriteLine($"Moved model with {location}");
-                        }
+                        //sorts for move, this value is applied relatively
+                        model.Transform.translation += location;
+                        WriteLine($"Moved model {modelIndex} with {location}");
                     }
                     else if (input.Contains("models"))
                     {
                         Vector3 location = Readers.GetThreeFloatsWithRegEx(input[2] + ' ' + input[3] + ' ' + input[4]);
                         if (input[0] == "moveto") //sorts for moveto, this value is applied absolutely
                         {
-                            foreach (Model model in Main.COREMain.CurrentScene.models)
+                            foreach (Model model in COREMain.CurrentScene.models)
                                 model.Transform.translation += location;
-                            WriteLine($"Moved model to {location}");
+                            WriteLine($"Moved all models to {location}");
+                            return;
                         }
-                        else //sorts for move, this value is applied relatively
-                        {
-                            foreach (Model model in Main.COREMain.CurrentScene.models)
-                                    model.Transform.translation += location;
-                            WriteLine($"Moved model with {location}");
-                        }
+                        //sorts for move, this value is applied relatively
+                        foreach (Model model in COREMain.CurrentScene.models)
+                            model.Transform.translation += location;
+                        WriteLine($"Moved all models with {location}");
                     }
-                    
                 }
                 catch (System.Exception)
                 {
@@ -746,44 +618,16 @@ namespace CORERenderer.GUI
                 }
             }
 
-            else if (input[0] == "disable")
-            {
-                switch (input[1])
-                {
-                    case "arrows":
-                        Arrows.disableArrows = true;
-                        WriteLine("Disabled arrows");
-                        break;
-                    case "lights":
-                        Rendering.renderLights = false;
-                        WriteLine("Lights aren't being rendered anymore");
-                        break;
-                    case "grid":
-                        COREMain.renderGrid = true;
-                        WriteLine("Grid isn't being rendered anymore");
-                        break;
-                }
-                
-            }
+            else if (input[0] == "disable" || input[0] == "enable")
+                SceneEnableDisable(input);
 
-            else if (input[0] == "enable")
-            {
-                switch (input[1])
-                {
-                    case "arrows":
-                        Arrows.disableArrows = false;
-                        WriteLine("Enabled arrows");
-                        break;
-                    case "lights":
-                        Rendering.renderLights = true;
-                        WriteLine("Lights are being rendered");
-                        break;
-                    case "grid":
-                        COREMain.renderGrid = true;
-                        WriteLine("Grid is being rendered");
-                        break;
-                }
-            }
+            //get
+            else if (input[0] == "get") //keyword for displaying variable values
+                SceneGetCommand(input);
+
+            //set
+            else if (input[0] == "set") //keyword for displaying variable values
+                SceneSetCommand(input);
 
             else
                 WriteError($"Couldn't parse scene command \"{input}\"");
@@ -799,6 +643,8 @@ namespace CORERenderer.GUI
                     WriteLine(GetFullPath(input[1]));
                 else if (input[1] == "path")
                     WriteLine(GetFullPath("$PATH"));
+                else
+                    WriteError($"Couldn't resolve get-variable {input[1]}");
             }
                 
             else if (input[0] == "clear" && input[1] == "GUI") //clears the GUI framebuffer, can leave artifacts behind
@@ -811,30 +657,30 @@ namespace CORERenderer.GUI
             else if (input[0] == "wipe") //wipes the console clean
                 Wipe();
 
-            else if (input[0] == "disable" && input[1] == "debug")
+            else if ((input[0] == "disable" || input[0] == "enable") && input[1] == "debug")
             {
                 if (!Debugmenu.isVisible)
                     return;
 
-                Debugmenu.isVisible = false;
-                int[] dimensions = ConsoleDimensionsWithoutDebugmenu;
+                Debugmenu.isVisible = input[0] == "enable"; //see disable enable above for info
+                int[] dimensions = input[0] != "enable" ? ConsoleDimensionsWithoutDebugmenu : ConsoleDimensionsWithDebugmenu;
                 COREMain.console = new(dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
             }
-            else if (input[0] == "enable" && input[1] == "debug")
-            {
-                if (Debugmenu.isVisible)
-                    return;
-
-                Debugmenu.isVisible = true;
-                int[] dimensions = ConsoleDimensionsWithDebugmenu;
-                COREMain.console = new(dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
-            }
-
             else
                 WriteError($"Couldn't parse console command");
         }
 
-        private void ChangeValue(ref float variable, string input)
+        private static string GetTextureInfo(string info, Texture texture)
+        {
+            if (info == "log")
+                return texture.Log;
+            else if (info == "name")
+                return texture.name;
+            WriteError($"invalid argument for the given texture, it can only be log or name");
+            return "";
+        }
+
+        private static void ChangeValue(ref float variable, string input)
         {
             bool succeeded = float.TryParse(input, out float result);
             if (succeeded)
@@ -843,63 +689,46 @@ namespace CORERenderer.GUI
                 WriteLine($"Set variable to {variable}");
             }
             else
-                WriteError($"Couldn't parse float {input[4..]}");
-        }
-
-        private void Restart()
-        {
-            if (Main.COREMain.LoadFilePath == null)
-                Process.Start("CORERenderer.exe");
-            else
-                Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-            GenerateCacheFile(Main.COREMain.BaseDirectory);
-            Environment.Exit(1);
+                WriteError($"Couldn't parse float {input[4..]}. the value is the same as it was before the command was issued");
         }
 
         private void ChangeShaders(string input)
         {
-            if (input.ToLower().Contains("pathtracing"))
+            if (shaderTypeLUT.ContainsKey(input))
             {
-                Rendering.shaderConfig = ShaderType.PathTracing;
-                Main.COREMain.GenerateConfig();
-                if (Main.COREMain.LoadFilePath == null)
-                    Process.Start("CORERenderer.exe");
-                else
-                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.BaseDirectory);
-                Environment.Exit(1);
-            }
-            else if (input.ToLower().Contains("lighting"))
-            {
-                Rendering.shaderConfig = ShaderType.Lighting;
-                Main.COREMain.GenerateConfig();
-                if (Main.COREMain.LoadFilePath == null)
-                    Process.Start("CORERenderer.exe");
-                else
-                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.BaseDirectory);
-                Environment.Exit(1);
-            }
-            else if (input.ToLower().Contains("fullbright"))
-            {
-                Rendering.shaderConfig = ShaderType.FullBright;
-                Main.COREMain.GenerateConfig();
-                if (Main.COREMain.LoadFilePath == null)
-                    Process.Start("CORERenderer.exe");
-                else
-                    Process.Start("CORERenderer.exe", Main.COREMain.LoadFilePath);
-                GenerateCacheFile(Main.COREMain.BaseDirectory);
-                Environment.Exit(1);
+                Rendering.shaderConfig = shaderTypeLUT[input];
+                GenerateCacheFile(COREMain.BaseDirectory);
+                COREMain.RestartWithArgsAndConfig();
             }
             else
                 WriteError("Couldn't find shader type");
+        }
+
+        private static Model GetModel(string input)
+        {
+            if (input == "currentModel")
+                return COREMain.CurrentModel;
+
+            return COREMain.CurrentScene.models[Readers.GetOneIntWithRegEx(input)];
+        }
+
+        private static Model[] GetModels(string input)
+        {
+            int[] indices = Readers.GetTwoIntsWithRegEx(input.Replace("..", " "));
+            return COREMain.CurrentScene.models.ToArray()[indices[0]..indices[1]];
+        }
+
+        private static Submodel GetSubmodel(string input)
+        {
+            int[] indices = Readers.GetTwoIntsWithRegEx(input);
+            return COREMain.CurrentScene.models[indices[0]].submodels[indices[1]];
         }
 
         public void LoadCacheFile(string dirPath)
         {
             if (!File.Exists($"{dirPath}\\consoleCache"))
             {
-                WriteError("Failed to retrieve cache");
+                WriteError("Failed to retrieve cache as it doesn't exist");
                 return;
             }
 
@@ -908,14 +737,14 @@ namespace CORERenderer.GUI
                 ParseInput(command);
 
             File.Delete($"{dirPath}\\consoleCache");
-            WriteDebug("Succeeded retrieved and loaded cache");
+            WriteDebug("Successfully retrieved and loaded cache");
         }
 
         private void GenerateCacheFile(string dirPath)
         {
             if (!Directory.Exists(dirPath))
             {
-                WriteError($"Failed to create a cache");
+                WriteError($"Failed to create a cache as the given destination ({dirPath}) doesn't exist");
                 return;
             }
 
@@ -930,13 +759,13 @@ namespace CORERenderer.GUI
             if (path.Contains("this"))
             {
                 if (COREMain.LoadFilePath == null)
-                    throw new System.Exception($"Invalid argument given for alias {path}: this == null");
+                    throw new System.Exception($"Invalid argument given for alias {path}: this == null. This instance initialized independently and doesn't have an instance directory to fetch");
                 path = path.Replace("this", Path.GetDirectoryName(COREMain.LoadFilePath));
             } 
             else if (path.Contains("$PATH"))
             {
                 if (COREMain.BaseDirectory == null)
-                    throw new System.Exception($"Invalid argument given for alias {path}: $PATH == null");
+                    throw new System.Exception($"Invalid argument given for alias {path}: $PATH == null. This means that the .exe and its files isn't inside a folder named \"CORERenderer\", or (unlikely) a different error prevented the base directory from being found");
                 path = path.Replace("$PATH", COREMain.BaseDirectory);
             }
             return path;
