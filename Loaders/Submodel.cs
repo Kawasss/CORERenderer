@@ -174,8 +174,8 @@ namespace CORERenderer.Loaders
 
                 highlighted = COREMain.selectedID == ID;
 
-                glStencilFunc(GL_ALWAYS, 1, 0xFF);
-                glStencilMask(0xFF);
+                //glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                //glStencilMask(0xFF);
 
                 ClampValues();
 

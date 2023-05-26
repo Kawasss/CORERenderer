@@ -5,6 +5,7 @@ using CORERenderer.GLFW;
 using CORERenderer.Main;
 using SharpFont;
 using CORERenderer.OpenGL;
+using System.Runtime.CompilerServices;
 
 namespace CORERenderer
 {
@@ -23,11 +24,11 @@ namespace CORERenderer
 
         private bool firstMove = true;
 
-        private Vector2 lastPos;
+        private Vector2 lastPos = new(0, 0);
 
         public float AspectRatio;
 
-        public Vector3 position;
+        public Vector3 position = Vector3.Zero;
 
         public Vector3 front = new(0, 0, -1);
 
@@ -40,6 +41,22 @@ namespace CORERenderer
         {
             position = Position;
             AspectRatio = aspectRatio;
+        }
+
+        public Camera(Camera camera)
+        {
+            this.pitch = camera.pitch;
+            this.yaw = camera.yaw;
+            this.fov = camera.fov;
+            this.nearPlane = camera.nearPlane;
+            this.farPlane = camera.farPlane;
+            this.firstMove = camera.firstMove;
+            this.lastPos = new(camera.lastPos);
+            this.AspectRatio = camera.AspectRatio;
+            this.position = new(camera.position);
+            this.front = new(camera.front);
+            this.up = new(camera.up);
+            this.right = new(camera.right);
         }
 
         public float NearPlane

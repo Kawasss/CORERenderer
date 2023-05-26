@@ -130,6 +130,9 @@ namespace CORERenderer.OpenGL
             GenericShaders.Shadow.SetFloat("farPlane", farPlane);
         }
 
+        private static Vector2[] pitchAndYaw = new Vector2[] { new(0, 0), new(0, 180), new(90, 180), new(-90, 180), new(0, 90), new(0, -90) };
+        private static Vector3[] ups = new Vector3[] { new(0, -1, 0), new(0, -1, 0), new(0, 0, 1), new(0, 0, -1), new(0, -1, 0), new(0, -1, 0) };
+        private static Vector3[] fronts = new Vector3[] { new Vector3(1, 0, 0), new Vector3(-1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
         private static void RenderReflections(List<Model> models, List<Light> lights, Skybox skybox)
         {
             int previousFB = CurrentFramebufferID;
@@ -140,7 +143,11 @@ namespace CORERenderer.OpenGL
             GenericShaders.PBR.SetInt("reflectionCubemap", 6);
             int[] viewport = ViewportDimensions;
 
-            Matrix[] viewMatrices = new Matrix[]
+            reflectionCamera = new(camera);
+            reflectionCamera.Fov = 90;
+            reflectionCamera.AspectRatio = 1;
+            
+            /*Matrix[] viewMatrices = new Matrix[]
             {
                 MathC.LookAt(camera.position, camera.position + new Vector3( 1,  0,  0), new(0, -1,  0)),
                 MathC.LookAt(camera.position, camera.position + new Vector3(-1,  0,  0), new(0, -1,  0)),
@@ -148,18 +155,22 @@ namespace CORERenderer.OpenGL
                 MathC.LookAt(camera.position, camera.position + new Vector3( 0, -1,  0), new(0,  0, -1)),
                 MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0,  1), new(0, -1,  0)),
                 MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0, -1), new(0, -1,  0))
-            };
+            };*/
 
             glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
-            MatrixToUniformBuffer(Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), 1, camera.NearPlane, camera.FarPlane), 0);
+            MatrixToUniformBuffer(reflectionCamera.ProjectionMatrix, 0);
 
             glViewport(0, 0, (int)((float)renderingWidth / (float)shadowQuality), (int)((float)renderingWidth / (float)shadowQuality));
 
             Submodel.renderAllIDs = false;
             for (int i = 0; i < 6; i++)
             {
+                reflectionCamera.Pitch = pitchAndYaw[i].x;
+                reflectionCamera.Yaw = pitchAndYaw[i].y;
+                reflectionCamera.up = ups[i];
+
                 glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
-                MatrixToUniformBuffer(viewMatrices[i], GL_MAT4_FLOAT_SIZE);
+                MatrixToUniformBuffer(reflectionCamera.ViewMatrix, GL_MAT4_FLOAT_SIZE);
 
                 shadowFramebuffer.Bind();
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
@@ -168,10 +179,11 @@ namespace CORERenderer.OpenGL
 
                 //RenderGrid();
 
-                RenderLights(lights);
+                RenderLights(reflectionCamera, lights);
                 foreach (Model model in models)
-                    model.Render();
-
+                    if (model.Transform.BoundingBox.IsInFrustum(reflectionCamera.Frustum, model.Transform))
+                        model.Render();
+                    
                 skybox?.Render();
             }
             shadowCubemap.Use(GL_TEXTURE0);
@@ -201,13 +213,12 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            //RenderShadowCubemap(scene.models, scene.lights);s
             RenderReflections(scene.models, scene.lights, scene.skybox);
             if (renderLights)
-                RenderLights(scene.lights);
+                RenderLights(camera, scene.lights);
             RenderAllModels(scene.models);
-            shadowCubemap.Render();
-            //scene.skybox?.Render();
+            //shadowCubemap.Render();
+            scene.skybox?.Render();
         }
 
         public static void RenderAllModels(List<Model> models)
@@ -478,8 +489,9 @@ namespace CORERenderer.OpenGL
 
         //try referring to offcenter version with 0, width, height, 0.01, 100
         public static Matrix GetOrthograpicProjectionMatrix(int width, int height) => Matrix.Createorthographic(width, height, -1000f, 1000f);//Matrix.Createorthographic(COREMain.Width, COREMain.Height, 0.01f, 1000f);
-        
-        public static void RenderLights(List<CORERenderer.Main.Light> locations)
+
+        private static Transform lightTransform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), new(.1f), Vector3.Zero);
+        public static void RenderLights(Camera camera, List<Light> locations)
         {
             GenericShaders.Light.Use();
 
@@ -487,8 +499,16 @@ namespace CORERenderer.OpenGL
 
             for (int i = 0; i < locations.Count; i++)
             {
-                GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
-                glDrawArrays(PrimitiveType.Triangles, 0, 36);
+                lightTransform.translation = locations[i].position;
+                lightTransform.boundingBox.center = locations[i].position;
+
+                if (lightTransform.boundingBox.IsInFrustum(camera.Frustum, lightTransform))
+                {
+                    Console.WriteLine(1);
+                    GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
+                    glDrawArrays(PrimitiveType.Triangles, 0, 36);
+                }
+                else Console.WriteLine(0);
             }
         }
 

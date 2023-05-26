@@ -251,6 +251,7 @@ namespace CORERenderer.OpenGL
             uniform samplerCube reflectionCubemap;
 
             uniform int isHighlighted;
+            uniform int lowQuality;
 
             const float PI = 3.14159265359;
             #define heightScale 0.1
@@ -417,7 +418,7 @@ namespace CORERenderer.OpenGL
                     vec3 L = normalize(lightPos[i] - FragPos);
                     vec3 H = normalize(V + L);
                     float distance = length(lightPos[i] - FragPos);
-                    float attenuation = 1.0 / (distance);
+                    float attenuation = 1.0 / (distance * distance);
                     vec3 radiance = vec3(1) * attenuation;
 
                     // Cook-Torrance BRDF
@@ -475,7 +476,7 @@ namespace CORERenderer.OpenGL
 
                 // ambient lighting (note that the next IBL tutorial will replace 
                 // this ambient lighting with environment lighting).
-                vec3 ambient = (vec3(0.03) * albedo * GetGuassianBlur(roughness, V, N) * F) * ao;
+                vec3 ambient = (vec3(0.03) * albedo + GetGuassianBlur(roughness, V, N) * vec3(.1) * F) * ao;
 
                 vec3 color = ambient + Lo;
                 //color *= GetShadow(FragPos);

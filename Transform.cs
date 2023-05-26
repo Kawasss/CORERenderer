@@ -9,7 +9,7 @@ namespace CORERenderer
 
         private Vector3 previousTranslation = Vector3.Zero, previousScale = new(1, 1, 1), previousRotation = Vector3.Zero;
         private Matrix model = Matrix.IdentityMatrix;
-        private AABB boundingBox;
+        public AABB boundingBox; //shoud be private
         public AABB BoundingBox { get { return boundingBox; } set { boundingBox = value; } }
 
 

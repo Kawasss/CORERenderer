@@ -9,17 +9,13 @@ namespace COREMath
 {
     public class Vector2
     {
-        public float x;
-        public float y;
-
-        public float[] xy = new float[2];
+        public float x = 0;
+        public float y = 0;
 
         public Vector2()
         {
             this.x = 0;
             this.y = 0;
-            xy[0] = x;
-            xy[1] = y;
         }
 
         public Vector2(string x, string y)
@@ -36,16 +32,18 @@ namespace COREMath
                 Console.WriteLine($"Couldn't parse {y}, set to 0");
                 this.y = 0;
             }
-            xy[0] = this.x;
-            xy[1] = this.y;
+        }
+
+        public Vector2(Vector2 v2)
+        {
+            this.x = v2.x;
+            this.y = v2.y;
         }
 
         public Vector2(float X, float Y)
         {
             this.x = X;
             this.y = Y;
-            xy[0] = this.x;
-            xy[1] = this.y;
         }
 
         public static Vector2 Zero = new();

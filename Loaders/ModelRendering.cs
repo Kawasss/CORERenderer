@@ -38,11 +38,6 @@ namespace CORERenderer.Loaders
                     translucentSubmodels.Add(submodels[i]);
                     continue;
                 }
-                if (MathC.Distance(COREMain.CurrentScene.camera.position, transform.translation) <= 10)
-                {
-                    translucentSubmodels.Add(submodels[i]);
-                    continue;
-                }
                 submodels[i].Render();
             }
         }

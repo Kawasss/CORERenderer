@@ -123,7 +123,7 @@ namespace CORERenderer
 
                 else if (selectedID == models[i].ID)
                 {
-                    models[previousHighlighted].highlighted = false;
+                    models[previousHighlighted].highlighted = !models[previousHighlighted].highlighted;
                     models[i].highlighted = true;
                     currentObj = i;
                     previousHighlighted = i;
