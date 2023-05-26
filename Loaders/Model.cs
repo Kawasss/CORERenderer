@@ -12,9 +12,10 @@ namespace CORERenderer.Loaders
 {
     public partial class Model : Readers
     {
-        public static Model Cube { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\cube.stl"); } }
-        public static Model Cylinder { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\cylinder.stl"); } }
-        public static Model Plane { get { return new($"{Main.COREMain.BaseDirectory}\\OBJs\\plane.stl"); } }
+        public static Model Cube { get => new($"{COREMain.BaseDirectory}\\OBJs\\cube.obj"); }
+        public static Model Cylinder { get => new($"{COREMain.BaseDirectory}\\OBJs\\cylinder.obj"); }
+        public static Model Plane { get => new ($"{COREMain.BaseDirectory}\\OBJs\\plane.obj"); }
+        public static Model Sphere { get => new($"{COREMain.BaseDirectory}\\OBJs\\sphere.obj"); }
 
         public static int totalSSBOSizeUsed = 0;
 
@@ -76,6 +77,9 @@ namespace CORERenderer.Loaders
             else if (type == RenderMode.FBXFile)
                 GenerateFbx(path);
 
+            else if (type == RenderMode.CPBRFile)
+                GeneratePBR(path);
+
             else if (type == RenderMode.JPGImage || type == RenderMode.PNGImage)
                 GenerateImage(path);
         }
@@ -119,12 +123,12 @@ namespace CORERenderer.Loaders
         private void GenerateFbx(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents);
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents, out Vector3 offset);
             double readFBXFile = Glfw.Time - startedReading;
 
             CheckError(loaded);
 
-            transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
+            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
             for (int i = 0; i < lVertices.Count; i++)
             {
                 submodels.Add(new(name, lVertices[i], materials[i], this));
@@ -136,16 +140,34 @@ namespace CORERenderer.Loaders
             selectedSubmodel = 0;
         }
 
+        private void GeneratePBR(string path)
+        {
+            double startedReading = Glfw.Time;
+            PBRMaterial material = LoadCPBR(path);
+            double readFile = Glfw.Time - startedReading;
+
+            Error loaded = LoadOBJ($"{COREMain.BaseDirectory}\\OBJs\\sphere.obj", out name, out List<List<Vertex>> lVertices, out _, out Vector3 center, out Vector3 extents, out Vector3 offset);
+            CheckError(loaded);
+
+            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
+
+            Console.WriteDebug($"Read CPBR file in {Math.Round(readFile, 2)} seconds");
+
+            submodels.Add(new(Path.GetFileNameWithoutExtension(path), lVertices[0], material, this));
+
+            submodels[0].highlighted = true;
+            selectedSubmodel = 0;
+        }
 
         private void GenerateObj(string path)
         {
             double startedReading = Glfw.Time;
-            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents);
+            Error loaded = LoadOBJ(path, out name, out List<List<Vertex>> lVertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents, out Vector3 offset);
             double readOBJFile = Glfw.Time - startedReading;
 
             CheckError(loaded);
 
-            transform = new(Vector3.Zero, Vector3.Zero, new(1, 1, 1), extents, center);
+            transform = new(offset, Vector3.Zero, new(1, 1, 1), extents, center);
             for (int i = 0; i < lVertices.Count; i++)
             {
                 submodels.Add(new(name, lVertices[i], materials[i], this));

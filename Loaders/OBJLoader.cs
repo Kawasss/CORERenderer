@@ -10,7 +10,7 @@ namespace CORERenderer.Loaders
 {
     public partial class Readers
     {
-        public static Error LoadOBJ(string path, out string name, out List<List<Vertex>> vertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents)
+        public static Error LoadOBJ(string path, out string name, out List<List<Vertex>> vertices, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents, out Vector3 offset)
         {
             if (!File.Exists(path))
             {
@@ -19,6 +19,7 @@ namespace CORERenderer.Loaders
                 center = Vector3.Zero;
                 extents = Vector3.Zero;
                 materials = new();
+                offset = Vector3.Zero;
                 return Error.InvalidPath;
             }
 
@@ -26,18 +27,20 @@ namespace CORERenderer.Loaders
 
             name = Path.GetFileNameWithoutExtension(path);
 
-            vertices = GetBasicSceneData(path, s, out materials, out center, out extents);
+            vertices = GetBasicSceneData(path, s, out materials, out center, out extents, out offset);
 
             return Error.None;
         }
 
-        private static List<List<Vertex>> GetBasicSceneData(string path, Assimp.Scene s, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents)
+        private static List<List<Vertex>> GetBasicSceneData(string path, Assimp.Scene s, out List<PBRMaterial> materials, out Vector3 center, out Vector3 extents, out Vector3 offset)
         {
             List<List<Vertex>> vertices = new();
             materials = new();
 
             Vector3 min = Vector3.Zero;
             Vector3 max = Vector3.Zero;
+
+            offset = null;
 
             for (int i = 0; i < s.MeshCount; i++)
             {
@@ -52,6 +55,10 @@ namespace CORERenderer.Loaders
 
                     Vector3D aPos = mesh.Vertices[indice];
                     Vector3 pos = new(aPos.X, aPos.Y, aPos.Z);
+
+                    offset ??= pos;
+
+                    pos -= offset;
 
                     max.x = pos.x > max.x ? pos.x : max.x;
                     max.y = pos.y > max.y ? pos.y : max.y;
@@ -105,9 +112,9 @@ namespace CORERenderer.Loaders
         private static Assimp.Scene GetAssimpScene(string path)
         {
             AssimpContext context = new();
-            Assimp.Configs.RemoveComponentConfig a = new(ExcludeComponent.Normals);
+            RemoveComponentConfig a = new(ExcludeComponent.Normals);
             context.SetConfig(a);
-            return context.ImportFile(path,  PostProcessSteps.FixInFacingNormals | PostProcessSteps.RemoveComponent | PostProcessPreset.TargetRealTimeMaximumQuality);
+            return context.ImportFile(path,  PostProcessSteps.FixInFacingNormals | PostProcessSteps.RemoveComponent | PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.PreTransformVertices);
         }
 
         [Obsolete("Made redundant by the inclusion of Assimp")]

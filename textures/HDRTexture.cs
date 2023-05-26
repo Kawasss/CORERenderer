@@ -8,7 +8,7 @@ using static CORERenderer.OpenGL.Rendering;
 
 namespace CORERenderer.textures
 {
-    public class HDRTexture
+    public class Skybox
     {
         public readonly uint Handle;
         public string path;
@@ -31,7 +31,7 @@ namespace CORERenderer.textures
 
         public byte[] data;
 
-        public static unsafe HDRTexture ReadFromFile(string imagePath, float quality)
+        public static unsafe Skybox ReadFromFile(string imagePath, float quality)
         {
             glDisable(GL_CULL_FACE);
 
@@ -42,7 +42,7 @@ namespace CORERenderer.textures
                 throw new Exception($"Couldnt find file at {imagePath}");
             }
 
-            HDRTexture h = new(glGenTexture());
+            Skybox h = new(glGenTexture());
             h.data = File.ReadAllBytes(imagePath);
 
             using (FileStream stream = File.OpenRead(imagePath))
@@ -197,7 +197,7 @@ namespace CORERenderer.textures
             glEnable(GL_CULL_FACE);
         }
 
-        public HDRTexture(uint newHandle)
+        public Skybox(uint newHandle)
         {
             Handle = newHandle;
         }

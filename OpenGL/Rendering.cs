@@ -1,8 +1,8 @@
 ﻿using COREMath;
-using CORERenderer.textures;
 using CORERenderer.Main;
 using CORERenderer.Loaders;
 using System.Diagnostics;
+using CORERenderer.textures;
 
 namespace CORERenderer.OpenGL
 {
@@ -14,11 +14,13 @@ namespace CORERenderer.OpenGL
         public static string[] RenderStatistics { get { return renderStatistics; } }
         public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
         public static int[] Viewport { get => GetViewportDimensions(); }
+        public static Skybox DefaultSkybox { get => standardSkybox; }
 
         private static uint vertexArrayObjectGrid;
 
         public static bool cullFaces = true;
         public static bool renderOrthographic = false;
+        public static bool renderLights = true;
 
         public static ShaderType shaderConfig = ShaderType.Lighting;
 
@@ -30,6 +32,8 @@ namespace CORERenderer.OpenGL
 
         private static Framebuffer shadowFramebuffer;
         private static Cubemap shadowCubemap;
+        private static Camera reflectionCamera;
+        private static Skybox standardSkybox;
 
         /// <summary>
         /// Gets the rendering quality and sets the rendering quality, whilst simultaniously changing anything that depends on the rendering quality
@@ -48,9 +52,6 @@ namespace CORERenderer.OpenGL
                 shadowCubemap = GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
                 shadowFramebuffer = GenerateFramebuffer((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
                 shadowFramebuffer.Bind();
-                glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCubemap.textureID, 0);
-                glDrawBuffer(GL_NONE);
-                glReadBuffer(GL_NONE);
                 glBindFramebuffer(0);
             }
         }
@@ -76,9 +77,11 @@ namespace CORERenderer.OpenGL
             renderingHeight = RenderingHeight;
             TextureQuality = OpenGL.TextureQuality.Default;
             ShadowQuality = OpenGL.ShadowQuality.Default;
+            standardSkybox = Skybox.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\hdr\\defaultSkybox.hdr", TextureQuality);
             shadowFramebuffer.Bind();
             SetClearColor(clearColor);
             camera = new(Vector3.Zero, 1);
+            reflectionCamera = new(Vector3.Zero, 1);
         }
 
         private unsafe static void RenderShadowCubemap(List<Model> models, List<Main.Light> lights)
@@ -109,7 +112,6 @@ namespace CORERenderer.OpenGL
 
             float nearPlane = camera.NearPlane;
             float farPlane = camera.FarPlane;
-            float aspectRatio = renderingWidth / renderingHeight;
             Matrix shadowProjection = Camera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
             Matrix[] viewMatrices = new Matrix[]
             {
@@ -128,6 +130,61 @@ namespace CORERenderer.OpenGL
             GenericShaders.Shadow.SetFloat("farPlane", farPlane);
         }
 
+        private static void RenderReflections(List<Model> models, List<Light> lights, Skybox skybox)
+        {
+            int previousFB = CurrentFramebufferID;
+
+            GenericShaders.PBR.Use();
+            shadowFramebuffer.Bind();
+            shadowCubemap.Use(GL_TEXTURE6);
+            GenericShaders.PBR.SetInt("reflectionCubemap", 6);
+            int[] viewport = ViewportDimensions;
+
+            Matrix[] viewMatrices = new Matrix[]
+            {
+                MathC.LookAt(camera.position, camera.position + new Vector3( 1,  0,  0), new(0, -1,  0)),
+                MathC.LookAt(camera.position, camera.position + new Vector3(-1,  0,  0), new(0, -1,  0)),
+                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  1,  0), new(0,  0,  1)),
+                MathC.LookAt(camera.position, camera.position + new Vector3( 0, -1,  0), new(0,  0, -1)),
+                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0,  1), new(0, -1,  0)),
+                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0, -1), new(0, -1,  0))
+            };
+
+            glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
+            MatrixToUniformBuffer(Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), 1, camera.NearPlane, camera.FarPlane), 0);
+
+            glViewport(0, 0, (int)((float)renderingWidth / (float)shadowQuality), (int)((float)renderingWidth / (float)shadowQuality));
+
+            Submodel.renderAllIDs = false;
+            for (int i = 0; i < 6; i++)
+            {
+                glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
+                MatrixToUniformBuffer(viewMatrices[i], GL_MAT4_FLOAT_SIZE);
+
+                shadowFramebuffer.Bind();
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
+                glClearColor(0.3f, 0.3f, 0.3f, 1);
+                glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                //RenderGrid();
+
+                RenderLights(lights);
+                foreach (Model model in models)
+                    model.Render();
+
+                skybox?.Render();
+            }
+            shadowCubemap.Use(GL_TEXTURE0);
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+            Submodel.renderAllIDs = true;
+
+            glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+            glBindFramebuffer((uint)previousFB);
+
+            UpdateUniformBuffers();
+        }
+
         private static void RenderShadows(List<Model> models)
         {
             shadowCubemap.Use(GL_TEXTURE0);
@@ -144,12 +201,13 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            //RenderShadowCubemap(scene.models, scene.lights);
-            RenderLights(scene.lights);
+            //RenderShadowCubemap(scene.models, scene.lights);s
+            RenderReflections(scene.models, scene.lights, scene.skybox);
+            if (renderLights)
+                RenderLights(scene.lights);
             RenderAllModels(scene.models);
-            scene.skybox?.Render();
-            //reflectionCubemap.Render();
-            //shadowCubemap.Render();
+            shadowCubemap.Render();
+            //scene.skybox?.Render();
         }
 
         public static void RenderAllModels(List<Model> models)

@@ -147,7 +147,7 @@ namespace CORERenderer.Loaders
             ID = parent.ID;
             IDColor = COREMain.GenerateIDColor(ID);
 
-            GenericShaders.Shadow.ActivateAttributes();
+            GenericShaders.NormalVisualisation.ActivateAttributes();
 
             shader.Use();
             //shader.SetInt("material.Texture", 0);
@@ -227,6 +227,15 @@ namespace CORERenderer.Loaders
             COREMain.renderFramebuffer.Bind();
         }
 
+        public void RenderNormals()
+        {
+            GenericShaders.NormalVisualisation.Use();
+
+            GenericShaders.NormalVisualisation.SetMatrix("model", parent.Transform.ModelMatrix);
+
+            vbo.Draw(PrimitiveType.Triangles, 0, vertices.Count);
+        }
+
         private void SetShaderValues()
         {
             //shader.SetFloat("transparency", material.Transparency);
@@ -236,6 +245,7 @@ namespace CORERenderer.Loaders
             //shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
 
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
+            shader.SetBool("isHighlighted", parent.highlighted);
 
             UseTextures();
         }
@@ -291,12 +301,6 @@ namespace CORERenderer.Loaders
             rotation.x = Math.Max(0, rotation.x);
             rotation.y = Math.Max(0, rotation.y);
             rotation.z = Math.Max(0, rotation.z);
-        }
-
-        ~Submodel()
-        {
-            //glDeleteBuffer(VBO);
-            //glDeleteVertexArray(VAO);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace CORERenderer.Main
         public const int NoIDSelected = 0x00FFFF;
 
         public static int refreshRate = 0;
-        private static int errorsCaught = 0;
+        public static int errorsCaught = 0;
 
         //uints
         public static uint vertexArrayObjectLightSource;
@@ -48,7 +48,7 @@ namespace CORERenderer.Main
         private static double previousTime = 0;
         public static double CPUUsage = 0;
         public static double scrollWheelMovedAmount = 0;
-        private static double timeSinceLastFrame = 0;
+        public static double timeSinceLastFrame = 0;
         private static TimeSpan previousCPU;
 
         //floats
@@ -83,7 +83,7 @@ namespace CORERenderer.Main
         public static bool subMenuOpenLastFrame = false, submenuOpen = false;
 
         private static bool loadInfoOnstartup = true;
-        private static bool appIsHealthy = true;
+        public static bool appIsHealthy = true;
 
         //enums
         public static RenderMode LoadFile = RenderMode.None;
@@ -177,15 +177,9 @@ namespace CORERenderer.Main
                 modelList = new((int)(monitorWidth * 0.117f), (int)(monitorHeight * 0.974f - 25), (int)(monitorWidth * 0.004f),(int)(monitorHeight * 0.004f));
                 Div submodelList = new((int)(monitorWidth * 0.117f),(int)(monitorHeight * 0.974f - 25),(int)(monitorWidth * 0.004f),(int)(monitorHeight * 0.004f));
                 Div modelInformation = new((int)(monitorWidth * 0.117f), (int)(monitorHeight * 0.974f - 25), (int)(monitorWidth * 0.879f),(int)(monitorHeight * 0.004f));
-                Div debugHolder = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25), viewportX, (int)(monitorHeight * 0.004f));
 
-                int debugWidth = (int)debugText.GetStringWidth("Ticks spent depth sorting: timeSpentDepthSorting", 0.7f);
-                Graph renderingTicks = new(0, debugWidth, (int)(debugText.characterHeight * 2), viewportX - (int)(debugWidth * 0.045f), (int)(debugHolder.Height - debugText.characterHeight * 12));
-                Graph debugFSGraph = new(0, debugWidth, (int)(debugText.characterHeight * 2), (int)(monitorWidth * 0.5f - debugWidth * 1.00f), (int)(debugHolder.Height - debugText.characterHeight * 7));
-                debugFSGraph.showValues = false;
-                renderingTicks.showValues = false;
-
-                console = new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
+                int[] cDimensions = Console.ConsoleDimensionsWithoutDebugmenu;
+                console = new(cDimensions[0], cDimensions[1], cDimensions[2], cDimensions[3]);//new((int)(monitorWidth * 0.496 - monitorWidth * 0.125f), (int)(monitorHeight * 0.242f - 25),monitorWidth - viewportX - (int)(monitorWidth * 0.496 - monitorWidth * 0.125f),(int)(monitorHeight * 0.004f));
                 Console.GenerateConsoleErrorLog(BaseDirectory);
 
                 TabManager tab = new(new string[] { "Models", "Submodels" });
@@ -320,10 +314,6 @@ namespace CORERenderer.Main
 
                 console.RenderEvenIfNotChanged();
 
-                //secondPassed = true; //cheap trick to make it think that its allowed to render
-                //graphManager.Render();
-                //secondPassed = false;
-
                 sceneManager.Render();
                 #endregion
                 //render loop
@@ -355,6 +345,9 @@ namespace CORERenderer.Main
                                 console.Update();
                                 if ((keyIsPressed || mouseIsPressed) && !Submenu.isOpen) //only draw new stuff if the app is actively being used
                                 {
+                                    button.Render();
+                                    saveAsImage.Render();
+
                                     tab.Render();
 
                                     modelInformation.Render();
@@ -368,18 +361,9 @@ namespace CORERenderer.Main
                                 console.Render();
                                 
                                 if (saveAsImage.isPressed)
-                                    Texture.WriteAsPNG($"{BaseDirectory}\\Renders\\test.png", renderFramebuffer.Texture, renderFramebuffer.width, renderFramebuffer.height);
+                                    Texture.WriteAsPNG($"{BaseDirectory}\\Renders\\render{DateTime.Now.ToString()[(DateTime.Now.ToString().IndexOf(' ') + 1)..].Replace(':', '-')}.png", renderFramebuffer.Texture, renderFramebuffer.width, renderFramebuffer.height);
                             }
-
-                            debugHolder.Render();
-                            renderingTicks.UpdateConditionless(TicksSpent3DRenderingThisFrame);
-                            if (debugFSGraph.MaxValue > 70) debugFSGraph.MaxValue = (int)(timeSinceLastFrame * 1000 * 1.5f);
-                            debugFSGraph.color = 1 / timeSinceLastFrame < refreshRate / 2 ? new(1, 0, 0) : new(1, 0, 1);
-                            debugFSGraph.UpdateConditionless((float)(timeSinceLastFrame * 1000));
-                            renderingTicks.RenderConditionless();
-                            debugFSGraph.RenderConditionless();
-                            glDisable(GL_CULL_FACE);
-                            ShowRenderStatistics(debugHolder);
+                            Debugmenu.Render();
 
                             clearedGUI = false;
                         }
@@ -557,45 +541,6 @@ namespace CORERenderer.Main
                 return -1;
             }
             return 0;
-        }
-
-        private static void ShowRenderStatistics(Div debugHolder)
-        {
-            string[] results = RenderStatistics;
-            debugText.drawWithHighlights = true;
-            for (int i = 0; i < results.Length; i++)
-            {
-                string result = results[i];
-                debugHolder.Write(result, 0, debugHolder.Height - debugText.characterHeight * (i + 1), 0.7f, new(1, 1, 1));
-            }
-            debugHolder.Write($"Camera position: {MathC.Round(Rendering.Camera.position, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 5), 0.7f, new(1, 1, 1));
-            debugHolder.Write($"Camera front: {MathC.Round(Rendering.Camera.front, 2)}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 6), 0.7f, new(1, 1, 1));
-            debugHolder.Write($"Selected scene: {SelectedScene}", 0, debugHolder.Height - debugText.characterHeight * (results.Length + 7), 0.7f, new(1, 1, 1));
-
-            string msg = $"Threads reserved: {Job.ReservedThreads + 1}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight, 0.7f, new(1, 1, 1));
-            msg = $"CPU usage: {CPUUsage}%";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 2, 0.7f, new(1, 1, 1));
-            msg = $"Framecount: {totalFrameCount}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 3, 0.7f, new(1, 1, 1));
-            msg = $"Frametime: {Math.Round(timeSinceLastFrame * 1000, 3)} ms";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 4, 0.7f, new(1, 1, 1));
-            msg = $"FPS: {(int)(1 / timeSinceLastFrame)}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 5, 0.7f, new(1, 1, 1));
-            msg = $"Errors caught: {errorsCaught}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 8, 0.7f, new(1, 1, 1));
-            string status = appIsHealthy ? "OK" : "BAD";
-            msg = $"App status: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 9, 0.7f, new(1, 1, 1));
-            status = keyIsPressed ? pressedKey.ToString() : mouseIsPressed ? pressedButton.ToString() : "None";
-            msg = $"Input callback: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 11, 0.7f, new(1, 1, 1));
-            msg = $"Render IDs: {renderToIDFramebuffer}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 13, 0.7f, new(1, 1, 1));
-            status = renderToIDFramebuffer ?  1 / timeSinceLastFrame > refreshRate / 2 ? "OK" : "BAD" : "Unknown";
-            msg = $"ID rendering performance: {status}";
-            debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 14, 0.7f, new(1, 1, 1));
-            debugText.drawWithHighlights = false;
         }
 
         public static void MergeAllModels(out List<List<float>> vertices, out List<Vector3> offsets)

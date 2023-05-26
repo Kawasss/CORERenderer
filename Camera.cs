@@ -16,7 +16,7 @@ namespace CORERenderer
         private float yaw = -(MathC.PiF / 2);
         private float fov = MathC.PiF / 2;
 
-        private float nearPlane = 0.1f, farPlane = 5000;
+        private float nearPlane = 0.01f, farPlane = 5000;
 
         public static float cameraSpeed = 3f;
         private const float SENSITIVITY = 0.1f;

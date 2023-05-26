@@ -65,7 +65,7 @@ namespace CORERenderer.Loaders
                         }
                         models[^1].Transform.BoundingBox = new(min, max);
                     }
-                    bool hasSkybox = RetrieveSkyboxNode(fs, out scene.skybox);
+                    bool hasSkybox = RetrieveSkyboxNode(fs, ref scene.skybox);
 
                     scene.models = models;
                 }
@@ -79,15 +79,12 @@ namespace CORERenderer.Loaders
             return Error.None;
         }
 
-        private static bool RetrieveSkyboxNode(FileStream fs, out HDRTexture skybox)
+        private static bool RetrieveSkyboxNode(FileStream fs, ref Skybox skybox)
         {
             bool exists = GetBool(fs);
 
             if (!exists)
-            {
-                skybox = null;
                 return false;
-            }
 
             int length = GetInt(fs);
             byte[] data = new byte[length];
@@ -100,7 +97,7 @@ namespace CORERenderer.Loaders
             {
                 sw.BaseStream.Write(data);
             }
-            skybox = HDRTexture.ReadFromFile($"{dir}skybox.hdr", Rendering.TextureQuality);
+            skybox = Skybox.ReadFromFile($"{dir}skybox.hdr", Rendering.TextureQuality);
             File.Delete($"{dir}skybox.hdr");
             return true;
         }

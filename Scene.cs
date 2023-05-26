@@ -21,15 +21,13 @@ namespace CORERenderer
         public List<Model> models = new();
         public List<Light> lights = new();
 
-        public HDRTexture skybox = null;
+        public Skybox skybox = null;
 
         public bool loaded = false;
 
         public int currentObj = -1;
 
         private Vector2 lastPos = null;
-
-        public PBRSphere sphere = null;
 
         public override void OnLoad(string[] args)
         {
@@ -47,10 +45,12 @@ namespace CORERenderer
                     currentObj = 0;
                 }
                 else if (LoadFile == RenderMode.HDRFile)
-                    skybox = HDRTexture.ReadFromFile(args[0], Rendering.TextureQuality);
+                    skybox = Skybox.ReadFromFile(args[0], Rendering.TextureQuality);
                 else if (LoadFile == RenderMode.CPBRFile)
-                    sphere = new(Readers.LoadCPBR(args[0]));
-                    
+                {
+                    models.Add(Model.Sphere);
+                    models[^1].submodels[0].material = Readers.LoadCPBR(args[0]);
+                }
             }
             for (int i = 0; i < models.Count; i++)
                 if (models[i].terminate)
@@ -58,8 +58,10 @@ namespace CORERenderer
                     Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
                     models.RemoveAt(i);
                 }
-            lights.Add(new() { position = new(1, 2, 1) });
+            if (lights.Count == 0)
+                lights.Add(new() { position = new(1, 2, 1) });
             lights.Add(new() { position = new(0, 1, 2) });
+            skybox ??= DefaultSkybox;
             /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
             models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
@@ -101,7 +103,6 @@ namespace CORERenderer
                     GenericShaders.PBR.SetVector3("lightPos[1]", lights[1].position);
                     //GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
-                sphere?.Render();
                 RenderScene(this);
             }
             catch (System.Exception err)
@@ -110,6 +111,7 @@ namespace CORERenderer
             }
         }
 
+        private int previousHighlighted = 0;
         public override void EveryFrame(Window window, float delta)
         {
             loaded = models.Count > 0;
@@ -121,8 +123,10 @@ namespace CORERenderer
 
                 else if (selectedID == models[i].ID)
                 {
+                    models[previousHighlighted].highlighted = false;
                     models[i].highlighted = true;
                     currentObj = i;
+                    previousHighlighted = i;
                 }
             }
 

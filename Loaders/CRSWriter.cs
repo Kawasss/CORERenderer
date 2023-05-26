@@ -30,9 +30,9 @@ namespace CORERenderer.Loaders
             }
         }
 
-        private static void WriteSkyboxNode(StreamWriter sw, HDRTexture skybox)
+        private static void WriteSkyboxNode(StreamWriter sw, Skybox skybox)
         {
-            byte[] exists = BitConverter.GetBytes(skybox != null);
+            byte[] exists = BitConverter.GetBytes(skybox != null || skybox != Rendering.DefaultSkybox);
             sw.BaseStream.Write(exists);
 
             if (skybox != null)

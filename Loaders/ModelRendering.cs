@@ -9,8 +9,7 @@ namespace CORERenderer.Loaders
     {
         public void Render()
         {
-            if (type == RenderMode.ObjFile || type == RenderMode.STLFile || type == RenderMode.JPGImage || type == RenderMode.PNGImage)
-                RenderModel();
+            RenderModel();
         }
 
         public void RenderShadow()

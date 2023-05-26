@@ -15,7 +15,7 @@ namespace CORERenderer.Loaders
 
             Assimp.Scene s = GetAssimpScene(path);
             name = Path.GetFileNameWithoutExtension(path);
-            vertices = GetBasicSceneData(path, s, out _, out _, out _);
+            vertices = GetBasicSceneData(path, s, out _, out _, out _, out _);
 
             return Error.None;
         }

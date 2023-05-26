@@ -156,6 +156,8 @@ namespace CORERenderer.OpenGL
             out VS_OUT 
             {
                 vec3 normal;
+                vec2 texCoords;
+                mat4 model;
             } vs_out;
 
             uniform mat4 model;
@@ -165,7 +167,9 @@ namespace CORERenderer.OpenGL
                 vec4 pos = (vec4(aPos, 1) * model);
             
             	vs_out.normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
-            
+                vs_out.texCoords = aTexCoords;
+                vs_out.model = model;
+
             	gl_Position = pos;
             }
             """;
@@ -178,6 +182,8 @@ namespace CORERenderer.OpenGL
 
             in VS_OUT {
                 vec3 normal;
+                vec2 texCoords;
+                mat4 model;
             } gs_in[];
 
             const float MAGNITUDE = 0.15;
@@ -190,7 +196,7 @@ namespace CORERenderer.OpenGL
 
             void GenerateLine(int index)
             {
-                gl_Position = gl_in[index].gl_Position *view * projection;
+                gl_Position = gl_in[index].gl_Position * view * projection;
                 EmitVertex();
                 gl_Position = (gl_in[index].gl_Position + vec4(gs_in[index].normal, 0.0) * MAGNITUDE) * view * projection;
                 EmitVertex();
@@ -215,7 +221,7 @@ namespace CORERenderer.OpenGL
                 FragColor = vec4(1.0, 0.0, 1.0, 1.0);
             }  
             """;
-        //stolen from learnopengl btw
+        //a lot of code used from LearnOpenGL at https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/6.pbr/1.2.lighting_textured/1.2.pbr.fs
         private static string PBRFragText =
             """
             #version 430 core
@@ -239,8 +245,12 @@ namespace CORERenderer.OpenGL
             uniform sampler2D roughnessMap;
             uniform sampler2D aoMap;
             uniform sampler2D heightMap;
+            uniform sampler2D alphaMap;
 
             uniform samplerCube shadowMap;
+            uniform samplerCube reflectionCubemap;
+
+            uniform int isHighlighted;
 
             const float PI = 3.14159265359;
             #define heightScale 0.1
@@ -255,6 +265,7 @@ namespace CORERenderer.OpenGL
                 return currentDepth - bias > closestDepth ? 1 : 0;
             }
 
+            //from https://github.com/DOWNPOURDIGITAL/glsl-parallax-occlusion-mapping, all credit there
             vec2 ParallaxOcclusionMapping( sampler2D depthMap, vec2 uv, vec2 displacement, float pivot ) {
             	const float layerDepth = 1.0 / float(8);
             	float currentLayerDepth = 0.0;
@@ -287,12 +298,35 @@ namespace CORERenderer.OpenGL
             	return ParallaxOcclusionMapping( depthMap, uv, displacement, 0.0 );
             }
             
+            #define Directions 16.0
 
-            // ----------------------------------------------------------------------------
-            // Easy trick to get tangent-normals to world-space to keep PBR code simplified.
-            // Don't worry if you don't get what's going on; you generally want to do normal 
-            // mapping the usual way for performance anyways; I do plan make a note of this 
-            // technique somewhere later in the normal mapping tutorial.
+            const float randomValues[16] = { 0.0162162162, 0.0540540541, 0.1216216216, 0.1945945946, 0.1216216216, 0.2969069646728344, 0.0540540541, 0.0162162162, 0.010381362401148057, 0.010381362401148057, 0.2270270270, 0.1964825501511404, 0.09447039785044732, 0.09447039785044732, 0.2969069646728344, 0.1964825501511404 };
+            //largely inspired by https://www.shadertoy.com/view/Xltfzj
+            vec3 GetGuassianBlur(float roughness, vec3 viewDir, vec3 normal)
+            {
+                /*vec3 newDir = -lightDir + 2 * normal * dot(lightDir, normal);//reflect(lightDir, normal);//fresnel;
+                vec3 blur = vec3(0);
+                int j = 0;
+                for (float i = 0; i < PI; i += PI / Directions, j++)
+                    blur += texture(reflectionCubemap, newDir + vec3(cos(randomValues[j]), sin(randomValues[j]), cos(randomValues[j]) * sin(randomValues[j])) * vec3(metallic*10/2560, metallic*10/1440, 1)).rgb * randomValues[j];
+                return blur;*/
+                vec3 dir = reflect(-viewDir, normal);
+                return textureLod(reflectionCubemap, dir, 4 * roughness).rgb;
+            }
+
+            #define FresnelExponent 5
+
+            vec3 GetFresnelOutline(vec3 normal, vec3 viewPos)
+            {
+                vec3 color = vec3(.9, .2, .9);
+
+                float fresnel = dot(normal, viewPos);
+                fresnel = clamp(1 - fresnel, 0.0, 1.0);
+                fresnel = pow(fresnel, FresnelExponent);
+                vec3 finalColor = color * fresnel;
+                return finalColor;
+            }
+
             vec3 getNormalFromMap(vec2 texCoords)
             {
                 vec3 tangentNormal = texture(normalMap, texCoords).xyz * 2.0 - 1.0;
@@ -309,7 +343,7 @@ namespace CORERenderer.OpenGL
 
                 return normalize(TBN * tangentNormal);
             }
-            // ----------------------------------------------------------------------------
+            
             float DistributionGGX(vec3 N, vec3 H, float roughness)
             {
                 float a = roughness*roughness;
@@ -323,7 +357,7 @@ namespace CORERenderer.OpenGL
 
                 return nom / denom;
             }
-            // ----------------------------------------------------------------------------
+            
             float GeometrySchlickGGX(float NdotV, float roughness)
             {
                 float r = (roughness + 1.0);
@@ -334,7 +368,7 @@ namespace CORERenderer.OpenGL
 
                 return nom / denom;
             }
-            // ----------------------------------------------------------------------------
+            
             float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
             {
                 float NdotV = max(dot(N, V), 0.0);
@@ -344,12 +378,17 @@ namespace CORERenderer.OpenGL
 
                 return ggx1 * ggx2;
             }
-            // ----------------------------------------------------------------------------
+            
             vec3 fresnelSchlick(float cosTheta, vec3 F0)
             {
                 return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
             }
-            // ----------------------------------------------------------------------------
+            
+            vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+            {
+                return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+            }  
+
             void main()
             {		
                 vec2 texCoords = ParallaxOcclusionMapping(heightMap, TexCoords, normalize(FragPos - viewPos).xy * .001);
@@ -357,8 +396,9 @@ namespace CORERenderer.OpenGL
                     discard;
 
                 vec3 albedo     = pow(texture(albedoMap, texCoords).rgb, vec3(2.2));
-                float metallic  = texture(metallicMap, texCoords).r;
-                float roughness = texture(roughnessMap, texCoords).r;
+                //each uses a different color channel so that its compatible with ARM maps
+                float metallic  = texture(metallicMap, texCoords).b;
+                float roughness = texture(roughnessMap, texCoords).g;
                 float ao        = texture(aoMap, texCoords).r;
 
                 vec3 N = getNormalFromMap(texCoords);
@@ -377,7 +417,7 @@ namespace CORERenderer.OpenGL
                     vec3 L = normalize(lightPos[i] - FragPos);
                     vec3 H = normalize(V + L);
                     float distance = length(lightPos[i] - FragPos);
-                    float attenuation = 1.0 / (distance * distance);
+                    float attenuation = 1.0 / (distance);
                     vec3 radiance = vec3(1) * attenuation;
 
                     // Cook-Torrance BRDF
@@ -386,18 +426,13 @@ namespace CORERenderer.OpenGL
                     vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
                     vec3 numerator    = NDF * G * F; 
-                    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+                    float denominator = 3.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
                     vec3 specular = numerator / denominator;
 
-                    // kS is equal to Fresnel
                     vec3 kS = F;
-                    // for energy conservation, the diffuse and specular light can't
-                    // be above 1.0 (unless the surface emits light); to preserve this
-                    // relationship the diffuse component (kD) should equal 1.0 - kS.
+                    
                     vec3 kD = vec3(1.0) - kS;
-                    // multiply kD by the inverse metalness such that only non-metals 
-                    // have diffuse lighting, or a linear blend if partly metal (pure metals
-                    // have no diffuse light).
+                    
                     kD *= 1.0 - metallic;	  
 
                     // scale light by NdotL
@@ -406,20 +441,53 @@ namespace CORERenderer.OpenGL
                     // add to outgoing radiance Lo
                     Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
                 }   
+                vec3 radiance = vec3(1);
+
+                vec3 L = vec3(0, 1, 0);
+                vec3 H = normalize(V + L);
+
+                float NDF = DistributionGGX(N, H, roughness);   
+                float G   = GeometrySmith(N, V, L, roughness);      
+                vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+                vec3 numerator    = NDF * G * F; 
+                float denominator = 3.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+                vec3 specular = numerator / denominator;
+
+                // kS is equal to Fresnel
+                vec3 kS = F;
+                // for energy conservation, the diffuse and specular light can't
+                // be above 1.0 (unless the surface emits light); to preserve this
+                // relationship the diffuse component (kD) should equal 1.0 - kS.
+                vec3 kD = vec3(1.0) - kS;
+                // multiply kD by the inverse metalness such that only non-metals 
+                // have diffuse lighting, or a linear blend if partly metal (pure metals
+                // have no diffuse light).
+                kD *= 1.0 - metallic;	  
+            
+                // scale light by NdotL
+                float NdotL = max(dot(N, L), 0.0);        
+            
+                // add to outgoing radiance Lo
+                Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+
+                F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
                 // ambient lighting (note that the next IBL tutorial will replace 
                 // this ambient lighting with environment lighting).
-                vec3 ambient = vec3(0.03) * albedo * ao;
+                vec3 ambient = (vec3(0.03) * albedo * GetGuassianBlur(roughness, V, N) * F) * ao;
 
                 vec3 color = ambient + Lo;
                 //color *= GetShadow(FragPos);
+                if (isHighlighted == 1)
+                    color += GetFresnelOutline(N, V);
 
                 // HDR tonemapping
-                color = color / (color + vec3(1.0));
+                color /= (color + vec3(1.0));
                 // gamma correct
                 color = pow(color, vec3(1.0/2.2)); 
 
-                FragColor = vec4(color, 1.0);
+                FragColor = vec4(color, /*texture(alphaMap, texCoords).r*/1.0);
             }
             """;
 
@@ -1289,7 +1357,7 @@ namespace CORERenderer.OpenGL
                     finalPos = pos;
 
             	FragPos = finalPos.xyz;//(finalPos * model).xyz;
-            	Normal = mat3(transpose(inverse(model))) * aNormal; //way more efficient if calculated on CPU
+            	Normal = aNormal * mat3(transpose(inverse(model))); //way more efficient if calculated on CPU
             	Model = model;
                 TexCoords = aTexCoords;
 

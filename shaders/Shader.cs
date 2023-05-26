@@ -92,6 +92,9 @@ namespace CORERenderer.shaders
 
             if (!HandleShaderPair.ContainsKey(Handle))
                 HandleShaderPair.Add(Handle, this);
+
+            if (!compiledSuccessfully || !linkedSuccessfully)
+                Console.WriteLine(false, StartLog);
         }
 
         public Shader(string vertexPath, string fragmentPath, string geometryPath)
@@ -136,6 +139,9 @@ namespace CORERenderer.shaders
 
             if (!HandleShaderPair.ContainsKey(Handle))
                 HandleShaderPair.Add(Handle, this);
+
+            if (!compiledSuccessfully || !linkedSuccessfully)
+                Console.WriteLine(StartLog);
         }
 
         private static bool compileShader(uint shader, out long time)

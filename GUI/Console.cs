@@ -15,6 +15,9 @@ namespace CORERenderer.GUI
 {
     public class Console
     {
+        public static int[] ConsoleDimensionsWithDebugmenu { get => new int[] { (int)(COREMain.monitorWidth * 0.496 - COREMain.monitorWidth * 0.125f), (int)(COREMain.monitorHeight * 0.242f - 25), COREMain.monitorWidth - COREMain.viewportX - (int)(COREMain.monitorWidth * 0.496 - COREMain.monitorWidth * 0.125f), (int)(COREMain.monitorHeight * 0.004f) }; }
+        public static int[] ConsoleDimensionsWithoutDebugmenu { get => new int[] { COREMain.renderWidth, (int)(COREMain.monitorHeight * 0.242f - 25), COREMain.viewportX, (int)(COREMain.monitorHeight * 0.004f) }; }
+
         public static bool writeDebug = false, writeError = true;
 
         private Div quad;
@@ -98,12 +101,19 @@ namespace CORERenderer.GUI
 
         private void CheckForUserInput()
         {
+            if (Glfw.GetKey(COREMain.window, Keys.Up) == InputState.Press && lines[^1] != $"COREConsole/{currentContext} > {allCommands[^1]}")
+            {
+                lines[^1] = $"COREConsole/{currentContext} > {allCommands[^1]}";
+                changed = true;
+                return;
+            }
+
             if (!Main.COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)Main.COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)Main.COREMain.pressedKey))
             {
                 isPressedPrevious = Glfw.GetKey(Main.COREMain.window, Keys.Backspace) == InputState.Press;
                 return;
             }
-                
+            
             char letter = Glfw.GetKey(Main.COREMain.window, Keys.LeftShift) == InputState.Press ? Globals.keyShiftCharBinding[(int)Main.COREMain.pressedKey] : Globals.keyCharBinding[(int)Main.COREMain.pressedKey]; //if shift is pressed use the appropriate version of that key
             if (letter != LastLine[^1] || Glfw.Time - previousTime2 > 0.15)
             {
@@ -160,8 +170,10 @@ namespace CORERenderer.GUI
                         lineOffset += sum;
                         max--;
                     }
-                        
-                    string suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 && COREMain.debugText.GetStringWidth(lines[i] + $" ({amountOfAppearancesLine[lines[i]]})", 0.7f) < Width ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
+                    string suffix = "";
+                    if (amountOfAppearancesLine.ContainsKey(lines[i]))
+                        suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : !lines[i].Contains("COREConsole/") && amountOfAppearancesLine[lines[i]] != 0 && COREMain.debugText.GetStringWidth(lines[i] + $" ({amountOfAppearancesLine[lines[i]]})", 0.7f) < Width ? $" ({amountOfAppearancesLine[lines[i]]})" : ""; //the | indicates the cursor. Only the last string has this
+                    else suffix = i == lines.Count - 1 && j == allText.Length - 1 ? "|" : "";
 
                     if (lines[i].Contains("COREConsole/") || i == lines.LastIndexOf(lines[i]))
                         quad.Write(allText[j] + suffix, 0, Height - lineOffset, 0.7f, color);
@@ -170,43 +182,47 @@ namespace CORERenderer.GUI
             Main.COREMain.debugText.drawWithHighlights = original;
         }
 
-        private static void WriteLineF(string text)
+        private static void WriteLineF(bool removeIfDuplicate, string text)
         {
-            if (!amountOfAppearancesLine.ContainsKey(text))
-                indexOfFirstLineToRender++;
-
-            if (amountOfAppearancesLine.ContainsKey(text) && !text.Contains("COREConsole/"))
+            if (removeIfDuplicate)
             {
-                int index = amountOfAppearancesLine[text];
-                amountOfAppearancesLine.Remove(text);
-                amountOfAppearancesLine.Add(text, index + 1);
-                lines.RemoveAt(lines.IndexOf(text));
-            }
-            else if (!text.Contains("COREConsole/"))
-                amountOfAppearancesLine.Add(text, 0);
+                if (!amountOfAppearancesLine.ContainsKey(text))
+                    indexOfFirstLineToRender++;
 
-            changed = true; //tells the console render everything again (could be optimised better by only rendering the newly added sentence / letters instead of every (already existing) sentence)
+                if (amountOfAppearancesLine.ContainsKey(text) && !text.Contains("COREConsole/"))
+                {
+                    int index = amountOfAppearancesLine[text];
+                    amountOfAppearancesLine.Remove(text);
+                    amountOfAppearancesLine.Add(text, index + 1);
+                    lines.RemoveAt(lines.IndexOf(text));
+                }
+                else if (!text.Contains("COREConsole/"))
+                    amountOfAppearancesLine.Add(text, 0);
+            }
+
+            changed = true; //tells the console to render everything again (could be optimised better by only rendering the newly added sentence / letters instead of every (already existing) sentence)
 
             lines.Add(text);
         }
 
-        public static void WriteLine(object value)
+        public static void WriteLine(object value) => WriteLine(true, value);
+        public static void WriteLine(bool removeIfDuplicate, object value)
         {
             string end = value.ToString();
             string[] allResults = new string[] { end };
 
             if (end.Contains(Environment.NewLine))
                 allResults = SeperateByNewLines(end);
-
+            
             foreach (string s in allResults)
-                WriteLineF(s);
+                WriteLineF(removeIfDuplicate, s);
         }
 
         public static string[] SeperateByNewLines(string end)
         {
             string prefix = GetPrefix(end); //decides if the base string is an error or debug by checking if it starts with its prefix
 
-            string[] seperatedLines = end.Split(new string[] {Environment.NewLine}, StringSplitOptions.None);
+            string[] seperatedLines = end.Split('\n');//end.Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 1; i < seperatedLines.Length; i++)
                 seperatedLines[i] = prefix + seperatedLines[i];
             
@@ -399,9 +415,9 @@ namespace CORERenderer.GUI
                 else HandleContextCommand(input);
 
             }
-            catch (System.Exception)
+            catch (System.Exception err)
             {
-                WriteError($"Couldn't parse given command \"{input}\", a provided argument was incorrect or there was insufficient information provided to construct a command");
+                WriteError($"Couldn't parse given command \"{input}\", a provided argument was incorrect or there was insufficient information provided to construct a command. \nCaught error:\n{err}");
             }
 
             WriteLine($"COREConsole/{currentContext} > ");
@@ -506,6 +522,8 @@ namespace CORERenderer.GUI
             else
                 WriteError($"Couldn't parse camera command \"{input}\"");
         }
+
+        private Dictionary<string, Model> BasicShapeTable = new() { { "cube", Model.Cube }, { "cylinder", Model.Cylinder }, { "plane", Model.Plane }, { "sphere", Model.Sphere } };
         private void HandleSceneCommands(string[] input)
         {
             if (input[0] == "attach")
@@ -549,22 +567,25 @@ namespace CORERenderer.GUI
                         WriteLine($"Couldn't delete given models, a provided index wasn't valid");
                     }
                 }
+                else if (input[1].StartsWith("lights"))
+                {
+                    int index = Readers.GetOneIntWithRegEx(input[1]);
+                    COREMain.CurrentScene.lights.RemoveAt(index);
+                }
             }
 
             //load
             else if (input[0] == "load") //keyword for loading in a file with given path
             {
+                if (BasicShapeTable.ContainsKey(input[1]))
+                {
+                    COREMain.CurrentScene.models.Add(BasicShapeTable[input[1]]);
+                    return;
+                }
+
                 if (input[1] == "dir")
                 {
                     string dir = GetFullPath(input[2][9..]);
-                    
-                    if (dir[..4] == "this" && Main.COREMain.LoadFilePath == null) //throws an error if it wasnt opened in a directory but 'this' is used
-                    {
-                        WriteError($"\"{dir}\" isn't valid here");
-                        return;
-                    }
-                    else if (dir[..5] == "$PATH") //allows '$PATH' to be used as an alias for the base of the directory that the .exe is located
-                        dir = Main.COREMain.BaseDirectory + dir[5..];
                     
                     if (Directory.Exists(dir)) //checks if the given directory is valid
                     {
@@ -576,10 +597,10 @@ namespace CORERenderer.GUI
                 }  
                 else if (input[1] != "dir") //checks if user wants to load in an directory or a single file
                 {
-                    string dir = GetFullPath(input[1][5..]);
-                    if (File.Exists(dir) && dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg") //only allows certain file types, in this case .obj and .hdr
+                    string dir = GetFullPath(input[1]);
+                    if (File.Exists(dir) && (dir[^4..] == ".obj" || dir[^4..] == ".hdr" || dir[^4..] == ".stl" || dir[^4..] == ".png" || dir[^4..] == ".jpg" || dir[^5..] == ".cpbr")) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
                     {
-                        Main.COREMain.scenes[Main.COREMain.SelectedScene].models.Add(new(dir));
+                        COREMain.CurrentScene.models.Add(new(dir));
                         WriteLine("Loaded file");
                     }
                     else
@@ -725,16 +746,43 @@ namespace CORERenderer.GUI
                 }
             }
 
-            else if (input[0] == "disable" && input[1] == "arrows")
+            else if (input[0] == "disable")
             {
-                Arrows.disableArrows = true;
-                WriteLine("Disabled arrows");
+                switch (input[1])
+                {
+                    case "arrows":
+                        Arrows.disableArrows = true;
+                        WriteLine("Disabled arrows");
+                        break;
+                    case "lights":
+                        Rendering.renderLights = false;
+                        WriteLine("Lights aren't being rendered anymore");
+                        break;
+                    case "grid":
+                        COREMain.renderGrid = true;
+                        WriteLine("Grid isn't being rendered anymore");
+                        break;
+                }
+                
             }
 
-            else if (input[0] == "enable" && input[1] == "arrows")
+            else if (input[0] == "enable")
             {
-                Arrows.disableArrows = false;
-                WriteLine("Enabled arrows");
+                switch (input[1])
+                {
+                    case "arrows":
+                        Arrows.disableArrows = false;
+                        WriteLine("Enabled arrows");
+                        break;
+                    case "lights":
+                        Rendering.renderLights = true;
+                        WriteLine("Lights are being rendered");
+                        break;
+                    case "grid":
+                        COREMain.renderGrid = true;
+                        WriteLine("Grid is being rendered");
+                        break;
+                }
             }
 
             else
@@ -743,8 +791,16 @@ namespace CORERenderer.GUI
 
         private void HandleConsoleCommands(string[] input)
         {
-            if (input[0] == "get" && input[1] == "info")
-                ShowInfo();
+            if (input[0] == "get")
+            {
+                if (input[1] == "info")
+                    ShowInfo();
+                else if (input[1] == "$PATH" || input[1] == "this")
+                    WriteLine(GetFullPath(input[1]));
+                else if (input[1] == "path")
+                    WriteLine(GetFullPath("$PATH"));
+            }
+                
             else if (input[0] == "clear" && input[1] == "GUI") //clears the GUI framebuffer, can leave artifacts behind
             {
                 GL.glClearColor(0.085f, 0.085f, 0.085f, 1);
@@ -754,8 +810,28 @@ namespace CORERenderer.GUI
                 
             else if (input[0] == "wipe") //wipes the console clean
                 Wipe();
+
+            else if (input[0] == "disable" && input[1] == "debug")
+            {
+                if (!Debugmenu.isVisible)
+                    return;
+
+                Debugmenu.isVisible = false;
+                int[] dimensions = ConsoleDimensionsWithoutDebugmenu;
+                COREMain.console = new(dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
+            }
+            else if (input[0] == "enable" && input[1] == "debug")
+            {
+                if (Debugmenu.isVisible)
+                    return;
+
+                Debugmenu.isVisible = true;
+                int[] dimensions = ConsoleDimensionsWithDebugmenu;
+                COREMain.console = new(dimensions[0], dimensions[1], dimensions[2], dimensions[3]);
+            }
+
             else
-                WriteError($"Couldn't parse console command \"{input}\"");
+                WriteError($"Couldn't parse console command");
         }
 
         private void ChangeValue(ref float variable, string input)
@@ -851,13 +927,18 @@ namespace CORERenderer.GUI
 
         private static string GetFullPath(string path)
         {
-            if (COREMain.BaseDirectory == null)
-                return path;
-
             if (path.Contains("this"))
+            {
+                if (COREMain.LoadFilePath == null)
+                    throw new System.Exception($"Invalid argument given for alias {path}: this == null");
                 path = path.Replace("this", Path.GetDirectoryName(COREMain.LoadFilePath));
+            } 
             else if (path.Contains("$PATH"))
+            {
+                if (COREMain.BaseDirectory == null)
+                    throw new System.Exception($"Invalid argument given for alias {path}: $PATH == null");
                 path = path.Replace("$PATH", COREMain.BaseDirectory);
+            }
             return path;
         }
     }

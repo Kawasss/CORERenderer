@@ -105,7 +105,9 @@ namespace CORERenderer.textures
             timer.Stop();
             System.Console.WriteLine($"Read 2D texture {Path.GetFileNameWithoutExtension(imagePath)}:\n    Path: {imagePath}\n    Mode: 0x{string.Concat(BitConverter.ToString(BitConverter.GetBytes(mode)).Where(c => c != '-'))}\n    Read in: {timer.ElapsedMilliseconds} ms\n    Flipped: {flip}\n    Dimensions: {imageWidth}x{imageHeight}\n    Data size: {imageData.Length} bytes\n");
 
-            return new Texture(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath), mode = mode, flipped = flip, timeToRead = timer.ElapsedMilliseconds, dataSize = imageData.Length };//, Data = image.Data.ToArray() };
+            Texture h = new(handle) { path = imagePath, name = Path.GetFileNameWithoutExtension(imagePath), width = imageWidth, height = imageHeight, FileContent = File.ReadAllBytes(imagePath), mode = mode, flipped = flip, timeToRead = timer.ElapsedMilliseconds, dataSize = imageData.Length };
+            //Console.WriteLine(false, h.Log);
+            return h;
         }
 
         public void Downscale(float quality)

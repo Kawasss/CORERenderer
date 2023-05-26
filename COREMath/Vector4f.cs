@@ -31,6 +31,15 @@ namespace COREMath
 
         public Vector4(Vector3 v3, float v1)
         {
+            if (v3 == null)
+            {
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+                this.w = 1;
+                return;
+            }
+
             this.x = v3.x;
             this.y = v3.y;
             this.z = v3.z;

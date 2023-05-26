@@ -160,7 +160,7 @@ namespace CORERenderer.Fonts
         {
             if (index + 1 >= fullText.Length)
                 return false;
-            if ((fullText[index] == ',' || fullText[index] == '.' || fullText[index] == '-') && int.TryParse($"{fullText[index + 1]}", out _))
+            if ((fullText[index] == ',' || fullText[index] == '.' || fullText[index] == '-' || fullText[index] == 'x') && int.TryParse($"{fullText[index + 1]}", out _))
                 return true;
             return false;
         }
@@ -171,13 +171,13 @@ namespace CORERenderer.Fonts
                 return true;
 
             if (index - 1 < 0)
-                return fullText[index + 1] == ' ' || fullText[index + 1] == '%' || int.TryParse($"{fullText[index + 1]}", out _);
+                return fullText[index + 1] == ' ' || fullText[index + 1] == '%' || fullText[index + 1] == ':' || int.TryParse($"{fullText[index + 1]}", out _);
 
             else if (index + 1 >= fullText.Length)
                 return fullText[index - 1] == ' ' || fullText[index - 1] == '~' || fullText[index - 1] == '-' || int.TryParse($"{fullText[index - 1]}", out _);
 
             else
-                return (int.TryParse($"{fullText[index - 1]}", out _) || fullText[index - 1] == '~' || fullText[index - 1] == ' ' || fullText[index - 1] == ',' || fullText[index - 1] == '.' || fullText[index - 1] == '-') && (int.TryParse($"{fullText[index + 1]}", out _) || fullText[index + 1] == ' ' || fullText[index + 1] == ',' || fullText[index + 1] == '.' || fullText[index + 1] == '%');
+                return (int.TryParse($"{fullText[index - 1]}", out _) || fullText[index - 1] == 'x' || fullText[index - 1] == '~' || fullText[index - 1] == ' ' || fullText[index - 1] == ',' || fullText[index - 1] == '.' || fullText[index - 1] == '-') && (int.TryParse($"{fullText[index + 1]}", out _) || fullText[index + 1] == 'x' || fullText[index + 1] == ':' || fullText[index + 1] == ' ' || fullText[index + 1] == ',' || fullText[index + 1] == '.' || fullText[index + 1] == '%');
         }
 
         /// <summary>
