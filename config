@@ -1,6 +1,7 @@
 version=v0.6
-shaders=Lighting
+shaders=PBR
 cameraSpeed=5
 writedebug=True
 writeerror=True
 loadinfo=True
+MuteShaderErrors=False

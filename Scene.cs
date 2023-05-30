@@ -50,6 +50,7 @@ namespace CORERenderer
                 {
                     models.Add(Model.Sphere);
                     models[^1].submodels[0].material = Readers.LoadCPBR(args[0]);
+                    currentObj = 0;
                 }
             }
             for (int i = 0; i < models.Count; i++)
@@ -85,22 +86,22 @@ namespace CORERenderer
             try
             {
                 for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128
-                    GenericShaders.GenericLighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].ModelMatrix);
+                    GenericShaders.Lighting.SetMatrix($"boneMatrices[{i}]", Bone.bones[i].ModelMatrix);
 
                 if (shaderConfig == ShaderType.PathTracing)
                 {
-                    GenericShaders.GenericLighting.SetVector3("RAY.origin", Rendering.Camera.position);
-                    GenericShaders.GenericLighting.SetVector3("RAY.direction", Rendering.Camera.front);
-                    GenericShaders.GenericLighting.SetInt("isReflective", 0);
-                    GenericShaders.GenericLighting.SetVector3("emission", new(1, 1, 1));
-                    GenericShaders.GenericLighting.SetVector3("lights.color", new(1, 1, 1));
-                    GenericShaders.GenericLighting.SetVector3("lights.position", new(0, 1, 1));
+                    GenericShaders.Lighting.SetVector3("RAY.origin", Rendering.Camera.position);
+                    GenericShaders.Lighting.SetVector3("RAY.direction", Rendering.Camera.front);
+                    GenericShaders.Lighting.SetInt("isReflective", 0);
+                    GenericShaders.Lighting.SetVector3("emission", new(1, 1, 1));
+                    GenericShaders.Lighting.SetVector3("lights.color", new(1, 1, 1));
+                    GenericShaders.Lighting.SetVector3("lights.position", new(0, 1, 1));
                 }
-                else if (shaderConfig == ShaderType.Lighting)
+                else if (shaderConfig == ShaderType.PBR)
                 {
-                    GenericShaders.PBR.SetVector3("viewPos", Rendering.Camera.position);
-                    GenericShaders.PBR.SetVector3("lightPos[0]", lights[0].position);
-                    GenericShaders.PBR.SetVector3("lightPos[1]", lights[1].position);
+                    GenericShaders.Lighting.SetVector3("viewPos", Rendering.Camera.position);
+                    GenericShaders.Lighting.SetVector3("lightPos[0]", lights[0].position);
+                    GenericShaders.Lighting.SetVector3("lightPos[1]", lights[1].position);
                     //GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 RenderScene(this);
@@ -111,7 +112,8 @@ namespace CORERenderer
             }
         }
 
-        private int previousHighlighted = 0;
+        private int previousHighlighted = -1;
+        private double previousTime = 0;
         public override void EveryFrame(Window window, float delta)
         {
             loaded = models.Count > 0;
@@ -121,12 +123,19 @@ namespace CORERenderer
                 if (models[i].terminate)
                     models.RemoveAt(i);
 
-                else if (selectedID == models[i].ID)
+                else if (selectedID == models[i].ID && Glfw.Time - previousTime > 0.01)
                 {
-                    models[previousHighlighted].highlighted = !models[previousHighlighted].highlighted;
-                    models[i].highlighted = true;
+                    if (previousHighlighted != -1)
+                    {
+                        models[i].highlighted = !models[i].highlighted;
+                        if (previousHighlighted != i)
+                            models[previousHighlighted].highlighted = false;
+                    }
+                    else models[i].highlighted = true;
+                    
                     currentObj = i;
                     previousHighlighted = i;
+                    previousTime = Glfw.Time;
                 }
             }
 

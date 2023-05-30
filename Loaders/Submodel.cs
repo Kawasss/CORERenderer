@@ -30,7 +30,7 @@ namespace CORERenderer.Loaders
 
         public PBRMaterial material;
 
-        private Shader shader = GenericShaders.PBR;
+        private Shader shader = GenericShaders.Lighting;
         private Shader IDShader = GenericShaders.IDPicking;
 
         public VertexBuffer vbo;
@@ -44,6 +44,11 @@ namespace CORERenderer.Loaders
         public bool renderLines = false, highlighted = false, isTranslucent = false, hasMaterials = true, renderIDVersion = true, cullFaces = true;
 
         #region constructors
+        /// <summary>
+        /// Only use this if you're sure that the variable will get a working value
+        /// </summary>
+        public Submodel() { }
+
         public Submodel(string name, List<Vertex> vertices, PBRMaterial material, Model parent)
         {
             this.name = name;
@@ -149,15 +154,16 @@ namespace CORERenderer.Loaders
 
             GenericShaders.NormalVisualisation.ActivateAttributes();
 
+            //better to move this to genericShaders so that it only happens once and is easier to find
             shader.Use();
-            //shader.SetInt("material.Texture", 0);
             shader.SetInt("albedoMap", 0);
             shader.SetInt("normalMap", 1);
             shader.SetInt("metallicMap", 2);
             shader.SetInt("roughnessMap", 3);
             shader.SetInt("aoMap", 4);
             shader.SetInt("heightMap", 5);
-            shader.SetInt("shadowMap", 6);
+            shader.SetInt("reflectionCubemap", 6);
+            shader.SetInt("irradianceMap", 7);
         }
 
         public void Render()
@@ -238,13 +244,8 @@ namespace CORERenderer.Loaders
 
         private void SetShaderValues()
         {
-            //shader.SetFloat("transparency", material.Transparency);
-            //shader.SetBool("allowAlpha", COREMain.allowAlphaOverride);
-            //shader.SetVector3("overrideColor", Vector3.Zero);
-            shader.SetVector3("viewPos", Rendering.Camera.position);
-            //shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
-
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
+            shader.SetVector3("viewPos", Rendering.Camera.position);
             shader.SetBool("isHighlighted", parent.highlighted);
 
             UseTextures();

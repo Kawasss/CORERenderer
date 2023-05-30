@@ -22,7 +22,7 @@ namespace CORERenderer.OpenGL
         public static bool renderOrthographic = false;
         public static bool renderLights = true;
 
-        public static ShaderType shaderConfig = ShaderType.Lighting;
+        public static ShaderType shaderConfig = ShaderType.PBR;
 
         private static Camera camera = null;
 
@@ -62,7 +62,7 @@ namespace CORERenderer.OpenGL
         /// Gets the color used with glClearColor (default is 0.3f, 0.3f, 0.3f, 1), sets the same color
         /// </summary>
         public static Vector4 ClearColor { get => clearColor; set => clearColor = value; }
-        private static Vector4 clearColor = new(0.3f, 0.3f, 0.3f, 1);
+        private static Vector4 clearColor = new(1f, 1f, 1f, 1);
 
         public static int[] ViewportDimensions { get => GetViewportDimensions(); }
 
@@ -137,25 +137,17 @@ namespace CORERenderer.OpenGL
         {
             int previousFB = CurrentFramebufferID;
 
-            GenericShaders.PBR.Use();
+            GenericShaders.Lighting.Use();
             shadowFramebuffer.Bind();
+            skybox?.irradianceMap.Use(GL_TEXTURE7);
             shadowCubemap.Use(GL_TEXTURE6);
-            GenericShaders.PBR.SetInt("reflectionCubemap", 6);
+            
+            GenericShaders.Lighting.SetInt("irradianceMap", 7);
             int[] viewport = ViewportDimensions;
 
             reflectionCamera = new(camera);
             reflectionCamera.Fov = 90;
             reflectionCamera.AspectRatio = 1;
-            
-            /*Matrix[] viewMatrices = new Matrix[]
-            {
-                MathC.LookAt(camera.position, camera.position + new Vector3( 1,  0,  0), new(0, -1,  0)),
-                MathC.LookAt(camera.position, camera.position + new Vector3(-1,  0,  0), new(0, -1,  0)),
-                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  1,  0), new(0,  0,  1)),
-                MathC.LookAt(camera.position, camera.position + new Vector3( 0, -1,  0), new(0,  0, -1)),
-                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0,  1), new(0, -1,  0)),
-                MathC.LookAt(camera.position, camera.position + new Vector3( 0,  0, -1), new(0, -1,  0))
-            };*/
 
             glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
             MatrixToUniformBuffer(reflectionCamera.ProjectionMatrix, 0);
@@ -181,7 +173,7 @@ namespace CORERenderer.OpenGL
 
                 RenderLights(reflectionCamera, lights);
                 foreach (Model model in models)
-                    if (model.Transform.BoundingBox.IsInFrustum(reflectionCamera.Frustum, model.Transform))
+                    //if (model.Transform.BoundingBox.IsInFrustum(reflectionCamera.Frustum, model.Transform))
                         model.Render();
                     
                 skybox?.Render();
@@ -207,13 +199,11 @@ namespace CORERenderer.OpenGL
                 model.RenderShadow();
         }
 
-        private static Model backgroundModel = null;
-
         public static List<Submodel> translucentSubmodels = new();
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            //RenderReflections(scene.models, scene.lights, scene.skybox);
+            RenderReflections(scene.models, scene.lights, scene.skybox);
             if (renderLights)
                 RenderLights(camera, scene.lights);
             RenderAllModels(scene.models);
@@ -236,7 +226,7 @@ namespace CORERenderer.OpenGL
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            GenericShaders.PBR.Use();
+            GenericShaders.Lighting.Use();
 
             sw.Start();
 
@@ -350,7 +340,7 @@ namespace CORERenderer.OpenGL
             };
         }
 
-        public static float[] GenerateQuadVerticesWithUV(int x, int y, int width, int height)
+        public static float[] GenerateQuadVerticesWithUV(float x, float y, float width, float height)
         {
             return new float[]
             {
@@ -507,7 +497,6 @@ namespace CORERenderer.OpenGL
                     GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
                     glDrawArrays(PrimitiveType.Triangles, 0, 36);
                 }
-                else Console.WriteLine(0);
             }
         }
 

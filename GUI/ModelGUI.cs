@@ -71,11 +71,15 @@ namespace CORERenderer.GUI
             totalOffset += (int)(Main.COREMain.debugText.characterHeight * 1.1f);
         }
 
+        private int previousAmount = 0;
         public void RenderModelList(List<Model> models)
         {
+            if (previousAmount == models.Count)
+                return;
+
             for (int i = 0; i < models.Count; i++)
             {
-                float offset = this.Height - Main.COREMain.debugText.characterHeight * 0.8f * (i + 1);
+                float offset = this.Height - Main.COREMain.debugText.characterHeight * 0.8f * ((i + 1) * 2);
 
                 if (offset <= 0) //return when the list goes outside the bounds of the div
                     return;
@@ -83,6 +87,8 @@ namespace CORERenderer.GUI
                 //if the model is selected it gets a different color to reflect that
                 Vector3 color = models[i].highlighted ? new(1, 0, 1) : new(1, 1, 1);
                 this.Write($"[{models[i].type}] {models[i].Name}", (int)(this.Width * 0.03f), (int)offset, 0.7f, color);
+                string plural = models[i].submodels.Count == 1 ? "" : "s";
+                this.Write($"    {models[i].submodels.Count} submodel{plural}", (int)(this.Width * 0.03f), (int)(offset - Main.COREMain.debugText.characterHeight * 0.8f), 0.7f, color);
             }
         }
     }

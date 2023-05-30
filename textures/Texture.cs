@@ -15,6 +15,15 @@ namespace CORERenderer.textures
 {
     public class Texture
     {
+        private static Texture defaultT = null;
+        public static Texture Default 
+        { get
+            {
+                defaultT ??= ReadFromFile($"{COREMain.BaseDirectory}");
+                return defaultT;
+            } 
+        }
+
         public uint Handle;
         public string path;
         public string name;
@@ -249,5 +258,10 @@ namespace CORERenderer.textures
         public static void WriteAsPNG(string destination, Texture texture, int width, int height) => WriteAsPNG(destination, texture.Handle, width, height);
 
         public void WriteAsPNG(string destination) => WriteAsPNG(destination, this.Handle, this.width, this.height);
+
+        public void Dispose()
+        {
+            glDeleteTexture(Handle);
+        }
     }
 } 

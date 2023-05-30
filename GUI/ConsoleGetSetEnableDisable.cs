@@ -137,16 +137,16 @@ namespace CORERenderer.GUI
             switch (input[1])
             {
                 case "arrows":
-                    Arrows.disableArrows = input[0] == "enable"; //if the command is enable the value must be set to true, so if it isnt enable (aka disable) its false. value also becomes values if the 2nd input is gibberish but that issue is too minor to care about
-                    WriteLine("Disabled arrows");
+                    Arrows.disableArrows = input[0] == "disable"; //if the command is enable the value must be set to true, so if it isnt enable (aka disable) its false. value also becomes values if the 2nd input is gibberish but that issue is too minor to care about
+                    WriteLine(Arrows.disableArrows ? "Disabled arrows" : "Enabled arrows");
                     break;
                 case "lights":
                     Rendering.renderLights = input[0] == "enable";
-                    WriteLine("Lights aren't being rendered anymore");
+                    WriteLine(Rendering.renderLights ? "Lights are being rendered" : "Lights aren't being rendered anymore");
                     break;
                 case "grid":
                     COREMain.renderGrid = input[0] == "enable";
-                    WriteLine("Grid isn't being rendered anymore");
+                    WriteLine(COREMain.renderGrid ? "Grid is being rendered" : "Grid isn't being rendered anymore");
                     break;
             }
         }

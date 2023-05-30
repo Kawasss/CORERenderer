@@ -135,7 +135,7 @@ namespace CORERenderer.GUI
 
             glEnable(GL_CULL_FACE);
 
-            GenericShaders.GenericLighting.SetVector3("overrideColor", Vector3.Zero);
+            //GenericShaders.Lighting.SetVector3("overrideColor", Vector3.Zero);
 
             RenderIDVersion();
 
@@ -209,7 +209,7 @@ namespace CORERenderer.GUI
 
             glEnable(GL_CULL_FACE);
 
-            GenericShaders.GenericLighting.SetVector3("overrideColor", Vector3.Zero);
+            //GenericShaders.Lighting.SetVector3("overrideColor", Vector3.Zero);
 
             Main.COREMain.renderFramebuffer.Bind();
         }

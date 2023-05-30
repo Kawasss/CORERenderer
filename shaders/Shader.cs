@@ -10,6 +10,7 @@ namespace CORERenderer.shaders
     public class Shader
     {
         public static Dictionary<uint, Shader> HandleShaderPair = new();
+        public static bool WriteErrors = true;
 
         public readonly uint Handle;
         public string vertexShaderSource;
@@ -305,7 +306,8 @@ namespace CORERenderer.shaders
 
                 if (uniformLocations[name] == -1)
                 {
-                    Console.WriteError($"Invalid uniform {name} (location == -1)");
+                    if (WriteErrors)
+                        Console.WriteError($"Invalid uniform {name} (location == -1)");
                     return -1;
                 }
             }

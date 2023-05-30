@@ -44,7 +44,7 @@ namespace CORERenderer.Loaders
 
         public List<Submodel> submodels = new();
 
-        public Shader shader = GenericShaders.GenericLighting;
+        public Shader shader = GenericShaders.Lighting;
 
         public ModelType type;
         public Error error = Error.None;

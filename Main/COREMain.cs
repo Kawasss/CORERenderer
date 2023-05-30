@@ -151,9 +151,9 @@ namespace CORERenderer.Main
                 SetRenderMode(args);
 
                 #region Starting other processes
+                LoadConfig();
                 Overrides.AlwaysLoad();
                 Rendering.Init(monitorWidth, monitorHeight);
-                LoadConfig();
                 #endregion
                 System.Console.WriteLine(GenericShaders.Log);
                 vertexArrayObjectLightSource = GenerateBufferlessVAO();
@@ -353,7 +353,7 @@ namespace CORERenderer.Main
                                     modelInformation.Render();
                                     modelInformation.RenderModelInformation();
 
-                                    //modelList.RenderModelList(CurrentScene.models);
+                                    modelList.RenderModelList(CurrentScene.models);
 
                                     sceneManager.Render();
                                 }
@@ -415,13 +415,16 @@ namespace CORERenderer.Main
                                 }
                                 #endregion
 
-                                scenes[SelectedScene].RenderEveryFrame(currentFrameTime);
+                                CurrentScene.RenderEveryFrame(currentFrameTime);
 
                                 if (renderGrid)
                                     RenderGrid();
 
-                                glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
-                                arrows.Render();
+                                if (!Arrows.disableArrows)
+                                {
+                                    glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
+                                    arrows.Render();
+                                }
                             }
                             else if (!mouseIsPressed)
                                 Glfw.SetInputMode(window, InputMode.Cursor, (int)CursorMode.Normal);
@@ -545,6 +548,7 @@ namespace CORERenderer.Main
 
         public static bool KeyIsPressed(Keys key) => Glfw.GetKey(window, key) == InputState.Press;
         public static bool MouseButtonIsPressed(MouseButton button) => Glfw.GetMouseButton(window, button) == InputState.Press;
+        public static bool MouseButtonIsReleased(MouseButton button) => Glfw.GetMouseButton(window, button) == InputState.Release;
 
         public static void RestartWithoutArgsWithConfig() => Restart(true, false);
         public static void RestartWithArgsAndConfig() => Restart(true, true);
@@ -607,7 +611,7 @@ namespace CORERenderer.Main
                 text = sr.ReadLine();
 
                 if (text.Contains("Lighting"))
-                    shaderConfig = ShaderType.Lighting;
+                    shaderConfig = ShaderType.PBR;
                 else if (text.Contains("PathTracing"))
                     shaderConfig = ShaderType.PathTracing;
                 else if (text.Contains("FullBright"))
@@ -619,6 +623,7 @@ namespace CORERenderer.Main
                 GUI.Console.writeDebug = sr.ReadLine().Contains("True");
                 GUI.Console.writeError = sr.ReadLine().Contains("True");
                 loadInfoOnstartup = sr.ReadLine().Contains("True");
+                Shader.WriteErrors = sr.ReadLine().Contains("False");
 
                 Console.WriteDebug("Loaded config file");
             }
@@ -634,6 +639,7 @@ namespace CORERenderer.Main
                 sw.WriteLine($"writedebug={GUI.Console.writeDebug}");
                 sw.WriteLine($"writeerror={GUI.Console.writeError}");
                 sw.WriteLine($"loadinfo={loadInfoOnstartup}");
+                sw.WriteLine($"MuteShaderErrors={!Shader.WriteErrors}");
             }
             Console.WriteDebug("Generated new config");
         }
@@ -682,9 +688,9 @@ namespace CORERenderer.Main
             byte[] data = new byte[4];
             glReadPixels((int)mousePosX, (int)(monitorHeight - mousePosY), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
             //convert color id to single int for uses, only change the id if the current one isnt being used (i.e being moved rotated or scaled
-            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press && Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Press && !arrows.isBeingUsed)
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press && Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Release && !arrows.isBeingUsed)
                 selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
-            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Press && selectedID < 9)
+            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Release && selectedID < 9)
                 selectedID = NoIDSelected;
                 
         }

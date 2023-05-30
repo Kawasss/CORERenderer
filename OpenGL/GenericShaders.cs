@@ -2,6 +2,7 @@
 
 namespace CORERenderer.OpenGL
 {
+    //commonly used shaders are placed in strings here, so that theyre neatly kept together and reduced the amount of files
     public class GenericShaders
     {
         private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader, PBRShader, normalVisualisationShader, shadowShader;
@@ -10,7 +11,7 @@ namespace CORERenderer.OpenGL
         public static Shader Light { get => lightingShader; }
         public static Shader Background { get => backgroundShader; }
         public static Shader Grid { get => gridShader; }
-        public static Shader GenericLighting { get => GenericLightingShader; }
+        public static Shader Lighting { get => GenericLightingShader; }
         public static Shader Quad { get => solidColorQuadShader; }
         public static Shader Arrow { get => arrowShader; }
         public static Shader IDPicking { get => pickShader; }
@@ -18,7 +19,7 @@ namespace CORERenderer.OpenGL
         public static Shader BonelessPickShader { get => bonelessPickShader; }
         public static Shader Cubemap { get => cubemapShader; }
         public static Shader Skybox { get => skyboxShader; }
-        public static Shader PBR { get => PBRShader; }
+        //public static Shader PBR { get => PBRShader; }
         public static Shader NormalVisualisation { get => normalVisualisationShader; }
         public static Shader Shadow { get => shadowShader; }
 
@@ -38,7 +39,7 @@ namespace CORERenderer.OpenGL
                 returnString += $"\n{bonelessPickShader.StartLog}";
                 returnString += $"\n{cubemapShader.StartLog}";
                 returnString += $"\n{skyboxShader.StartLog}";
-                returnString += $"\n{PBRShader.StartLog}";
+                //returnString += $"\n{PBRShader.StartLog}";
                 returnString += $"\n{normalVisualisationShader.StartLog}";
                 returnString += $"\n{shadowShader.StartLog}";
                 return returnString;
@@ -53,8 +54,8 @@ namespace CORERenderer.OpenGL
             gridShader = new(gridVertText, gridFragText);
             if (Rendering.shaderConfig == ShaderType.PathTracing)
                 GenericLightingShader = new(defaultVertexShaderText, pathTracingFragText, pathTracingGeomText);
-            else if (Rendering.shaderConfig == ShaderType.Lighting)
-                GenericLightingShader = new(defaultVertexShaderText, defaultLightingShaderText);
+            else if (Rendering.shaderConfig == ShaderType.PBR)
+                GenericLightingShader = new(defaultVertexShaderText, PBRFragText);
             else if (Rendering.shaderConfig == ShaderType.FullBright)
                 GenericLightingShader = new(defaultVertexShaderText, fullBrightFragText);
             solidColorQuadShader = new(quadVertText, quadFragText);
@@ -64,7 +65,7 @@ namespace CORERenderer.OpenGL
             bonelessPickShader = new(pickVertexShader, arrowFragText);
             cubemapShader = new(cubemapVert, cubemapFrag);
             skyboxShader = new(skyboxVert, skyboxFrag);
-            PBRShader = new(defaultVertexShaderText, PBRFragText);
+            //PBRShader = new(defaultVertexShaderText, PBRFragText);
             normalVisualisationShader = new(normalVisVertText, normalVisFragText, normalVisGeomText);
             shadowShader = new(shadowVertText, shadowFragText, shadowGeomText);
         }
@@ -249,6 +250,7 @@ namespace CORERenderer.OpenGL
 
             uniform samplerCube shadowMap;
             uniform samplerCube reflectionCubemap;
+            uniform samplerCube irradianceMap;
 
             uniform int isHighlighted;
             uniform int lowQuality;
@@ -301,18 +303,12 @@ namespace CORERenderer.OpenGL
             
             #define Directions 16.0
 
-            const float randomValues[16] = { 0.0162162162, 0.0540540541, 0.1216216216, 0.1945945946, 0.1216216216, 0.2969069646728344, 0.0540540541, 0.0162162162, 0.010381362401148057, 0.010381362401148057, 0.2270270270, 0.1964825501511404, 0.09447039785044732, 0.09447039785044732, 0.2969069646728344, 0.1964825501511404 };
-            //largely inspired by https://www.shadertoy.com/view/Xltfzj
             vec3 GetGuassianBlur(float roughness, vec3 viewDir, vec3 normal)
             {
-                /*vec3 newDir = -lightDir + 2 * normal * dot(lightDir, normal);//reflect(lightDir, normal);//fresnel;
-                vec3 blur = vec3(0);
-                int j = 0;
-                for (float i = 0; i < PI; i += PI / Directions, j++)
-                    blur += texture(reflectionCubemap, newDir + vec3(cos(randomValues[j]), sin(randomValues[j]), cos(randomValues[j]) * sin(randomValues[j])) * vec3(metallic*10/2560, metallic*10/1440, 1)).rgb * randomValues[j];
-                return blur;*/
                 vec3 dir = reflect(-viewDir, normal);
-                return textureLod(reflectionCubemap, dir, 4 * roughness).rgb;
+                vec3 highestReflection = textureLod(reflectionCubemap, dir, 4 * roughness).rgb;
+                vec3 lowestReflection = texture(irradianceMap, dir).rgb;
+                return (lowestReflection - highestReflection) * roughness + highestReflection; //interpolate between the 2 colors based on the roughness. Add the highest reflection last, because a roughness of 0 means its as smooth as can be
             }
 
             #define FresnelExponent 5
@@ -326,6 +322,11 @@ namespace CORERenderer.OpenGL
                 fresnel = pow(fresnel, FresnelExponent);
                 vec3 finalColor = color * fresnel;
                 return finalColor;
+            }
+
+            vec3 GetAmbientFromMap(vec3 texCoords)
+            {
+                return texture(irradianceMap, texCoords).rgb;
             }
 
             vec3 getNormalFromMap(vec2 texCoords)
@@ -401,9 +402,11 @@ namespace CORERenderer.OpenGL
                 float metallic  = texture(metallicMap, texCoords).b;
                 float roughness = texture(roughnessMap, texCoords).g;
                 float ao        = texture(aoMap, texCoords).r;
-
+                
                 vec3 N = getNormalFromMap(texCoords);
                 vec3 V = normalize(viewPos - FragPos);
+
+                vec3 reflection = GetGuassianBlur(roughness, V, N);
 
                 // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
                 // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
@@ -442,41 +445,15 @@ namespace CORERenderer.OpenGL
                     // add to outgoing radiance Lo
                     Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
                 }   
-                vec3 radiance = vec3(1);
+                vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
 
-                vec3 L = vec3(0, 1, 0);
-                vec3 H = normalize(V + L);
-
-                float NDF = DistributionGGX(N, H, roughness);   
-                float G   = GeometrySmith(N, V, L, roughness);      
-                vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
-
-                vec3 numerator    = NDF * G * F; 
-                float denominator = 2.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-                vec3 specular = numerator / denominator;
-
-                // kS is equal to Fresnel
                 vec3 kS = F;
-                // for energy conservation, the diffuse and specular light can't
-                // be above 1.0 (unless the surface emits light); to preserve this
-                // relationship the diffuse component (kD) should equal 1.0 - kS.
-                vec3 kD = vec3(1.0) - kS;
-                // multiply kD by the inverse metalness such that only non-metals 
-                // have diffuse lighting, or a linear blend if partly metal (pure metals
-                // have no diffuse light).
+                vec3 kD = 1.0 - kS;
                 kD *= 1.0 - metallic;	  
-            
-                // scale light by NdotL
-                float NdotL = max(dot(N, L), 0.0);        
-            
-                // add to outgoing radiance Lo
-                //Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
 
-                F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
-
-                // ambient lighting (note that the next IBL tutorial will replace 
-                // this ambient lighting with environment lighting).
-                vec3 ambient = (vec3(0.03) * albedo/* + GetGuassianBlur(roughness, V, N) * vec3(.1) * F*/) * ao;
+                vec3 irradiance = texture(irradianceMap, N).rgb;
+                vec3 diffuse      = irradiance * albedo;
+                vec3 ambient = (kD * diffuse + reflection * F * metallic * irradiance) * ao;
 
                 vec3 color = ambient + Lo;
                 //color *= GetShadow(FragPos);
@@ -662,11 +639,12 @@ namespace CORERenderer.OpenGL
 
             void main()
             {
-                FragColor = texture(albedoMap, TexCoords);
-                if (transparency != 0)
-                    FragColor.a = transparency;
-                if (FragColor.a < 0.1)
-                    discard;
+                vec3 color = texture(albedoMap, TexCoords).rgb;
+                FragColor = vec4(color, 1);
+                //if (transparency != 0)
+                //    FragColor.a = transparency;
+                //if (FragColor.a < 0.1)
+                //    discard;
             }
             """;
 

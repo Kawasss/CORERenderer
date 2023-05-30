@@ -39,7 +39,7 @@ namespace CORERenderer.GUI
         private static string logLocation;
 
         private static Dictionary<string, int> amountOfAppearancesLine = new();
-        private static Dictionary<string, ShaderType> shaderTypeLUT = new() { { "pathtracing", ShaderType.PathTracing }, { "lighting", ShaderType.Lighting }, { "fullbright", ShaderType.FullBright } };
+        private static Dictionary<string, ShaderType> shaderTypeLUT = new() { { "pathtracing", ShaderType.PathTracing }, { "pbr", ShaderType.PBR }, { "fullbright", ShaderType.FullBright } };
         private static Dictionary<string, Context> contextLUT = new() { { "scene", Context.Scene }, { "camera", Context.Camera }, { "console", Context.Console } };
         private        Dictionary<string, Model> BasicShapeLUT = new() { { "cube", Model.Cube }, { "cylinder", Model.Cylinder }, { "plane", Model.Plane }, { "sphere", Model.Sphere } }; //cant be static because opengl calls in model constructor
         private static List<string> lines = new();
@@ -410,7 +410,7 @@ namespace CORERenderer.GUI
                     COREMain.RestartWithArgsAndConfig();
 
                 else if (input.Contains("set shaders"))
-                    ChangeShaders(input);
+                    ChangeShaders(inputs[2]);
 
                 else if (input == "recompile shaders")
                     COREMain.RestartWithArgsAndConfig();
@@ -468,21 +468,30 @@ namespace CORERenderer.GUI
             {
                 string path = GetFullPath(input[1]);
 
-                if (input[1].EndsWith("\\cpbr")) //if the given value is cpbr load the first cpbr found
+                Submodel submodelToAttachTo = new();
+
+                if (input[1].EndsWith("\\cpbr") && input.Length == 2) //if the given value is cpbr load the first cpbr found
+                {
                     foreach (string file in Directory.GetFiles(path[..^4]))
                         if (Path.GetExtension(file) == ".cpbr")
                         {
                             path = file;
                             break;
                         }
-                if (COREMain.GetCurrentObjFromScene == -1) //avoiding unnecessary index out of range error
-                {
-                    WriteError($"Can't attach {Path.GetFileName(path)} to a model since there are no models");
-                    return;
-                }
-                Submodel submodelToAttachTo = COREMain.CurrentModel.submodels[0]; //its possible to only say "attach pathtocpbr", if so itll attach to current model
 
-                if (input.Length > 2) //if the command is "attach pathtocpbr to submodel" itll get the submodels location and use that instead of the current model
+                    if (COREMain.GetCurrentObjFromScene == -1) //avoiding unnecessary index out of range error
+                    {
+                        WriteError($"Can't attach {Path.GetFileName(path)} to a model since no model is currently selected. trying to continue with the first submodel of the first model, if that exists");
+                        if (COREMain.CurrentScene.models.Count <= 0)
+                        {
+                            WriteError("Couldn't get the first submodel, since there are no models");
+                            return;
+                        }
+                        submodelToAttachTo = COREMain.CurrentScene.models[0].submodels[0];
+                    }
+                    else submodelToAttachTo = COREMain.CurrentModel.submodels[0]; //its possible to only say "attach pathtocpbr", if so itll attach to current model
+                }
+                else if (input.Length > 2) //if the command is "attach pathtocpbr to submodel" itll get the submodels location and use that instead of the current model
                 {
                     int[] modelIndex = Readers.GetTwoIntsWithRegEx(input[3]);
                     submodelToAttachTo = COREMain.CurrentScene.models[modelIndex[0]].submodels[modelIndex[1]];
@@ -556,9 +565,9 @@ namespace CORERenderer.GUI
                 else //checks if user wants to load in an directory or a single file
                 {
                     string dir = GetFullPath(input[1]);
-                    if (!File.Exists(dir) || COREMain.GetRenderMode(dir) != ModelType.None) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
+                    if (!File.Exists(dir) || COREMain.GetRenderMode(dir) == ModelType.None) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
                     {
-                        WriteError($"Invalid file at {dir}");
+                        WriteError($"Invalid file at {dir}, one of the following conditions failed. Exists: {File.Exists(dir)}, valid extension: {COREMain.GetRenderMode(dir) == ModelType.None}");
                         return;
                     }
                     COREMain.CurrentScene.models.Add(new(dir));

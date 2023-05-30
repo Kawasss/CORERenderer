@@ -7,6 +7,19 @@ namespace CORERenderer.OpenGL
 {
     public struct Cubemap
     {
+        public static Matrix[] ViewMatrices
+        {
+            get => new Matrix[] 
+            {
+                    MathC.LookAt(new(0, 0, 0), new(1, 0, 0), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(-1, 0, 0), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 1, 0), new(0, 0, 1)),
+                    MathC.LookAt(new(0, 0, 0), new(0, -1, 0), new(0, 0, -1)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 0, 1), new(0, -1, 0)),
+                    MathC.LookAt(new(0, 0, 0), new(0, 0, -1), new(0, -1, 0)),
+                };
+        }
+
         public uint VAO = 0;
         public uint textureID = 0;
         public Shader shader = GenericShaders.Background;
@@ -33,12 +46,18 @@ namespace CORERenderer.OpenGL
             GL.glEnable(GL.GL_CULL_FACE);
         }
 
+        public void Dispose()
+        {
+            GL.glDeleteVertexArray(VAO);
+            GL.glDeleteTexture(textureID);
+        }
+
         public Cubemap() { }
     }
 
     public partial class Rendering
     {
-        public static Cubemap GenerateEmptyCubemap(int width, int height)
+        public static Cubemap GenerateEmptyCubemap(int width, int height, int textureMinFilter)
         {
             uint vao = GenerateBufferlessVAO();
             uint texture = glGenTexture();
@@ -53,13 +72,15 @@ namespace CORERenderer.OpenGL
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, textureMinFilter);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
             glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
             return new() { VAO = vao, textureID = texture };
         }
+
+        public static Cubemap GenerateEmptyCubemap(int width, int height) => GenerateEmptyCubemap(width, height, GL_LINEAR_MIPMAP_LINEAR);
 
         public static unsafe Cubemap GenerateCubemap(string[] faces)
         {

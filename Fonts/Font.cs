@@ -154,6 +154,7 @@ namespace CORERenderer.Fonts
             }
             glBindVertexArray(0);
             glBindTexture(GL_TEXTURE0, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         private bool IsCharUsedNumerical(string fullText, int index)
