@@ -31,7 +31,7 @@ namespace CORERenderer.OpenGL
         private static long ticksSpent3DRenderingThisFrame = 0;
 
         private static Framebuffer shadowFramebuffer;
-        private static Cubemap shadowCubemap;
+        public static Cubemap shadowCubemap;
         private static Camera reflectionCamera;
         private static Skybox standardSkybox;
 
@@ -55,7 +55,7 @@ namespace CORERenderer.OpenGL
                 glBindFramebuffer(0);
             }
         }
-        private static float shadowQuality = OpenGL.TextureQuality.Default;
+        private static float shadowQuality = OpenGL.TextureQuality.Ultra;
         private static float textureQuality = OpenGL.ShadowQuality.Default;
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace CORERenderer.OpenGL
                 RenderLights(camera, scene.lights);
             RenderAllModels(scene.models);
             //shadowCubemap.Render();
-            //scene.skybox?.Render();
+            scene.skybox?.Render();
         }
 
         public static void RenderAllModels(List<Model> models)

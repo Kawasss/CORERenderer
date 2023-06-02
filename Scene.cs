@@ -83,6 +83,8 @@ namespace CORERenderer
 
         public override void RenderEveryFrame(float delta)
         {
+            if (models.Count > 0)
+                models[0].Transform.scale = new(5);
             try
             {
                 for (int i = 0; i < (Bone.bones.Count > 128 ? 128 : Bone.bones.Count); i++) //the max amount of bones is 128

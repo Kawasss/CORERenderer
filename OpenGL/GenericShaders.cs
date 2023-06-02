@@ -5,7 +5,7 @@ namespace CORERenderer.OpenGL
     //commonly used shaders are placed in strings here, so that theyre neatly kept together and reduced the amount of files
     public class GenericShaders
     {
-        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader, PBRShader, normalVisualisationShader, shadowShader;
+        private static Shader image2DShader, lightingShader, backgroundShader, gridShader, GenericLightingShader, solidColorQuadShader, arrowShader, pickShader, framebufferShader, bonelessPickShader, cubemapShader, skyboxShader, PBRShader, normalVisualisationShader, shadowShader, water;
 
         public static Shader Image2D { get => image2DShader; }
         public static Shader Light { get => lightingShader; }
@@ -22,6 +22,7 @@ namespace CORERenderer.OpenGL
         //public static Shader PBR { get => PBRShader; }
         public static Shader NormalVisualisation { get => normalVisualisationShader; }
         public static Shader Shadow { get => shadowShader; }
+        public static Shader Water { get => water; }
 
         public static string Log
         {
@@ -335,8 +336,8 @@ namespace CORERenderer.OpenGL
 
                 vec3 Q1  = dFdx(FragPos);
                 vec3 Q2  = dFdy(FragPos);
-                vec2 st1 = dFdx(TexCoords);
-                vec2 st2 = dFdy(TexCoords);
+                vec2 st1 = dFdx(texCoords);
+                vec2 st2 = dFdy(texCoords);
 
                 vec3 N   = normalize(Normal);
                 vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
