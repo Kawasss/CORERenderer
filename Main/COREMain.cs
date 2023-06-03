@@ -351,7 +351,7 @@ namespace CORERenderer.Main
                                     tab.Render();
 
                                     modelInformation.Render();
-                                    modelInformation.RenderModelInformation();
+                                    //modelInformation.RenderModelInformation();
 
                                     modelList.RenderModelList(CurrentScene.models);
 

@@ -12,6 +12,7 @@ using StbiSharp;
 using CORERenderer.Fonts;
 using CORERenderer.OpenGL;
 using System.Drawing;
+using System.Reflection.Metadata;
 
 namespace CORERenderer.GUI
 {
@@ -29,7 +30,7 @@ namespace CORERenderer.GUI
 
         private readonly Shader shader;
 
-        private readonly Texture splashScreenTexture;
+        private readonly uint splashScreenTexture;
 
         public unsafe SplashScreen()
         {
@@ -80,7 +81,7 @@ namespace CORERenderer.GUI
 
             shader = new($"{Main.COREMain.BaseDirectory}\\shaders\\SplashScreen.vert", $"{Main.COREMain.BaseDirectory}\\shaders\\SplashScreen.frag");
 
-            splashScreenTexture = Texture.ReadFromFile($"{Main.COREMain.BaseDirectory}\\textures\\splashscreen.png");
+            splashScreenTexture = GenerateTexture();
 
             font = new(32, $"{Main.COREMain.BaseDirectory}\\Fonts\\Orbitron.ttf");
 
@@ -90,13 +91,37 @@ namespace CORERenderer.GUI
             shader.Use();
             shader.SetInt("Texture", 0);
 
-            splashScreenTexture.Use(ActiveTexture.Texture0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, splashScreenTexture);
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
             
             Glfw.SwapBuffers(window);
         }
 
+        private static uint GenerateTexture()
+        {
+            Stbi.SetFlipVerticallyOnLoad(true);
+
+            uint handle = glGenTexture();
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, handle);
+
+            StbiImage image = Stbi.LoadFromMemory(File.ReadAllBytes($"{COREMain.BaseDirectory}\\textures\\splashscreen.png"), 4);
+
+            glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.Data);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            return handle;
+        }
 
         public void WriteLine(string text) => WriteLine(text, new Vector3(1, 1, 1));
 
@@ -109,7 +134,8 @@ namespace CORERenderer.GUI
 
             shader.Use();
 
-            splashScreenTexture.Use(ActiveTexture.Texture0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, splashScreenTexture);
 
             glDrawArrays(PrimitiveType.Triangles, 0, 6);
 
@@ -125,7 +151,7 @@ namespace CORERenderer.GUI
         public void Dispose()
         {
             //deletes the window and the vram it used
-            glDeleteTexture(splashScreenTexture.Handle);
+            glDeleteTexture(splashScreenTexture);
             glDeleteVertexArray(vao);
             Glfw.DestroyWindow(window);
             Glfw.RestoreWindow(Main.COREMain.window);
