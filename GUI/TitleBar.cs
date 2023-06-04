@@ -97,8 +97,8 @@ namespace CORERenderer.GUI
             previousState = isSelected;
             if (Main.COREMain.monitorHeight - mouseY >= Main.COREMain.monitorHeight - 25 && Main.COREMain.monitorHeight - mouseY <= Main.COREMain.monitorHeight && mouseX >= Main.COREMain.monitorWidth - 50 && mouseX <= Main.COREMain.Width)
             {
-                if (Glfw.GetMouseButton(Main.COREMain.window, GLFW.Enums.MouseButton.Left) == GLFW.Enums.InputState.Press)
-                    Glfw.SetWindowShouldClose(Main.COREMain.window, true);
+                if (COREMain.MouseButtonIsPressed(GLFW.Enums.MouseButton.Left))
+                    Glfw.SetWindowShouldClose(COREMain.window, true);
 
                 isSelected = true;
                 shaderC.SetBool("isSelected", isSelected);

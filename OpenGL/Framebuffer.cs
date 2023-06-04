@@ -16,6 +16,8 @@ namespace CORERenderer.OpenGL
 
         public uint VBO; //VBO isnt really needed, but just in case
 
+        public bool isComplete { get { Bind(); bool status = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE; glBindFramebuffer(GL_FRAMEBUFFER, 0); return status; } }
+
         public void Bind() => glBindFramebuffer(this);
 
         public void RenderFramebuffer()

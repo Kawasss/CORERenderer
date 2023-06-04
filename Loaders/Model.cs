@@ -68,7 +68,7 @@ namespace CORERenderer.Loaders
         public Model(string path)
         {
             ID = COREMain.NewAvaibleID;
-            type = COREMain.GetRenderMode(path);
+            type = COREMain.GetModelType(path);
 
             if (type == ModelType.ObjFile)
                 GenerateObj(path);
@@ -89,7 +89,7 @@ namespace CORERenderer.Loaders
         public Model(string path, List<List<Vertex>> vertices, List<List<uint>> indices, List<PBRMaterial> materials, List<Vector3> offsets, Vector3 center, Vector3 extents)
         {
             ID = COREMain.NewAvaibleID;
-            type = COREMain.GetRenderMode(path);
+            type = COREMain.GetModelType(path);
 
             Name = Path.GetFileName(path)[..^4];
 
@@ -211,18 +211,6 @@ namespace CORERenderer.Loaders
 
             Console.WriteDebug($"Read .stl file in {Math.Round(readSTLFile, 2)} seconds");
             Console.WriteDebug($"Amount of vertices: {submodels[^1].NumberOfVertices}");
-            float[] vertexData = localVertices.ToArray();
-            unsafe
-            { //transfer the vertex data to the compute shader
-                glBindBuffer(BufferTarget.ShaderStorageBuffer, Main.COREMain.ssbo);
-                //glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, COREMain.ssbo, 0, totalSSBOSizeUsed + vertexData.Length * sizeof(float));
-
-                int size = totalSSBOSizeUsed / sizeof(float) + vertexData.Length;
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int), &size);
-
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(int) + totalSSBOSizeUsed, vertexData.Length * sizeof(float), vertexData);
-                totalSSBOSizeUsed += vertexData.Length * sizeof(float);
-            }
         }
 
         private void GenerateImage(string path)

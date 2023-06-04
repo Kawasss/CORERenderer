@@ -85,6 +85,12 @@ namespace CORERenderer.GUI
                 onClick?.Invoke();
         }
 
+        public void RenderConditionless()
+        {
+            changed = true;
+            RenderStatic();
+        }
+
         public void Update()
         {
             bool previousState = isPressed;

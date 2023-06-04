@@ -62,7 +62,7 @@ namespace CORERenderer.Main
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 5, 0.7f, new(1, 1, 1));
             msg = $"Errors caught: {errorsCaught}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 8, 0.7f, new(1, 1, 1));
-            string status = appIsHealthy ? "OK" : "BAD";
+            string status = AppIsHealthy ? "OK" : "BAD";
             msg = $"App status: {status}";
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 9, 0.7f, new(1, 1, 1));
             status = keyIsPressed ? pressedKey.ToString() : mouseIsPressed ? pressedButton.ToString() : "None";

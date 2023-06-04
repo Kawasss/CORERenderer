@@ -110,11 +110,6 @@ namespace CORERenderer.textures
 
             Stbi.SetFlipVerticallyOnLoad(flip);
 
-            /*uint handle = glGenTexture();
-            
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, handle);*/
-
             if (!File.Exists(imagePath))
             {
                 Console.WriteError($"Couldn't find given texture at {imagePath}, using default texture");
@@ -124,25 +119,7 @@ namespace CORERenderer.textures
             int imageHeight = 0, imageWidth = 0;
             byte[] imageData = Array.Empty<byte>();
             byte[] bytes = File.ReadAllBytes(imagePath);
-            //Task<StbiImage> readingTask = Task<StbiImage>.Run(() => { return Stbi.LoadFromMemory(bytes, 4); });// = (Task<StbiImage>)Task.Run(System.Console.WriteLine);
-            /*using (FileStream stream = File.OpenRead(imagePath))
-            using (MemoryStream memoryStream = new())
-            {
-                stream.CopyTo(memoryStream);
-                readingTask = Task<StbiImage>.Run(() => { return Stbi.LoadFromMemory(memoryStream, 4); } );
-                //task.Start();
-                //task.Wait();
 
-                /*glTexImage2D(Image2DTarget.Texture2D, 0, mode, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-                glGenerateMipmap(GL_TEXTURE_2D);
-            }*/
             timer.Stop();
             System.Console.WriteLine($"Read 2D texture {Path.GetFileNameWithoutExtension(imagePath)}:\n    Path: {imagePath}\n    Mode: 0x{string.Concat(BitConverter.ToString(BitConverter.GetBytes(mode)).Where(c => c != '-'))}\n    Read in: {timer.ElapsedMilliseconds} ms\n    Flipped: {flip}\n    Dimensions: {imageWidth}x{imageHeight}\n    Data size: {imageData.Length} bytes\n");
 
@@ -276,7 +253,7 @@ namespace CORERenderer.textures
 
             isCompleted = true;
 
-            Console.WriteLine($"Loaded texture {name} to the OpenGL context from an async task");
+            //Console.WriteLine($"Loaded texture {name} to the OpenGL context from an async task");
     }
 
         private unsafe byte[] GetData()

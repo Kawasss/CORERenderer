@@ -1,16 +1,14 @@
 ﻿using COREMath;
 using static CORERenderer.OpenGL.GL;
-using static CORERenderer.Main.Globals;
+using CORERenderer.textures;
 using static CORERenderer.OpenGL.Rendering;
 using CORERenderer.Main;
-using CORERenderer.shaders;
 using CORERenderer.GLFW;
 using CORERenderer.GLFW.Structs;
 using CORERenderer.GLFW.Enums;
 using CORERenderer.Loaders;
 using CORERenderer.OpenGL;
 using Console = CORERenderer.GUI.Console;
-using CORERenderer.textures;
 
 namespace CORERenderer
 {
@@ -34,51 +32,25 @@ namespace CORERenderer
             models = new();
             lights = new();
             camera = new(new(0, 1, 5), (float)renderWidth / (float)renderHeight);
-            Rendering.Camera = camera;
 
-            if (args.Length != 0 && LoadFile != ModelType.None && LoadFile != ModelType.CRSFile)
-            {
-                if (LoadFile != ModelType.HDRFile && LoadFile != ModelType.CPBRFile)
-                {
-                    loaded = true;
-                    models.Add(new(args[0]));
-                    currentObj = 0;
-                }
-                else if (LoadFile == ModelType.HDRFile)
-                    skybox = Skybox.ReadFromFile(args[0], Rendering.TextureQuality);
-                else if (LoadFile == ModelType.CPBRFile)
-                {
-                    models.Add(Model.Sphere);
-                    models[^1].submodels[0].material = Readers.LoadCPBR(args[0]);
-                    currentObj = 0;
-                }
-            }
-            for (int i = 0; i < models.Count; i++)
-                if (models[i].terminate)
-                {
-                    Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
-                    models.RemoveAt(i);
-                }
             if (lights.Count == 0)
                 lights.Add(new() { position = new(1, 2, 1) });
             lights.Add(new() { position = new(0, 1, 2) });
-            skybox ??= DefaultSkybox;
-            /*skybox = HDRTexture.ReadFromFile("C:\\Users\\wveen\\Downloads\\highres.hdr", Rendering.TextureQuality);
 
-            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
-            models[^1].Transform.translation = new(3, 3, 3);
+            skybox = LoadFile == ModelType.HDRFile ? Skybox.ReadFromFile(args[0], Rendering.TextureQuality) : DefaultSkybox;
 
-            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
-            models[^1].Transform.translation = new(2, 1, 0);
-            models[^1].Transform.scale = new(.1f, .1f, .1f);
+            if (args.Length != 0 && LoadFile != ModelType.None && LoadFile != ModelType.CRSFile)
+            {
+                loaded = true;
+                models.Add(new(args[0]));
+                currentObj = 0;
+            }
+            CheckForModelTermination();
+        }
 
-            models.Add(new($"{pathRenderer}\\OBJs\\sphere.obj"));
-
-            lights.Add(new() { position = new(1, 2, 1) });
-            camera.position = new(-1.37f, -0.65f, -1.28f);
-            camera.front = new(.9f, .35f, 0.25f);
-            camera.right = MathC.Normalize(MathC.GetCrossProduct(camera.front, Vector3.UnitVectorY));
-            camera.up = MathC.Normalize(MathC.GetCrossProduct(camera.right, camera.front));*/
+        public void OnSceneEnter()
+        {
+            Rendering.Camera = this.camera;
         }
 
         public override void RenderEveryFrame(float delta)
@@ -186,14 +158,14 @@ namespace CORERenderer
                         CurrentModel.Transform.translation.z += -deltaX / 150;
 
 
-                    if (arrows.wantsToScaleYAxis && loaded)
+                    /*if (arrows.wantsToScaleYAxis && loaded)
                         CurrentModel.Transform.scale.y -= deltaY / 200;
 
                     if (arrows.wantsToScaleXAxis && loaded)
                         CurrentModel.Transform.scale.x += deltaX / 200;
 
                     if (arrows.wantsToScaleZAxis && loaded)
-                        CurrentModel.Transform.scale.z += (deltaX + deltaY) / 400;
+                        CurrentModel.Transform.scale.z += (deltaX + deltaY) / 400;*/
                 }
             }
             if (state != InputState.Press && state2 != InputState.Press)
@@ -218,6 +190,9 @@ namespace CORERenderer
             //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
+
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
         }
 
         
@@ -228,11 +203,11 @@ namespace CORERenderer
         { //awfully written
             if (((mouseX >= viewportX) && (mouseX <= monitorWidth - viewportX) && (monitorHeight - mouseY >= viewportY) && (monitorHeight - mouseY <= monitorHeight - 25)))
             {
-                if (Glfw.GetMouseButton(window, MouseButton.Right) == InputState.Press)
+                if (COREMain.MouseButtonIsPressed(MouseButton.Right))
                     enteredFrame = true;
                 return true;
             }
-            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press)
+            if (!COREMain.MouseButtonIsPressed(MouseButton.Right))
             {
                 enteredFrame = false;
                 return false;
@@ -242,6 +217,16 @@ namespace CORERenderer
                 return true;
 
             return false;
+        }
+
+        private void CheckForModelTermination()
+        {
+            for (int i = 0; i < models.Count; i++)
+                if (models[i].terminate)
+                {
+                    Console.WriteError($"Deleting terminated model {i}: {models[i].error}");
+                    models.RemoveAt(i);
+                }
         }
     }
 }

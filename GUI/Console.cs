@@ -115,7 +115,7 @@ namespace CORERenderer.GUI
 
             if (!COREMain.keyIsPressed || !Globals.keyCharBinding.ContainsKey((int)COREMain.pressedKey) || !Globals.keyShiftCharBinding.ContainsKey((int)COREMain.pressedKey))
             {
-                isPressedPrevious = Glfw.GetKey(Main.COREMain.window, Keys.Backspace) == InputState.Press;
+                isPressedPrevious = COREMain.KeyIsPressed(Keys.Backspace);
                 return;
             }
 
@@ -565,9 +565,9 @@ namespace CORERenderer.GUI
                 else //checks if user wants to load in an directory or a single file
                 {
                     string dir = GetFullPath(input[1]);
-                    if (!File.Exists(dir) || COREMain.GetRenderMode(dir) == ModelType.None) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
+                    if (!File.Exists(dir) || COREMain.GetModelType(dir) == ModelType.None) //only allows certain file types, not really that necessary since model will catch it, but just to be sure
                     {
-                        WriteError($"Invalid file at {dir}, one of the following conditions failed. Exists: {File.Exists(dir)}, valid extension: {COREMain.GetRenderMode(dir) == ModelType.None}");
+                        WriteError($"Invalid file at {dir}, one of the following conditions failed. Exists: {File.Exists(dir)}, valid extension: {COREMain.GetModelType(dir) == ModelType.None}");
                         return;
                     }
                     COREMain.CurrentScene.models.Add(new(dir));

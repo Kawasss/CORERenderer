@@ -15,15 +15,29 @@ namespace CORERenderer
         public static unsafe void AlwaysLoad()
         {
             //creating the window
-            Glfw.WindowHint(Hint.ContextVersionMajor, 4);
-            Glfw.WindowHint(Hint.ContextVersionMinor, 3);
+            if (!SetOpenGLVersion(4, 3))
+            {
+                GUI.Console.WriteError("Couldn't find OpenGL version 4.3, trying to find an older version now. This software will be unstable and can crash unexpectedly.");
+                GUI.Console.WriteError("Trying to use OpenGL version 4.0");
+                Console.WriteLine("Couldn't find OpenGL version 4.3, trying to find an older version now. This software will be unstable and can crash unexpectedly.");
+                Console.WriteLine("Trying to use OpenGL version 4.0");
+                if (!SetOpenGLVersion(4, 0))
+                {
+                    GUI.Console.WriteError("Trying to use OpenGL version 3.3");
+                    Console.WriteLine("Trying to use OpenGL version 3.3");
+                    if (!SetOpenGLVersion(3, 3))
+                    {
+                        GUI.Console.WriteError("No valid version of OpenGL can be found, this software can't be used and will crash");
+                        Console.WriteLine("No valid version of OpenGL can be found, this software can't be used and will crash");
+                    }
+                }
+            }
+            
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
             Glfw.WindowHint(Hint.Visible, false);
             Glfw.WindowHint(Hint.Decorated, true);
 
             window = Glfw.CreateWindow(monitorWidth, monitorHeight, "CORE renderer", Monitor.None, Window.None);
-
-            Console.WriteLine("Successfully created window");
 
             using (FileStream stream = File.OpenRead($"{BaseDirectory}\\logos\\logo4.png"))
             using (MemoryStream memoryStream = new())
@@ -51,6 +65,21 @@ namespace CORERenderer
             Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\white.png"));
             Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\normal2_1.png"));//$"{pathRenderer}\\textures\\normal2_1.png"
             Globals.usedTextures.Add(Texture.ReadFromFile($"{BaseDirectory}\\textures\\black.png"));//$"{pathRenderer}\\textures\\black.png"
+        }
+
+        private static bool SetOpenGLVersion(int major, int minor)
+        {
+            try
+            {
+                Glfw.WindowHint(Hint.ContextVersionMajor, major);
+                Glfw.WindowHint(Hint.ContextVersionMinor, minor);
+                return true;
+            }
+            catch (GLFW.Exception)
+            {
+                GUI.Console.WriteError($"Couldn't get OpenGL version {major}.{minor}, returning without setting an OpenGL version");
+                return false;
+            }
         }
 
         /// <summary>
