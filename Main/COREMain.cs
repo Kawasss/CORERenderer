@@ -543,7 +543,7 @@ namespace CORERenderer.Main
 
         private static void CheckForFullscreen()
         {
-            if (KeyIsPressed(Keys.Escape) || !fullscreen)
+            if (!KeyIsPressed(Keys.Escape))
                 return;
 
             fullscreen = false;
