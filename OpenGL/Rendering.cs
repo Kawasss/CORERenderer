@@ -53,7 +53,7 @@ namespace CORERenderer.OpenGL
         {
             get => reflectionQuality; set
             {//both width because afaik its better to have a perfect cube and not a stretched one
-                shadowQuality = value;
+                reflectionQuality = value;
                 reflectionCubemap = GenerateEmptyCubemap((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
                 reflectionFramebuffer = GenerateFramebuffer((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
                 reflectionFramebuffer.Bind();
@@ -239,8 +239,6 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            //if (renderShadows)
-                RenderShadowCubemap(scene.models, scene.lights);
             if (renderReflections)
                 RenderReflections(scene.models, scene.lights, scene.skybox);
             if (renderLights)

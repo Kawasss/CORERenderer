@@ -248,7 +248,7 @@ namespace CORERenderer.Loaders
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
             shader.SetVector3("viewPos", Rendering.Camera.position);
             shader.SetBool("isHighlighted", parent.highlighted);
-            shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
+            //shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
 
             UseTextures();
         }

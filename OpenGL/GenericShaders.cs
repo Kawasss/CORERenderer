@@ -447,7 +447,7 @@ namespace CORERenderer.OpenGL
                     vec3 H = normalize(V + L);
                     float distance = length(lightPos[i] - FragPos);
                     float attenuation = 1.0 / (distance * distance);
-                    vec3 radiance = (1 - GetShadow(FragPos)) * vec3(1) * attenuation;
+                    vec3 radiance = /*(1 - GetShadow(FragPos)) **/ vec3(1) * attenuation;
 
                     // Cook-Torrance BRDF
                     float NDF = DistributionGGX(N, H, roughness);   
