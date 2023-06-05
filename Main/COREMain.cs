@@ -126,6 +126,8 @@ namespace CORERenderer.Main
                 splashScreen = new();
                 refreshRate = splashScreen.refreshRate;
 
+                CheckForCompatibility();
+
                 CalculateDimensions();
 
                 SetModelType(args);
@@ -263,6 +265,12 @@ namespace CORERenderer.Main
                 ReportFatalError(err);
             }
             return 0;
+        }
+
+        private static void CheckForCompatibility()
+        {
+            if (glGetString(GL_VENDOR).ToLower().Contains("intel"))
+                throw new System.Exception("CORE doesn't support Intel (i)GPUs. The software will exit in order to prevent any crashes");
         }
 
         private static void ReportFatalError(System.Exception err)
