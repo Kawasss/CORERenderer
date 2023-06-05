@@ -21,6 +21,8 @@ namespace CORERenderer.OpenGL
         public static bool cullFaces = true;
         public static bool renderOrthographic = false;
         public static bool renderLights = true;
+        public static bool renderReflections = true;
+        public static bool renderShadows = true;
 
         public static ShaderType shaderConfig = ShaderType.PBR;
 
@@ -32,7 +34,10 @@ namespace CORERenderer.OpenGL
 
         private static Framebuffer shadowFramebuffer;
         public static Cubemap shadowCubemap;
+        private static Framebuffer reflectionFramebuffer;
+        public static Cubemap reflectionCubemap;
         private static Camera reflectionCamera;
+        private static Camera shadowCamera;
         private static Skybox standardSkybox;
 
         /// <summary>
@@ -44,18 +49,30 @@ namespace CORERenderer.OpenGL
                 textureQuality = value;
             } 
         }
+        public static float ReflectionQuality
+        {
+            get => reflectionQuality; set
+            {//both width because afaik its better to have a perfect cube and not a stretched one
+                shadowQuality = value;
+                reflectionCubemap = GenerateEmptyCubemap((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
+                reflectionFramebuffer = GenerateFramebuffer((int)(renderingWidth / reflectionQuality), (int)(renderingWidth / reflectionQuality));
+                reflectionFramebuffer.Bind();
+                glBindFramebuffer(0);
+            }
+        }
         public static float ShadowQuality
         {
             get => shadowQuality; set
             {//both width because afaik its better to have a perfect cube and not a stretched one
                 shadowQuality = value;
-                shadowCubemap = GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
+                shadowCubemap = GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality), GL_LINEAR);
                 shadowFramebuffer = GenerateFramebuffer((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
                 shadowFramebuffer.Bind();
                 glBindFramebuffer(0);
             }
         }
         private static float shadowQuality = OpenGL.TextureQuality.Ultra;
+        private static float reflectionQuality = OpenGL.TextureQuality.Ultra;
         private static float textureQuality = OpenGL.ShadowQuality.Default;
 
         /// <summary>
@@ -76,9 +93,10 @@ namespace CORERenderer.OpenGL
             renderingWidth = RenderingWidth;
             renderingHeight = RenderingHeight;
             TextureQuality = OpenGL.TextureQuality.Default;
+            ReflectionQuality = OpenGL.ReflectionQuality.Default;
             ShadowQuality = OpenGL.ShadowQuality.Default;
             standardSkybox = Skybox.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\hdr\\defaultSkybox.hdr", TextureQuality);
-            shadowFramebuffer.Bind();
+            reflectionFramebuffer.Bind();
             SetClearColor(clearColor);
             camera = new(Vector3.Zero, 1);
             reflectionCamera = new(Vector3.Zero, 1);
@@ -100,19 +118,6 @@ namespace CORERenderer.OpenGL
 
             shadowFramebuffer.Bind();
 
-            RenderShadows(models);
-
-            glBindFramebuffer((uint)previousFB);
-            glViewport(originalViewportDimensions[0], originalViewportDimensions[1], originalViewportDimensions[2], originalViewportDimensions[3]);
-        }
-
-        private static void SetShadowValues(List<Light> lights)
-        {
-            glDisable(GL_CULL_FACE);
-
-            float nearPlane = camera.NearPlane;
-            float farPlane = camera.FarPlane;
-            Matrix shadowProjection = Camera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
             Matrix[] viewMatrices = new Matrix[]
             {
                 MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 1,  0,  0), new(0, -1,  0)),
@@ -122,12 +127,52 @@ namespace CORERenderer.OpenGL
                 MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0,  0,  1), new(0, -1,  0)),
                 MathC.LookAt(lights[0].position, lights[0].position + new Vector3( 0,  0, -1), new(0, -1,  0))
             };
+
+            RenderShadows(models, viewMatrices);
+
+            glBindFramebuffer((uint)previousFB);
+            glViewport(originalViewportDimensions[0], originalViewportDimensions[1], originalViewportDimensions[2], originalViewportDimensions[3]);
+        }
+
+        private static void SetShadowValues(List<Light> lights)
+        {
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_FRONT);
+
+            float nearPlane = camera.NearPlane;
+            float farPlane = camera.FarPlane;
+            float oldFov = Camera.Fov;
+            float oldAR = camera.AspectRatio;
+            Camera.Fov = 90;
+            Camera.AspectRatio = 1;
+            Matrix shadowProjection = Camera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
+            camera.Fov = oldFov;
+            Camera.AspectRatio = oldAR;
+            
             GenericShaders.Shadow.Use();
-            for (int i = 0; i < 6; i++)
-                GenericShaders.Shadow.SetMatrix($"shadowMatrices[{i}]", viewMatrices[i]);
+            //for (int i = 0; i < 6; i++)
+            //    GenericShaders.Shadow.SetMatrix($"shadowMatrices[{i}]", viewMatrices[i]);
             GenericShaders.Shadow.SetMatrix("projection", shadowProjection);
             GenericShaders.Shadow.SetVector3("lightPos", lights[0].position);
-            GenericShaders.Shadow.SetFloat("farPlane", farPlane);
+            GenericShaders.Shadow.SetFloat("farPlane", Camera.FarPlane);
+        }
+
+        private static void RenderShadows(List<Model> models, Matrix[] views)
+        {
+            shadowCubemap.Use(GL_TEXTURE0);
+
+            for (int i = 0; i < 6; i++)
+            {
+                shadowFramebuffer.Bind();
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
+                glClearColor(1, 1, 1, 1);
+                glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+                GenericShaders.Shadow.SetMatrix($"view", views[i]);
+                foreach (Model model in models)
+                    model.RenderShadow();
+            }
+            glCullFace(GL_BACK);
         }
 
         private static Vector2[] pitchAndYaw = new Vector2[] { new(0, 0), new(0, 180), new(90, 180), new(-90, 180), new(0, 90), new(0, -90) };
@@ -138,9 +183,10 @@ namespace CORERenderer.OpenGL
             int previousFB = CurrentFramebufferID;
 
             GenericShaders.Lighting.Use();
-            shadowFramebuffer.Bind();
+            reflectionFramebuffer.Bind();
+            shadowCubemap.Use(GL_TEXTURE8);
             skybox?.irradianceMap.Use(GL_TEXTURE7);
-            shadowCubemap.Use(GL_TEXTURE6);
+            reflectionCubemap.Use(GL_TEXTURE6);
             
             GenericShaders.Lighting.SetInt("irradianceMap", 7);
             int[] viewport = ViewportDimensions;
@@ -164,8 +210,8 @@ namespace CORERenderer.OpenGL
                 glBindBuffer(BufferTarget.UniformBuffer, uboMatrices);
                 MatrixToUniformBuffer(reflectionCamera.ViewMatrix, GL_MAT4_FLOAT_SIZE);
 
-                shadowFramebuffer.Bind();
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
+                reflectionFramebuffer.Bind();
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, reflectionCubemap.textureID, 0);
                 glClearColor(0.3f, 0.3f, 0.3f, 1);
                 glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -178,7 +224,7 @@ namespace CORERenderer.OpenGL
                     
                 skybox?.Render();
             }
-            shadowCubemap.Use(GL_TEXTURE0);
+            reflectionCubemap.Use(GL_TEXTURE0);
             glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
             Submodel.renderAllIDs = true;
@@ -189,21 +235,14 @@ namespace CORERenderer.OpenGL
             UpdateUniformBuffers();
         }
 
-        private static void RenderShadows(List<Model> models)
-        {
-            shadowCubemap.Use(GL_TEXTURE0);
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCubemap.textureID, 0);
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            foreach (Model model in models)
-                model.RenderShadow();
-        }
-
         public static List<Submodel> translucentSubmodels = new();
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            RenderReflections(scene.models, scene.lights, scene.skybox);
+            //if (renderShadows)
+                RenderShadowCubemap(scene.models, scene.lights);
+            if (renderReflections)
+                RenderReflections(scene.models, scene.lights, scene.skybox);
             if (renderLights)
                 RenderLights(camera, scene.lights);
             RenderAllModels(scene.models);
@@ -230,7 +269,7 @@ namespace CORERenderer.OpenGL
 
             sw.Start();
 
-            shadowCubemap.Use(GL_TEXTURE6);
+            reflectionCubemap.Use(GL_TEXTURE6);
             //GenericShaders.PBR.SetFloat("farPlane", camera.FarPlane);
 
             for (int i = 0; i < models.Count; i++)
@@ -492,11 +531,11 @@ namespace CORERenderer.OpenGL
                 lightTransform.translation = locations[i].position;
                 lightTransform.boundingBox.center = locations[i].position;
 
-                if (lightTransform.boundingBox.IsInFrustum(camera.Frustum, lightTransform))
-                {
+                //if (lightTransform.boundingBox.IsInFrustum(camera.Frustum, lightTransform))
+                //{
                     GenericShaders.Light.SetMatrix("model", Matrix.IdentityMatrix * MathC.GetTranslationMatrix(locations[i].position) * MathC.GetScalingMatrix(0.2f));
                     glDrawArrays(PrimitiveType.Triangles, 0, 36);
-                }
+                //}
             }
         }
 

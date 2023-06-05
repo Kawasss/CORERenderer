@@ -69,6 +69,26 @@ namespace CORERenderer.GUI
 
         private static void SceneGetCommand(string[] input)
         {
+            if (input[1].StartsWith("models"))
+            {
+                if (input[1].EndsWith("position"))
+                {
+                    Model model = GetModel(input[1]);
+                    Console.WriteLine(model.Transform.translation);
+                }
+                if (input[1].EndsWith("scale"))
+                {
+                    Model model = GetModel(input[1]);
+                    Console.WriteLine(model.Transform.scale);
+                }
+                if (input[1].EndsWith("rotation"))
+                {
+                    Model model = GetModel(input[1]);
+                    Console.WriteLine(model.Transform.rotation);
+                }
+                return;
+            }
+
             switch (input[1])
             {
                 case "model count":
@@ -116,11 +136,31 @@ namespace CORERenderer.GUI
                 return;
             }
 
+            else if (input[1].StartsWith("models"))
+            {
+                if (input[1].EndsWith("position"))
+                {
+                    Model model = GetModel(input[1]);
+                    model.Transform.translation = new(input[2], input[3], input[4]);
+                }
+                if (input[1].EndsWith("scale"))
+                {
+                    Model model = GetModel(input[1]);
+                    model.Transform.scale = new(input[2], input[3], input[4]);
+                }
+                if (input[1].EndsWith("rotation"))
+                {
+                    Model model = GetModel(input[1]);
+                    model.Transform.rotation = new(input[2], input[3], input[4]);
+                }
+                return;
+            }
+
             switch (input[1])
             {
                 case "reflectionQuality":
-                    Rendering.ShadowQuality = Readers.GetOneFloatWithRegEx(input[2]);
-                    WriteLine($"Set reflection quality to {Rendering.ShadowQuality}");
+                    Rendering.ReflectionQuality = Readers.GetOneFloatWithRegEx(input[2]);
+                    WriteLine($"Set reflection quality to {Rendering.ReflectionQuality}");
                     break;
                 case "textureQuality":
                     Rendering.TextureQuality = Readers.GetOneFloatWithRegEx(input[2]);
@@ -147,6 +187,10 @@ namespace CORERenderer.GUI
                 case "grid":
                     COREMain.renderGrid = input[0] == "enable";
                     WriteLine(COREMain.renderGrid ? "Grid is being rendered" : "Grid isn't being rendered anymore");
+                    break;
+                case "reflections":
+                    Rendering.renderReflections = input[0] == "enable";
+                    WriteLine(COREMain.renderGrid ? "Reflections are being rendered" : "Reflection aren't being rendered anymore");
                     break;
             }
         }

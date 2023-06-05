@@ -164,6 +164,7 @@ namespace CORERenderer.Loaders
             shader.SetInt("heightMap", 5);
             shader.SetInt("reflectionCubemap", 6);
             shader.SetInt("irradianceMap", 7);
+            shader.SetInt("shadowMap", 8);
         }
 
         public void Render()
@@ -247,6 +248,7 @@ namespace CORERenderer.Loaders
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
             shader.SetVector3("viewPos", Rendering.Camera.position);
             shader.SetBool("isHighlighted", parent.highlighted);
+            shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
 
             UseTextures();
         }

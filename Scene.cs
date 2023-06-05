@@ -35,11 +35,10 @@ namespace CORERenderer
 
             if (lights.Count == 0)
                 lights.Add(new() { position = new(1, 2, 1) });
-            lights.Add(new() { position = new(0, 1, 2) });
 
             skybox = LoadFile == ModelType.HDRFile ? Skybox.ReadFromFile(args[0], Rendering.TextureQuality) : DefaultSkybox;
 
-            if (args.Length != 0 && LoadFile != ModelType.None && LoadFile != ModelType.CRSFile)
+            if (args.Length != 0 && LoadFile != ModelType.None && LoadFile != ModelType.CRSFile && LoadFile != ModelType.HDRFile)
             {
                 loaded = true;
                 models.Add(new(args[0]));
@@ -73,7 +72,6 @@ namespace CORERenderer
                 {
                     GenericShaders.Lighting.SetVector3("viewPos", Rendering.Camera.position);
                     GenericShaders.Lighting.SetVector3("lightPos[0]", lights[0].position);
-                    GenericShaders.Lighting.SetVector3("lightPos[1]", lights[1].position);
                     //GenericShaders.GenericLighting.SetInt("skybox", 6);
                 }
                 RenderScene(this);

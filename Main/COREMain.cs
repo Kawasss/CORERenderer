@@ -126,7 +126,7 @@ namespace CORERenderer.Main
                 splashScreen = new();
                 refreshRate = splashScreen.refreshRate;
 
-                CheckForCompatibility();
+                //CheckForCompatibility();
 
                 CalculateDimensions();
 

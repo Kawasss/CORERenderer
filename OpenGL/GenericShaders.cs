@@ -68,7 +68,7 @@ namespace CORERenderer.OpenGL
             skyboxShader = new(skyboxVert, skyboxFrag);
             //PBRShader = new(defaultVertexShaderText, PBRFragText);
             normalVisualisationShader = new(normalVisVertText, normalVisFragText, normalVisGeomText);
-            shadowShader = new(shadowVertText, shadowFragText, shadowGeomText);
+            shadowShader = new(shadowVertText, shadowFragText/*, shadowGeomText*/);
         }
 
         private static string shadowVertText =
@@ -83,10 +83,15 @@ namespace CORERenderer.OpenGL
             layout (location = 6) in vec4 weights2;
 
             uniform mat4 model;
+            uniform mat4 projection;
+            uniform mat4 view;
+
+            out vec4 FragPos;
 
             void main()
             {
-                gl_Position = vec4(aPos, 1.0) * model;
+                FragPos = vec4(aPos, 1) * model;
+                gl_Position = FragPos * view * projection;
             }  
             """;
 
@@ -120,6 +125,8 @@ namespace CORERenderer.OpenGL
         private static string shadowFragText =
             """
             #version 430 core
+            out vec4 FragColor;
+
             in vec4 FragPos;
 
             uniform vec3 lightPos;
@@ -134,7 +141,8 @@ namespace CORERenderer.OpenGL
                 lightDistance = lightDistance / farPlane;
 
                 // write this as modified depth
-                gl_FragDepth = lightDistance;
+                FragColor = vec4(vec3(lightDistance), 1);
+                //egl_FragDepth = lightDistance;
             } 
             """;
 
@@ -262,11 +270,27 @@ namespace CORERenderer.OpenGL
             float GetShadow(vec3 FragPos)
             {
                 vec3 fragToLight = FragPos - lightPos[0];
-                float closestDepth = texture(shadowMap, fragToLight).r;
-                closestDepth *= farPlane;
                 float currentDepth = length(fragToLight);
+
+                float shadow = 0.0;
                 float bias = 0.05;
-                return currentDepth - bias > closestDepth ? 1 : 0;
+                float samples = 3.0;
+                float offset = 0.1;
+                for(float x = -offset; x < offset; x += offset / (samples * 0.5))
+                {
+                    for(float y = -offset; y < offset; y += offset / (samples * 0.5))
+                    {
+                        for(float z = -offset; z < offset; z += offset / (samples * 0.5))
+                        {
+                            float closestDepth = texture(shadowMap, fragToLight + vec3(x, y, z)).r;
+                            closestDepth *= farPlane; // undo mapping [0;1]
+                            if(currentDepth - bias > closestDepth)
+                                shadow += 1.0;
+                        }
+                    }
+                }
+                shadow /= (samples * samples * samples);
+                return shadow;
             }
 
             //from https://github.com/DOWNPOURDIGITAL/glsl-parallax-occlusion-mapping, all credit there
@@ -416,14 +440,14 @@ namespace CORERenderer.OpenGL
 
                 // reflectance equation
                 vec3 Lo = vec3(0.0);
-                for(int i = 0; i < 2; ++i) 
+                for(int i = 0; i < 1; ++i) 
                 {
                     // calculate per-light radiance
                     vec3 L = normalize(lightPos[i] - FragPos);
                     vec3 H = normalize(V + L);
                     float distance = length(lightPos[i] - FragPos);
                     float attenuation = 1.0 / (distance * distance);
-                    vec3 radiance = vec3(1) * attenuation;
+                    vec3 radiance = (1 - GetShadow(FragPos)) * vec3(1) * attenuation;
 
                     // Cook-Torrance BRDF
                     float NDF = DistributionGGX(N, H, roughness);   
@@ -457,7 +481,6 @@ namespace CORERenderer.OpenGL
                 vec3 ambient = (kD * diffuse + reflection * F * metallic * irradiance) * ao;
 
                 vec3 color = ambient + Lo;
-                //color *= GetShadow(FragPos);
                 if (isHighlighted == 1)
                     color += GetFresnelOutline(N, V);
 

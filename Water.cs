@@ -63,7 +63,7 @@ namespace CORERenderer
             normal1.Use(ActiveTexture.Texture0);
             normal2.Use(ActiveTexture.Texture1);
 
-            Rendering.shadowCubemap.Use(GL.GL_TEXTURE2);
+            Rendering.reflectionCubemap.Use(GL.GL_TEXTURE2);
 
             vb.Draw(PrimitiveType.Triangles, 0, vertexCount);
             speed += 0.1f;

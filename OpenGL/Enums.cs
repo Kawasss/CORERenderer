@@ -58,6 +58,29 @@ namespace CORERenderer.OpenGL
         public const float Lowest = 128;
     }
 
+    /// <summary>
+    /// determines the quality of certain render actions, like reflections.
+    /// Maximum uses 4 times the given resolution,
+    /// Ultra uses 2 times the given resolution,
+    /// High uses the given resolution,
+    /// Default uses 3/4 of the given resolution,
+    /// Medium uses 1/4 of the given resolution,
+    /// Low uses a 1/8 of the given resolution,
+    /// Minimum uses 1/32 of the given resolution,
+    /// Lowest uses 1/128 of the given resolution
+    /// </summary>
+    public static class ReflectionQuality
+    {
+        public const float Maximum = 0.25f;
+        public const float Ultra = 0.5f;
+        public const float High = 1f;
+        public const float Default = 1.5f;
+        public const float Medium = 4;
+        public const float Low = 8;
+        public const float Minimum = 32;
+        public const float Lowest = 128;
+    }
+
     public enum Usage 
     {
         StreamDraw = GL_STREAM_DRAW,
