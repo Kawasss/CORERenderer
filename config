@@ -4,4 +4,4 @@ cameraSpeed=5
 writedebug=True
 writeerror=True
 loadinfo=True
-MuteShaderErrors=False
+MuteShaderErrors=True

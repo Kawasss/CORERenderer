@@ -33,7 +33,7 @@ namespace CORERenderer
 
             Transform t = new(offset, Vector3.Zero, new(size), extents, center);
 
-            Texture normal1 = Texture.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\waterNormal1.jpg");
+            Texture normal1 = Texture.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\waterNormal2.jpg");
             Texture normal2 = normal1;
 
             Water w = new(vb, t, normal1, normal2);
@@ -45,7 +45,8 @@ namespace CORERenderer
             w.shader.SetInt("normal1", 0);
             w.shader.SetInt("normal2", 1);
             w.shader.SetInt("reflection", 2);
-            w.shader.SetVector3("absorbance", new(1f, 0.06f, 0f));
+            w.shader.SetInt("depthMap", 8);
+            w.shader.SetVector3("absorbance", new(.8f, 0.06f, 0f));
 
             return w;
         }
@@ -55,9 +56,10 @@ namespace CORERenderer
             shader.Use();
 
             shader.SetFloat("time", speed);
-            //shader.SetVector3("lightPos[0]", COREMain.CurrentScene.lights[0].position);
+            shader.SetVector3("lightPos", COREMain.CurrentScene.lights[0].position);
             //shader.SetVector3("lightPos[1]", COREMain.CurrentScene.lights[1].position);
             shader.SetVector3("viewPos", Rendering.Camera.position);
+            shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
             shader.SetMatrix("model", MathC.GetScalingMatrix(size) * MathC.GetTranslationMatrix(position));
 
             normal1.Use(ActiveTexture.Texture0);

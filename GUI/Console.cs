@@ -570,6 +570,13 @@ namespace CORERenderer.GUI
                         WriteError($"Invalid file at {dir}, one of the following conditions failed. Exists: {File.Exists(dir)}, valid extension: {COREMain.GetModelType(dir) == ModelType.None}");
                         return;
                     }
+
+                    if (COREMain.GetModelType(dir) == ModelType.CRSFile)
+                    {
+                        WriteError("CRS files can't be loaded on runtime. Consider running this via the file.");
+                        return;
+                    }
+
                     COREMain.CurrentScene.models.Add(new(dir));
                     WriteLine($"Loaded file {Path.GetFileName(dir)} from {Path.GetDirectoryName(dir)}");
                 }

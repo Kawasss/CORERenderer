@@ -55,6 +55,16 @@ namespace CORERenderer.Main
              AO = Globals.usedTextures[1];
              height = Globals.usedTextures[4];
         }
+
+        public void Dispose()
+        {
+            albedo.Dispose();
+            normal.Dispose();
+            metallic.Dispose();
+            roughness.Dispose();
+            AO.Dispose();
+            height.Dispose();
+        }
     }
 
     /// <summary>

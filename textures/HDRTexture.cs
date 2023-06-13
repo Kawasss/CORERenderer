@@ -109,7 +109,7 @@ namespace CORERenderer.textures
                 }
                 renderToCubemap.Dispose();
 
-                h.irradianceMap = GenerateIrradianceMap(h.envCubeMap, captureProjection, captureViews);
+                 h.irradianceMap = GenerateIrradianceMap(h.envCubeMap, captureProjection, captureViews);
 
                 glEnable(GL_CULL_FACE);
             }

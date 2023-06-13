@@ -15,6 +15,11 @@ namespace CORERenderer.OpenGL
         public static long TicksSpent3DRenderingThisFrame { get { return ticksSpent3DRenderingThisFrame; } }
         public static int[] Viewport { get => GetViewportDimensions(); }
         public static Skybox DefaultSkybox { get => standardSkybox; }
+        public static int AvaibleVRAM { get => GetTotalVRAM(); }
+        public static int UsedVRAM { get => GetUsedVRAM(); }
+        public static string OpenGLVersion { get => GetOpenGLVersion(); }
+        public static string GPU { get => GetGPU(); }
+        public static bool IsFullyFunctional { get => isFullyFunctional; }
 
         private static uint vertexArrayObjectGrid;
 
@@ -23,6 +28,9 @@ namespace CORERenderer.OpenGL
         public static bool renderLights = true;
         public static bool renderReflections = true;
         public static bool renderShadows = true;
+        public static bool renderProtected = false;
+
+        private static bool isFullyFunctional = true;
 
         public static ShaderType shaderConfig = ShaderType.PBR;
 
@@ -100,6 +108,9 @@ namespace CORERenderer.OpenGL
             SetClearColor(clearColor);
             camera = new(Vector3.Zero, 1);
             reflectionCamera = new(Vector3.Zero, 1);
+            isFullyFunctional = !glGetString(GL_RENDERER).ToLower().Contains("intel");
+            if (!isFullyFunctional)
+                Console.WriteLine("Irradiance maps are not supported with this vendor");
         }
 
         private unsafe static void RenderShadowCubemap(List<Model> models, List<Main.Light> lights)
@@ -239,13 +250,35 @@ namespace CORERenderer.OpenGL
 
         public static void RenderScene(Scene scene) //experimental but can work
         {
-            if (renderReflections)
-                RenderReflections(scene.models, scene.lights, scene.skybox);
-            if (renderLights)
-                RenderLights(camera, scene.lights);
-            RenderAllModels(scene.models);
-            //shadowCubemap.Render();
-            scene.skybox?.Render();
+            if (!renderProtected)
+            {
+                RenderShadowCubemap(scene.models, scene.lights);
+                if (renderReflections)
+                    RenderReflections(scene.models, scene.lights, scene.skybox);
+                if (renderLights)
+                    RenderLights(camera, scene.lights);
+                RenderAllModels(scene.models);
+                //shadowCubemap.Render();
+                scene.skybox?.Render();
+            }
+            else
+            {
+                try
+                {
+                    RenderShadowCubemap(scene.models, scene.lights);
+                    if (renderReflections)
+                        RenderReflections(scene.models, scene.lights, scene.skybox);
+                    if (renderLights)
+                        RenderLights(camera, scene.lights);
+                    RenderAllModels(scene.models);
+                    //shadowCubemap.Render();
+                    scene.skybox?.Render();
+                }
+                catch (Exception err)
+                {
+                    Console.WriteLine($"Rendering error: {err}");
+                }
+            }
         }
 
         public static void RenderAllModels(List<Model> models)
@@ -361,6 +394,30 @@ namespace CORERenderer.OpenGL
             int value;
             glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &value);
             return value;
+        }
+
+        private static unsafe int GetUsedVRAM()
+        {
+            int value;
+            glGetIntegerv(0x9049, &value);
+            return GetTotalVRAM() - value;
+        }
+
+        private static unsafe int GetTotalVRAM()
+        {
+            int value;
+            glGetIntegerv(0x9048, &value);
+            return value;
+        }
+
+        private static string GetOpenGLVersion()
+        {
+            return $"{glGetString(GL_VERSION)}";
+        }
+
+        private static string GetGPU()
+        {
+            return glGetString(GL_RENDERER);
         }
 
         public static float[] GenerateQuadVerticesWithoutUV(float x, float y, float width, float height)

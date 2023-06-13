@@ -34,7 +34,7 @@ namespace CORERenderer.Loaders
         private Shader IDShader = GenericShaders.IDPicking;
 
         public VertexBuffer vbo;
-
+        
         public int ID;
         private Vector3 IDColor;
 
@@ -248,7 +248,7 @@ namespace CORERenderer.Loaders
             shader.SetMatrix("model", parent.Transform.ModelMatrix);
             shader.SetVector3("viewPos", Rendering.Camera.position);
             shader.SetBool("isHighlighted", parent.highlighted);
-            //shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
+            shader.SetFloat("farPlane", Rendering.Camera.FarPlane);
 
             UseTextures();
         }
@@ -309,6 +309,7 @@ namespace CORERenderer.Loaders
         public void Dispose()
         {
             vbo.Dispose();
+            material.Dispose();
             //should also dispose of the materials (if they arent being used by other models) but thats not that important since vram isnt a main concern
         }
     }

@@ -8,15 +8,48 @@ in vec3 Normal;
 in vec2 TexCoords;
 
 uniform float time;
+uniform float farPlane;
 
 uniform sampler2D normal1;
 uniform sampler2D normal2;
 
 uniform samplerCube reflection;
+uniform samplerCube depthMap;
 
-uniform vec3 lightPos[2];
+uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 absorbance;
+
+float GetShadow(vec3 FragPos)
+            {
+                vec3 fragToLight = FragPos - lightPos[0];
+                float currentDepth = length(fragToLight);
+
+                float shadow = 0.0;
+                float bias = 0.05;
+                float samples = 3.0;
+                float offset = 0.1;
+                for(float x = -offset; x < offset; x += offset / (samples * 0.5))
+                {
+                    for(float y = -offset; y < offset; y += offset / (samples * 0.5))
+                    {
+                        for(float z = -offset; z < offset; z += offset / (samples * 0.5))
+                        {
+                            float closestDepth = texture(depthMap, fragToLight + vec3(x, y, z)).r;
+                            closestDepth *= farPlane; // undo mapping [0;1]
+                            if(currentDepth - bias > closestDepth)
+                                shadow += 1.0;
+                        }
+                    }
+                }
+                shadow /= (samples * samples * samples);
+                return 1 - shadow;
+            }
+
+float GetDistanceInWater(vec3 texCoords)
+{
+    return texture(depthMap, texCoords).r * farPlane;
+}
 
 vec3 getNormalFromMap(sampler2D normalMap, vec2 texCoords)
 {
@@ -88,61 +121,18 @@ void main()
     vec2 texCoords2 = vec2(TexCoords.x, TexCoords.y + time * 0.01);
     vec3 normal = normalize((getNormalFromMap(normal1, texCoords) + getNormalFromMap(normal2, texCoords2)));
     vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 directionThroughWater = reflect(-(viewPos - FragPos), normal);
 
     vec3 color = vec3(0);
-    vec3 absorb = vec3(1) - absorbance;
-    vec3 F0 = mix(texture(reflection, refract(-viewDir, normal, 1.33)).rgb, absorb, .2);
-    /*for (int i = 0; i < 2; i++)
-    {
-        vec3 lightDir  = normalize(lightPos[i] - FragPos);
-        vec3 H = normalize(viewDir + lightDir);
+    vec3 absorb = vec3(0, 0.53, 1);
+    vec3 locationOfClosestObject = FragPos + directionThroughWater * GetDistanceInWater(directionThroughWater);
+    float mixingValue = exp(-distance(FragPos, locationOfClosestObject));
+    vec3 F0 = mix(texture(reflection, directionThroughWater).rgb, absorb, mixingValue);
+    vec3 lightDir  = normalize(lightPos - FragPos);
 
-        float NDF = DistributionGGX(normal, H, 0);   
-        float G   = GeometrySmith(normal, viewDir, lightDir, 0);      
-        vec3 F    = fresnelSchlick(max(dot(H, viewDir), 0.0), absorb);
+    vec3 ambient = texture(reflection, directionThroughWater).rgb * 0.1;
 
-        vec3 numerator    = NDF * G * F; 
-        float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-        vec3 specular = numerator / denominator;
-
-        vec3 kS = F;
-                    
-        vec3 kD = vec3(1.0) - kS;
-
-        // scale light by NdotL
-        float NdotL = max(dot(normal, lightDir), 0.0);        
-
-        // add to outgoing radiance Lo
-        color += ((texture(reflection, refract(-viewDir, normal, 1.33)).rgb * absorb) / PI + specular) * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-    }*/
-    vec3 lightDir  = normalize(FragPos + vec3(0, 1, 0) - FragPos);
-        vec3 H = normalize(viewDir + lightDir);
-
-        float NDF = DistributionGGX(normal, H, 0);   
-        float G   = GeometrySmith(normal, viewDir, lightDir, 0.5);      
-        vec3 F    = fresnelSchlick(max(dot(H, viewDir), 0.0), F0);
-
-        vec3 numerator    = NDF * G * F; 
-        float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-        vec3 specular = numerator / denominator;
-
-        vec3 kS = F;
-                    
-        vec3 kD = vec3(1.0) - kS;
-
-        // scale light by NdotL
-        float NdotL = max(dot(normal, lightDir), 0.0);        
-
-        float fresnel = dot(normal, viewPos);
-        fresnel = clamp(1 - fresnel, 0.0, 1.0);
-        fresnel = pow(fresnel, 5);
-
-        // add to outgoing radiance Lo
-        color += (texture(reflection, refract(-viewDir, normal, 1.33)).rgb + specular) * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-    // HDR tonemapping
-    color /= (color + vec3(1.0));
-    // gamma correct
-    color = pow(color, vec3(1.0/2.2)); 
-    color = texture(reflection, reflect(viewDir, normal)).rgb * fresnel + texture(reflection, refract(-viewDir, normal, 1.33)).rgb;
-    FragColor = vec4(mix(color, absorb, .1)/*mix(texture(reflection, reflect(viewDir, normal)).rgb, texture(reflection, refract(viewDir, normal, 1.33)).rgb, fresnel)*/, 1.0);//
+    vec3 result = F0;
+    //color = texture(reflection, reflect(viewDir, normal)).rgb * fresnel + texture(reflection, refract(-viewDir, normal, 1.33)).rgb;
+    FragColor = vec4(ambient + texture(reflection, directionThroughWater).rgb * fresnelSchlick(dot(-(viewPos - FragPos), normal), F0) * GetShadow(FragPos)/*mix(texture(reflection, reflect(viewDir, normal)).rgb, texture(reflection, refract(viewDir, normal, 1.33)).rgb, fresnel)*/, 1.0);//
 }

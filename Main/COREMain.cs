@@ -434,6 +434,9 @@ namespace CORERenderer.Main
 
             CurrentScene.EveryFrame(window, currentFrameTime);
 
+            if (fullscreen)
+                Debugmenu.RenderVRAMStatistics();
+
             CheckIfDirectoryIsLoading(args);
         }
 
@@ -637,9 +640,9 @@ namespace CORERenderer.Main
             byte[] data = new byte[4];
             glReadPixels((int)mousePosX, (int)(monitorHeight - mousePosY), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
             //convert color id to single int for uses, only change the id if the current one isnt being used (i.e being moved rotated or scaled
-            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press && Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Release && !arrows.isBeingUsed)
+            if (Glfw.GetMouseButton(window, MouseButton.Right) != InputState.Press && Glfw.GetMouseButton(window, MouseButton.Left) == InputState.Press && !arrows.isBeingUsed)
                 selectedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
-            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Release && selectedID < 9)
+            if (Glfw.GetMouseButton(window, MouseButton.Left) != InputState.Press && selectedID < 9)
                 selectedID = NoIDSelected;
                 
         }

@@ -75,5 +75,28 @@ namespace CORERenderer.Main
             debugHolder.Write(msg, (int)(debugHolder.Width * 0.99f - debugText.GetStringWidth(msg, 0.7f)), debugHolder.Height - debugText.characterHeight * 14, 0.7f, new(1, 1, 1));
             debugText.drawWithHighlights = false;
         }
+
+        public static void RenderVRAMStatistics()
+        {
+            if (firstTime)
+            {
+                int debugWidth = (int)debugText.GetStringWidth("Ticks spent depth sorting: timeSpentDepthSorting", 0.7f);
+                debugFSGraph = new(0, debugWidth, (int)(debugText.characterHeight * 2), 0, (int)(monitorHeight - debugText.characterHeight * 0.7f * 4 - debugText.characterHeight * 2));
+                debugFSGraph.showValues = false;
+                firstTime = false;
+            }
+
+            string appStatus = AppIsHealthy ? "OK" : "BAD";
+            debugText.RenderText($"Renderer: OpenGL {OpenGLVersion}     VRAM used: {Globals.FormatSizeToMB(UsedVRAM)} out of {Globals.FormatSizeToMB(AvaibleVRAM)}    resolution: {monitorWidth}x{monitorHeight}    status: {appStatus}", -monitorWidth / 2, monitorHeight / 2 - debugText.characterHeight, 1, new Vector3(0, 1, 0.1f));
+            debugText.RenderText($"Protected rendering: {renderProtected}    Shadows: {renderShadows}    Quality: {Rendering.ShadowQuality}    Reflections: {renderReflections}    Quality: {Rendering.ReflectionQuality}    Texture quality: {Rendering.TextureQuality}", -monitorWidth / 2, monitorHeight / 2 - debugText.characterHeight * 2, 1, new Vector3(0, 1, 0.1f));
+            debugText.RenderText($"FPS: {Math.Round(1 / FrameTime, 2)}", -monitorWidth / 2, monitorHeight / 2 - debugText.characterHeight * 3, 1f, new Vector3(0, 1, 0.1f));
+            debugText.RenderText($"Frametime: {Math.Round(FrameTime * 1000, 2)} ms", -monitorWidth / 2 + debugText.characterHeight * 9, monitorHeight / 2 - debugText.characterHeight * 3, 1f, new Vector3(0, 1, 0.1f));
+            debugText.RenderText($"Draw calls: {drawCallsPerFrame}", -monitorWidth / 2 + debugText.characterHeight * 22, monitorHeight / 2 - debugText.characterHeight * 3, 1f, new Vector3(0, 1, 0.1f));
+            GL.glLineWidth(1);
+            if (debugFSGraph.MaxValue > 70) debugFSGraph.MaxValue = (int)(timeSinceLastFrame * 1000 * 1.5f);
+            debugFSGraph.color = 1 / timeSinceLastFrame < refreshRate / 2 ? new(1, 0, 0) : new(1, 0, 1);
+            debugFSGraph.UpdateConditionless((float)(timeSinceLastFrame * 1000));
+            debugFSGraph.RenderConditionless();
+        }
     }
 }

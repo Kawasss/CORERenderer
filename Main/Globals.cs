@@ -4,6 +4,7 @@ using static CORERenderer.OpenGL.GL;
 using Console = CORERenderer.GUI.Console;
 using CORERenderer.OpenGL;
 using CORERenderer.GLFW.Enums;
+using System.Drawing;
 
 namespace CORERenderer.Main
 {
@@ -57,6 +58,13 @@ namespace CORERenderer.Main
 
         public static char PressedLetter {  get => COREMain.KeyIsPressed(Keys.LeftShift) ? keyShiftCharBinding[(int)COREMain.pressedKey] : keyCharBinding[(int)COREMain.pressedKey]; }
 
+        public static bool TextureIsDefault(Texture texture)
+        {
+            if (usedTextures.IndexOf(texture) <= 4)
+                return true;
+            return false;
+        }
+
         /// <summary>
         /// Formats a given amount of bytes in KB, MB or GB
         /// </summary>
@@ -92,6 +100,12 @@ namespace CORERenderer.Main
             }
 
             return $"{size:0.#} {unit}";
+        }
+
+        public static string FormatSizeToMB(int sizeInBytes)
+        {
+            double size = (double)sizeInBytes / (/*1024 **/ 1024);
+            return $"{size:0.#} MB";
         }
 
         /// <summary>

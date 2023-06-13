@@ -110,10 +110,15 @@ namespace CORERenderer.Fonts
 
                 if (text[i] == ' ')
                 {
+                    indexOfTrue = text[i..].IndexOf("True") == -1 ? -1 : text[i..].IndexOf("True") + i;
+                    indexOfFalse = text[i..].IndexOf("False") == -1 ? -1 : text[i..].IndexOf("False") + i;
+                    indexOfOK = text[i..].IndexOf("OK") == -1 ? -1 : text[i..].IndexOf("OK") + i;
+                    indexOfBAD = text[i..].IndexOf("BAD") == -1 ? -1 : text[i..].IndexOf("BAD") + i;
+
                     x += (ch.advance >> 6) * scale;
                     continue;
                 }
-                if (IsColorWhite(color) && (indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3)) || (indexOfOK != -1 && (i == indexOfOK || i == indexOfOK + 1)))
+                if (IsColorWhite(color) && ((indexOfTrue != -1 && (i == indexOfTrue || i == indexOfTrue + 1 || i == indexOfTrue + 2 || i == indexOfTrue + 3)) || (indexOfOK != -1 && (i == indexOfOK || i == indexOfOK + 1))))
                     shader.SetVector3("textColor", new(0, 1, 0));
                 else if (IsColorWhite(color) && (indexOfFalse != -1 && (i == indexOfFalse || i == indexOfFalse + 1 || i == indexOfFalse + 2 || i == indexOfFalse + 3 || i == indexOfFalse + 4)) || (indexOfBAD != -1 && (i == indexOfBAD || i == indexOfBAD + 1 || i == indexOfBAD + 2)))
                     shader.SetVector3("textColor", new(1, 0, 0));

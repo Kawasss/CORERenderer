@@ -274,7 +274,7 @@ namespace CORERenderer.OpenGL
 
                 float shadow = 0.0;
                 float bias = 0.05;
-                float samples = 3.0;
+                float samples = 1.0;
                 float offset = 0.1;
                 for(float x = -offset; x < offset; x += offset / (samples * 0.5))
                 {
@@ -333,7 +333,7 @@ namespace CORERenderer.OpenGL
                 vec3 dir = reflect(-viewDir, normal);
                 vec3 highestReflection = textureLod(reflectionCubemap, dir, 4 * roughness).rgb;
                 vec3 lowestReflection = texture(irradianceMap, dir).rgb;
-                return (lowestReflection - highestReflection) * roughness + highestReflection; //interpolate between the 2 colors based on the roughness. Add the highest reflection last, because a roughness of 0 means its as smooth as can be
+                return ((1 - roughness) * lowestReflection + roughness * highestReflection) / 2;//(lowestReflection - highestReflection) * roughness + highestReflection; //interpolate between the 2 colors based on the roughness. Add the highest reflection last, because a roughness of 0 means its as smooth as can be
             }
 
             #define FresnelExponent 5
@@ -447,7 +447,7 @@ namespace CORERenderer.OpenGL
                     vec3 H = normalize(V + L);
                     float distance = length(lightPos[i] - FragPos);
                     float attenuation = 1.0 / (distance * distance);
-                    vec3 radiance = /*(1 - GetShadow(FragPos)) **/ vec3(1) * attenuation;
+                    vec3 radiance = vec3(1) * attenuation;
 
                     // Cook-Torrance BRDF
                     float NDF = DistributionGGX(N, H, roughness);   

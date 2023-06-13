@@ -322,7 +322,8 @@ namespace CORERenderer.textures
 
         public void Dispose()
         {
-            glDeleteTexture(Handle);
+            if (!Globals.TextureIsDefault(this))
+                glDeleteTexture(Handle);
         }
     }
 } 
