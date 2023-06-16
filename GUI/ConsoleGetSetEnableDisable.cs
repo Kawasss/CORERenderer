@@ -91,16 +91,16 @@ namespace CORERenderer.GUI
 
             switch (input[1])
             {
-                case "model count":
+                case "modelcount":
                     WriteLine($"{COREMain.CurrentScene.models.Count}");
                     break;
-                case "submodel count":
+                case "submodelcount":
                     int count = 0;
                     foreach (Model model in COREMain.CurrentScene.models)
                         count += model.submodels.Count;
                     WriteLine($"{count}");
                     break;
-                case "draw calls":
+                case "drawcalls":
                     WriteLine($"{COREMain.drawCallsPerFrame}");
                     break;
                 case "shader":
@@ -190,7 +190,7 @@ namespace CORERenderer.GUI
                     break;
                 case "reflections":
                     Rendering.renderReflections = input[0] == "enable";
-                    WriteLine(COREMain.renderGrid ? "Reflections are being rendered" : "Reflection aren't being rendered anymore");
+                    WriteLine(Rendering.renderReflections ? "Reflections are being rendered" : "Reflection aren't being rendered anymore");
                     break;
             }
         }

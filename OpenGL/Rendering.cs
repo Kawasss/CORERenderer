@@ -27,7 +27,7 @@ namespace CORERenderer.OpenGL
         public static bool renderOrthographic = false;
         public static bool renderLights = true;
         public static bool renderReflections = true;
-        public static bool renderShadows = true;
+        public static bool renderShadows = false;
         public static bool renderProtected = false;
 
         private static bool isFullyFunctional = true;
@@ -150,19 +150,10 @@ namespace CORERenderer.OpenGL
             glEnable(GL_CULL_FACE);
             glCullFace(GL_FRONT);
 
-            float nearPlane = camera.NearPlane;
-            float farPlane = camera.FarPlane;
-            float oldFov = Camera.Fov;
-            float oldAR = camera.AspectRatio;
-            Camera.Fov = 90;
-            Camera.AspectRatio = 1;
-            Matrix shadowProjection = Camera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
-            camera.Fov = oldFov;
-            Camera.AspectRatio = oldAR;
+            reflectionCamera.position = lights[0].position;
+            Matrix shadowProjection = reflectionCamera.ProjectionMatrix;//Matrix.CreatePerspectiveFOV(MathC.DegToRad(90), aspectRatio, nearPlane, farPlane);
             
             GenericShaders.Shadow.Use();
-            //for (int i = 0; i < 6; i++)
-            //    GenericShaders.Shadow.SetMatrix($"shadowMatrices[{i}]", viewMatrices[i]);
             GenericShaders.Shadow.SetMatrix("projection", shadowProjection);
             GenericShaders.Shadow.SetVector3("lightPos", lights[0].position);
             GenericShaders.Shadow.SetFloat("farPlane", Camera.FarPlane);

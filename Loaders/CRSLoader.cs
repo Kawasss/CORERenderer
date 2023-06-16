@@ -18,7 +18,7 @@ namespace CORERenderer.Loaders
                 {
                     header = GetString(fs, 100);
 
-                    List<Model> models = new();
+                    scene.models = new();
 
                     if (!header.Contains(CURRENT_VERSION))
                         return Error.Outdated;
@@ -29,16 +29,17 @@ namespace CORERenderer.Loaders
                     scene.lights.Add(new() { position = GetVector3(fs) });
 
                     int modelCount = GetInt(fs);
+                    GUI.Console.WriteLine(modelCount);
                     System.Console.WriteLine(modelCount);
                     for (int i = 0; i < modelCount; i++)
                     {
                         RetrieveModelNode(fs, out string modelName, out Vector3 translation, out Vector3 scaling, out Vector3 rotation, out int submodelCount);
 
-                        models.Add(new());
-                        models[^1].Name = modelName;
-                        models[^1].Transform.translation = translation;
-                        models[^1].Transform.scale = scaling;
-                        models[^1].Transform.rotation = rotation;
+                        scene.models.Add(new());
+                        scene.models[^1].Name = modelName;
+                        scene.models[^1].Transform.translation = translation;
+                        scene.models[^1].Transform.scale = scaling;
+                        scene.models[^1].Transform.rotation = rotation;
 
                         //getting the submodels
                         Vector3 min = Vector3.Zero, max = Vector3.Zero;
@@ -54,20 +55,20 @@ namespace CORERenderer.Loaders
                             {
                                 PBRMaterial material = RetrieveMaterialNode(fs);
 
-                                models[^1].type = ModelType.ObjFile;
-                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, models[^1], material));
+                                scene.models[^1].type = ModelType.ObjFile;
+                                scene.models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, submodelRotation, scene.models[^1], material));
                             }
                             else
                             {
-                                models[^1].type = ModelType.STLFile;
-                                models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, models[^1]));
+                                scene.models[^1].type = ModelType.STLFile;
+                                scene.models[^1].submodels.Add(new(submodelName, vertices, submodelTranslation, submodelScaling, scene.models[^1]));
                             }
                         }
-                        models[^1].Transform.BoundingBox = new(min, max);
+                        scene.models[^1].Transform.BoundingBox = new(min, max);
                     }
                     bool hasSkybox = RetrieveSkyboxNode(fs, ref scene.skybox);
 
-                    scene.models = models;
+                    //scene.models = models;
                 }
             }
             catch (Exception)

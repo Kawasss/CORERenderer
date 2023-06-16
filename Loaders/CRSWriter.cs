@@ -35,7 +35,7 @@ namespace CORERenderer.Loaders
             byte[] exists = BitConverter.GetBytes(skybox != null || skybox != Rendering.DefaultSkybox);
             sw.BaseStream.Write(exists);
 
-            if (skybox != null)
+            if (skybox != null && skybox != Rendering.DefaultSkybox)
             {
                 sw.BaseStream.Write(BitConverter.GetBytes(skybox.data.Length));
                 sw.BaseStream.Write(skybox.data);

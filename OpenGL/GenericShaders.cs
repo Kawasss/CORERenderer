@@ -1246,6 +1246,9 @@ namespace CORERenderer.OpenGL
             in vec2 TexCoords;
 
             uniform sampler2D screenTexture;
+            uniform sampler2D depthTexture;
+
+            uniform int mipMapCount;
 
             uniform int useVignette;
             uniform float vignetteStrength;
@@ -1253,31 +1256,53 @@ namespace CORERenderer.OpenGL
             uniform int useChromaticAberration;
             uniform vec3 chromAberIntensities;
 
+            uniform int useDOF;
+            uniform float DOFStrength;
+            uniform float DOFFocusPoint;
+
+            uniform float farPlane;
+            uniform float nearPlane;
+
             void main()
             {
             	float distanceFromCentreOfScreen = length(TexCoords - 0.5);
 
             	vec4 color;
+
             	if (useChromaticAberration == 1)
             	{
             		vec2 rUV = TexCoords + chromAberIntensities.x * (TexCoords - 0.5);
             		vec2 gUV = TexCoords + chromAberIntensities.y * (TexCoords - 0.5);
             		vec2 bUV = TexCoords + chromAberIntensities.z * (TexCoords - 0.5);
 
-            		color.r = texture(screenTexture, rUV).r;
+                    color.r = texture(screenTexture, rUV).r;
             		color.g = texture(screenTexture, gUV).g;
             		color.b = texture(screenTexture, bUV).b;
             	}
             	else
             		color = texture(screenTexture, TexCoords);
 
-            	float vignetteColor = 0;
+            	/*float vignetteColor = 0;
             	if (useVignette == 1)
             		vignetteColor = (distanceFromCentreOfScreen) * vignetteStrength;
 
             	color -= vignetteColor;
-            	color.a = 1;
+            	color.a = 1;*/
+                if (useDOF == 1)
+                {
+                    vec4 depth = texture(depthTexture, TexCoords);
+                    float linearizedDepth = nearPlane * farPlane / (farPlane + texture(depthTexture, TexCoords).r * (nearPlane - farPlane));
+                    float distanceCameraToObject = linearizedDepth;
+                    float amountOfDistance = clamp(abs(DOFFocusPoint - distanceCameraToObject), 0, 1);
+                    if (abs(DOFFocusPoint - distanceCameraToObject) < 3)
+                    amountOfDistance = 0;
 
+                    vec3 bestFocus = texture(screenTexture, TexCoords).rgb;
+                    vec3 worstFocus = textureLod(screenTexture, TexCoords, 2 * amountOfDistance * DOFStrength).rgb;
+
+                    color = vec4(worstFocus, 1);
+                }
+                
             	FragColor = color;
             }
             """;

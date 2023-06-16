@@ -416,7 +416,7 @@ namespace CORERenderer.Main
 
             if (!Arrows.disableArrows)
             {
-                glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
+                //glClear(GL_DEPTH_BUFFER_BIT); //clear the buffer bit so that the arrows are always visible
                 arrows.Render();
             }
         }
@@ -482,10 +482,10 @@ namespace CORERenderer.Main
             IDFramebuffer = GenerateFramebuffer(monitorWidth, monitorHeight);
 
             //test
-            renderFramebuffer.shader.SetBool("useVignette", useVignette);
-            renderFramebuffer.shader.SetFloat("vignetteStrength", 0.1f);
-            renderFramebuffer.shader.SetBool("useChromaticAberration", useChromAber);
-            renderFramebuffer.shader.SetVector3("chromAberIntensities", 0.014f, 0.009f, 0.006f);
+            //renderFramebuffer.UsesChromaticAberration = true;
+            //renderFramebuffer.ChromaticAberrationStrength = new(0.5f, 0.3f, 0.8f);
+            renderFramebuffer.UsesDepthOfField = true;
+            renderFramebuffer.DepthOfFieldFocusPoint = 5;
         }
 
         private static void StartOtherProcesses()

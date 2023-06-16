@@ -169,7 +169,7 @@ namespace CORERenderer.textures
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexImage2D(Image2DTarget.Texture2D, 0, GL_RGBA32F, Width, Height, 0, GL_RGBA, GL_FLOAT, null);
 
-            return new(handle) { width = Width, height = Height };
+            return new(handle) { width = Width, height = Height, isCompleted = true };
         }
 
         /// <summary>
