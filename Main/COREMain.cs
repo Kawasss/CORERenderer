@@ -484,8 +484,10 @@ namespace CORERenderer.Main
             //test
             //renderFramebuffer.UsesChromaticAberration = true;
             //renderFramebuffer.ChromaticAberrationStrength = new(0.5f, 0.3f, 0.8f);
-            renderFramebuffer.UsesDepthOfField = true;
+            //renderFramebuffer.UsesDepthOfField = true;
             renderFramebuffer.DepthOfFieldFocusPoint = 5;
+            renderFramebuffer.VignetteStrength = 5f;
+            renderFramebuffer.UsesVignette = true;
         }
 
         private static void StartOtherProcesses()

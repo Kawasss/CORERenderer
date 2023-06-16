@@ -36,6 +36,7 @@ namespace CORERenderer
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
             Glfw.WindowHint(Hint.Visible, false);
             Glfw.WindowHint(Hint.Decorated, true);
+            Glfw.WindowHint(Hint.Samples, 8);
 
             window = Glfw.CreateWindow(monitorWidth, monitorHeight, "CORE renderer", Monitor.None, Window.None);
 

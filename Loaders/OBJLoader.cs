@@ -114,7 +114,7 @@ namespace CORERenderer.Loaders
             AssimpContext context = new();
             RemoveComponentConfig a = new(ExcludeComponent.Normals);
             context.SetConfig(a);
-            return context.ImportFile(path,  PostProcessSteps.FixInFacingNormals | PostProcessSteps.RemoveComponent | PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.PreTransformVertices);
+            return context.ImportFile(path,  PostProcessSteps.FixInFacingNormals | PostProcessSteps.RemoveComponent | PostProcessPreset.TargetRealTimeMaximumQuality);
         }
 
         [Obsolete("Made redundant by the inclusion of Assimp")]

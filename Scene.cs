@@ -185,7 +185,7 @@ namespace CORERenderer
             glEnable(GL_DEBUG_OUTPUT);
 
             glEnable(GL_CULL_FACE);
-            //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+            glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
 

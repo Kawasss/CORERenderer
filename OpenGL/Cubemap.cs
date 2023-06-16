@@ -33,7 +33,6 @@ namespace CORERenderer.OpenGL
         public void Render()
         {
             GL.glDisable(GL.GL_CULL_FACE);
-            //cubemap.shader.Use();
             GenericShaders.Background.Use();
             GenericShaders.Background.SetInt("environmentMap", 0);
 
@@ -81,6 +80,25 @@ namespace CORERenderer.OpenGL
         }
 
         public static Cubemap GenerateEmptyCubemap(int width, int height) => GenerateEmptyCubemap(width, height, GL_LINEAR_MIPMAP_LINEAR);
+
+        public static unsafe Cubemap GenerateDepthCubemap(int width, int height)
+        {
+            uint vao = GenerateBufferlessVAO();
+            uint handle = glGenTexture();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
+
+            for (int i = 0; i < 6; i++)
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, null);
+
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+            return new() { textureID = handle, VAO = vao };
+        }
 
         public static unsafe Cubemap GenerateCubemap(string[] faces)
         {

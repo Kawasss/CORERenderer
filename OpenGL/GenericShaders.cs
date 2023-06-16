@@ -134,7 +134,7 @@ namespace CORERenderer.OpenGL
 
             void main()
             {
-                // get distance between fragment and light source
+                /*// get distance between fragment and light source
                 float lightDistance = length(FragPos.xyz - lightPos);
 
                 // map to [0;1] range by dividing by far_plane
@@ -142,7 +142,7 @@ namespace CORERenderer.OpenGL
 
                 // write this as modified depth
                 FragColor = vec4(vec3(lightDistance), 1);
-                //egl_FragDepth = lightDistance;
+                gl_FragDepth = lightDistance;*/
             } 
             """;
 
@@ -488,7 +488,7 @@ namespace CORERenderer.OpenGL
                 color /= (color + vec3(1.0));
                 // gamma correct
                 color = pow(color, vec3(1.0/2.2));
-
+                
                 FragColor = vec4(color, /*texture(alphaMap, texCoords).r*/1.0);
             }
             """;
@@ -1298,10 +1298,11 @@ namespace CORERenderer.OpenGL
                     amountOfDistance = 0;
 
                     vec3 bestFocus = texture(screenTexture, TexCoords).rgb;
-                    vec3 worstFocus = textureLod(screenTexture, TexCoords, 2 * amountOfDistance * DOFStrength).rgb;
+                    vec3 worstFocus = (textureLod(screenTexture, TexCoords, 2 * amountOfDistance * DOFStrength).rgb+ bestFocus) / 2.1;
 
                     color = vec4(worstFocus, 1);
                 }
+                color.a = 1;
                 
             	FragColor = color;
             }

@@ -73,7 +73,7 @@ namespace CORERenderer.OpenGL
             get => shadowQuality; set
             {//both width because afaik its better to have a perfect cube and not a stretched one
                 shadowQuality = value;
-                shadowCubemap = GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality), GL_LINEAR);
+                shadowCubemap = GenerateDepthCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));//GenerateEmptyCubemap((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality), GL_LINEAR);
                 shadowFramebuffer = GenerateFramebuffer((int)(renderingWidth / shadowQuality), (int)(renderingWidth / shadowQuality));
                 shadowFramebuffer.Bind();
                 glBindFramebuffer(0);
@@ -87,7 +87,7 @@ namespace CORERenderer.OpenGL
         /// Gets the color used with glClearColor (default is 0.3f, 0.3f, 0.3f, 1), sets the same color
         /// </summary>
         public static Vector4 ClearColor { get => clearColor; set => clearColor = value; }
-        private static Vector4 clearColor = new(1f, 1f, 1f, 1);
+        private static Vector4 clearColor = new(.75f, .75f, .75f, 1);
 
         public static int[] ViewportDimensions { get => GetViewportDimensions(); }
 
@@ -166,7 +166,7 @@ namespace CORERenderer.OpenGL
             for (int i = 0; i < 6; i++)
             {
                 shadowFramebuffer.Bind();
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_COMPONENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, shadowCubemap.textureID, 0);
                 glClearColor(1, 1, 1, 1);
                 glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 

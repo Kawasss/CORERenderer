@@ -166,6 +166,10 @@ namespace CORERenderer.GUI
                     Rendering.TextureQuality = Readers.GetOneFloatWithRegEx(input[2]);
                     WriteLine($"Set texture quality to {Rendering.TextureQuality}");
                     break;
+                case "focuspoint":
+                    COREMain.renderFramebuffer.DepthOfFieldFocusPoint = Readers.GetOneFloatWithRegEx(input[2]);
+                    WriteLine($"Set focus point to {COREMain.renderFramebuffer.DepthOfFieldFocusPoint}");
+                    break;
 
                 default:
                     WriteError($"Couldn't parse input {input[1]}");
@@ -191,6 +195,10 @@ namespace CORERenderer.GUI
                 case "reflections":
                     Rendering.renderReflections = input[0] == "enable";
                     WriteLine(Rendering.renderReflections ? "Reflections are being rendered" : "Reflection aren't being rendered anymore");
+                    break;
+                case "dof":
+                    COREMain.renderFramebuffer.UsesDepthOfField = true;
+                    WriteLine(COREMain.renderFramebuffer.UsesDepthOfField ? "Depth of field enabled" : "Depth of field disabled");
                     break;
             }
         }
