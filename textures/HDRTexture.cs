@@ -121,7 +121,9 @@ namespace CORERenderer.textures
             int width = 1280, height = 1280;
             Cubemap irradianceMap = GenerateEmptyCubemap(width, height, GL_LINEAR); //low res textures because irradiance isnt meant to have detail
             Framebuffer renderToMap = GenerateFramebuffer(width, height);
-            Shader irradianceConverter = new($"{COREMain.BaseDirectory}\\shaders\\HDRCube.vert", $"{COREMain.BaseDirectory}\\shaders\\irradiance.frag");
+
+            Shader irradianceConverter = IsFullyFunctional ? new($"{COREMain.BaseDirectory}\\shaders\\HDRCube.vert", $"{COREMain.BaseDirectory}\\shaders\\irradiance.frag") : new($"{COREMain.BaseDirectory}\\shaders\\HDRCube.vert", $"{COREMain.BaseDirectory}\\shaders\\irradianceIntel.frag");
+            if (Rendering.IsFullyFunctional)
 
             irradianceConverter.Use();
 

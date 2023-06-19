@@ -103,14 +103,14 @@ namespace CORERenderer.OpenGL
             TextureQuality = OpenGL.TextureQuality.Default;
             ReflectionQuality = OpenGL.ReflectionQuality.Default;
             ShadowQuality = OpenGL.ShadowQuality.Default;
-            standardSkybox = Skybox.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\hdr\\defaultSkybox.hdr", TextureQuality);
             reflectionFramebuffer.Bind();
             SetClearColor(clearColor);
             camera = new(Vector3.Zero, 1);
             reflectionCamera = new(Vector3.Zero, 1);
-            isFullyFunctional = !glGetString(GL_RENDERER).ToLower().Contains("intel");
+            isFullyFunctional = !glGetString(GL_VENDOR).ToLower().Contains("intel");
             if (!isFullyFunctional)
-                Console.WriteLine("Irradiance maps are not supported with this vendor");
+                Console.WriteLine("this GPU vendor is fully supported, failsafes are implemented but can not garantuee anything");
+            standardSkybox = Skybox.ReadFromFile($"{COREMain.BaseDirectory}\\textures\\hdr\\defaultSkybox.hdr", TextureQuality);
         }
 
         private unsafe static void RenderShadowCubemap(List<Model> models, List<Main.Light> lights)

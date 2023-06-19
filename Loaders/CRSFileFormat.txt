@@ -15,7 +15,7 @@ Camera node:
 The pitch and yaw are both used in degrees. These can be used to calculate the front, right and up of the camera.
 
 Light node:
-12 bytes - psoition	: vector3
+12 bytes - position	: vector3
 
 Model node:
 The structure of a model node looks like this:
